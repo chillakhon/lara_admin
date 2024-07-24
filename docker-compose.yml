@@ -1,0 +1,117 @@
+version: '3'
+
+services:
+    # PHP Service
+    app:
+        build:
+            context: .
+            dockerfile: ./_docker/Dockerfile
+        container_name: laravel_app
+        restart: unless-stopped
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+            - ./_docker/php/php.ini:/usr/local/etc/php/conf.d/php.ini
+        networks:
+            - laravel_network
+        command: [ "/usr/local/bin/start" ]
+        user: "1000:1000"
+        depends_on:
+            - db
+
+    # Nginx Service
+    nginx:
+        image: nginx:alpine
+        container_name: laravel_nginx
+        restart: unless-stopped
+        ports:
+            - "80:80"
+        volumes:
+            - ./:/var/www
+            - ./_docker/nginx/conf.d:/etc/nginx/conf.d
+        networks:
+            - laravel_network
+        depends_on:
+            - app
+
+    # MySQL Service
+    db:
+        image: mysql:8.0
+        container_name: laravel_db
+        restart: unless-stopped
+        environment:
+            MYSQL_DATABASE: shop_db
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_PASSWORD: shop_db_admin
+            MYSQL_USER: shop_db
+        volumes:
+            - dbdata:/var/lib/mysql
+        ports:
+            - "8101:3306"
+        command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
+        networks:
+            - laravel_network
+
+
+    npm:
+        image: node:latest
+        container_name: laravel_npm
+        volumes:
+            - ./:/var/www
+        working_dir: /var/www
+        entrypoint: [ 'npm' ]
+        ports:
+            - "5173:5173"
+        environment:
+            - HOST=0.0.0.0
+        profiles:
+            - dev
+
+    vite:
+        image: node:latest
+        container_name: laravel_vite
+        volumes:
+            - ./:/var/www
+        working_dir: /var/www
+        entrypoint: ['npm', 'run', 'dev', '--', '--host', '0.0.0.0']
+        ports:
+            - "5173:5173"
+        environment:
+            - HOST=0.0.0.0
+            - CHOKIDAR_USEPOLLING=true
+        profiles:
+            - dev
+
+    artisan:
+        build:
+            context: .
+            dockerfile: ./_docker/Dockerfile
+        container_name: laravel_artisan
+        volumes:
+            - ./:/var/www
+        working_dir: /var/www
+        entrypoint: [ 'php', '/var/www/artisan' ]
+        networks:
+            - laravel_network
+
+    composer:
+        build:
+            context: .
+            dockerfile: ./_docker/Dockerfile
+        container_name: laravel_composer
+        volumes:
+            - ./:/var/www
+        working_dir: /var/www
+        entrypoint: [ 'composer' ]
+        networks:
+            - laravel_network
+        profiles:
+            - dev
+
+networks:
+    laravel_network:
+        driver: bridge
+
+volumes:
+    dbdata:
+        driver: local
