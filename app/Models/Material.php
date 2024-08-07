@@ -9,13 +9,15 @@ class Material extends Model
 {
     use HasFactory;
     public $timestamps = false;
+    protected $fillable = ['title', 'unit_of_measurement', 'cost_per_unit'];
 
-    protected $fillable = ['name', 'price', 'unit', 'is_calculated', 'formula', 'conversion_factor'];
+    public function conversions()
+    {
+        return $this->hasMany(MaterialConversion::class);
+    }
 
-    protected $casts = [
-        'is_calculated' => 'boolean',
-        'conversion_factor' => 'float',
-    ];
-
-
+    public function productComponents()
+    {
+        return $this->hasMany(ProductComponent::class);
+    }
 }

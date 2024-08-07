@@ -2,111 +2,61 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreMaterialRequest;
-use App\Http\Requests\UpdateMaterialRequest;
 use App\Models\Material;
-use App\Models\RawMaterial;
-use App\Services\MaterialPriceCalculator;
+use App\Services\MaterialService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class MaterialController extends Controller
 {
-    private $calculator;
+    protected $materialService;
 
-    public function __construct(MaterialPriceCalculator $calculator)
+    public function __construct(MaterialService $materialService)
     {
-        $this->calculator = $calculator;
+        $this->materialService = $materialService;
     }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $materials = Material::all();
-        return Inertia::render('Materials/Index', ['materials' => $materials]);
+        $materials = Material::with('conversions')->paginate(10);
+        return Inertia::render('Dashboard/Materials/Index', [
+            'materials' => $materials
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        $rawMaterials = RawMaterial::all();
-        return Inertia::render('Materials/Create', ['rawMaterials' => $rawMaterials]);
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-
-    public function store(StoreMaterialRequest $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'price' => 'nullable|numeric|min:0',
-            'unit' => 'required|string|max:50',
-            'is_calculated' => 'required|boolean',
-            'formula' => 'required_if:is_calculated,true|nullable|string',
-            'from_unit' => 'required_if:is_calculated,true|nullable|string',
-            'to_unit' => 'required_if:is_calculated,true|nullable|string',
+            'title' => 'required|string|max:255',
+            'unit_of_measurement' => 'required|string|max:50',
+            'cost_per_unit' => 'required|numeric|min:0',
+            'conversion.from_unit' => 'sometimes|required|string|max:50',
+            'conversion.to_unit' => 'sometimes|required|string|max:50',
+            'conversion.conversion_factor' => 'sometimes|required|numeric|min:0',
         ]);
 
-        if ($validated['is_calculated']) {
-            $validated['price'] = $this->calculator->calculate(
-                $validated['formula'],
-                $validated['from_unit'],
-                $validated['to_unit']
-            );
-        }
+        $material = $this->materialService->createMaterial($validated);
 
-        Material::create($validated);
-
-        return redirect()->route('materials.index');
+        return redirect()->back()->with('success', 'Material created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Material $material)
+    public function update(Request $request, Material $material)
     {
-        //
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'unit_of_measurement' => 'required|string|max:50',
+            'cost_per_unit' => 'required|numeric|min:0',
+        ]);
+
+        $material->update($validated);
+
+        return redirect()->back()->with('success', 'Material updated successfully.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Material $material)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateMaterialRequest $request, Material $material)
-    {
-        //
-    }
-
-    public function updatePrices()
-    {
-        $calculatedMaterials = Material::where('is_calculated', true)->get();
-
-        foreach ($calculatedMaterials as $material) {
-            $material->price = $this->calculator->calculate($material->formula, $material->conversion_factor);
-            $material->save();
-        }
-
-        return response()->json(['message' => 'Material prices updated successfully']);
-    }
-
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Material $material)
     {
-        //
+        $material->delete();
+
+        return redirect()->back()->with('success', 'Material deleted successfully.');
     }
 }
