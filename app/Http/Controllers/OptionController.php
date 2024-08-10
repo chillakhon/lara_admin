@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreColorRequest;
-use App\Http\Requests\UpdateColorRequest;
-use App\Models\Color;
+use App\Http\Requests\StoreOptionRequest;
+use App\Http\Requests\UpdateOptionRequest;
+use App\Models\Option;
 
-class ColorController extends Controller
+class OptionController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -27,7 +27,7 @@ class ColorController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreColorRequest $request)
+    public function store(StoreOptionRequest $request)
     {
         //
     }
@@ -35,7 +35,7 @@ class ColorController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Color $color)
+    public function show(Option $option)
     {
         //
     }
@@ -43,7 +43,7 @@ class ColorController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Color $color)
+    public function edit(Option $option)
     {
         //
     }
@@ -51,7 +51,7 @@ class ColorController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateColorRequest $request, Color $color)
+    public function update(UpdateOptionRequest $request, Option $option)
     {
         //
     }
@@ -59,7 +59,7 @@ class ColorController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Color $color)
+    public function destroy(Option $option)
     {
         //
     }

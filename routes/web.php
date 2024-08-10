@@ -1,8 +1,12 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ColorManagementController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\ProductComponentController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductSizeController;
+use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -38,7 +42,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/products/{product}/variants', [ProductController::class, 'createVariant'])->name('products.createVariant');
         Route::put('/products/variants/{variant}', [ProductController::class, 'updateVariant'])->name('products.updateVariant');
         Route::delete('/products/variants/{variant}', [ProductController::class, 'deleteVariant'])->name('products.deleteVariant');
+
+        Route::get('color-management', [ColorManagementController::class, 'index'])->name('color-management.index');
+        Route::post('color-categories', [ColorManagementController::class, 'storeCategory'])->name('color-categories.store');
+        Route::put('color-categories/{category}', [ColorManagementController::class, 'updateCategory'])->name('color-categories.update');
+        Route::delete('color-categories/{category}', [ColorManagementController::class, 'destroyCategory'])->name('color-categories.destroy');
+        Route::post('colors', [ColorManagementController::class, 'storeColor'])->name('colors.store');
+        Route::put('colors/{color}', [ColorManagementController::class, 'updateColor'])->name('colors.update');
+        Route::delete('colors/{color}', [ColorManagementController::class, 'destroyColor'])->name('colors.destroy');
+
     });
+
+    Route::resource('products.sizes', ProductSizeController::class)->only(['store', 'destroy']);
+    Route::resource('products.sizes.components', ProductComponentController::class)->only(['store', 'destroy']);
+    Route::post('/products/{product}/variants', [ProductVariantController::class, 'store'])
+        ->name('products.variants.store');
+    Route::delete('/products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])
+        ->name('products.variants.destroy');
 });
 
 Route::middleware('auth')->group(function () {

@@ -14,6 +14,6 @@ class ColorCategory extends Model
 
 
     public function colors() {
-        return $this->hasMany(Color::class, 'categories_id');
+        return $this->hasMany(Color::class, 'color_category_id');
     }
 }

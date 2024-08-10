@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Material;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -20,20 +21,20 @@ class ProductController extends Controller
 
     public function index()
     {
-        $products = Product::with('components.material')->paginate(10);
         return Inertia::render('Dashboard/Products/Index', [
-            'products' => $products
+            'products' => Product::with('categories')->paginate(10),
+            'categories' => Category::with('options.values')->get(),
         ]);
     }
 
     public function show(Product $product)
     {
-        $product->load('components.material', 'variants');
-        $baseCost = $this->materialService->calculateProductCost($product);
+        $product->load('sizes.components.material', 'variants');
+        $materials = Material::all();
 
         return Inertia::render('Dashboard/Products/Show', [
             'product' => $product,
-            'baseCost' => $baseCost,
+            'materials' => $materials,
         ]);
     }
 
@@ -42,11 +43,20 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'is_available' => 'boolean',
+            'categories' => 'required|array',
+            'categories.*' => 'exists:categories,id',
         ]);
 
         $product = Product::create($validated);
+        $product->categories()->sync($validated['categories']);
 
-        return redirect()->back()->with('success', 'Product created successfully.');
+//        foreach ($validated['variants'] as $variantData) {
+//            $variant = $product->variants()->create($variantData);
+//            $variant->optionValues()->sync($variantData['option_values']);
+//        }
+
+        return redirect()->back()->with('success', 'Продукт успешно создан.');
     }
 
     public function update(Request $request, Product $product)
@@ -54,11 +64,33 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'is_available' => 'boolean',
+            'categories' => 'required|array',
+            'categories.*' => 'exists:categories,id',
+            'variants' => 'required|array',
+            'variants.*.id' => 'sometimes|exists:product_variants,id',
+            'variants.*.name' => 'required|string',
+            'variants.*.article' => 'required|string',
+            'variants.*.additional_cost' => 'required|numeric',
+            'variants.*.price' => 'required|numeric',
+            'variants.*.stock' => 'required|integer',
+            'variants.*.option_values' => 'required|array',
         ]);
 
         $product->update($validated);
+        $product->categories()->sync($validated['categories']);
 
-        return redirect()->back()->with('success', 'Product updated successfully.');
+        foreach ($validated['variants'] as $variantData) {
+            if (isset($variantData['id'])) {
+                $variant = $product->variants()->findOrFail($variantData['id']);
+                $variant->update($variantData);
+            } else {
+                $variant = $product->variants()->create($variantData);
+            }
+            $variant->optionValues()->sync($variantData['option_values']);
+        }
+
+        return redirect()->back()->with('success', 'Продукт успешно обновлен.');
     }
 
     public function destroy(Product $product)

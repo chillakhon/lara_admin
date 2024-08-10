@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreColorCategoryRequest;
-use App\Http\Requests\UpdateColorCategoryRequest;
-use App\Models\ColorCategory;
+use App\Http\Requests\StoreOptionValueRequest;
+use App\Http\Requests\UpdateOptionValueRequest;
+use App\Models\OptionValue;
 
-class ColorCategoryController extends Controller
+class OptionValueController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -27,7 +27,7 @@ class ColorCategoryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreColorCategoryRequest $request)
+    public function store(StoreOptionValueRequest $request)
     {
         //
     }
@@ -35,7 +35,7 @@ class ColorCategoryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(ColorCategory $colorCategory)
+    public function show(OptionValue $optionValue)
     {
         //
     }
@@ -43,7 +43,7 @@ class ColorCategoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(ColorCategory $colorCategory)
+    public function edit(OptionValue $optionValue)
     {
         //
     }
@@ -51,7 +51,7 @@ class ColorCategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateColorCategoryRequest $request, ColorCategory $colorCategory)
+    public function update(UpdateOptionValueRequest $request, OptionValue $optionValue)
     {
         //
     }
@@ -59,7 +59,7 @@ class ColorCategoryController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ColorCategory $colorCategory)
+    public function destroy(OptionValue $optionValue)
     {
         //
     }

@@ -15,4 +15,14 @@ class ProductVariant extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function optionValues()
+    {
+        return $this->belongsToMany(OptionValue::class);
+    }
+
+    public function components()
+    {
+        return $this->hasMany(ProductComponent::class);
+    }
 }

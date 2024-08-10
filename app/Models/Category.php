@@ -61,4 +61,9 @@ class Category extends Model
 
         return $count ? "{$slug}-{$count}" : $slug;
     }
+
+    public function options()
+    {
+        return $this->hasMany(Option::class);
+    }
 }

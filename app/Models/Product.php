@@ -9,7 +9,7 @@ class Product extends Model
 {
     use HasFactory;
     public $timestamps = false;
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'description', 'is_available'];
 
     public function components()
     {
@@ -21,8 +21,13 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
-    public function category()
+    public function categories()
     {
-        $this->belongsToMany(Category::class);
+        return $this->belongsToMany(Category::class);
+    }
+
+    public function sizes()
+    {
+        return $this->hasMany(ProductSize::class);
     }
 }
