@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Kalnoy\Nestedset\NodeTrait;
 
@@ -65,5 +66,10 @@ class Category extends Model
     public function options()
     {
         return $this->hasMany(Option::class);
+    }
+
+    public function colorOptions(): HasMany
+    {
+        return $this->hasMany(ColorOption::class);
     }
 }

@@ -8,15 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class ColorOptionValue extends Model
 {
     use HasFactory;
+    protected $guarded = false;
+    public $timestamps = false;
 
     public function color()
     {
         return $this->belongsTo(Color::class);
     }
 
-    public function productVariant()
+    public function product()
     {
-        return $this->belongsTo(ProductVariant::class);
+        return $this->belongsTo(Product::class);
     }
 
     public function colorOption()

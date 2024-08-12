@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Color;
+use App\Models\ColorCategory;
+use App\Models\ColorOption;
 use App\Models\Material;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -29,12 +32,16 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-        $product->load('sizes.components.material', 'variants');
+        $product->load('sizes.components.material', 'variants', 'colorOptions.category', 'colorOptions.colorOptionValues.color');
         $materials = Material::all();
+        $categories = Category::with('colorOptions')->get();
+        $colors = Color::with('images')->get();
 
         return Inertia::render('Dashboard/Products/Show', [
             'product' => $product,
             'materials' => $materials,
+            'categories' => $categories,
+            'colors' => $colors,
         ]);
     }
 
@@ -158,5 +165,46 @@ class ProductController extends Controller
         $variant->delete();
 
         return redirect()->back()->with('success', 'Variant deleted successfully.');
+    }
+
+    public function addColorOption(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
+        ]);
+
+        $colorOption = $product->colorOptions()->create($validated);
+
+        return redirect()->back()->with('success', 'Color option added successfully.');
+    }
+
+    public function removeColorOption(Product $product, ColorOption $colorOption)
+    {
+        $colorOption->delete();
+
+        return redirect()->back()->with('success', 'Color option removed successfully.');
+    }
+
+    public function addColorToOption(Request $request, Product $product, ColorOption $colorOption)
+    {
+        $validated = $request->validate([
+            'color_id' => 'required|exists:colors,id',
+        ]);
+
+        $colorOption->colorOptionValues()->create([
+            'color_id' => $validated['color_id'],
+            'color_option_id' => $colorOption->id,
+            'product_id' => $product->id
+        ]);
+
+        return redirect()->back()->with('success', 'Color added to option successfully.');
+    }
+
+    public function removeColorFromOption(Product $product, ColorOption $colorOption, $colorOptionValueId)
+    {
+        $colorOption->colorOptionValues()->findOrFail($colorOptionValueId)->delete();
+
+        return redirect()->back()->with('success', 'Color removed from option successfully.');
     }
 }

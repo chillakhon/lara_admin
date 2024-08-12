@@ -30,4 +30,9 @@ class Product extends Model
     {
         return $this->hasMany(ProductSize::class);
     }
+
+    public function colorOptions()
+    {
+        return $this->hasMany(ColorOption::class);
+    }
 }

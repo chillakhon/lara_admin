@@ -15,6 +15,55 @@
                             <input type="number" id="markup" v-model.number="markup" min="0" step="0.1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         </div>
 
+                        <div class="mt-8">
+                            <h3 class="text-lg font-semibold mb-4">Color Options</h3>
+
+                            <!-- Form to add new color option -->
+                            <form @submit.prevent="addColorOption" class="mb-4">
+                                <input v-model="newColorOption.title" placeholder="Color option title" class="mr-2">
+                                <select v-model="newColorOption.category_id" class="mr-2">
+                                    <option value="">Select Category</option>
+                                    <option v-for="category in categories" :key="category.id" :value="category.id">
+                                        {{ category.name }}
+                                    </option>
+                                </select>
+                                <PrimaryButton type="submit">Add Color Option</PrimaryButton>
+                            </form>
+
+                            <!-- List of color options -->
+                            <div v-for="colorOption in product.color_options" :key="colorOption.id" class="mb-4">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="text-md font-semibold">{{ colorOption.title }}</h4>
+                                    <button @click="removeColorOption(colorOption.id)" class="text-red-600 hover:text-red-800">
+                                        Remove Option
+                                    </button>
+                                </div>
+
+                                <!-- Form to add color to option -->
+                                <form @submit.prevent="addColorToOption(colorOption.id)" class="mt-2">
+                                    <select v-model="newColor[colorOption.id]" class="mr-2">
+                                        <option value="">Select Color</option>
+                                        <option v-for="category in colorCategories" :key="category.id" :value="null" disabled>
+                                            {{ category.title }}
+                                        </option>
+                                        <option v-for="color in colors" :key="color.id" :value="color.id">
+                                            &nbsp;&nbsp;{{ color.title }}
+                                        </option>
+                                    </select>
+                                    <PrimaryButton type="submit">Add Color</PrimaryButton>
+                                </form>
+
+                                <!-- List of colors in option -->
+                                <div v-for="colorValue in colorOption.color_option_values" :key="colorValue.id" class="mt-2 flex items-center">
+                                    <div class="w-6 h-6 rounded-full mr-2" :style="{ backgroundColor: `#${colorValue.color.code}` }"></div>
+                                    <span>{{ colorValue.color.title }}</span>
+                                    <button @click="removeColorFromOption(colorOption.id, colorValue.id)" class="ml-2 text-red-600 hover:text-red-800">
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Form to add new size -->
                         <form @submit.prevent="addSize" class="mb-6">
                             <input v-model="newSizeName" placeholder="New size name" class="mr-2">
@@ -108,6 +157,8 @@
                 </div>
             </div>
         </div>
+
+
     </AuthenticatedLayout>
 </template>
 
@@ -120,6 +171,9 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 const props = defineProps({
     product: Object,
     materials: Array,
+    categories: Array,
+    colorCategories: Array,
+    colors: Array
 });
 
 const markup = ref(20);
@@ -128,6 +182,8 @@ const newComponent = ref({
     material_id: '',
     quantity: null,
 });
+const newColorOption = ref({ title: '', category_id: '' });
+const newColor = ref({});
 
 const addSize = () => {
     useForm({
@@ -210,4 +266,41 @@ const deleteVariant = (variantId) => {
         });
     }
 };
+
+
+const addColorOption = () => {
+    useForm(newColorOption.value).post(route('dashboard.products.color-options.store', props.product.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            newColorOption.value = { title: '', category_id: '' };
+        },
+    });
+};
+
+const removeColorOption = (colorOptionId) => {
+    if (confirm('Are you sure you want to remove this color option?')) {
+        router.delete(route('dashboard.products.color-options.destroy', [props.product.id, colorOptionId]), {
+            preserveScroll: true,
+        });
+    }
+};
+
+const addColorToOption = (colorOptionId) => {
+    useForm({ color_id: newColor.value[colorOptionId], product_id: props.product.id })
+        .post(route('dashboard.products.color-options.colors.store', [props.product.id, colorOptionId]), {
+            preserveScroll: true,
+            onSuccess: () => {
+                newColor.value[colorOptionId] = '';
+            },
+        });
+};
+
+const removeColorFromOption = (colorOptionId, colorValueId) => {
+    if (confirm('Are you sure you want to remove this color?')) {
+        router.delete(route('dashboard.products.color-options.colors.destroy', [props.product.id, colorOptionId, colorValueId]), {
+            preserveScroll: true,
+        });
+    }
+};
+
 </script>

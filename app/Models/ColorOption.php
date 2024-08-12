@@ -24,6 +24,6 @@ class ColorOption extends Model
 
     public function colorOptionValues()
     {
-        return $this->hasMany(ColorOptionValue::class, 'color_options_id');
+        return $this->hasMany(ColorOptionValue::class, );
     }
 }

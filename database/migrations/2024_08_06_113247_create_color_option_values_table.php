@@ -2,7 +2,7 @@
 
 use App\Models\Color;
 use App\Models\ColorOption;
-use App\Models\ProductVariant;
+use App\Models\Product;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -17,7 +17,7 @@ return new class extends Migration
         Schema::create('color_option_values', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(Color::class)->constrained();
-            $table->foreignIdFor(ProductVariant::class)->constrained();
+            $table->foreignIdFor(Product::class)->constrained();
             $table->foreignIdFor(ColorOption::class)->constrained();
         });
     }

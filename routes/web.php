@@ -51,6 +51,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('colors/{color}', [ColorManagementController::class, 'updateColor'])->name('colors.update');
         Route::delete('colors/{color}', [ColorManagementController::class, 'destroyColor'])->name('colors.destroy');
 
+        Route::post('/products/{product}/color-options', [ProductController::class, 'addColorOption'])->name('products.color-options.store');
+        Route::delete('/products/{product}/color-options/{colorOption}', [ProductController::class, 'removeColorOption'])->name('products.color-options.destroy');
+        Route::post('/products/{product}/color-options/{colorOption}/colors', [ProductController::class, 'addColorToOption'])->name('products.color-options.colors.store');
+        Route::delete('/products/{product}/color-options/{colorOption}/colors/{colorValue}', [ProductController::class, 'removeColorFromOption'])->name('products.color-options.colors.destroy');
+
     });
 
     Route::resource('products.sizes', ProductSizeController::class)->only(['store', 'destroy']);
