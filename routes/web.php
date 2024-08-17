@@ -5,6 +5,7 @@ use App\Http\Controllers\ColorManagementController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\ProductComponentController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\ProductSizeController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\ProfileController;
@@ -56,14 +57,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/products/{product}/color-options/{colorOption}/colors', [ProductController::class, 'addColorToOption'])->name('products.color-options.colors.store');
         Route::delete('/products/{product}/color-options/{colorOption}/colors/{colorValue}', [ProductController::class, 'removeColorFromOption'])->name('products.color-options.colors.destroy');
 
+        Route::post('/products/{product}/images', [ProductImageController::class, 'store'])->name('product.images.store');
+        Route::delete('/products/{product}/images/{image}/{variant}', [ProductImageController::class, 'destroy'])->name('product.images.destroy');
+        Route::patch('/products/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain'])->name('product.images.setMain');
+
+        Route::resource('products.sizes', ProductSizeController::class)->only(['store', 'destroy']);
+        Route::resource('products.sizes.components', ProductComponentController::class)->only(['store', 'destroy']);
+        Route::post('/products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
+        Route::delete('/products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
     });
 
-    Route::resource('products.sizes', ProductSizeController::class)->only(['store', 'destroy']);
-    Route::resource('products.sizes.components', ProductComponentController::class)->only(['store', 'destroy']);
-    Route::post('/products/{product}/variants', [ProductVariantController::class, 'store'])
-        ->name('products.variants.store');
-    Route::delete('/products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])
-        ->name('products.variants.destroy');
+
 });
 
 Route::middleware('auth')->group(function () {

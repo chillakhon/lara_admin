@@ -35,4 +35,18 @@ class Product extends Model
     {
         return $this->hasMany(ColorOption::class);
     }
+
+    public function images()
+    {
+        return $this->morphToMany(Image::class, 'imagable')
+            ->withPivot('product_variant_id')
+            ->withTimestamps();
+    }
+
+    public function getImagesForVariant($variantId)
+    {
+        return $this->images()
+            ->wherePivot('product_variant_id', $variantId)
+            ->get();
+    }
 }

@@ -25,4 +25,20 @@ class ProductVariant extends Model
     {
         return $this->hasMany(ProductComponent::class);
     }
+
+    public function images()
+    {
+        return $this->morphToMany(Image::class, 'imagable', 'imagables')
+            ->withPivot('product_variant_id');
+    }
+
+    public function size()
+    {
+        return $this->belongsTo(ProductSize::class, 'product_size_id');
+    }
+
+    public function colorOptionValue()
+    {
+        return $this->belongsTo(ColorOptionValue::class);
+    }
 }

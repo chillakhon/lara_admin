@@ -21,4 +21,11 @@ class Image extends Model
         return $this->morphedByMany(Color::class, 'imagable', 'imagables');
     }
 
+    public function products()
+    {
+        return $this->morphedByMany(Product::class, 'imagable')
+            ->withPivot('product_variant_id')
+            ->withTimestamps();
+    }
+
 }

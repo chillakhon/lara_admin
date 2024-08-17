@@ -32,7 +32,7 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-        $product->load('sizes.components.material', 'variants', 'colorOptions.category', 'colorOptions.colorOptionValues.color');
+        $product->load(['sizes.components.material', 'variants', 'colorOptions.category', 'colorOptions.colorOptionValues.color', 'images' => function ($query) {$query->with('imagable');}] );
         $materials = Material::all();
         $categories = Category::with('colorOptions')->get();
         $colors = Color::with('images')->get();
