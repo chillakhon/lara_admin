@@ -26,7 +26,7 @@ class ProductController extends Controller
     {
         return Inertia::render('Dashboard/Products/Index', [
             'products' => Product::with('categories')->paginate(10),
-            'categories' => Category::with('options.values')->get(),
+            'categories' => Category::all(),
         ]);
     }
 
@@ -58,10 +58,7 @@ class ProductController extends Controller
         $product = Product::create($validated);
         $product->categories()->sync($validated['categories']);
 
-//        foreach ($validated['variants'] as $variantData) {
-//            $variant = $product->variants()->create($variantData);
-//            $variant->optionValues()->sync($variantData['option_values']);
-//        }
+
 
         return redirect()->back()->with('success', 'Продукт успешно создан.');
     }
@@ -74,28 +71,11 @@ class ProductController extends Controller
             'is_available' => 'boolean',
             'categories' => 'required|array',
             'categories.*' => 'exists:categories,id',
-            'variants' => 'required|array',
-            'variants.*.id' => 'sometimes|exists:product_variants,id',
-            'variants.*.name' => 'required|string',
-            'variants.*.article' => 'required|string',
-            'variants.*.additional_cost' => 'required|numeric',
-            'variants.*.price' => 'required|numeric',
-            'variants.*.stock' => 'required|integer',
-            'variants.*.option_values' => 'required|array',
         ]);
 
         $product->update($validated);
         $product->categories()->sync($validated['categories']);
 
-        foreach ($validated['variants'] as $variantData) {
-            if (isset($variantData['id'])) {
-                $variant = $product->variants()->findOrFail($variantData['id']);
-                $variant->update($variantData);
-            } else {
-                $variant = $product->variants()->create($variantData);
-            }
-            $variant->optionValues()->sync($variantData['option_values']);
-        }
 
         return redirect()->back()->with('success', 'Продукт успешно обновлен.');
     }

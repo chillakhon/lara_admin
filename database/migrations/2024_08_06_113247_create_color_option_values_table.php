@@ -16,9 +16,9 @@ return new class extends Migration
     {
         Schema::create('color_option_values', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Color::class)->constrained();
-            $table->foreignIdFor(Product::class)->constrained();
-            $table->foreignIdFor(ColorOption::class)->constrained();
+            $table->foreignIdFor(Color::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(Product::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(ColorOption::class)->constrained()->cascadeOnDelete();
         });
     }
 

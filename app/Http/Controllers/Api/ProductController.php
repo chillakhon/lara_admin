@@ -49,4 +49,19 @@ class ProductController extends Controller
 
         return new ProductResource($product);
     }
+
+    public function showBySlug($slug)
+    {
+        $product = Product::where('slug', $slug)
+            ->with([
+                'categories',
+                'variants.size',
+                'variants.colorOptionValue.color',
+                'variants.images',
+                'colorOptions.colorOptionValues.color.images'
+            ])
+            ->firstOrFail();
+
+        return new ProductResource($product);
+    }
 }

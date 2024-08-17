@@ -60,7 +60,12 @@ class ColorManagementController extends Controller
             'image' => 'nullable|image|max:2048',
         ]);
 
-        $color = Color::create($validated);
+        $color = Color::create(
+            [
+                'title' => $validated['title'],
+                'code' => $validated['code'],
+                'color_category_id' => $validated['color_category_id']
+            ]);
 
         if ($request->hasFile('image')) {
             $this->saveColorImage($request->file('image'), $color);
@@ -115,7 +120,7 @@ class ColorManagementController extends Controller
         // Создаем и сохраняем уменьшенную версию
         $thumb = $manager->read($file);
         $thumb->cover(32, 32);
-        $thumbPath = $directory . '/thumb_' . $filename;
+        $thumbPath = $directory . '/thumb30x30_' . $filename;
         $thumb->save(storage_path('app/public/' . $thumbPath));
 
         // Сохраняем информацию об изображениях в базе данных

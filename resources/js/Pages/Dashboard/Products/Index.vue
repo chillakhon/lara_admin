@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import {router, useForm} from '@inertiajs/vue3';
 import Modal from '@/Components/Modal.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
@@ -21,14 +21,6 @@ const form = useForm({
     description: '',
     is_available: true,
     categories: [],
-    variants: [{
-        name: '',
-        article: '',
-        additional_cost: 0,
-        price: 0,
-        stock: 0,
-        option_values: [],
-    }],
 });
 
 const openModal = (product = null) => {
@@ -37,16 +29,8 @@ const openModal = (product = null) => {
         form.name = product.name;
         form.description = product.description;
         form.is_available = product.is_available;
-        form.categories = product.categories.map(c => c.id);
-        form.variants = product.variants.map(v => ({
-            id: v.id,
-            name: v.name,
-            article: v.article,
-            additional_cost: v.additional_cost,
-            price: v.price,
-            stock: v.stock,
-            option_values: v.option_values.map(ov => ov.id),
-        }));
+        form.categories = product.categories ? product.categories.map(c => c.id) : [];
+
     } else {
         form.reset();
     }
@@ -73,24 +57,11 @@ const submitForm = () => {
     }
 };
 
-const addVariant = () => {
-    form.variants.push({
-        name: '',
-        article: '',
-        additional_cost: 0,
-        price: 0,
-        stock: 0,
-        option_values: [],
-    });
-};
 
-const removeVariant = (index) => {
-    form.variants.splice(index, 1);
-};
 
 const deleteProduct = (product) => {
     if (confirm('Вы уверены, что хотите удалить этот продукт?')) {
-        Inertia.delete(route('products.destroy', product.id), {
+        router.delete(route('dashboard.products.destroy', product.id), {
             preserveScroll: true,
         });
     }
@@ -167,49 +138,7 @@ const deleteProduct = (product) => {
                     </select>
                 </div>
 
-                <div v-for="(variant, index) in form.variants" :key="index" class="mb-4 p-4 border rounded">
-                    <h3 class="font-medium mb-2">Вариант {{ index + 1 }}</h3>
 
-                    <div class="mb-2">
-                        <InputLabel :for="`variant-name-${index}`" value="Название варианта" />
-                        <TextInput :id="`variant-name-${index}`" v-model="variant.name" required />
-                    </div>
-
-                    <div class="mb-2">
-                        <InputLabel :for="`variant-article-${index}`" value="Артикул" />
-                        <TextInput :id="`variant-article-${index}`" v-model="variant.article" required />
-                    </div>
-
-                    <div class="mb-2">
-                        <InputLabel :for="`variant-additional-cost-${index}`" value="Дополнительная стоимость" />
-                        <TextInput :id="`variant-additional-cost-${index}`" v-model.number="variant.additional_cost" type="number" required />
-                    </div>
-
-                    <div class="mb-2">
-                        <InputLabel :for="`variant-price-${index}`" value="Цена" />
-                        <TextInput :id="`variant-price-${index}`" v-model.number="variant.price" type="number" required />
-                    </div>
-
-                    <div class="mb-2">
-                        <InputLabel :for="`variant-stock-${index}`" value="Количество на складе" />
-                        <TextInput :id="`variant-stock-${index}`" v-model.number="variant.stock" type="number" required />
-                    </div>
-
-                    <div class="mb-2">
-                        <InputLabel value="Значения опций" />
-                        <select v-model="variant.option_values" multiple class="mt-1 block w-full">
-                            <optgroup v-for="category in form.categories.map(id => categories.find(c => c.id === id))" :key="category.id" :label="category.name">
-                                <option v-for="option in category.options" :key="option.id" :value="option.id">
-                                    {{ option.name }}
-                                </option>
-                            </optgroup>
-                        </select>
-                    </div>
-
-                    <PrimaryButton @click="removeVariant(index)" type="button" class="mt-2 bg-red-500">Удалить вариант</PrimaryButton>
-                </div>
-
-                <PrimaryButton @click="addVariant" type="button" class="mt-2">Добавить вариант</PrimaryButton>
 
                 <div class="flex justify-end mt-4">
                     <PrimaryButton :disabled="form.processing">
