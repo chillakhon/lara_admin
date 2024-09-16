@@ -40,9 +40,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/products/{product}/components/{component}', [ProductController::class, 'removeComponent'])->name('products.removeComponent');
         Route::get('/products/{product}/calculate-cost', [ProductController::class, 'calculateCost'])->name('products.calculateCost');
 
-        Route::post('/products/{product}/variants', [ProductController::class, 'createVariant'])->name('products.createVariant');
-        Route::put('/products/variants/{variant}', [ProductController::class, 'updateVariant'])->name('products.updateVariant');
-        Route::delete('/products/variants/{variant}', [ProductController::class, 'deleteVariant'])->name('products.deleteVariant');
+        // Product Variants
+        Route::post('/products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
+        Route::put('/products/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
+        Route::delete('/products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
 
         Route::get('color-management', [ColorManagementController::class, 'index'])->name('color-management.index');
         Route::post('color-categories', [ColorManagementController::class, 'storeCategory'])->name('color-categories.store');
@@ -63,8 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::resource('products.sizes', ProductSizeController::class)->only(['store', 'destroy']);
         Route::resource('products.sizes.components', ProductComponentController::class)->only(['store', 'destroy']);
-        Route::post('/products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
-        Route::delete('/products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
+
     });
 
 

@@ -18,29 +18,35 @@ class ProductVariantController extends Controller
     public function store(Request $request, Product $product)
     {
         $request->validate([
-            'color_option_value_id' => 'required|exists:color_option_values,id',
             'variants' => 'required|array',
             'variants.*.size_id' => 'required|exists:product_sizes,id',
             'variants.*.price' => 'required|numeric|min:0',
             'variants.*.stock' => 'required|integer|min:0',
+            'variants.*.color_combination' => 'required|array',
             'images' => 'required|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:40960',
         ]);
 
-        $colorValue = ColorOptionValue::findOrFail($request->color_option_value_id);
         $createdVariants = [];
 
         foreach ($request->variants as $variantData) {
             $size = ProductSize::findOrFail($variantData['size_id']);
+            $colorCombination = $variantData['color_combination'];
+
+            $variantName = $this->generateVariantName($product, $size, $colorCombination);
 
             $variant = $product->variants()->create([
-                'name' => "{$product->name} - {$size->name} - {$colorValue->color->title}",
+                'name' => $variantName,
                 'article' => Str::random(8),
                 'price' => $variantData['price'],
                 'stock' => $variantData['stock'],
                 'product_size_id' => $size->id,
-                'color_option_value_id' => $colorValue->id,
             ]);
+
+            // Attach color option values to the variant
+            foreach ($colorCombination as $colorOptionId => $colorValueId) {
+                $variant->colorOptionValues()->attach($colorValueId, ['color_option_id' => $colorOptionId]);
+            }
 
             $createdVariants[] = $variant;
         }
@@ -50,6 +56,16 @@ class ProductVariantController extends Controller
         }
 
         return back()->with('success', 'Product variants created successfully.');
+    }
+
+    private function generateVariantName($product, $size, $colorCombination)
+    {
+        $name = $product->name . " - " . $size->name;
+        foreach ($colorCombination as $colorOptionId => $colorValueId) {
+            $colorValue = ColorOptionValue::find($colorValueId);
+            $name .= " - " . $colorValue->color->title;
+        }
+        return $name;
     }
 
     private function handleImageUpload($images, $variants, $product)
@@ -92,20 +108,43 @@ class ProductVariantController extends Controller
         }
     }
 
+    public function update(Request $request, ProductVariant $variant)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+        ]);
+
+        $variant->update($validated);
+
+        return back()->with('success', 'Variant updated successfully.');
+    }
 
     public function destroy(Product $product, ProductVariant $variant)
     {
-        // Delete associated images
+        // Получаем все изображения, связанные с этим вариантом
         $images = $variant->images;
-        if ($images && is_iterable($images)) {
-            foreach ($images as $image) {
-                Storage::disk('public')->delete($image->path);
-                Storage::disk('public')->delete(str_replace($image->path, 'thumb_' . basename($image->path), $image->path));
+
+        // Удаляем связи между вариантом и изображениями
+        $variant->images()->detach();
+
+        // Проверяем каждое изображение
+        foreach ($images as $image) {
+            // Если изображение больше не связано ни с какими вариантами, удаляем его
+            if ($image->products()->doesntExist()) {
+                // Удаляем файл изображения
+                if (Storage::disk('public')->exists($image->path)) {
+                    Storage::disk('public')->delete($image->path);
+                }
+                // Удаляем запись из базы данных
                 $image->delete();
             }
         }
 
+        // Удаляем сам вариант
         $variant->delete();
+
         return back()->with('success', 'Product variant deleted successfully.');
     }
 }

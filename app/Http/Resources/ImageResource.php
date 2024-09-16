@@ -11,7 +11,7 @@ class ImageResource extends JsonResource
         return [
             'id' => $this->id,
             'url' => $this->url,
-            'is_main' => $this->pivot->is_main ?? false,
+            'is_main' => $this->is_main ?? false,
         ];
     }
 }

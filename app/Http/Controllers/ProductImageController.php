@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Image;
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
@@ -78,11 +80,24 @@ class ProductImageController extends Controller
         return redirect()->back()->with('success', 'Image deleted successfully.');
     }
 
-    public function setMain(Product $product, Image $image, $variantId)
+    public function setMain(Request $request, Product $product, Image $image)
     {
-        $product->images()->wherePivot('product_variant_id', $variantId)->update(['is_main' => false]);
-        $product->images()->wherePivot('product_variant_id', $variantId)->updateExistingPivot($image->id, ['is_main' => true]);
+        $variantId = $request->input('variant_id');
 
-        return redirect()->back()->with('success', 'Main image set successfully.');
+        DB::transaction(function () use ($product, $image, $variantId) {
+            // Сбрасываем флаг is_main для всех изображений данного варианта
+            Image::whereHas('products', function ($query) use ($product, $variantId) {
+                $query->where('products.id', $product->id)
+                    ->where('imagables.product_variant_id', $variantId);
+            })->update(['is_main' => false]);
+
+            // Устанавливаем флаг is_main только для выбранного изображения
+            $image->update(['is_main' => true]);
+
+            // Нет необходимости обновлять промежуточную таблицу imagables,
+            // так как is_main находится в таблице images
+        });
+
+        return back()->with('success', 'Main image set successfully.');
     }
 }

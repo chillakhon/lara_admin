@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Category;
+use App\Models\ColorOption;
+use App\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -9,15 +12,14 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ColorOptionFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
+    protected $model = ColorOption::class;
+
+    public function definition()
     {
         return [
-            //
+            'title' => $this->faker->word,
+            'category_id' => Category::factory(),
+            'product_id' => Product::factory(),
         ];
     }
 }

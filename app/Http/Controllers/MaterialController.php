@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Material;
+use App\Providers\AppServiceProvider;
 use App\Services\MaterialService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,7 +19,8 @@ class MaterialController extends Controller
 
     public function index()
     {
-        $materials = Material::with('conversions')->paginate(10);
+        $materials = Material::with('conversions')->paginate(20);
+        $materials = AppServiceProvider::setUrlsToHttps($materials);
         return Inertia::render('Dashboard/Materials/Index', [
             'materials' => $materials
         ]);

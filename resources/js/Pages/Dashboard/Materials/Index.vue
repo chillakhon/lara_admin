@@ -35,7 +35,10 @@
                             </tr>
                             </tbody>
                         </table>
-
+                        <!-- Pagination -->
+                        <div class="mt-6">
+                            <Pagination :links="materials.links" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -125,9 +128,11 @@ import InputError from '@/Components/InputError.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import SecondaryButton from '@/Components/SecondaryButton.vue'
 import DangerButton from '@/Components/DangerButton.vue'
+import Pagination from "@/Components/Pagination.vue";
 
 export default {
     components: {
+        Pagination,
         AuthenticatedLayout,
         Modal,
         InputLabel,

@@ -1,0 +1,102 @@
+stages:
+  - build
+  - deploy
+
+cache:
+  paths:
+    - vendor/
+    - node_modules/
+
+project_build:
+  stage: build
+  only:
+    - develop
+    - master
+  script:
+    - pwd
+    - composer install
+    - npm install
+    - npm run build
+    - chmod 755 -R storage
+  artifacts:
+    paths:
+      - ./
+    expire_in: 10 mins
+
+#test_deploy:
+#  stage: deploy
+#  only:
+#    - develop
+#  variables:
+#    HOST: "194.67.125.168"
+#    USER: "root"
+#    PASSWORD: "opdW3ku#vVtF"
+#    APP_PATH: "/var/www/cars"
+#    BACKUP_PATH: "/var/www/backup"
+#  script:
+#    - export SSHPASS=$PASSWORD
+#    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
+#      rm -rf $BACKUP_PATH/*
+#      && cp -R $APP_PATH $BACKUP_PATH
+#      "
+#    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
+#      rm -rf $APP_PATH/*
+#      "
+#    - sshpass -e scp -o stricthostkeychecking=no -r * $USER@$HOST:$APP_PATH
+#    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
+#      cd $APP_PATH
+#      && rm -rf .env
+#      && touch .env
+#      && echo 'APP_NAME=\"$TEST_APP_NAME\"' >> .env
+#      && echo "APP_ENV=local" >> .env
+#      && echo "APP_KEY=" >> .env
+#      && echo "APP_DEBUG=true" >> .env
+#      && echo "APP_URL=194.67.125.168" >> .env
+#      && echo "APP_NAME=cars" >> .env
+#      && php artisan key:generate
+#      && cat .env
+#      && chown -R www-data:www-data storage/
+#      "
+
+atmo_deploy:
+  stage: deploy
+  only:
+    - master
+  variables:
+    HOST: $ATMO_HOST
+    USER: $ATMO_USER
+    PASSWORD: $ATMO_PASSWORD
+    APP_PATH: $ATMO_APP_PATH
+  script:
+    - export SSHPASS=$PASSWORD
+
+    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
+      rm -rf $APP_PATH/*
+      "
+    - sshpass -e scp -o stricthostkeychecking=no -r * $USER@$HOST:$APP_PATH
+    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
+      cd $APP_PATH
+      && rm -rf .env
+      && touch .env
+      && echo 'APP_NAME=\"$ATMO_APP_NAME\"' >> .env
+      && echo "APP_ENV=production" >> .env
+      && echo "APP_KEY=" >> .env
+      && echo "APP_DEBUG=false" >> .env
+      && echo "APP_URL=$ATMO_APP_URL" >> .env
+      && echo "ASSET_URL=$ATMO_APP_URL" >> .env
+      && echo "APP_NAME=$ATMO_APP_NAME" >> .env
+      && echo "DB_CONNECTION=mysql" >> .env
+      && echo "DB_HOST=localhost" >> .env
+      && echo "DB_PORT=3306" >> .env
+      && echo "DB_DATABASE=$ATMO_DB_NAME" >> .env
+      && echo "DB_USERNAME=$ATMO_DB_USER" >> .env
+      && echo "DB_PASSWORD=$ATMO_DB_PASSWORD" >> .env
+      && php artisan key:generate
+      && cat .env
+      && chown -R www-data:www-data storage/
+      && php artisan migrate --force
+      && php artisan db:seed
+      && php artisan cache:clear
+      && php artisan config:cache
+      && php artisan route:cache
+      "

@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\Category;
+use App\Models\Option;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -9,15 +11,13 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class OptionFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
+    protected $model = Option::class;
+
+    public function definition()
     {
         return [
-            //
+            'name' => $this->faker->word,
+            'category_id' => Category::factory(),
         ];
     }
 }

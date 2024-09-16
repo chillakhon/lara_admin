@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Material;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -9,15 +10,14 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class MaterialFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
+    protected $model = Material::class;
+
+    public function definition()
     {
         return [
-            //
+            'title' => $this->faker->word,
+            'unit_of_measurement' => $this->faker->randomElement(['kg', 'g', 'l', 'ml', 'm', 'cm']),
+            'cost_per_unit' => $this->faker->randomFloat(2, 0.1, 100),
         ];
     }
 }

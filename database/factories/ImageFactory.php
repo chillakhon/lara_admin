@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Image;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -9,15 +10,15 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ImageFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
+    protected $model = Image::class;
+
+    public function definition()
     {
         return [
-            //
+            'path' => $this->faker->imageUrl(),
+            'url' => $this->faker->url,
+            'order' => $this->faker->numberBetween(1, 10),
+            'is_main' => $this->faker->boolean,
         ];
     }
 }

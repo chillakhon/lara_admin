@@ -1,10 +1,11 @@
 <script setup>
-import {ref, computed, watch} from 'vue';
+import {ref, computed,  reactive} from 'vue';
 import {router, useForm} from '@inertiajs/vue3';
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
+import ProductVariant from "@/Components/ProductVariant.vue";
 
 const props = defineProps({
     product: Object,
@@ -18,6 +19,16 @@ const newSizeName = ref('');
 const newComponent = ref({
     material_id: '',
     quantity: null,
+});
+
+const selectedColorOptions = reactive({});
+
+// Инициализируем selectedColorOptions сразу
+props.product.color_options.forEach(option => {
+    selectedColorOptions[option.id] = {};
+    option.color_option_values.forEach(colorValue => {
+        selectedColorOptions[option.id][colorValue.id] = false;
+    });
 });
 
 const newColorOption = ref({ title: '', category_id: '' });
@@ -47,8 +58,6 @@ const calculateSizePriceWithMarkup = (size) => {
     const totalCost = parseFloat(calculateSizeTotalCost(size));
     return (totalCost * (1 + markup.value / 100)).toFixed(2);
 };
-
-
 
 const addSize = () => {
     useForm({
@@ -89,38 +98,83 @@ const removeComponent = (sizeId, componentId) => {
     }
 };
 
+// Функция для генерации всех возможных комбинаций цветов
+const generateColorCombinations = () => {
+    const combinations = [{}];
+    props.product.color_options.forEach(option => {
+        const newCombinations = [];
+        combinations.forEach(combo => {
+            const selectedColors = Object.entries(selectedColorOptions[option.id])
+                .filter(([, isSelected]) => isSelected)
+                .map(([colorValueId]) => parseInt(colorValueId));
+
+            if (selectedColors.length === 0) {
+                newCombinations.push(combo);
+            } else {
+                selectedColors.forEach(colorValueId => {
+                    newCombinations.push({...combo, [option.id]: colorValueId});
+                });
+            }
+        });
+        combinations.splice(0, combinations.length, ...newCombinations);
+    });
+    return combinations.filter(combo => Object.keys(combo).length > 0);
+};
+
+const createProductVariants = () => {
+    if (!imageFiles.value) {
+        alert('Please upload images before creating variants.');
+        return;
+    }
+
+    const colorCombinations = generateColorCombinations();
+    if (colorCombinations.length === 0) {
+        alert('Please select at least one color for each color option.');
+        return;
+    }
+
+    form.color_combinations = colorCombinations;
+    form.images = imageFiles.value;
+    form.variants = props.product.sizes.flatMap(size =>
+        colorCombinations.map(combo => ({
+            size_id: size.id,
+            price: calculateSizePriceWithMarkup(size),
+            stock: 0,
+            color_combination: combo
+        }))
+    );
+
+    form.post(route('dashboard.products.variants.store', props.product.id), {
+        preserveScroll: true,
+        forceFormData: true,
+        onSuccess: () => {
+            // Сбрасываем selectedColorOptions к исходному состоянию
+            props.product.color_options.forEach(option => {
+                option.color_option_values.forEach(colorValue => {
+                    selectedColorOptions[option.id][colorValue.id] = false;
+                });
+            });
+            imageFiles.value = null;
+            previewImages.value = [];
+            form.reset();
+        },
+    });
+};
+
+const canCreateVariants = computed(() => {
+    return imageFiles.value &&
+        imageFiles.value.length > 0 &&
+        Object.values(selectedColorOptions).some(option =>
+            Object.values(option).some(isSelected => isSelected)
+        );
+});
+
 const handleFileUpload = (event) => {
     imageFiles.value = event.target.files;
     previewImages.value = [];
     for (let i = 0; i < imageFiles.value.length; i++) {
         previewImages.value.push(URL.createObjectURL(imageFiles.value[i]));
     }
-};
-
-const createProductVariants = () => {
-    if (!selectedColor.value || !imageFiles.value) {
-        alert('Please select a color and upload images before creating variants.');
-        return;
-    }
-
-    form.color_option_value_id = selectedColor.value;
-    form.images = imageFiles.value;
-    form.variants = props.product.sizes.map(size => ({
-        size_id: size.id,
-        price: calculateSizePriceWithMarkup(size),
-        stock: 0, // Устанавливаем начальный запас в 0, это можно изменить по вашему усмотрению
-    }));
-
-    form.post(route('dashboard.products.variants.store', props.product.id), {
-        preserveScroll: true,
-        forceFormData: true,
-        onSuccess: () => {
-            selectedColor.value = null;
-            imageFiles.value = null;
-            previewImages.value = [];
-            form.reset();
-        },
-    });
 };
 
 const deleteVariant = (variantId) => {
@@ -131,16 +185,13 @@ const deleteVariant = (variantId) => {
     }
 };
 
-const canCreateVariants = computed(() => {
-    return selectedColor.value && imageFiles.value && imageFiles.value.length > 0;
-});
 
 const variantsWithImages = computed(() => {
     return props.product.variants.map(variant => ({
         ...variant,
         images: props.product.images.filter(image => image.pivot.product_variant_id === variant.id)
     }));
-});
+})
 
 const addColorOption = () => {
     useForm(newColorOption.value).post(route('dashboard.products.color-options.store', props.product.id), {
@@ -178,6 +229,43 @@ const removeColorFromOption = (colorOptionId, colorValueId) => {
 };
 
 
+const editingVariant = ref(null);
+const variantForm = useForm({
+    id: null,
+    name: '',
+    price: '',
+    stock: '',
+});
+
+const startEditingVariant = (variant) => {
+    editingVariant.value = variant.id;
+    variantForm.id = variant.id;
+    variantForm.name = variant.name;
+    variantForm.price = variant.price;
+    variantForm.stock = variant.stock;
+};
+
+const updateVariant = () => {
+    variantForm.put(route('dashboard.products.variants.update', variantForm.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            editingVariant.value = null;
+            variantForm.reset();
+        },
+    });
+};
+
+const setMainImage = (variantId, imageId) => {
+    router.patch(route('dashboard.product.images.setMain', {
+        product: props.product.id,
+        image: imageId,
+        variant: variantId
+    }), {}, {
+        preserveScroll: true,
+    });
+};
+
+;
 </script>
 
 <template>
@@ -325,16 +413,16 @@ const removeColorFromOption = (colorOptionId, colorValueId) => {
                         <!-- Variant creation form -->
                         <div class="mb-8">
                             <h3 class="text-lg font-semibold mb-4">Create Product Variants</h3>
-                            <div class="mb-4">
-                                <InputLabel for="color" value="Select Color"/>
-                                <select v-model="selectedColor" id="color" class="mt-1 block w-full">
-                                    <option value="">Select a color</option>
-                                    <optgroup v-for="colorOption in product.color_options" :key="colorOption.id" :label="colorOption.title">
-                                        <option v-for="colorValue in colorOption.color_option_values" :key="colorValue.id" :value="colorValue.id">
-                                            {{ colorValue.color.title }}
-                                        </option>
-                                    </optgroup>
-                                </select>
+                            <div v-for="colorOption in product.color_options" :key="colorOption.id" class="mb-4">
+                                <h4 class="font-medium">{{ colorOption.title }}</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    <label v-for="colorValue in colorOption.color_option_values" :key="colorValue.id" class="flex items-center">
+                                        <input type="checkbox"
+                                               v-model="selectedColorOptions[colorOption.id][colorValue.id]"
+                                               class="mr-2">
+                                        <span>{{ colorValue.color.title }}</span>
+                                    </label>
+                                </div>
                             </div>
                             <div class="mb-4">
                                 <InputLabel for="images" value="Upload Images"/>
@@ -354,19 +442,14 @@ const removeColorFromOption = (colorOptionId, colorValueId) => {
                         <!-- Display variants -->
                         <div class="mt-8">
                             <h3 class="text-lg font-semibold mb-4">Product Variants</h3>
-                            <div v-for="variant in variantsWithImages" :key="variant.id" class="mb-4 p-4 border rounded">
-                                <h4 class="font-medium">{{ variant.name }}</h4>
-                                <p>Price: {{ variant.price }}</p>
-                                <p>Stock: {{ variant.stock }}</p>
-                                <div class="mt-2">
-                                    <h5 class="font-medium">Images:</h5>
-                                    <div class="flex flex-wrap mt-1">
-                                        <img v-for="image in variant.images" :key="image.id" :src="image.url" class="w-24 h-24 object-cover m-1 rounded"/>
-                                    </div>
-                                </div>
-                                <PrimaryButton @click="deleteVariant(variant.id)" class="mt-2 bg-red-500 hover:bg-red-600">
-                                    Delete Variant
-                                </PrimaryButton>
+                            <div class="space-y-6">
+                                <ProductVariant
+                                    v-for="variant in variantsWithImages"
+                                    :key="variant.id"
+                                    :variant="variant"
+                                    :productId="product.id"
+                                    @delete-variant="deleteVariant"
+                                />
                             </div>
                         </div>
                     </div>

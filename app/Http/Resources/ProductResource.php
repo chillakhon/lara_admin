@@ -18,7 +18,7 @@ class ProductResource extends JsonResource
                     'price' => $variant->price,
                     'stock' => $variant->stock,
                     'size' => $this->getSizeForVariant($variant),
-                    'color' => $this->getColorForVariant($variant),
+                    'color_options' => $this->getColorOptionsForVariant($variant),
                     'images' => $this->getImagesForVariant($variant),
                 ];
             });
@@ -35,6 +35,7 @@ class ProductResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'slug' => $this->slug,
             'description' => $this->description,
             'is_available' => $this->is_available,
             'categories' => CategoryResource::collection($this->whenLoaded('categories')),
@@ -69,20 +70,21 @@ class ProductResource extends JsonResource
         return $size ? ['id' => $size->id, 'name' => $size->name] : null;
     }
 
-    private function getColorForVariant($variant)
+    private function getColorOptionsForVariant($variant)
     {
-        foreach ($this->colorOptions as $colorOption) {
-            foreach ($colorOption->colorOptionValues as $colorValue) {
-                if (Str::contains($variant->name, $colorValue->color->title)) {
-                    return [
-                        'id' => $colorValue->color->id,
-                        'title' => $colorValue->color->title,
-                        'code' => $colorValue->color->code,
-                    ];
-                }
-            }
-        }
-        return null;
+        return $variant->colorOptionValues->groupBy('pivot.color_option_id')
+            ->map(function ($values, $optionId) {
+                $colorOption = $this->colorOptions->find($optionId);
+                return [
+                    'id' => $optionId,
+                    'title' => $colorOption ? $colorOption->title : '',
+                    'color' => [
+                        'id' => $values->first()->color->id,
+                        'title' => $values->first()->color->title,
+                        'code' => $values->first()->color->code,
+                    ],
+                ];
+            })->values();
     }
 
     private function getImagesForVariant($variant)
@@ -94,6 +96,7 @@ class ProductResource extends JsonResource
     {
         $lengths = [];
         $widths = [];
+        $depths = [];
 
         foreach ($sizes as $size) {
             $dimensions = explode('x', $size['name']);
@@ -101,11 +104,18 @@ class ProductResource extends JsonResource
                 $lengths[] = intval(trim($dimensions[0]));
                 $widths[] = intval(trim($dimensions[1]));
             }
+            if (count($dimensions) == 3) {
+                $lengths[] = intval(trim($dimensions[0]));
+                $widths[] = intval(trim($dimensions[1]));
+                $depths[] = intval(trim($dimensions[2]));
+            }
         }
 
         return [
             'lengths' => array_unique($lengths),
             'widths' => array_unique($widths),
+            'depths' => array_unique($depths),
         ];
     }
 }
+

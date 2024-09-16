@@ -56,7 +56,7 @@ class ProductController extends Controller
             ->with([
                 'categories',
                 'variants.size',
-                'variants.colorOptionValue.color',
+                'variants.colorOptionValues.color',
                 'variants.images',
                 'colorOptions.colorOptionValues.color.images'
             ])
