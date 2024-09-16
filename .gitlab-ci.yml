@@ -93,7 +93,6 @@ atmo_deploy:
       && echo "DB_PASSWORD=${ATMO_DB_PASSWORD@Q}" >> .env
       && php8.3 artisan key:generate
       && cat .env
-      && chown -R www-data:www-data storage/
       && php8.3 artisan migrate --force
       && php8.3 artisan db:seed
       && php8.3 artisan cache:clear
