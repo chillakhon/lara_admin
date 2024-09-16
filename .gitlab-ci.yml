@@ -90,7 +90,7 @@ atmo_deploy:
       && echo "DB_PORT=3306" >> .env
       && echo "DB_DATABASE=$ATMO_DB_NAME" >> .env
       && echo "DB_USERNAME=$ATMO_DB_USER" >> .env
-      && echo 'DB_PASSWORD=\"$ATMO_DB_PASSWORD\"' >> .env
+      && echo 'DB_PASSWORD=${ATMO_DB_PASSWORD@Q}' >> .env
       && php artisan key:generate
       && cat .env
       && chown -R www-data:www-data storage/
