@@ -91,12 +91,12 @@ atmo_deploy:
       && echo "DB_DATABASE=$ATMO_DB_NAME" >> .env
       && echo "DB_USERNAME=$ATMO_DB_USER" >> .env
       && echo "DB_PASSWORD=${ATMO_DB_PASSWORD@Q}" >> .env
-      && php artisan key:generate
+      && php8.3 artisan key:generate
       && cat .env
       && chown -R www-data:www-data storage/
-      && php artisan migrate --force
-      && php artisan db:seed
-      && php artisan cache:clear
-      && php artisan config:cache
-      && php artisan route:cache
+      && php8.3 artisan migrate --force
+      && php8.3 artisan db:seed
+      && php8.3 artisan cache:clear
+      && php8.3 artisan config:cache
+      && php8.3 artisan route:cache
       "
