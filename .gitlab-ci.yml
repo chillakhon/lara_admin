@@ -30,23 +30,23 @@ test_deploy:
     - develop
   variables:
     HOST: $TEST_HOST
-    USER: $TEST_USER
+    TEST_USER: $TEST_USER
     PASSWORD: $TEST_PASSWORD
-    APP_PATH: $TEST_APP_PATH
+    TEST_APP_PATH: $TEST_APP_PATH
   script:
     - |
-      echo "User: $USER"
+      echo "User: $TEST_USER"
       echo "Host: $HOST"
-      echo "App Path: $APP_PATH"
+      echo "App Path: $TEST_APP_PATH"
       echo "Password is set: $([[ -n $PASSWORD ]] && echo 'Yes' || echo 'No')"
     - export SSHPASS=$PASSWORD
 
-    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
-      rm -rf $APP_PATH/*
+    - sshpass -e ssh $TEST_USER@$HOST -o stricthostkeychecking=no "
+      rm -rf $TEST_APP_PATH/*
       "
-    - sshpass -e scp -o stricthostkeychecking=no -r * $USER@$HOST:$APP_PATH
-    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
-      cd $APP_PATH
+    - sshpass -e scp -o stricthostkeychecking=no -r * $TEST_USER@$HOST:$TEST_APP_PATH
+    - sshpass -e ssh $TEST_USER@$HOST -o stricthostkeychecking=no "
+      cd $TEST_APP_PATH
       && rm -rf .env
       && touch .env
       && echo 'APP_NAME=\"$TEST_APP_NAME\"' >> .env
