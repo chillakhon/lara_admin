@@ -30,9 +30,9 @@ test_deploy:
     - develop
   variables:
     SSH_HOST: $TEST_HOST
-    SHH_USER: $TEST_USER
+    SHH_USER: $DEVELOP_USER
     SSH_PASSWORD: $TEST_PASSWORD
-    SSH_APP_PATH: $TEST_APP_PATH
+    SSH_APP_PATH: $DEVELOP_APP_PATH
   script:
     - |
       echo "User: $SSH_USER"
