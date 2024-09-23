@@ -23,40 +23,46 @@ project_build:
       - ./
     expire_in: 10 mins
 
-#test_deploy:
-#  stage: deploy
-#  only:
-#    - develop
-#  variables:
-#    HOST: "194.67.125.168"
-#    USER: "root"
-#    PASSWORD: "opdW3ku#vVtF"
-#    APP_PATH: "/var/www/cars"
-#    BACKUP_PATH: "/var/www/backup"
-#  script:
-#    - export SSHPASS=$PASSWORD
-#    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
-#      rm -rf $BACKUP_PATH/*
-#      && cp -R $APP_PATH $BACKUP_PATH
-#      "
-#    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
-#      rm -rf $APP_PATH/*
-#      "
-#    - sshpass -e scp -o stricthostkeychecking=no -r * $USER@$HOST:$APP_PATH
-#    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
-#      cd $APP_PATH
-#      && rm -rf .env
-#      && touch .env
-#      && echo 'APP_NAME=\"$TEST_APP_NAME\"' >> .env
-#      && echo "APP_ENV=local" >> .env
-#      && echo "APP_KEY=" >> .env
-#      && echo "APP_DEBUG=true" >> .env
-#      && echo "APP_URL=194.67.125.168" >> .env
-#      && echo "APP_NAME=cars" >> .env
-#      && php artisan key:generate
-#      && cat .env
-#      && chown -R www-data:www-data storage/
-#      "
+test_develop:
+  stage: deploy
+  only:
+    - develop
+  variables:
+    HOST: $TEST_HOST
+    USER: $TEST_USER
+    PASSWORD: $TEST_PASSWORD
+    APP_PATH: $TEST_APP_PATH
+  script:
+    - export SSHPASS=$PASSWORD
+
+    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
+      rm -rf $APP_PATH/*
+      "
+    - sshpass -e scp -o stricthostkeychecking=no -r * $USER@$HOST:$APP_PATH
+    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
+      cd $APP_PATH
+      && rm -rf .env
+      && touch .env
+      && echo 'APP_NAME=\"$TEST_APP_NAME\"' >> .env
+      && echo "APP_ENV=local" >> .env
+      && echo "APP_KEY=" >> .env
+      && echo "APP_DEBUG=true" >> .env
+      && echo "APP_URL=$TEST_APP_URL" >> .env
+      && echo "ASSET_URL=$TEST_APP_URL" >> .env
+      && echo "APP_NAME=$TEST_APP_NAME" >> .env
+      && echo "DB_CONNECTION=mysql" >> .env
+      && echo "DB_HOST=localhost" >> .env
+      && echo "DB_PORT=3306" >> .env
+      && echo "DB_DATABASE=$TEST_DB_NAME" >> .env
+      && echo "DB_USERNAME=$TEST_DB_USER" >> .env
+      && echo "DB_PASSWORD=${TEST_DB_PASSWORD@Q}" >> .env
+      && php8.3 artisan key:generate
+      && cat .env
+      && php8.3 artisan migrate --force
+      && php8.3 artisan cache:clear
+      && php8.3 artisan config:cache
+      && php8.3 artisan route:cache
+      "
 
 atmo_deploy:
   stage: deploy
