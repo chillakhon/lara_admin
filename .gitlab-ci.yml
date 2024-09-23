@@ -30,7 +30,7 @@ test_deploy:
     - develop
   variables:
     SSH_HOST: $TEST_HOST
-    SHH_USER: $DEV_USER
+    SHH_USER: fronte5f
     SSH_PASSWORD: $TEST_PASSWORD
     SSH_APP_PATH: $DEVELOP_APP_PATH
   script:
@@ -38,8 +38,8 @@ test_deploy:
       echo "User: $SSH_USER"
       echo "Host: $SSH_HOST"
       echo "App Path: $SSH_APP_PATH"
-      echo "Password is set: $([[ -n $PASSWORD ]] && echo 'Yes' || echo 'No')"
-    - export SSHPASS=$PASSWORD
+      echo "Password is set: $([[ -n $SSH_PASSWORD ]] && echo 'Yes' || echo 'No')"
+    - export SSHPASS=$SSH_PASSWORD
 
     - sshpass -e ssh $SSH_USER@$SSH_HOST -o stricthostkeychecking=no "
       rm -rf $SSH_APP_PATH/*
