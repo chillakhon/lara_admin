@@ -30,7 +30,7 @@ test_deploy:
     - develop
   variables:
     SSH_HOST: $TEST_HOST
-    SHH_USER: 'fronte5f'
+    SSH_USER: $DEV_USER
     SSH_PASSWORD: $TEST_PASSWORD
     SSH_APP_PATH: $DEVELOP_APP_PATH
   script:
