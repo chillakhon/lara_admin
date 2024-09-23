@@ -23,7 +23,8 @@ project_build:
       - ./
     expire_in: 10 mins
 
-test_develop:
+
+test_deploy:
   stage: deploy
   only:
     - develop
@@ -33,13 +34,8 @@ test_develop:
     PASSWORD: $TEST_PASSWORD
     APP_PATH: $TEST_APP_PATH
   script:
-    - echo "User: $USER"
-    - echo "Host: $HOST"
-    - echo "App Path: $APP_PATH"
-    - echo "Password is set: $([[ -n $PASSWORD ]] && echo 'Yes' || echo 'No')"
     - export SSHPASS=$PASSWORD
 
-    - sshpass -e ssh $USER@$HOST -o StrictHostKeyChecking=no echo "SSH connection successful $USER, $HOST, $APP_PATH"
     - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
       rm -rf $APP_PATH/*
       "
