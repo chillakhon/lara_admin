@@ -26,12 +26,13 @@ export default defineConfig({
     },
     build: {
         outDir: path.resolve(__dirname, 'public/build'),
-        manifest: true,
+        emptyOutDir: true,
+        manifest: 'manifest.json',
         rollupOptions: {
             output: {
-                chunkFileNames: 'build/assets/[name]-[hash].js',
-                entryFileNames: 'build/assets/[name]-[hash].js',
-                assetFileNames: 'build/assets/[name]-[hash].[ext]',
+                chunkFileNames: 'assets/[name]-[hash].js',
+                entryFileNames: 'assets/[name]-[hash].js',
+                assetFileNames: 'assets/[name]-[hash].[ext]',
             },
         },
     },
