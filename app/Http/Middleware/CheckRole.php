@@ -22,6 +22,6 @@ class CheckRole
 
         Log::info('Access denied');
         // Перенаправляем на главную страницу дашборда
-        return redirect()->route('dashboard.index')->with('error', 'У вас нет прав для доступа к этой странице.');
+        return redirect()->route('dashboard')->with('error', 'У вас нет прав для доступа к этой странице.');
     }
 }
