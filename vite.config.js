@@ -24,4 +24,15 @@ export default defineConfig({
         },
         port: 5174
     },
+    build: {
+        outDir: 'public/build',
+        manifest: true,
+        rollupOptions: {
+            output: {
+                chunkFileNames: 'build/assets/[name]-[hash].js',
+                entryFileNames: 'build/assets/[name]-[hash].js',
+                assetFileNames: 'build/assets/[name]-[hash].[ext]',
+            },
+        },
+    },
 });
