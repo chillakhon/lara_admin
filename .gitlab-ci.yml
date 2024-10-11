@@ -62,11 +62,12 @@ test_deploy:
       && rm -rf .env
       && touch .env
       && echo 'APP_NAME=\"$TEST_APP_NAME\"' >> .env
+      && echo 'APP_NAME=\"$TEST_APP_NAME\"' >> .env
       && echo "APP_ENV=local" >> .env
       && echo "APP_KEY=" >> .env
       && echo "APP_DEBUG=true" >> .env
       && echo "APP_URL=$TEST_APP_URL" >> .env
-      && echo "ASSET_URL=$TEST_APP_URL" >> .env
+      && echo "ASSET_URL=${TEST_APP_URL}/public" >> .env
       && echo "APP_NAME=$TEST_APP_NAME" >> .env
       && echo "DB_CONNECTION=mysql" >> .env
       && echo "DB_HOST=localhost" >> .env
@@ -79,7 +80,8 @@ test_deploy:
       && php8.3 artisan migrate --force
       && php8.3 artisan cache:clear
       && php8.3 artisan config:cache
-      && php8.3 artisan route:cache
+      && php8.3 artisan route:clear
+      && php8.3 artisan view:clear
       "
 
 atmo_deploy:
