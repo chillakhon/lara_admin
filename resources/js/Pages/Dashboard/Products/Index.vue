@@ -6,7 +6,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import TextInput from '@/Components/TextInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import NavLink from "@/Components/NavLink.vue";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import DashboardLayout from "@/Layouts/DashboardLayout.vue";
 
 const props = defineProps({
     products: Object,
@@ -69,83 +69,78 @@ const deleteProduct = (product) => {
 </script>
 
 <template>
-    <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Управление товарами
-            </h2>
-        </template>
+    <DashboardLayout>
+        <template  >
+            <div class="py-12">
+                <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                        <div class="p-6 bg-white border-b border-gray-200">
+                            <PrimaryButton @click="openModal()">Добавить товар</PrimaryButton>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 bg-white border-b border-gray-200">
-                        <PrimaryButton @click="openModal()">Добавить товар</PrimaryButton>
-
-                        <table class="mt-4 w-full">
-                            <thead>
-                            <tr>
-                                <th>Название</th>
-                                <th>Доступность</th>
-                                <th>Категории</th>
-                                <th>Действия</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr v-for="product in products.data" :key="product.id">
-                                <td><NavLink :href="route('dashboard.products.show', product.id)">{{ product.name }}</NavLink></td>
-                                <td>{{ product.is_available ? 'Да' : 'Нет' }}</td>
-                                <td>{{ product.categories.map(c => c.name).join(', ') }}</td>
-                                <td>
-                                    <PrimaryButton @click="openModal(product)">Редактировать</PrimaryButton>
-                                    <PrimaryButton @click="deleteProduct(product)" class="ml-2 bg-red-500">Удалить</PrimaryButton>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
+                            <table class="mt-4 w-full">
+                                <thead>
+                                <tr>
+                                    <th>Название</th>
+                                    <th>Доступность</th>
+                                    <th>Категории</th>
+                                    <th>Действия</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="product in products.data" :key="product.id">
+                                    <td><NavLink :href="route('dashboard.products.show', product.id)">{{ product.name }}</NavLink></td>
+                                    <td>{{ product.is_available ? 'Да' : 'Нет' }}</td>
+                                    <td>{{ product.categories.map(c => c.name).join(', ') }}</td>
+                                    <td>
+                                        <PrimaryButton @click="openModal(product)">Редактировать</PrimaryButton>
+                                        <PrimaryButton @click="deleteProduct(product)" class="ml-2 bg-red-500">Удалить</PrimaryButton>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+            <Modal :show="showModal" @close="closeModal">
+                <form @submit.prevent="submitForm" class="p-6">
+                    <h2 class="text-lg font-medium mb-4">
+                        {{ editingProduct ? 'Редактировать товар' : 'Добавить новый товар' }}
+                    </h2>
 
-        <Modal :show="showModal" @close="closeModal">
-            <form @submit.prevent="submitForm" class="p-6">
-                <h2 class="text-lg font-medium mb-4">
-                    {{ editingProduct ? 'Редактировать товар' : 'Добавить новый товар' }}
-                </h2>
+                    <div class="mb-4">
+                        <InputLabel for="name" value="Название" />
+                        <TextInput id="name" v-model="form.name" required />
+                    </div>
 
-                <div class="mb-4">
-                    <InputLabel for="name" value="Название" />
-                    <TextInput id="name" v-model="form.name" required />
-                </div>
+                    <div class="mb-4">
+                        <InputLabel for="description" value="Описание" />
+                        <textarea id="description" v-model="form.description" class="mt-1 block w-full" rows="3"></textarea>
+                    </div>
 
-                <div class="mb-4">
-                    <InputLabel for="description" value="Описание" />
-                    <textarea id="description" v-model="form.description" class="mt-1 block w-full" rows="3"></textarea>
-                </div>
+                    <div class="mb-4">
+                        <InputLabel for="is_available" value="Доступен" />
+                        <input type="checkbox" id="is_available" v-model="form.is_available" class="mt-1">
+                    </div>
 
-                <div class="mb-4">
-                    <InputLabel for="is_available" value="Доступен" />
-                    <input type="checkbox" id="is_available" v-model="form.is_available" class="mt-1">
-                </div>
-
-                <div class="mb-4">
-                    <InputLabel value="Категории" />
-                    <select v-model="form.categories" multiple class="mt-1 block w-full">
-                        <option v-for="category in categories" :key="category.id" :value="category.id">
-                            {{ category.name }}
-                        </option>
-                    </select>
-                </div>
+                    <div class="mb-4">
+                        <InputLabel value="Категории" />
+                        <select v-model="form.categories" multiple class="mt-1 block w-full">
+                            <option v-for="category in categories" :key="category.id" :value="category.id">
+                                {{ category.name }}
+                            </option>
+                        </select>
+                    </div>
 
 
 
-                <div class="flex justify-end mt-4">
-                    <PrimaryButton :disabled="form.processing">
-                        {{ editingProduct ? 'Сохранить' : 'Добавить' }}
-                    </PrimaryButton>
-                </div>
-            </form>
-        </Modal>
-    </AuthenticatedLayout>
+                    <div class="flex justify-end mt-4">
+                        <PrimaryButton :disabled="form.processing">
+                            {{ editingProduct ? 'Сохранить' : 'Добавить' }}
+                        </PrimaryButton>
+                    </div>
+                </form>
+            </Modal>
+        </template>
+    </DashboardLayout>
 </template>

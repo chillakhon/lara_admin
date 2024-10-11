@@ -1,6 +1,6 @@
 <!-- resources/js/Pages/Materials/Index.vue -->
 <template>
-    <AuthenticatedLayout>
+    <DashboardLayout>
         <template #header>
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Materials</h2>
         </template>
@@ -114,7 +114,7 @@
                 </div>
             </div>
         </Modal>
-    </AuthenticatedLayout>
+    </DashboardLayout>
 </template>
 
 <script>
@@ -129,9 +129,11 @@ import PrimaryButton from '@/Components/PrimaryButton.vue'
 import SecondaryButton from '@/Components/SecondaryButton.vue'
 import DangerButton from '@/Components/DangerButton.vue'
 import Pagination from "@/Components/Pagination.vue";
+import DashboardLayout from "@/Layouts/DashboardLayout.vue";
 
 export default {
     components: {
+        DashboardLayout,
         Pagination,
         AuthenticatedLayout,
         Modal,

@@ -4,6 +4,7 @@ import {useForm} from '@inertiajs/vue3'
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import CategoryItem from "@/Pages/Dashboard/Categories/CategoryItem.vue";
 import Modal from "@/Components/Modal.vue";
+import DashboardLayout from "@/Layouts/DashboardLayout.vue";
 
 const props = defineProps({
     categories: Array
@@ -70,12 +71,7 @@ const deleteCategory = () => {
 }
 </script>
 <template>
-    <AuthenticatedLayout title="Categories">
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Categories
-            </h2>
-        </template>
+    <DashboardLayout>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -146,5 +142,5 @@ const deleteCategory = () => {
             </div>
 
         </Modal>
-    </AuthenticatedLayout>
+    </DashboardLayout>
 </template>

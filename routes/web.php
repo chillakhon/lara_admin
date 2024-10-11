@@ -1,14 +1,20 @@
 <?php
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ColorManagementController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProductComponentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductImageController;
 use App\Http\Controllers\ProductSizeController;
 use App\Http\Controllers\ProductVariantController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PromoCodeController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -65,6 +71,46 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('products.sizes', ProductSizeController::class)->only(['store', 'destroy']);
         Route::resource('products.sizes.components', ProductComponentController::class)->only(['store', 'destroy']);
 
+
+        Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
+        Route::get('/clients/{client}', [ClientController::class, 'show'])->name('clients.show');
+        Route::get('/clients/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit');
+        Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update');
+        Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('dashboard.clients.destroy');
+
+        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+        Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
+
+        Route::get('/promo-codes', [PromoCodeController::class, 'index'])->name('promo-codes.index');
+        Route::post('/promo-codes', [PromoCodeController::class, 'store'])->name('promo-codes.store');
+        Route::put('/promo-codes/{promoCode}', [PromoCodeController::class, 'update'])->name('promo-codes.update');
+        Route::delete('/promo-codes/{promoCode}', [PromoCodeController::class, 'destroy'])->name('promo-codes.destroy');
+        Route::get('/promo-codes/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('promo-codes.usage');
+
+        // Маршруты, доступные только администраторам
+        Route::middleware(['role:admin'])->group(function () {
+            // Управление пользователями
+            Route::get('/users', [UserController::class, 'index'])->name('users.index');
+            Route::post('/users', [UserController::class, 'store'])->name('users.store');
+            Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+            Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+            // Управление ролями
+            Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+            Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+            Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+            Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
+
+            // Управление разрешениями
+            Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
+            Route::post('/permissions', [PermissionController::class, 'store'])->name('permissions.store');
+            Route::put('/permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
+            Route::delete('/permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
+
+            // Обновление разрешений для роли
+            Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.updatePermissions');
+        });
     });
 
 

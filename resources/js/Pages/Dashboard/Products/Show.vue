@@ -6,6 +6,7 @@ import PrimaryButton from "@/Components/PrimaryButton.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import ProductVariant from "@/Components/ProductVariant.vue";
+import DashboardLayout from "@/Layouts/DashboardLayout.vue";
 
 const props = defineProps({
     product: Object,
@@ -269,10 +270,7 @@ const setMainImage = (variantId, imageId) => {
 </script>
 
 <template>
-    <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Product Details: {{ product.name }}</h2>
-        </template>
+    <DashboardLayout>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -456,6 +454,6 @@ const setMainImage = (variantId, imageId) => {
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </DashboardLayout>
 </template>
 

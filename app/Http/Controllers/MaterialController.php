@@ -20,7 +20,7 @@ class MaterialController extends Controller
     public function index()
     {
         $materials = Material::with('conversions')->paginate(20);
-        $materials = AppServiceProvider::setUrlsToHttps($materials);
+        //$materials = AppServiceProvider::setUrlsToHttps($materials);
         return Inertia::render('Dashboard/Materials/Index', [
             'materials' => $materials
         ]);

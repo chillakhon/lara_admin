@@ -1,8 +1,5 @@
 <template>
-    <AuthenticatedLayout>
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">Color Management</h2>
-        </template>
+    <DashboardLayout>
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -66,7 +63,7 @@
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </DashboardLayout>
 </template>
 
 <script setup>
@@ -74,6 +71,7 @@ import {ref} from 'vue';
 import {router, useForm} from '@inertiajs/vue3';
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
+import DashboardLayout from "@/Layouts/DashboardLayout.vue";
 
 const props = defineProps({
     categories: Array,
