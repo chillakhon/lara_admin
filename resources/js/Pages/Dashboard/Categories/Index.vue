@@ -6,6 +6,9 @@ import CategoryTable from "./CategoryTable.vue";
 import Modal from "@/Components/Modal.vue";
 import BreadCrumbs from "@/Components/BreadCrumbs.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
+import SecondaryButton from "@/Components/SecondaryButton.vue";
+import TextInput from "@/Components/TextInput.vue";
+import SelectDropdown from "@/Components/SelectDropdown.vue";
 
 const props = defineProps({
     categories: Array
@@ -117,50 +120,50 @@ const deleteCategory = () => {
             />
 
             <Modal :show="showModal" @close="closeModal">
-                <div class="p-6">
-                    <h2 class="text-lg font-medium text-gray-900" v-if="modalMode === 'create'">
-                        Создать категорию
-                    </h2>
-                    <h2 class="text-lg font-medium text-gray-900" v-else-if="modalMode === 'edit'">
-                        Редактировать категорию
-                    </h2>
-                    <h2 class="text-lg font-medium text-gray-900" v-else-if="modalMode === 'delete'">
-                        Удалить категорию
-                    </h2>
+                <template #title v-if="modalMode === 'create'">
+                    Создать категорию
+                </template>
+                <template #title v-if="modalMode === 'edit'">
+                    Редактировать категорию
+                </template>
+                <template #title v-if="modalMode === 'delete'">
+                    Удалить категорию
+                </template>
+
+                <template #content v-if="modalMode !== 'delete'">
                     <form @submit.prevent="submitForm" v-if="modalMode !== 'delete'">
                         <div class="mt-4">
-                            <label for="name" class="block text-sm font-medium text-gray-700">Название</label>
-                            <input type="text" id="name" v-model="form.name"
-                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <TextInput label="Название" v-model="form.name"></TextInput>
                         </div>
                         <div class="mt-4">
-                            <label for="parent" class="block text-sm font-medium text-gray-700">Родительская
-                                категория</label>
-                            <select id="parent" v-model="form.parent_id"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                                <option :value="null">Без родительской категории</option>
-                                <option v-for="category in flattenedCategories" :key="category.id" :value="category.id">
-                                    {{ category.label }}
-                                </option>
-                            </select>
-                        </div>
-                        <div class="mt-4 flex justify-end">
-                            <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                                {{ modalMode === 'create' ? 'Создать' : 'Обновить' }}
-                            </button>
+                            <SelectDropdown
+                                class="w-full"
+                                v-model="form.parent_id"
+                                :options="flattenedCategories"
+                                label="Родительская
+                                категория"
+                                placeholder="Без родителя"
+                                value-key="id"
+                                label-key="name"
+                                children-key="children"
+                                null-label="Без категории"
+                            ></SelectDropdown>
                         </div>
                     </form>
-                    <div v-else>
-                        <p class="mt-4">Вы уверены, что хотите удалить эту категорию?</p>
-                        <div class="mt-4 flex justify-end">
-                            <button @click="deleteCategory"
-                                    class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">
-                                Удалить
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                </template>
+                <template v-else #content>
+                    <p class="mt-4">Вы уверены, что хотите удалить эту категорию?</p>
+                </template>
+                <template #footer v-if="modalMode !== 'delete'">
+                    <PrimaryButton @click="submitForm">{{ modalMode === 'create' ? 'Создать' : 'Обновить' }}</PrimaryButton>
+                    <PrimaryButton type="red" @click="closeModal">Отмена</PrimaryButton>
+                </template>
+                <template #footer v-else>
+                    <PrimaryButton @click="deleteCategory" class="mr-3">Удалить</PrimaryButton>
+                    <PrimaryButton type="red" @click="closeModal">Отмена</PrimaryButton>
+                </template>
             </Modal>
+
         </template>
     </DashboardLayout>
 </template>
