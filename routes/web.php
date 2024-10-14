@@ -3,6 +3,7 @@
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ColorManagementController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PermissionController;
@@ -35,6 +36,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/materials', [MaterialController::class, 'store'])->name('materials.store');
         Route::put('/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
         Route::delete('/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
+        Route::post('/materials/{material}/add-stock', [MaterialController::class, 'addStock'])->name('dashboard.materials.add-stock');
+        Route::post('/materials/{material}/remove-stock', [MaterialController::class, 'removeStock'])->name('dashboard.materials.remove-stock');
 
         // Products
         Route::get('/products', [ProductController::class, 'index'])->name('products.index');
@@ -87,6 +90,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/promo-codes/{promoCode}', [PromoCodeController::class, 'update'])->name('promo-codes.update');
         Route::delete('/promo-codes/{promoCode}', [PromoCodeController::class, 'destroy'])->name('promo-codes.destroy');
         Route::get('/promo-codes/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('promo-codes.usage');
+
+        Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::post('/inventory/add', [InventoryController::class, 'addStock'])->name('inventory.add');
+        Route::post('/inventory/remove', [InventoryController::class, 'removeStock'])->name('inventory.remove');
+        Route::get('/inventory/transactions', [InventoryController::class, 'transactions'])->name('inventory.transactions');
 
         // Маршруты, доступные только администраторам
         Route::middleware(['role:admin'])->group(function () {

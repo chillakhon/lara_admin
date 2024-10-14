@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,13 +9,12 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, Notifiable, HasFactory;
 
     protected $fillable = [
-        'name',
         'email',
         'password',
-        'role_id',
+        'type',
     ];
 
     protected $hidden = [
@@ -26,33 +24,35 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'password' => 'hashed',
     ];
 
-    public function role()
+    public function adminUser()
     {
-        return $this->belongsTo(Role::class);
+        return $this->hasOne(AdminUser::class);
     }
 
-    public function hasPermission($permission)
+    public function client()
     {
-        return $this->role->permissions->contains('name', $permission);
-    }
-
-    public function hasAnyRole($roles)
-    {
-        if (!$this->role) {
-            return false;
-        }
-
-        if (is_array($roles)) {
-            return in_array($this->role->name, $roles);
-        }
-
-        return $this->role->name == $roles;
+        return $this->hasOne(Client::class);
     }
 
     public function hasRole($role)
     {
-        return $this->role && $this->role->name == $role;
+        return $this->type === $role;
+    }
+
+    public function hasAnyRole($roles)
+    {
+        return in_array($this->type, (array) $roles);
+    }
+
+    public function hasPermission($permission)
+    {
+        if ($this->type === 'client') {
+            return false;
+        }
+
+        return $this->adminUser->permissions && in_array($permission, $this->adminUser->permissions);
     }
 }

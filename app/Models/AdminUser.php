@@ -4,11 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Client extends Model
+class AdminUser extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -19,9 +18,8 @@ class Client extends Model
         'user_id',
         'first_name',
         'last_name',
-        'phone',
-        'address',
-        'bonus_balance',
+        'role',
+        'permissions',
     ];
 
     /**
@@ -30,11 +28,11 @@ class Client extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'bonus_balance' => 'decimal:2',
+        'permissions' => 'array',
     ];
 
     /**
-     * Get the user that owns the client.
+     * Get the user that owns the admin user.
      */
     public function user()
     {
@@ -42,7 +40,7 @@ class Client extends Model
     }
 
     /**
-     * Get the full name of the client.
+     * Get the full name of the admin user.
      *
      * @return string
      */

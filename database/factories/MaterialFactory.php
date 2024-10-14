@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Material;
+use App\Models\Unit;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,8 +17,15 @@ class MaterialFactory extends Factory
     {
         return [
             'title' => $this->faker->word,
-            'unit_of_measurement' => $this->faker->randomElement(['kg', 'g', 'l', 'ml', 'm', 'cm']),
-            'cost_per_unit' => $this->faker->randomFloat(2, 0.1, 100),
+            'unit_id' =>  function () {
+                $unitIds = Unit::pluck('id')->toArray();
+
+                if (empty($unitIds)) {
+                    return Unit::factory()->create()->id;
+                }
+
+                return $this->faker->randomElement($unitIds);
+            }
         ];
     }
 }

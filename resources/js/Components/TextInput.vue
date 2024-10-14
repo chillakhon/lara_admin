@@ -15,6 +15,7 @@ const props = defineProps({
     name: String,
     autocomplete: String,
     error: String,
+    step: String
 });
 
 const model = defineModel({

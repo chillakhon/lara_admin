@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Unit;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('materials', function (Blueprint $table) {
+        Schema::create('inventory_balances', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
+            $table->morphs('item');
+            $table->decimal('total_quantity', 10, 3);
+            $table->decimal('average_price', 10, 2);
             $table->foreignId('unit_id')->constrained()->onDelete('restrict');
             $table->timestamps();
         });
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('materials');
+        Schema::dropIfExists('inventory_balances');
     }
 };
