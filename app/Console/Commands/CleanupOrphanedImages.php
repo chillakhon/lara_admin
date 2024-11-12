@@ -24,7 +24,7 @@ class CleanupOrphanedImages extends Command
         }
 
         $orphanedImages = Image::whereDoesntHave('products', function ($query) {
-            $query->whereNotNull('imagables.product_variant_id');
+            $query->whereNotNull('imageables.product_variant_id');
         })->get();
 
         $count = 0;
@@ -41,8 +41,8 @@ class CleanupOrphanedImages extends Command
                 }
 
                 // Удаляем связи в промежуточной таблице
-                DB::table('imagables')->where('image_id', $image->id)->delete();
-                $this->info("Deleted imagable relations for image ID: {$image->id}");
+                DB::table('imageables')->where('image_id', $image->id)->delete();
+                $this->info("Deleted imageable relations for image ID: {$image->id}");
 
                 // Удаляем запись из базы данных
                 $image->delete();

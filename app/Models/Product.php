@@ -4,12 +4,29 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasFactory;
-    public $timestamps = false;
-    protected $fillable = ['name', 'description', 'is_available', 'slug'];
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+        'type',
+        'default_unit_id',
+        'is_active',
+        'has_variants'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'has_variants' => 'boolean',
+    ];
 
 
     protected static function boot()
@@ -27,10 +44,39 @@ class Product extends Model
         });
     }
 
-
-    public function components()
+    public function recipeItems(): MorphMany
     {
-        return $this->hasMany(ProductComponent::class);
+        return $this->morphMany(RecipeItem::class, 'component');
+    }
+
+    public function inventoryBalance(): MorphOne
+    {
+        return $this->morphOne(InventoryBalance::class, 'item');
+    }
+
+    public function getCurrentStock(): float
+    {
+        return $this->inventoryBalance?->total_quantity ?? 0;
+    }
+
+    public function getAverageCost(): float
+    {
+        return $this->inventoryBalance?->average_price ?? 0;
+    }
+
+    public function inventoryBatches()
+    {
+        return $this->morphMany(InventoryBatch::class, 'item');
+    }
+
+    public function checkAvailability(float $quantity): bool
+    {
+        return $this->getCurrentStock() >= $quantity;
+    }
+
+    public function inventoryTransactions()
+    {
+        return $this->morphMany(InventoryTransaction::class, 'item');
     }
 
     public function variants()
@@ -38,24 +84,49 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
+    public function defaultRecipe()
+    {
+        return $this->recipes()
+            ->wherePivot('is_default', true)
+            ->wherePivot('product_variant_id', null)
+            ->first();
+    }
+
+    public function recipes()
+    {
+        return $this->belongsToMany(Recipe::class, 'product_recipes')
+            ->withPivot('is_default')
+            ->withTimestamps();
+    }
+
+    public function activeVariants()
+    {
+        return $this->hasMany(ProductVariant::class)->where('is_active', true);
+    }
+
+    public function defaultUnit()
+    {
+        return $this->belongsTo(Unit::class, 'default_unit_id');
+    }
+
+
     public function categories()
     {
         return $this->belongsToMany(Category::class);
     }
 
-    public function sizes()
+    public function options(): BelongsToMany
     {
-        return $this->hasMany(ProductSize::class);
-    }
-
-    public function colorOptions()
-    {
-        return $this->hasMany(ColorOption::class);
+        return $this->belongsToMany(Option::class, 'product_options')
+            ->using(ProductOption::class)
+            ->withPivot(['is_required', 'order'])
+            ->withTimestamps()
+            ->orderByPivot('order');
     }
 
     public function images()
     {
-        return $this->morphToMany(Image::class, 'imagable')
+        return $this->morphToMany(Image::class, 'imageable')
             ->withPivot('product_variant_id')
             ->withTimestamps();
     }

@@ -14,9 +14,19 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('slug')->unique()->nullable();
+            $table->string('slug')->unique();
             $table->text('description')->nullable();
-            $table->boolean('is_available')->default(true);
+            $table->enum('type', ['simple', 'manufactured', 'composite'])
+                ->default('simple');
+            $table->foreignId('default_unit_id')
+                ->nullable()
+                ->constrained('units');
+            $table->boolean('is_active')->default(true);
+            $table->boolean('has_variants')->default(false);
+            $table->boolean('allow_preorder')->default(false);
+            $table->smallInteger('after_purchase_processing_time')->default(0);
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

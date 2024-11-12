@@ -6,7 +6,7 @@
         "build": "vite build"
     },
     "devDependencies": {
-        "@inertiajs/vue3": "^1.0.0",
+        "@inertiajs/vue3": "^2.0.0-beta.2",
         "@tailwindcss/forms": "^0.5.3",
         "@vitejs/plugin-vue": "^5.0.0",
         "autoprefixer": "^10.4.12",
@@ -18,7 +18,9 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
+        "@braks/revue-draggable": "^0.3.0-5",
         "flowbite": "^2.5.1",
-        "flowbite-vue": "^0.1.6"
+        "flowbite-vue": "^0.1.6",
+        "lodash": "^4.17.21"
     }
 }

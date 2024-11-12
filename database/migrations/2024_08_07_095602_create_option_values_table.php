@@ -16,14 +16,13 @@ return new class extends Migration
     {
         Schema::create('option_values', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Option::class)->constrained()->onDelete('cascade');
-            $table->string('value');
-        });
-
-        Schema::create('product_variant_option_value', function (Blueprint $table) {
-            $table->id();
-            $table->foreignIdFor(ProductVariant::class)->constrained()->onDelete('cascade');
-            $table->foreignIdFor(OptionValue::class)->constrained()->onDelete('cascade');
+            $table->foreignId('option_id')->constrained()->onDelete('cascade');
+            $table->string('name');
+            $table->string('value')->nullable();
+            $table->string('color_code')->nullable();
+            $table->integer('order')->default(0);
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

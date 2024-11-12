@@ -88,7 +88,7 @@ class ProductImageController extends Controller
             // Сбрасываем флаг is_main для всех изображений данного варианта
             Image::whereHas('products', function ($query) use ($product, $variantId) {
                 $query->where('products.id', $product->id)
-                    ->where('imagables.product_variant_id', $variantId);
+                    ->where('imageables.product_variant_id', $variantId);
             })->update(['is_main' => false]);
 
             // Устанавливаем флаг is_main только для выбранного изображения

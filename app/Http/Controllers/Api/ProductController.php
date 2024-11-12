@@ -16,7 +16,6 @@ class ProductController extends Controller
                 'categories',
                 'variants',
                 'sizes',
-                'colorOptions.colorOptionValues.color.images',
                 'images'
             ])
             ->where('is_available', true);
@@ -41,9 +40,7 @@ class ProductController extends Controller
         $product = Product::with([
             'categories',
             'variants.size',
-            'variants.colorOptionValue.color',
             'variants.images',
-            'colorOptions.colorOptionValues.color.images'
         ])
             ->findOrFail($id);
 
@@ -56,9 +53,7 @@ class ProductController extends Controller
             ->with([
                 'categories',
                 'variants.size',
-                'variants.colorOptionValues.color',
                 'variants.images',
-                'colorOptions.colorOptionValues.color.images'
             ])
             ->firstOrFail();
 

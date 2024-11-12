@@ -11,14 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('imagables', function (Blueprint $table) {
+        Schema::create('imageables', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('image_id');
-            $table->unsignedBigInteger('imagable_id');
-            $table->string('imagable_type');
+            $table->foreignId('image_id')->constrained()->onDelete('cascade');
+            $table->morphs('imageable');
             $table->timestamps();
-
-            $table->foreign('image_id')->references('id')->on('images')->onDelete('cascade');
         });
     }
 

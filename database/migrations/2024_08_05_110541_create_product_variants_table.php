@@ -15,10 +15,17 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->string('name');
-            $table->string('article');
-            $table->decimal('additional_cost', 10, 2)->default(0);
+            $table->string('sku')->unique();
             $table->decimal('price', 10, 2);
-            $table->integer('stock')->default(0);
+            $table->decimal('additional_cost', 10, 2)->default(0);
+            $table->enum('type', ['simple', 'manufactured', 'composite'])
+                ->default('simple');
+            $table->foreignId('unit_id')
+                ->nullable()
+                ->constrained('units');
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

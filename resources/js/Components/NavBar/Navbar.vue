@@ -80,7 +80,7 @@ const changeLightScheme = () => {
                             <a href="#"
                                class="flex py-3 px-4 border-b hover:bg-gray-100 dark:hover:bg-gray-600 dark:border-gray-600">
                                 <div class="flex-shrink-0">
-                                    <img class="w-11 h-11 rounded-full" src="/images/users/bonnie-green.png"
+                                    <img class="w-11 h-11 rounded-full" src="/storage/images/users/bonnie-green.png"
                                          alt="Jese image">
                                     <div
                                         class="flex absolute justify-center items-center ml-6 -mt-5 w-5 h-5 rounded-full border border-white bg-primary-700 dark:border-gray-700">
@@ -106,7 +106,7 @@ const changeLightScheme = () => {
                             <a href="#"
                                class="flex py-3 px-4 border-b hover:bg-gray-100 dark:hover:bg-gray-600 dark:border-gray-600">
                                 <div class="flex-shrink-0">
-                                    <img class="w-11 h-11 rounded-full" src="/images/users/jese-leos.png"
+                                    <img class="w-11 h-11 rounded-full" src="/storage/images/users/jese-leos.png"
                                          alt="Jese image">
                                     <div
                                         class="flex absolute justify-center items-center ml-6 -mt-5 w-5 h-5 bg-gray-900 rounded-full border border-white dark:border-gray-700">
@@ -131,7 +131,7 @@ const changeLightScheme = () => {
                             <a href="#"
                                class="flex py-3 px-4 border-b hover:bg-gray-100 dark:hover:bg-gray-600 dark:border-gray-600">
                                 <div class="flex-shrink-0">
-                                    <img class="w-11 h-11 rounded-full" src="/images/users/joseph-mcfall.png"
+                                    <img class="w-11 h-11 rounded-full" src="/storage/images/users/joseph-mcfall.png"
                                          alt="Joseph image">
                                     <div
                                         class="flex absolute justify-center items-center ml-6 -mt-5 w-5 h-5 bg-red-600 rounded-full border border-white dark:border-gray-700">
@@ -156,7 +156,7 @@ const changeLightScheme = () => {
                             <a href="#"
                                class="flex py-3 px-4 border-b hover:bg-gray-100 dark:hover:bg-gray-600 dark:border-gray-600">
                                 <div class="flex-shrink-0">
-                                    <img class="w-11 h-11 rounded-full" src="/images/users/leslie-livingston.png"
+                                    <img class="w-11 h-11 rounded-full" src="/storage/images/users/leslie-livingston.png"
                                          alt="Leslie image">
                                     <div
                                         class="flex absolute justify-center items-center ml-6 -mt-5 w-5 h-5 bg-green-400 rounded-full border border-white dark:border-gray-700">
@@ -180,7 +180,7 @@ const changeLightScheme = () => {
                             </a>
                             <a href="#" class="flex py-3 px-4 hover:bg-gray-100 dark:hover:bg-gray-600">
                                 <div class="flex-shrink-0">
-                                    <img class="w-11 h-11 rounded-full" src="/images/users/robert-brown.png"
+                                    <img class="w-11 h-11 rounded-full" src="/storage/images/users/robert-brown.png"
                                          alt="Robert image">
                                     <div
                                         class="flex absolute justify-center items-center ml-6 -mt-5 w-5 h-5 bg-purple-500 rounded-full border border-white dark:border-gray-700">
@@ -356,7 +356,7 @@ const changeLightScheme = () => {
                                     class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
                                     id="user-menu-button-2" aria-expanded="false" data-dropdown-toggle="dropdown-2">
                                 <span class="sr-only">Open user menu</span>
-                                <img class="w-8 h-8 rounded-full" src="/images/users/neil-sims.png" alt="user photo">
+                                <img class="w-8 h-8 rounded-full" src="/storage/images/users/neil-sims.png" alt="user photo">
                             </button>
                         </div>
 

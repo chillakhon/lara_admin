@@ -41,7 +41,7 @@ class MaterialController extends Controller
 
         $material = $this->materialService->createMaterial($validated);
 
-        return redirect()->back()->with('success', 'Материал успешно создан.');
+        return redirect()->route('dashboard.materials.index')->with('success', 'Material has been created.');
     }
 
     public function update(Request $request, Material $material)

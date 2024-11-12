@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\Color;
-use App\Models\ColorCategory;
-use App\Models\ColorOption;
+use App\Models\Image;
 use App\Models\Material;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Unit;
 use App\Services\MaterialService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class ProductController extends Controller
@@ -22,26 +23,53 @@ class ProductController extends Controller
         $this->materialService = $materialService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
+        $query = Product::query()
+            ->with(['categories', 'options', 'variants'])
+            ->when($request->search, function ($query, $search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%")
+                        ->orWhereHas('categories', function($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->when($request->category, function($query, $categoryId) {
+                $query->whereHas('categories', function($q) use ($categoryId) {
+                    $q->where('categories.id', $categoryId);
+                });
+            });
+
+        $products = $query->latest()->paginate(10)->withQueryString();
+
         return Inertia::render('Dashboard/Products/Index', [
-            'products' => Product::with('categories')->paginate(10),
-            'categories' => Category::all(),
+            'products' => $products,
+            'categories' => Category::select(['id', 'name'])->get(),
+            'filters' => [
+                'search' => $request->search,
+                'category' => $request->category
+            ],
+            'units' => Unit::all()
         ]);
     }
 
     public function show(Product $product)
     {
-        $product->load(['sizes.components.material', 'variants', 'colorOptions.category', 'colorOptions.colorOptionValues.color', 'images' => function ($query) {$query->with('imagable');}] );
-        $materials = Material::all();
-        $categories = Category::with('colorOptions')->get();
-        $colors = Color::with('images')->get();
+        $product->load([
+            'categories',
+            'options.values',
+            'variants.optionValues.option',
+            'variants.images',
+            'variants.unit',
+            'defaultUnit'
+        ]);
 
         return Inertia::render('Dashboard/Products/Show', [
             'product' => $product,
-            'materials' => $materials,
-            'categories' => $categories,
-            'colors' => $colors,
+            'categories' => Category::with('options.values')->get(),
+            'units' => Unit::all(),
         ]);
     }
 
@@ -50,25 +78,46 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'is_available' => 'boolean',
+            'type' => 'required|in:simple,manufactured,composite',
+            'default_unit_id' => 'nullable|exists:units,id',
+            'is_active' => 'boolean',
+            'has_variants' => 'boolean',
+            'allow_preorder' => 'boolean',
+            'after_purchase_processing_time' => 'integer|min:0',
             'categories' => 'required|array',
             'categories.*' => 'exists:categories,id',
         ]);
 
-        $product = Product::create($validated);
+        $product = Product::create([
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'description' => $validated['description'],
+            'type' => $validated['type'],
+            'default_unit_id' => $validated['default_unit_id'],
+            'is_active' => $validated['is_active'],
+            'has_variants' => $validated['has_variants'],
+            'allow_preorder' => $validated['allow_preorder'],
+            'after_purchase_processing_time' => $validated['after_purchase_processing_time'],
+        ]);
+
         $product->categories()->sync($validated['categories']);
 
-
-
-        return redirect()->back()->with('success', 'Продукт успешно создан.');
+        return redirect()->route('dashboard.products.show', $product)
+            ->with('success', 'Товар успешно создан');
     }
+
 
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'is_available' => 'boolean',
+            'type' => 'required|in:simple,manufactured,composite',
+            'default_unit_id' => 'nullable|exists:units,id',
+            'is_active' => 'boolean',
+            'has_variants' => 'boolean',
+            'allow_preorder' => 'boolean',
+            'after_purchase_processing_time' => 'integer|min:0',
             'categories' => 'required|array',
             'categories.*' => 'exists:categories,id',
         ]);
@@ -76,8 +125,7 @@ class ProductController extends Controller
         $product->update($validated);
         $product->categories()->sync($validated['categories']);
 
-
-        return redirect()->back()->with('success', 'Продукт успешно обновлен.');
+        return redirect()->back()->with('success', 'Товар успешно обновлен');
     }
 
     public function destroy(Product $product)
@@ -159,32 +207,214 @@ class ProductController extends Controller
         return redirect()->back()->with('success', 'Color option added successfully.');
     }
 
-    public function removeColorOption(Product $product, ColorOption $colorOption)
-    {
-        $colorOption->delete();
 
-        return redirect()->back()->with('success', 'Color option removed successfully.');
-    }
-
-    public function addColorToOption(Request $request, Product $product, ColorOption $colorOption)
+    public function storeOption(Request $request, Product $product)
     {
         $validated = $request->validate([
-            'color_id' => 'required|exists:colors,id',
+            'name' => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
+            'is_required' => 'boolean',
         ]);
 
-        $colorOption->colorOptionValues()->create([
-            'color_id' => $validated['color_id'],
-            'color_option_id' => $colorOption->id,
-            'product_id' => $product->id
-        ]);
+        $product->options()->create($validated);
 
-        return redirect()->back()->with('success', 'Color added to option successfully.');
+        return redirect()->back()->with('success', 'Опция успешно добавлена');
     }
 
-    public function removeColorFromOption(Product $product, ColorOption $colorOption, $colorOptionValueId)
+    public function updateOption(Request $request, Product $product, $optionId)
     {
-        $colorOption->colorOptionValues()->findOrFail($colorOptionValueId)->delete();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'is_required' => 'boolean',
+        ]);
 
-        return redirect()->back()->with('success', 'Color removed from option successfully.');
+        $product->options()->findOrFail($optionId)->update($validated);
+
+        return redirect()->back()->with('success', 'Опция успешно обновлена');
+    }
+
+    public function destroyOption(Product $product, $optionId)
+    {
+        $product->options()->findOrFail($optionId)->delete();
+
+        return redirect()->back()->with('success', 'Опция успешно удалена');
+    }
+
+    // Методы для работы с вариантами
+    public function generateVariants(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'variants' => 'required|array',
+            'variants.*.name' => 'required|string',
+            'variants.*.sku' => 'required|string|unique:product_variants,sku',
+            'variants.*.price' => 'required|numeric|min:0',
+            'variants.*.option_values' => 'required|array',
+            'variants.*.option_values.*' => 'exists:option_values,id'
+        ]);
+
+        foreach ($validated['variants'] as $variantData) {
+            $variant = $product->variants()->create([
+                'name' => $variantData['name'],
+                'sku' => $variantData['sku'],
+                'price' => $variantData['price'],
+                'type' => $product->type,
+                'unit_id' => $product->default_unit_id,
+                'is_active' => true
+            ]);
+
+            $variant->optionValues()->sync($variantData['option_values']);
+        }
+
+        return redirect()->back()->with('success', 'Варианты успешно сгенерированы');
+    }
+
+    public function storeImages(Request $request, Product $product)
+    {
+        $request->validate([
+            'images' => 'required|array',
+            'images.*' => 'required|image|max:5120', // 5MB max
+            'variant_id' => 'nullable|exists:product_variants,id',
+            'is_main' => 'boolean'
+        ]);
+
+        $uploadedImages = [];
+
+        foreach ($request->file('images') as $image) {
+            $path = $image->store('products', 'public');
+
+            $imageModel = new Image([
+                'path' => $path,
+                'url' => Storage::url($path),
+                'is_main' => $request->is_main,
+                'order' => 0
+            ]);
+
+            if ($request->variant_id) {
+                // Если указан вариант, прикрепляем изображение к варианту
+                $variant = ProductVariant::find($request->variant_id);
+                $variant->images()->save($imageModel);
+            } else {
+                // Иначе прикрепляем к основному продукту
+                $product->images()->save($imageModel);
+            }
+
+            $uploadedImages[] = $imageModel;
+        }
+
+        // Если загружаем основное изображение, сбрасываем флаг у остальных
+        if ($request->is_main) {
+            if ($request->variant_id) {
+                $variant = ProductVariant::find($request->variant_id);
+                $variant->images()->where('id', '!=', $uploadedImages[0]->id)->update(['is_main' => false]);
+            } else {
+                $product->images()->where('id', '!=', $uploadedImages[0]->id)->update(['is_main' => false]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Изображения успешно загружены');
+    }
+
+
+    public function deleteImage(Product $product, $imageId)
+    {
+        // Находим изображение
+        $image = Image::findOrFail($imageId);
+
+        // Проверяем, принадлежит ли изображение продукту или его вариантам
+        $belongs = $product->images()->where('images.id', $imageId)->exists() ||
+            $product->variants()->whereHas('images', function($q) use ($imageId) {
+                $q->where('images.id', $imageId);
+            })->exists();
+
+        if (!$belongs) {
+            abort(403);
+        }
+
+        // Удаляем файл
+        Storage::disk('public')->delete($image->path);
+
+        // Удаляем запись
+        $image->delete();
+
+        return redirect()->back()->with('success', 'Изображение удалено');
+    }
+
+    public function setMainImage(Product $product, $imageId)
+    {
+        // Находим изображение
+        $image = Image::findOrFail($imageId);
+
+        // Проверяем, принадлежит ли изображение продукту или его вариантам
+        $belongs = $product->images()->where('images.id', $imageId)->exists() ||
+            $product->variants()->whereHas('images', function($q) use ($imageId) {
+                $q->where('images.id', $imageId);
+            })->exists();
+
+        if (!$belongs) {
+            abort(403);
+        }
+
+        // Определяем, к чему привязано изображение
+        $isVariantImage = $product->variants()->whereHas('images', function($q) use ($imageId) {
+            $q->where('images.id', $imageId);
+        })->exists();
+
+        if ($isVariantImage) {
+            // Если изображение принадлежит варианту, обновляем флаг только у изображений этого варианта
+            $variant = $product->variants()->whereHas('images', function($q) use ($imageId) {
+                $q->where('images.id', $imageId);
+            })->first();
+
+            $variant->images()->update(['is_main' => false]);
+            $image->update(['is_main' => true]);
+        } else {
+            // Если изображение принадлежит продукту, обновляем флаг у изображений продукта
+            $product->images()->update(['is_main' => false]);
+            $image->update(['is_main' => true]);
+        }
+
+        return redirect()->back()->with('success', 'Основное изображение обновлено');
+    }
+
+    public function reorderImages(Request $request, Product $product)
+    {
+        $request->validate([
+            'images' => 'required|array',
+            'images.*.id' => 'required|exists:images,id',
+            'images.*.order' => 'required|integer|min:0'
+        ]);
+
+        foreach ($request->images as $imageData) {
+            $image = Image::findOrFail($imageData['id']);
+
+            // Проверяем принадлежность изображения
+            $belongs = $product->images()->where('images.id', $image->id)->exists() ||
+                $product->variants()->whereHas('images', function($q) use ($image) {
+                    $q->where('images.id', $image->id);
+                })->exists();
+
+            if ($belongs) {
+                $image->update(['order' => $imageData['order']]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Порядок изображений обновлен');
+    }
+
+    public function attachOptions(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'options' => 'required|array',
+            'options.*.option_id' => 'required|exists:options,id',
+            'options.*.is_required' => 'required|boolean',
+        ]);
+
+        foreach ($validated['options'] as $optionData) {
+            $product->options()->attach($optionData['option_id'], [
+                'is_required' => $optionData['is_required']
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Опции успешно добавлены к товару');
     }
 }

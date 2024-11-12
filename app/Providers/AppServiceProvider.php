@@ -27,7 +27,9 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Relation::morphMap([
+            'Material' => \App\Models\Material::class,
             'material' => \App\Models\Material::class,
+            'Product' => \App\Models\Product::class,
             'product' => \App\Models\Product::class,
         ]);
 

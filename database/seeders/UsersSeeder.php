@@ -25,7 +25,7 @@ class UsersSeeder extends Seeder
 
         // Create 1000 clients
         Client::factory()
-            ->count(1000)
+            ->count(100)
             ->create();
     }
 }
