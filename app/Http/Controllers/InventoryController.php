@@ -24,11 +24,33 @@ class InventoryController extends Controller
 
     public function index()
     {
-
         return Inertia::render('Dashboard/Inventory/Index', [
             'materials' => Material::select('id', 'title')->get(),
-            'products' => Product::select('id', 'name', 'has_variants')->get(),
+            'products' => Product::select('id', 'name', 'has_variants')
+                ->with(['variants' => function($query) {
+                    $query->select('id', 'product_id', 'name', 'sku', 'unit_id')
+                        ->with(['inventoryBalance' => function($q) {
+                            $q->select('id', 'item_id', 'item_type', 'total_quantity', 'average_price', 'unit_id')
+                                ->with('unit:id,name');
+                        }]);
+                }])
+                ->get(),
             'units' => Unit::select('id', 'name')->get(),
+            'materialsInventory' => InventoryBalance::where('item_type', 'material')
+                ->with(['item:id,title as name', 'unit:id,name'])
+                ->paginate(10),
+            'productsInventory' => InventoryBalance::where('item_type', 'product')
+                ->with(['item' => function($query) {
+                    $query->select('id', 'name', 'has_variants')
+                        ->with(['variants' => function($q) {
+                            $q->select('id', 'product_id', 'name', 'sku', 'unit_id')
+                                ->with(['inventoryBalance' => function($bal) {
+                                    $bal->select('id', 'item_id', 'item_type', 'total_quantity', 'average_price', 'unit_id')
+                                        ->with('unit:id,name');
+                                }]);
+                        }]);
+                }, 'unit:id,name'])
+                ->paginate(10)
         ]);
     }
 
@@ -36,7 +58,7 @@ class InventoryController extends Controller
     public function addStock(Request $request)
     {
         $validated = $request->validate([
-            'item_type' => 'required|in:material,product',
+            'item_type' => 'required|in:material,product,variant',
             'item_id' => 'required|integer',
             'quantity' => 'required|numeric|min:0',
             'price_per_unit' => 'required|numeric|min:0',
@@ -66,7 +88,7 @@ class InventoryController extends Controller
     public function removeStock(Request $request)
     {
         $validated = $request->validate([
-            'item_type' => 'required|in:material,product',
+            'item_type' => 'required|in:material,product,variant',
             'item_id' => 'required|integer',
             'quantity' => 'required|numeric|min:0',
             'description' => 'nullable|string',
@@ -90,7 +112,7 @@ class InventoryController extends Controller
     public function getStock(Request $request)
     {
         $validated = $request->validate([
-            'item_type' => 'required|in:material,product',
+            'item_type' => 'required|in:material,product,variant',
             'item_id' => 'required|integer',
         ]);
 
@@ -109,7 +131,7 @@ class InventoryController extends Controller
     public function getTransactionHistory(Request $request)
     {
         $validated = $request->validate([
-            'item_type' => 'required|in:material,product',
+            'item_type' => 'required|in:material,product,variant',
             'item_id' => 'required|integer',
             'from_date' => 'nullable|date',
             'to_date' => 'nullable|date|after_or_equal:from_date',

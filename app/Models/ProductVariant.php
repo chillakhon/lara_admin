@@ -108,6 +108,11 @@ class ProductVariant extends Model
             ->where('item_type', 'variant');
     }
 
+    public function inventoryBalance()
+    {
+        return $this->morphOne(InventoryBalance::class, 'item');
+    }
+
     public function getCurrentStock(): float
     {
         return $this->inventoryBalance?->total_quantity ?? 0;

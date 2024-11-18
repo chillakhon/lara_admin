@@ -72,6 +72,7 @@ const showBatchDetails = (batch) => {
 const startBatch = (batch) => {
     selectedBatch.value = batch;
     showStartModal.value = true;
+    handleBatchStart();
 };
 
 const handleBatchStart = () => {
@@ -123,6 +124,17 @@ const getStatusClass = (status) => {
         'failed': 'bg-gray-100 text-gray-800'
     };
     return classes[status] || 'bg-gray-100 text-gray-800';
+};
+
+const getStatusLabel = (status) => {
+    const labels = {
+        'planned': 'Запланировано',
+        'in_progress': 'В производстве',
+        'completed': 'Завершено',
+        'cancelled': 'Отменено',
+        'failed': 'Ошибка'
+    };
+    return labels[status] || status;
 };
 </script>
 
@@ -202,21 +214,25 @@ const getStatusClass = (status) => {
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex space-x-2">
-                                        <button @click="showBatchDetails(batch)"
+                                        <PrimaryButton @click="showBatchDetails(batch)"
                                                 class="text-blue-600 hover:text-blue-800">
-                                        </button>
-                                        <button v-if="batch.status === 'planned'"
+                                            <i class="fas fa-eye"></i> Детали
+                                        </PrimaryButton>
+                                        <PrimaryButton v-if="batch.status === 'planned'"
                                                 @click="startBatch(batch)"
                                                 class="text-green-600 hover:text-green-800">
-                                        </button>
-                                        <button v-if="batch.status === 'in_progress'"
+                                            <i class="fas fa-play"></i> Запустить
+                                        </PrimaryButton>
+                                        <PrimaryButton v-if="batch.status === 'in_progress'"
                                                 @click="completeBatch(batch)"
                                                 class="text-green-600 hover:text-green-800">
-                                        </button>
-                                        <button v-if="['planned', 'in_progress'].includes(batch.status)"
+                                            <i class="fas fa-check"></i> Завершить
+                                        </PrimaryButton>
+                                        <PrimaryButton type="red" v-if="['planned', 'in_progress'].includes(batch.status)"
                                                 @click="cancelBatch(batch)"
                                                 class="text-red-600 hover:text-red-800">
-                                        </button>
+                                            <i class="fas fa-times"></i> Отменить
+                                        </PrimaryButton>
                                     </div>
                                 </td>
                             </tr>

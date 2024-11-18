@@ -7,6 +7,7 @@ use App\Models\InventoryBatch;
 use App\Models\InventoryBalance;
 use App\Models\InventoryTransaction;
 use App\Models\ProductionBatch;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
@@ -285,5 +286,13 @@ class InventoryService
     public function checkAvailability(string $itemType, int $itemId, float $requiredQuantity): bool
     {
         return $this->getAvailableQuantity($itemType, $itemId) >= $requiredQuantity;
+    }
+    public function getAvailableBatches(string $type, int $id, float $requiredQuantity): Collection
+    {
+        return InventoryBatch::where('item_type', $type)
+            ->where('item_id', $id)
+            ->where('quantity', '>', 0)
+            ->orderBy('received_date', 'asc')
+            ->get();
     }
 }

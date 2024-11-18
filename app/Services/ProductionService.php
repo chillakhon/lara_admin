@@ -86,12 +86,28 @@ class ProductionService
     }
 
     public function startProduction(ProductionBatch $batch): void
-    {
-        if ($batch->status !== 'planned') {
-            throw new \Exception("Невозможно начать производство. Неверный статус партии.");
-        }
+{
+    if ($batch->status !== 'planned') {
+        throw new ProductionException("Невозможно начать производство. Неверный статус партии.");
+    }
 
+    try {
         DB::transaction(function () use ($batch) {
+            // Проверяем наличие материалов
+            $availability = $this->checkComponentsAvailability(
+                $batch->recipe, 
+                $batch->planned_quantity
+            );
+
+            if (!$availability['can_produce']) {
+                $shortages = collect($availability['components'])
+                    ->filter(fn($item) => !$item['is_sufficient'])
+                    ->map(fn($item) => "{$item['component']['name']}: нехватка {$item['shortage']}")
+                    ->join(', ');
+                    
+                throw new ProductionException("Недостаточно материалов для производства: $shortages");
+            }
+
             // Резервируем и списываем материалы
             $this->consumeMaterials($batch);
 
@@ -99,8 +115,20 @@ class ProductionService
                 'status' => 'in_progress',
                 'started_at' => now()
             ]);
+
+            Log::info('Production batch started', [
+                'batch_id' => $batch->id,
+                'batch_number' => $batch->batch_number
+            ]);
         });
+    } catch (\Exception $e) {
+        Log::error('Error starting production batch', [
+            'batch_id' => $batch->id,
+            'error' => $e->getMessage()
+        ]);
+        throw $e;
     }
+}
 
     public function completeProduction(
         ProductionBatch $batch,
@@ -185,24 +213,52 @@ class ProductionService
         foreach ($recipe->items as $item) {
             $requiredQuantity = $this->calculateRequiredQuantity($item, $quantity);
 
-            // Списываем материал и сохраняем информацию о списании
-            $consumption = $this->inventoryService->removeStock(
+            // Получаем информацию о доступных партиях материала
+            $availableBatches = $this->inventoryService->getAvailableBatches(
                 $item->component_type,
                 $item->component_id,
-                $requiredQuantity,
-                auth()->id(),
-                "Списание для производственной партии #{$batch->batch_number}"
+                $requiredQuantity
             );
 
-            // Записываем данные о списании
-            $batch->materialConsumptions()->create([
-                'component_type' => $item->component_type,
-                'component_id' => $item->component_id,
-                'inventory_batch_id' => $consumption->batch_id,
-                'quantity' => $requiredQuantity,
-                'price_per_unit' => $consumption->price_per_unit,
-                'unit_id' => $item->unit_id
-            ]);
+            $remainingQuantity = $requiredQuantity;
+
+            foreach ($availableBatches as $inventoryBatch) {
+                $quantityToConsume = min($remainingQuantity, $inventoryBatch->quantity);
+
+                // Списываем материал
+                $success = $this->inventoryService->removeStock(
+                    $item->component_type,
+                    $item->component_id,
+                    $quantityToConsume,
+                    auth()->id(),
+                    "Списание для производственной партии #{$batch->batch_number}"
+                );
+
+                if (!$success) {
+                    throw new ProductionException("Ошибка при списании материала {$item->component->name}");
+                }
+
+                // Записываем данные о списании
+                $batch->materialConsumptions()->create([
+                    'component_type' => $item->component_type,
+                    'component_id' => $item->component_id,
+                    'inventory_batch_id' => $inventoryBatch->id,
+                    'quantity' => $quantityToConsume,
+                    'price_per_unit' => $inventoryBatch->price_per_unit,
+                    'unit_id' => $item->unit_id
+                ]);
+
+                $remainingQuantity -= $quantityToConsume;
+                if ($remainingQuantity <= 0) {
+                    break;
+                }
+            }
+
+            if ($remainingQuantity > 0) {
+                throw new ProductionException(
+                    "Недостаточно материала {$item->component->name} для списания"
+                );
+            }
         }
     }
 

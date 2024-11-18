@@ -92,7 +92,7 @@ class ProductionBatchController extends Controller
                     'batch_number' => $batch->batch_number
                 ]);
 
-                return redirect()->route('dashboard.production.show', $batch)
+                return redirect()->route('dashboard.production.index', $batch)
                     ->with('success', 'Производственная партия успешно создана');
 
             } catch (\Exception $e) {

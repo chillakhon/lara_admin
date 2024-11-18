@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductionBatch extends Model
@@ -63,5 +64,10 @@ class ProductionBatch extends Model
     public function completedBy()
     {
         return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    public function materialConsumptions(): HasMany
+    {
+        return $this->hasMany(ComponentConsumption::class, 'production_batch_id');
     }
 }

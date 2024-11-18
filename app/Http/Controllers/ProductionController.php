@@ -62,12 +62,62 @@ class ProductionController extends Controller
                 $validated['notes']
             );
 
-            return redirect()->route('dashboard.production.show', $batch)
+            return redirect()->route('dashboard.production.index', $batch)
                 ->with('success', 'Производственная партия создана');
         } catch (\Exception $e) {
             return back()->withErrors(['quantity' => $e->getMessage()]);
         }
     }
 
-    // Остальные методы...
+    public function start(ProductionBatch $batch)
+    {
+        try {
+            $this->productionService->startProduction($batch);
+            
+            return redirect()->back()
+                ->with('success', 'Производственная партия запущена');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function complete(ProductionBatch $batch, Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'actual_quantity' => 'required|numeric|min:0',
+                'notes' => 'nullable|string'
+            ]);
+
+            $this->productionService->completeProduction(
+                $batch,
+                $validated['actual_quantity'],
+                $validated['notes'] ?? null
+            );
+            
+            return redirect()->back()
+                ->with('success', 'Производственная партия успешно завершена');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function cancel(ProductionBatch $batch, Request $request)
+        {
+            try {
+                $validated = $request->validate([
+                    'reason' => 'required|string|max:1000'
+                ]);
+
+                $this->productionService->cancelProduction($batch, $validated['reason']);
+                
+                return redirect()->back()
+                    ->with('success', 'Производственная партия отменена');
+            } catch (\Exception $e) {
+                return redirect()->back()
+                    ->withErrors(['error' => $e->getMessage()]);
+            }
+        }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Recipe extends Model
@@ -39,6 +40,18 @@ class Recipe extends Model
             ->wherePivot('product_variant_id', '!=', null)
             ->withPivot('is_default')
             ->withTimestamps();
+    }
+
+    public function productVariant(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            ProductVariant::class,
+            ProductRecipe::class,
+            'recipe_id', // Внешний ключ в product_recipes
+            'id', // Локальный ключ в product_variants
+            'id', // Локальный ключ в recipes
+            'product_variant_id' // Внешний ключ в product_recipes
+        );
     }
 
     public function items()
