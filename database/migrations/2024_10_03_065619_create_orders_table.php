@@ -16,12 +16,12 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(User::class)->constrained();
+            $table->foreignIdFor(Client::class)->constrained();
             $table->string('order_number')->unique();
             $table->decimal('total_amount', 10, 2);
             $table->enum('status', ['pending', 'processing', 'completed', 'cancelled'])->default('pending');
             $table->text('notes')->nullable();
-            $table->foreignIdFor(PromoCode::class)->constrained();
+            $table->foreignIdFor(PromoCode::class)->nullable()->constrained();
             $table->decimal('discount_amount', 10, 2)->default(0);
             $table->timestamps();
             $table->softDeletes();

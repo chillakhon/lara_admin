@@ -214,6 +214,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 
 
+        // Orders
+            Route::prefix('orders')->name('orders.')->group(function () {
+                Route::get('/', [OrderController::class, 'index'])->name('index');
+                Route::post('/', [OrderController::class, 'store'])->name('store');
+                Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+                Route::put('/{order}', [OrderController::class, 'update'])->name('update');
+                Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
+                
+                // Дополнительные действия с заказами
+                Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
+                Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');
+                Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');
+            });
+
+
         // Маршруты, доступные только администраторам
         Route::middleware(['role:admin'])->group(function () {
             // Управление пользователями

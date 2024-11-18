@@ -24,13 +24,10 @@ class InventoryController extends Controller
 
     public function index()
     {
-        $inventory = InventoryBalance::with(['item', 'unit'])
-            ->paginate(15);
 
         return Inertia::render('Dashboard/Inventory/Index', [
-            'inventory' => InventoryBalanceResource::collection($inventory),
             'materials' => Material::select('id', 'title')->get(),
-            'products' => Product::select('id', 'name')->get(),
+            'products' => Product::select('id', 'name', 'has_variants')->get(),
             'units' => Unit::select('id', 'name')->get(),
         ]);
     }

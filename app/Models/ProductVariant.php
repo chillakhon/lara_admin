@@ -2,14 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasRelationships;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductVariant extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasRelationships;
 
     protected $fillable = [
         'product_id',
@@ -50,7 +56,7 @@ class ProductVariant extends Model
             ->first();
     }
 
-    public function images()
+    public function images(): MorphToMany
     {
         return $this->morphToMany(Image::class, 'imageable')
             ->withPivot(['id'])
@@ -79,26 +85,27 @@ class ProductVariant extends Model
             ->first();
     }
 
-    public function activeRecipe()
+    public function activeRecipe(): HasOne
     {
         return $this->hasOne(Recipe::class)
             ->where('is_active', true)
             ->where('is_default', true);
     }
 
-    public function unit()
+    public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
     }
 
-    public function productionBatches()
+    public function productionBatches(): HasMany
     {
         return $this->hasMany(ProductionBatch::class);
     }
 
-    public function inventoryBalance()
+    public function inventoryBalances(): HasMany
     {
-        return $this->morphOne(InventoryBalance::class, 'item');
+        return $this->hasMany(InventoryBalance::class, 'item_id')
+            ->where('item_type', 'variant');
     }
 
     public function getCurrentStock(): float
@@ -115,4 +122,11 @@ class ProductVariant extends Model
     {
         return $this->getCurrentStock() >= $quantity;
     }
+
+    public function morphClass()
+    {
+        return 'App\\Models\\ProductVariant';
+    }
+
+
 }

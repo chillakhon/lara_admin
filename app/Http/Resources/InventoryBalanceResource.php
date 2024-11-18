@@ -2,28 +2,51 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Request;
+use App\Models\Material;
+use App\Models\Product;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class InventoryBalanceResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray($request)
     {
+        $item = $this->item;
+        
+        if (!$item) {
+            return null;
+        }
+
         return [
             'id' => $this->id,
-            'item_id' => $this->item_id,
             'item_type' => $this->item_type,
-            'name' => $this->item->title ?? $this->item->name ?? 'Unknown',
-            'sku' => $this->item->sku ?? 'N/A',
-            'type' => $this->item_type === 'App\\Models\\Material' ? 'Материал' : 'Продукт',
+            'item_id' => $this->item_id,
             'quantity' => $this->total_quantity,
-            'unit' => $this->unit->abbreviation,
             'average_price' => $this->average_price,
+            'unit' => $this->unit?->name,
+            'item' => [
+                'id' => $item->id,
+                'name' => $this->item_type === 'material' ? $item->title : $item->name,
+                'has_variants' => $this->item_type === 'product' ? $item->has_variants : false,
+                'variants' => $this->when(
+                    $this->item_type === 'product' && $item->has_variants,
+                    function() use ($item) {
+                        return $item->variants->map(function($variant) {
+                            return [
+                                'id' => $variant->id,
+                                'name' => $variant->name,
+                                'sku' => $variant->sku,
+                                'inventory_balance' => [
+                                    'quantity' => $variant->inventoryBalance?->total_quantity ?? 0,
+                                ],
+                                'unit' => [
+                                    'id' => $variant->unit?->id,
+                                    'name' => $variant->unit?->name,
+                                ],
+                            ];
+                        });
+                    }
+                ),
+            ],
         ];
     }
 }

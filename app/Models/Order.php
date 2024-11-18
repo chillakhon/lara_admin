@@ -21,6 +21,11 @@ class Order extends Model
         'discount_amount'
     ];
 
+    protected $casts = [
+        'total_amount' => 'float',
+        'discount_amount' => 'float'
+    ];
+
     public function client()
     {
         return $this->belongsTo(Client::class);
@@ -36,7 +41,10 @@ class Order extends Model
         return $this->belongsTo(PromoCode::class);
     }
 
-
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
+    }
 
     public function updateTotalAmount()
     {

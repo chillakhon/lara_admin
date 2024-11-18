@@ -31,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
             'material' => \App\Models\Material::class,
             'Product' => \App\Models\Product::class,
             'product' => \App\Models\Product::class,
+            'Variant' => \App\Models\ProductVariant::class,
+            'variant' => \App\Models\ProductVariant::class,
         ]);
 
     }

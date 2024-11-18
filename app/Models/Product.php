@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -79,7 +80,7 @@ class Product extends Model
         return $this->morphMany(InventoryTransaction::class, 'item');
     }
 
-    public function variants()
+    public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
     }
@@ -99,7 +100,7 @@ class Product extends Model
             ->withTimestamps();
     }
 
-    public function activeVariants()
+    public function activeVariants(): HasMany
     {
         return $this->hasMany(ProductVariant::class)->where('is_active', true);
     }
