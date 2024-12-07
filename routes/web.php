@@ -18,6 +18,13 @@ use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\RecipeController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\FieldTypeController;
+use App\Http\Controllers\FieldGroupController;
+use App\Http\Controllers\ContentBlockController;
+use App\Http\Controllers\ContentController;
+use App\Http\Controllers\ClientLevelController;
+use App\Http\Controllers\Admin\LeadController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -215,18 +222,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
         // Orders
-            Route::prefix('orders')->name('orders.')->group(function () {
-                Route::get('/', [OrderController::class, 'index'])->name('index');
-                Route::post('/', [OrderController::class, 'store'])->name('store');
-                Route::get('/{order}', [OrderController::class, 'show'])->name('show');
-                Route::put('/{order}', [OrderController::class, 'update'])->name('update');
-                Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
-                
-                // Дополнительные действия с заказами
-                Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
-                Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');
-                Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');
-            });
+        Route::prefix('orders')->name('orders.')->group(function () {
+            Route::get('/', [OrderController::class, 'index'])->name('index');
+            Route::post('/', [OrderController::class, 'store'])->name('store');
+            Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+            Route::put('/{order}', [OrderController::class, 'update'])->name('update');
+            Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
+
+            // Дополнительные действия с заказами
+            Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
+            Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');
+            Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');
+        });
 
 
         // Маршруты, доступные только администраторам
@@ -252,15 +259,56 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Обновление разрешений для роли
             Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.updatePermissions');
         });
+
+        // Content Management Routes
+        Route::prefix('content')->name('content.')->group(function () {
+
+            Route::get('/', [ContentController::class, 'index'])->name('index');
+
+            // Типы полей
+            Route::get('/field-types', [FieldTypeController::class, 'index'])->name('field-types.index');
+            Route::post('/field-types', [FieldTypeController::class, 'store'])->name('field-types.store');
+            Route::put('/field-types/{fieldType}', [FieldTypeController::class, 'update'])->name('field-types.update');
+            Route::delete('/field-types/{fieldType}', [FieldTypeController::class, 'destroy'])->name('field-types.destroy');
+
+            // Группы полей
+            Route::get('/field-groups', [FieldGroupController::class, 'index'])->name('field-groups.index');
+            Route::post('/field-groups', [FieldGroupController::class, 'store'])->name('field-groups.store');
+            Route::put('/field-groups/{fieldGroup}', [FieldGroupController::class, 'update'])->name('field-groups.update');
+            Route::delete('/field-groups/{fieldGroup}', [FieldGroupController::class, 'destroy'])->name('field-groups.destroy');
+
+            // Блоки контента
+            Route::get('/blocks', [ContentBlockController::class, 'index'])->name('blocks.index');
+            Route::post('/blocks', [ContentBlockController::class, 'store'])->name('blocks.store');
+            Route::put('/blocks/{block}', [ContentBlockController::class, 'update'])->name('blocks.update');
+            Route::delete('/blocks/{block}', [ContentBlockController::class, 'destroy'])->name('blocks.destroy');
+
+            // Контент страниц
+            Route::get('/pages', [PageController::class, 'index'])->name('pages.index');
+            Route::post('/pages', [PageController::class, 'store'])->name('pages.store');
+            Route::put('/pages/{pageContent}', [PageController::class, 'update'])->name('pages.update');
+            Route::delete('/pages/{pageContent}', [PageController::class, 'destroy'])->name('pages.destroy');
+
+            // Управление медиафайлами
+            // Route::post('/upload-image', [MediaController::class, 'uploadImage'])->name('upload-image');
+            // Route::post('/upload-gallery', [MediaController::class, 'uploadGallery'])->name('upload-gallery');
+            // Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
+        });
+
+        Route::resource('client-levels', ClientLevelController::class);
+
+        
+        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
+        Route::put('/leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
+        Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
+        Route::post('/leads/create-client', [LeadController::class, 'createClient'])->name('leads.create-client');
     });
-
-
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

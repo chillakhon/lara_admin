@@ -17,4 +17,21 @@ export default defineConfig({
             },
         }),
     ],
+    base: '/build/',
+    build: {
+        outDir: 'public/build',
+        rollupOptions: {
+            output: {
+                chunkFileNames: 'assets/js/[name]-[hash].js',
+                entryFileNames: 'assets/js/[name]-[hash].js',
+                assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
+            }
+        },
+        manifest: true,
+    },
+    resolve: {
+        alias: {
+            '@': '/resources/js'
+        }
+    }
 });

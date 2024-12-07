@@ -16,21 +16,21 @@ class ProductResource extends JsonResource
             'description' => $this->description,
             'has_variants' => $this->has_variants,
             'allow_preorder' => $this->allow_preorder,
-            'default_unit' => $this->whenLoaded('defaultUnit', function() {
+            'default_unit' => $this->whenLoaded('defaultUnit', function () {
                 return [
                     'id' => $this->defaultUnit->id,
                     'name' => $this->defaultUnit->name,
                 ];
             }),
-            'categories' => $this->whenLoaded('categories', function() {
-                return $this->categories->map(function($category) {
+            'categories' => $this->whenLoaded('categories', function () {
+                return $this->categories->map(function ($category) {
                     return [
                         'id' => $category->id,
                         'name' => $category->name,
                     ];
                 });
             }),
-            'main_image' => $this->whenLoaded('images', function() {
+            'main_image' => $this->whenLoaded('images', function () {
                 $mainImage = $this->images
                     ->sortBy('order')
                     ->firstWhere('is_main', true) ??
@@ -41,7 +41,7 @@ class ProductResource extends JsonResource
                     'url' => $mainImage->url,
                 ] : null;
             }),
-            'price_range' => $this->whenLoaded('activeVariants', function() {
+            'price_range' => $this->whenLoaded('activeVariants', function () {
                 $prices = $this->activeVariants->pluck('price');
                 if ($prices->isEmpty()) {
                     return null;
@@ -51,14 +51,14 @@ class ProductResource extends JsonResource
                     'max' => $prices->max(),
                 ];
             }),
-            'variants' => $this->whenLoaded('activeVariants', function() {
-                return $this->activeVariants->map(function($variant) {
+            'variants' => $this->whenLoaded('activeVariants', function () {
+                return $this->activeVariants->map(function ($variant) {
                     return [
                         'id' => $variant->id,
                         'price' => $variant->price,
                         'stock' => $variant->stock,
                         'unit' => $variant->unit->name ?? null,
-                        'option_values' => $variant->optionValues->map(function($optionValue) {
+                        'option_values' => $variant->optionValues->map(function ($optionValue) {
                             return [
                                 'id' => $optionValue->id,
                                 'name' => $optionValue->name,
@@ -69,10 +69,11 @@ class ProductResource extends JsonResource
                                 ],
                             ];
                         }),
-                        'images' => $variant->images->map(function($image) {
+                        'images' => $variant->images->map(function ($image) {
                             return [
                                 'id' => $image->id,
                                 'url' => $image->url,
+                                'path' => $image->path,
                             ];
                         }),
                     ];
@@ -83,5 +84,3 @@ class ProductResource extends JsonResource
         ];
     }
 }
-
-

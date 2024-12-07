@@ -47,7 +47,9 @@ class Category extends Model
 
     public function children()
     {
-        return $this->hasMany(Category::class, 'parent_id');
+        return $this->hasMany(Category::class, 'parent_id')
+            ->with('children')
+            ->defaultOrder();
     }
 
     public function products()
@@ -71,5 +73,10 @@ class Category extends Model
     public function colorOptions(): HasMany
     {
         return $this->hasMany(ColorOption::class);
+    }
+
+    public function scopeDefaultOrder($query)
+    {
+        return $query->orderBy('_lft');
     }
 }

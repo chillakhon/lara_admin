@@ -1,20 +1,19 @@
 <?php
 
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CategoryResource;
 use App\Models\Category;
-use Illuminate\Http\Request;
+use App\Http\Resources\CategoryResource;
 
 class CategoryController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $categories = Category::withDepth()
-            ->having('depth', '=', 0)
-            ->with('descendants')
+        // Получаем только корневые категории с их потомками
+        $categories = Category::with('children')
+            ->whereIsRoot()
+            ->defaultOrder()
             ->get();
 
         return CategoryResource::collection($categories);

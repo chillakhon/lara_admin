@@ -3,6 +3,7 @@ import {ref} from 'vue';
 import DashboardLayout from '@/Layouts/DashboardLayout.vue';
 import BreadCrumbs from "@/Components/BreadCrumbs.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
+import Badge from "@/Components/Badge.vue";
 
 const props = defineProps({
     order: {
@@ -55,177 +56,230 @@ const getStatusLabel = (status) => {
 <template>
     <DashboardLayout>
         <template #header>
-            <div class="space-y-4">
-                <BreadCrumbs :breadcrumbs="[
-                    { name: 'Заказы', href: route('dashboard.orders.index') },
-                    { name: `Заказ №${order.order_number}`, href: '#' }
-                ]"/>
-                <div class="flex justify-between items-center">
-                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <ShoppingBagIcon class="w-8 h-8 text-primary-600"/>
-                        Заказ №{{ order.order_number }}
-                    </h1>
-                    <div class="flex gap-3">
-                        <PrimaryButton
-                            
-                            class="bg-primary-600 hover:bg-primary-700"
-                        >
-                            Редактировать
-                        </PrimaryButton>
-                    </div>
+            <BreadCrumbs :breadcrumbs="breadCrumbs"/>
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">
+                    Заказ #{{ order.order_number }}
+                </h1>
+                <div class="flex gap-2">
+                    <Badge :type="getStatusBadgeType(order.status)">
+                        {{ getStatusLabel(order.status) }}
+                    </Badge>
+                    <Badge :type="getPaymentStatusBadgeType(order.payment_status)">
+                        {{ getPaymentStatusLabel(order.payment_status) }}
+                    </Badge>
                 </div>
             </div>
         </template>
 
-        <div class="space-y-6">
-            <!-- Основная информация -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Информация о заказе -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-                    <h3 class="text-lg font-medium mb-4 flex items-center gap-2">
-                        <ClipboardDocumentListIcon class="w-5 h-5 text-primary-600"/>
-                        Информация о заказе
-                    </h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600 dark:text-gray-400">Статус</span>
-                            <span :class="getStatusBadgeClass(order.status)"
-                                  class="px-3 py-1 rounded-full text-sm font-medium">
-                                {{ getStatusLabel(order.status) }}
-                            </span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600 dark:text-gray-400">Дата создания</span>
-                            <span class="font-medium">{{ formatDate(order.created_at) }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600 dark:text-gray-400">Сумма заказа</span>
-                            <span class="font-medium text-primary-600">{{ formatPrice(order.total_amount) }}</span>
-                        </div>
-                        <div v-if="order.discount_amount > 0" class="flex justify-between items-center">
-                            <span class="text-gray-600 dark:text-gray-400">Скидка</span>
-                            <span class="font-medium text-green-600">-{{ formatPrice(order.discount_amount) }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Информация о клиенте -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-                    <h3 class="text-lg font-medium mb-4 flex items-center gap-2">
-                        <UserIcon class="w-5 h-5 text-primary-600"/>
-                        Информация о клиенте
-                    </h3>
-                    <div class="flex items-center gap-4 mb-4">
-                        <div class="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-                            <span class="text-lg font-medium text-primary-600">
-                                {{ order.client.first_name[0] }}{{ order.client.last_name[0] }}
-                            </span>
-                        </div>
-                        <div>
-                            <div class="font-medium">{{ order.client.first_name }} {{ order.client.last_name }}</div>
-                            <div class="text-sm text-gray-500">{{ order.client.email }}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Промокод -->
-                <div v-if="order.promo_code" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-                    <h3 class="text-lg font-medium mb-4 flex items-center gap-2">
-                        <TagIcon class="w-5 h-5 text-primary-600"/>
-                        Примененный промокод
-                    </h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600 dark:text-gray-400">Код</span>
-                            <span class="font-medium">{{ order.promo_code.code }}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-gray-600 dark:text-gray-400">Скидка</span>
-                            <span class="font-medium text-green-600">
-                                {{ order.promo_code.discount_type === 'percentage' 
-                                    ? order.promo_code.discount_value + '%' 
-                                    : formatPrice(order.promo_code.discount_value) }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Товары -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-lg font-medium">Товары в заказе</h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Товар
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Вариант
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Цена
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Количество
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Сумма
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <tr v-for="item in order.items" :key="item.id" 
-                                class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
+        <div class="py-6">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Информация о заказе -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Состав заказа -->
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                            <div class="px-4 py-5 sm:px-6 border-b dark:border-gray-700">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                                    Состав заказа
+                                </h3>
+                            </div>
+                            <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <div v-for="item in order.items" :key="item.id" 
+                                     class="p-4 flex items-center">
+                                    <div class="flex-shrink-0 w-16 h-16">
                                         <img v-if="item.product.image" 
-                                             :src="item.product.image" 
-                                             class="h-10 w-10 rounded-lg object-cover mr-3"
-                                             :alt="item.product.name"/>
-                                        <div>
-                                            <div class="font-medium">{{ item.product.name }}</div>
-                                            <div class="text-sm text-gray-500">
-                                                Артикул: {{ item.product.sku }}
+                                             :src="item.product.image.url"
+                                             class="w-full h-full object-cover rounded-lg"
+                                             :alt="item.product.name">
+                                        <div v-else 
+                                             class="w-full h-full bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                            <svg class="w-8 h-8 text-gray-400" fill="none" 
+                                                 stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" 
+                                                      stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4 flex-1">
+                                        <div class="flex justify-between">
+                                            <div>
+                                                <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ item.product.name }}
+                                                </h4>
+                                                <p v-if="item.variant" 
+                                                   class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ item.variant.name }}
+                                                </p>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ formatPrice(item.price) }}
+                                                </p>
+                                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                                    × {{ item.quantity }}
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    {{ item.variant?.name || '—' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    {{ formatPrice(item.price) }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    {{ item.quantity }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap font-medium">
-                                    {{ formatPrice(item.price * item.quantity) }}
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot class="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <td colspan="4" class="px-6 py-4 text-right font-medium">
-                                    Итого:
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap font-medium text-primary-600">
-                                    {{ formatPrice(order.total_amount) }}
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
+                                </div>
+                            </div>
+                            <div class="px-4 py-5 sm:px-6 border-t dark:border-gray-700">
+                                <dl class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <dt class="text-sm text-gray-500 dark:text-gray-400">Подытог</dt>
+                                        <dd class="text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ formatPrice(order.subtotal) }}
+                                        </dd>
+                                    </div>
+                                    <div v-if="order.discount_amount" class="flex justify-between">
+                                        <dt class="text-sm text-gray-500 dark:text-gray-400">Скидка</dt>
+                                        <dd class="text-sm font-medium text-green-600 dark:text-green-400">
+                                            -{{ formatPrice(order.discount_amount) }}
+                                        </dd>
+                                    </div>
+                                    <div class="flex justify-between pt-3 border-t dark:border-gray-700">
+                                        <dt class="text-base font-medium text-gray-900 dark:text-white">Итого</dt>
+                                        <dd class="text-base font-medium text-gray-900 dark:text-white">
+                                            {{ formatPrice(order.total_amount) }}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
 
-            <!-- Примечания -->
-            <div v-if="order.notes" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-                <h3 class="text-lg font-medium mb-4">Примечания к заказу</h3>
-                <p class="text-gray-600 dark:text-gray-400 whitespace-pre-line">{{ order.notes }}</p>
+                        <!-- История заказа -->
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                            <div class="px-4 py-5 sm:px-6 border-b dark:border-gray-700">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                                    История заказа
+                                </h3>
+                            </div>
+                            <div class="flow-root">
+                                <ul class="-mb-8">
+                                    <li v-for="(event, eventIdx) in order.history" :key="event.id">
+                                        <div class="relative pb-8">
+                                            <span v-if="eventIdx !== order.history.length - 1" 
+                                                  class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700" 
+                                                  aria-hidden="true"/>
+                                            <div class="relative flex space-x-3">
+                                                <div>
+                                                    <span :class="[
+                                                        getHistoryEventIconClass(event),
+                                                        'h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white dark:ring-gray-800'
+                                                    ]">
+                                                        <!-- Иконка события -->
+                                                    </span>
+                                                </div>
+                                                <div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                                    <div>
+                                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                            {{ event.comment }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="whitespace-nowrap text-right text-sm text-gray-500 dark:text-gray-400">
+                                                        <time :datetime="event.created_at">
+                                                            {{ formatDate(event.created_at) }}
+                                                        </time>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Боковая панель -->
+                    <div class="space-y-6">
+                        <!-- Информация о клиенте -->
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg">
+                            <div class="px-4 py-5 sm:px-6 border-b dark:border-gray-700">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                                    Информация о клиенте
+                                </h3>
+                            </div>
+                            <div class="px-4 py-5 sm:px-6">
+                                <div v-if="order.client" class="space-y-4">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                            Имя
+                                        </p>
+                                        <p class="mt-1 text-sm text-gray-900 dark:text-white">
+                                            {{ order.client.full_name }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                            Email
+                                        </p>
+                                        <p class="mt-1 text-sm text-gray-900 dark:text-white">
+                                            {{ order.client.email }}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                            Телефон
+                                        </p>
+                                        <p class="mt-1 text-sm text-gray-900 dark:text-white">
+                                            {{ order.client.phone }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div v-else-if="order.lead" class="space-y-4">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                            Лид #{{ order.lead.id }}
+                                        </p>
+                                        <PrimaryButton @click="createClient" class="mt-4">
+                                            Создать клиента
+                                        </PrimaryButton>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Информация о платеже -->
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg">
+                            <div class="px-4 py-5 sm:px-6 border-b dark:border-gray-700">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                                    Информация о платеже
+                                </h3>
+                            </div>
+                            <div class="px-4 py-5 sm:px-6">
+                                <dl class="space-y-4">
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                            Метод оплаты
+                                        </dt>
+                                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                                            {{ getPaymentMethodLabel(order.payment_method) }}
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                            Статус оплаты
+                                        </dt>
+                                        <dd class="mt-1">
+                                            <Badge :type="getPaymentStatusBadgeType(order.payment_status)">
+                                                {{ getPaymentStatusLabel(order.payment_status) }}
+                                            </Badge>
+                                        </dd>
+                                    </div>
+                                    <div v-if="order.payment_id">
+                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                            ID транзакции
+                                        </dt>
+                                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                                            {{ order.payment_id }}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </DashboardLayout>

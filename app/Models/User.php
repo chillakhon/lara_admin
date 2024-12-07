@@ -14,7 +14,7 @@ class User extends Authenticatable
     protected $fillable = [
         'email',
         'password',
-        'type',
+        'type'
     ];
 
     protected $hidden = [
@@ -26,6 +26,10 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public const TYPE_CLIENT = 'client';
+    public const TYPE_ADMIN = 'admin';
+    public const TYPE_MANAGER = 'manager';
 
     public function adminUser()
     {
@@ -54,5 +58,10 @@ class User extends Authenticatable
         }
 
         return $this->adminUser->permissions && in_array($permission, $this->adminUser->permissions);
+    }
+
+    public function isClient(): bool
+    {
+        return $this->type === self::TYPE_CLIENT;
     }
 }
