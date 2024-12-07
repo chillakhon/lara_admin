@@ -131,7 +131,6 @@
     import PrimaryButton from '@/Components/PrimaryButton.vue';
     import Pagination from '@/Components/Pagination.vue';
     import ContextMenu from '@/Components/ContextMenu.vue';
-    //import { PlusIcon } from '@heroicons/vue/24/outline';
 
     const props = defineProps({
         pages: Object, // Пагинированные данные

@@ -31,8 +31,8 @@
                                 <td class="px-4 py-3">{{ block.fieldGroup?.name }}</td>
                                 <td class="px-4 py-3">{{ block.description }}</td>
                                 <td class="px-4 py-3">
-                                    <ContextMenu 
-                                        :items="menuItems" 
+                                    <ContextMenu
+                                        :items="menuItems"
                                         @action="(action) => handleMenuAction(action, block)"
                                     />
                                 </td>
@@ -50,20 +50,20 @@
             </template>
             <template #content>
                 <form @submit.prevent="submitForm" class="space-y-6">
-                    <TextInput 
-                        v-model="form.name" 
-                        label="Название блока" 
-                        :error="form.errors.name" 
+                    <TextInput
+                        v-model="form.name"
+                        label="Название блока"
+                        :error="form.errors.name"
                         required
                     />
-                    
-                    <TextInput 
-                        v-model="form.key" 
-                        label="Ключ блока" 
-                        :error="form.errors.key" 
+
+                    <TextInput
+                        v-model="form.key"
+                        label="Ключ блока"
+                        :error="form.errors.key"
                         required
                     />
-                    
+
                     <SelectInput
                         v-model="form.field_group_id"
                         :options="fieldGroups"
@@ -71,7 +71,7 @@
                         :error="form.errors.field_group_id"
                         required
                     />
-                    
+
                     <TextArea
                         v-model="form.description"
                         label="Описание"
@@ -102,7 +102,6 @@ import SelectInput from '@/Components/SelectInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import Pagination from '@/Components/Pagination.vue';
 import ContextMenu from '@/Components/ContextMenu.vue';
-import { PlusIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
     blocks: Object,
