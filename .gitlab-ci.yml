@@ -90,27 +90,45 @@ atmo_deploy:
   only:
     - master
   variables:
-    HOST: $ATMO_HOST
-    USER: $ATMO_USER
-    PASSWORD: $ATMO_PASSWORD
-    APP_PATH: $ATMO_APP_PATH
+    SSH_HOST: $ATMO_HOST
+    SSH_USER: $ATMO_USER
+    SSH_PASSWORD: $ATMO_PASSWORD
+    SSH_APP_PATH: $ATMO_APP_PATH
   script:
-    - export SSHPASS=$PASSWORD
+    - |
+      echo "User: $SSH_USER"
+      echo "Host: $SSH_HOST"
+      echo "App Path: $SSH_APP_PATH"
+      echo "Password is set: $([[ -n $SSH_PASSWORD ]] && echo 'Yes' || echo 'No')"
+    - export SSHPASS=$SSH_PASSWORD
 
-    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
-      rm -rf $APP_PATH/*
+    - sshpass -e ssh $SSH_USER@$SSH_HOST -o stricthostkeychecking=no "
+      rm -rf $SSH_APP_PATH/*
       "
-    - sshpass -e scp -o stricthostkeychecking=no -r * $USER@$HOST:$APP_PATH
-    - sshpass -e ssh $USER@$HOST -o stricthostkeychecking=no "
-      cd $APP_PATH
+
+    - |
+      sshpass -e ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "cat << EOF > $SSH_APP_PATH/.htaccess
+      <IfModule mod_rewrite.c>
+      RewriteEngine On
+      RewriteCond %{REQUEST_URI} !/public
+      RewriteRule ^(.*)$ public/\$1 [L]
+      </IfModule>
+      EOF"
+
+    - sshpass -e ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "cat $SSH_APP_PATH/.htaccess"
+
+    - sshpass -e scp -o stricthostkeychecking=no -r * $SSH_USER@$SSH_HOST:$SSH_APP_PATH
+    - sshpass -e ssh $SSH_USER@$SSH_HOST -o stricthostkeychecking=no "
+      cd $SSH_APP_PATH
       && rm -rf .env
       && touch .env
       && echo 'APP_NAME=\"$ATMO_APP_NAME\"' >> .env
-      && echo "APP_ENV=production" >> .env
+      && echo 'APP_NAME=\"$ATMO_APP_NAME\"' >> .env
+      && echo "APP_ENV=local" >> .env
       && echo "APP_KEY=" >> .env
-      && echo "APP_DEBUG=false" >> .env
+      && echo "APP_DEBUG=true" >> .env
       && echo "APP_URL=$ATMO_APP_URL" >> .env
-      && echo "ASSET_URL=$ATMO_APP_URL" >> .env
+      && echo "ASSET_URL=${ATMO_APP_URL}/public" >> .env
       && echo "APP_NAME=$ATMO_APP_NAME" >> .env
       && echo "DB_CONNECTION=mysql" >> .env
       && echo "DB_HOST=localhost" >> .env
@@ -120,8 +138,9 @@ atmo_deploy:
       && echo "DB_PASSWORD=${ATMO_DB_PASSWORD@Q}" >> .env
       && php8.3 artisan key:generate
       && cat .env
-      && php8.3 artisan migrate --force
+      && php8.3 artisan migrate:fresh
       && php8.3 artisan cache:clear
       && php8.3 artisan config:cache
-      && php8.3 artisan route:cache
+      && php8.3 artisan route:clear
+      && php8.3 artisan view:clear
       "
