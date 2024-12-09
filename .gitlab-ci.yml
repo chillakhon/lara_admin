@@ -21,6 +21,7 @@ project_build:
   artifacts:
     paths:
       - ./
+      - public/build/
     expire_in: 10 mins
 
 
