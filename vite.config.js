@@ -20,14 +20,17 @@ export default defineConfig({
     base: '/build/',
     build: {
         outDir: 'public/build',
+        manifest: {
+            path: 'public/build',
+            fileName: 'manifest.json'
+        },
         rollupOptions: {
             output: {
                 chunkFileNames: 'assets/js/[name]-[hash].js',
                 entryFileNames: 'assets/js/[name]-[hash].js',
                 assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
             }
-        },
-        manifest: true,
+        }
     },
     resolve: {
         alias: {
