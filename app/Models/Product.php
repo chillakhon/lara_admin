@@ -188,4 +188,17 @@ class Product extends Model
         return strtr($text, $transliterationTable);
     }
 
+    public function reviews(): MorphMany
+    {
+        return $this->morphMany(Review::class, 'reviewable');
+    }
+
+    public function getAverageRatingAttribute(): float
+    {
+        return $this->reviews()
+            ->published()
+            ->verified()
+            ->avg('rating') ?? 0;
+    }
+
 }

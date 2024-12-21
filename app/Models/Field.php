@@ -3,30 +3,47 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Field extends Model
 {
     protected $fillable = [
-        'field_type_id',
-        'field_group_id',
         'name',
         'key',
+        'type',
+        'settings',
         'required',
-        'settings'
+        'order',
+        'parent_id'
     ];
 
     protected $casts = [
-        'required' => 'boolean',
-        'settings' => 'json'
+        'settings' => 'array',
+        'required' => 'boolean'
     ];
 
-    public function fieldType()
+    /**
+     * Дочерние поля (для repeater)
+     */
+    public function children(): HasMany
     {
-        return $this->belongsTo(FieldType::class);
+        return $this->hasMany(Field::class, 'parent_id')->orderBy('order');
     }
 
-    public function fieldGroup()
+    /**
+     * Родительское поле
+     */
+    public function parent(): BelongsTo
     {
-        return $this->belongsTo(FieldGroup::class);
+        return $this->belongsTo(Field::class, 'parent_id');
+    }
+
+    /**
+     * Значения поля
+     */
+    public function values(): HasMany
+    {
+        return $this->hasMany(FieldValue::class);
     }
 }

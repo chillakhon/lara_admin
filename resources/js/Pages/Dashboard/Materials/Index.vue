@@ -205,7 +205,7 @@
                 </PrimaryButton>
             </template>
         </Modal>
-        <!-- Модальное окно подтверждения удаления -->
+        <!-- Модальное окно подтвержден��я удаления -->
         <Modal :show="showDeleteModal" @close="closeDeleteModal">
             <template #title>
                 Подтверждение удаления
@@ -277,10 +277,7 @@ const inventoryForm = useForm({
     description: '',
 })
 
-const unitOptions = computed(() => props.units.map(unit => ({
-    label: unit.name,
-    value: unit.id
-})))
+const unitOptions = computed(() => props.units || []);
 
 const handleContextMenuItemClick = (item, material) => {
     console.log(`Выбрано действие: ${item.action}`);

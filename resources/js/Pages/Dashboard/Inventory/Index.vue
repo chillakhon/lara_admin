@@ -136,9 +136,7 @@ const itemOptions = computed(() => {
     return [];
 });
 
-const unitOptions = computed(() => {
-    return props.units.map(u => ({ label: u.name, value: u.id }));
-});
+const unitOptions = computed(() => props.units || []);
 
 const openModal = (mode, item) => {
     modalMode.value = mode;
@@ -403,7 +401,7 @@ const activeTab = ref('materials');
         <!-- Modal -->
         <Modal :show="showModal" @close="closeModal">
             <template #title>
-                {{ modalMode === 'addStock' ? 'Доб��вить запас' : 'Списать запас' }}
+                {{ modalMode === 'addStock' ? 'Добавить запас' : 'Списать запас' }}
             </template>
 
             <template #content>

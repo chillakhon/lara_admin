@@ -36,6 +36,7 @@ class CreateUserSystem extends Migration
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('client_level_id')->nullable()->constrained('client_levels');
             $table->string('first_name');
             $table->string('last_name');
             $table->string('phone')->nullable();
@@ -44,7 +45,6 @@ class CreateUserSystem extends Migration
             $table->timestamps();
             $table->softDeletes();
             $table->index('phone');
-
         });
 
         // Password reset tokens table

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ContentBlock extends Model
 {
@@ -13,13 +14,8 @@ class ContentBlock extends Model
         'description'
     ];
 
-    public function fieldGroup()
+    public function fieldGroup(): BelongsTo
     {
         return $this->belongsTo(FieldGroup::class);
-    }
-
-    public function pageContents()
-    {
-        return $this->hasMany(PageContent::class);
     }
 }

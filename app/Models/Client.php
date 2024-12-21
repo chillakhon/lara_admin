@@ -50,4 +50,12 @@ class Client extends Model
     {
         return "{$this->first_name} {$this->last_name}";
     }
+
+    /**
+     * Get the orders for the client.
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }

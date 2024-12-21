@@ -191,10 +191,12 @@
                                             class="text-sm font-medium text-primary-600 dark:text-primary-400"
                                         >
                                             {{
-                                                result.name
+                                                result.name?.trim()
                                                     .split(' ')
+                                                    .filter(Boolean)
                                                     .map((n) => n[0])
                                                     .join('')
+                                                    || '?'
                                             }}
                                         </span>
                                     </div>

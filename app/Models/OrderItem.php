@@ -5,24 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderItem extends Model
 {
     use HasFactory;
-    use SoftDeletes;
 
     protected $fillable = [
         'order_id',
         'product_id',
-        'variant_id',
+        'product_variant_id',
         'quantity',
-        'price'
+        'price',
+        'discount'
     ];
 
     protected $casts = [
-        'quantity' => 'float',
-        'price' => 'float'
+        'price' => 'decimal:2',
+        'discount' => 'decimal:2'
     ];
 
     public function order(): BelongsTo
@@ -35,8 +34,8 @@ class OrderItem extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function variant(): BelongsTo
+    public function productVariant(): BelongsTo
     {
-        return $this->belongsTo(ProductVariant::class, 'variant_id');
+        return $this->belongsTo(ProductVariant::class);
     }
 }

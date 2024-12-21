@@ -21,11 +21,12 @@ class FieldGroupController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'fields' => 'required|array',
-            'fields.*.field_type_id' => 'required|exists:field_types,id',
+            'fields' => 'array',
             'fields.*.name' => 'required|string|max:255',
             'fields.*.key' => 'required|string|max:255',
-            'fields.*.required' => 'boolean'
+            'fields.*.field_type_id' => 'required|exists:field_types,id',
+            'fields.*.required' => 'boolean',
+            'fields.*.settings' => 'nullable|array'
         ]);
 
         $fieldGroup = FieldGroup::create([
@@ -43,22 +44,32 @@ class FieldGroupController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'fields' => 'required|array',
-            'fields.*.field_type_id' => 'required|exists:field_types,id',
+            'fields' => 'array',
+            'fields.*.id' => 'nullable|exists:fields,id',
             'fields.*.name' => 'required|string|max:255',
             'fields.*.key' => 'required|string|max:255',
-            'fields.*.required' => 'boolean'
+            'fields.*.field_type_id' => 'required|exists:field_types,id',
+            'fields.*.required' => 'boolean',
+            'fields.*.settings' => 'nullable|array'
         ]);
 
         $fieldGroup->update([
             'name' => $validated['name']
         ]);
 
-        // Удаляем существующие поля и создаем новые
-        $fieldGroup->fields()->delete();
-        foreach ($validated['fields'] as $field) {
-            $fieldGroup->fields()->create($field);
+        // Обновляем или создаем поля
+        foreach ($validated['fields'] as $fieldData) {
+            if (isset($fieldData['id'])) {
+                $field = $fieldGroup->fields()->find($fieldData['id']);
+                $field->update($fieldData);
+            } else {
+                $fieldGroup->fields()->create($fieldData);
+            }
         }
+
+        // Удаляем поля, которых нет в запросе
+        $existingIds = collect($validated['fields'])->pluck('id')->filter();
+        $fieldGroup->fields()->whereNotIn('id', $existingIds)->delete();
 
         return redirect()->back();
     }

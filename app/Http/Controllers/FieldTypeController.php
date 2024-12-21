@@ -19,7 +19,7 @@ class FieldTypeController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|string',
+            'type' => 'required|string|max:255',
             'settings' => 'nullable|array'
         ]);
 
@@ -32,7 +32,7 @@ class FieldTypeController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'type' => 'required|string',
+            'type' => 'required|string|max:255',
             'settings' => 'nullable|array'
         ]);
 

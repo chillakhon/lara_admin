@@ -9,6 +9,7 @@ use App\Models\Lead;
 use App\Models\LeadType;
 use App\Models\Product;
 use App\Models\PromoCode;
+use App\Models\DeliveryMethod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -35,6 +36,14 @@ class OrderController extends Controller
             'payment_method' => 'required|in:cash,card,online',
             'payment_provider' => 'required_if:payment_method,online|nullable|string',
             'promo_code_id' => 'nullable|exists:promo_codes,id',
+            'delivery_method_id' => 'required|exists:delivery_methods,id',
+            'delivery_address' => 'required|array',
+            'delivery_address.city' => 'required|string',
+            'delivery_address.street' => 'required|string',
+            'delivery_address.house' => 'required|string',
+            'delivery_address.apartment' => 'nullable|string',
+            'delivery_address.postal_code' => 'required|string',
+            'delivery_comment' => 'nullable|string',
         ]);
 
         try {
@@ -140,12 +149,27 @@ class OrderController extends Controller
                     : 'Заказ создан от лида'
             ]);
 
+            // Добавляем информацию о доставке
+            $deliveryMethod = DeliveryMethod::findOrFail($request->delivery_method_id);
+            $deliveryService = $deliveryMethod->getDeliveryService();
+            
+            // Рассчитываем стоимость доставки
+            $deliveryRate = $deliveryService->calculateRate($order)->first();
+            
+            $order->update([
+                'delivery_method_id' => $request->delivery_method_id,
+                'delivery_address' => $request->delivery_address,
+                'delivery_cost' => $deliveryRate['price'],
+                'delivery_comment' => $request->delivery_comment,
+                'total_amount' => $order->total_amount + $deliveryRate['price']
+            ]);
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Order created successfully',
-                'order' => $order->load('items', 'client', 'lead', 'promoCode'),
+                'order' => $order->load('items', 'client', 'lead', 'promoCode', 'deliveryMethod'),
             ], 201);
 
         } catch (\Exception $e) {

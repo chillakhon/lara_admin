@@ -18,13 +18,13 @@ const props = defineProps({
     required: Boolean,
     disabled: Boolean,
     error: String,
-    valueKey: {
+    optionValue: {
         type: String,
-        default: 'value'
+        default: 'id'
     },
-    labelKey: {
+    optionLabel: {
         type: String,
-        default: 'label'
+        default: 'name'
     },
     childrenKey: {
         type: String,
@@ -48,8 +48,8 @@ const flattenOptions = (options, depth = 0) => {
     return options.reduce((acc, option) => {
         const flatOption = {
             ...option,
-            [props.labelKey]: `${props.indentChar.repeat(depth)} ${option[props.labelKey]}`,
-            __rawLabel: option[props.labelKey]
+            [props.optionLabel]: `${props.indentChar.repeat(depth)} ${option[props.optionLabel]}`,
+            __rawLabel: option[props.optionLabel]
         };
         acc.push(flatOption);
         if (option[props.childrenKey] && option[props.childrenKey].length > 0) {
@@ -62,7 +62,7 @@ const flattenOptions = (options, depth = 0) => {
 const flatOptions = computed(() => flattenOptions(props.options));
 
 const selectedOption = computed(() => {
-    return flatOptions.value.find(option => option[props.valueKey] === props.modelValue) || null;
+    return flatOptions.value.find(option => option[props.optionValue] === props.modelValue) || null;
 });
 
 const toggleDropdown = () => {
@@ -72,7 +72,7 @@ const toggleDropdown = () => {
 };
 
 const selectOption = (option) => {
-    emit('update:modelValue', option? option[props.valueKey] : null);
+    emit('update:modelValue', option ? option[props.optionValue] : null);
     isOpen.value = false;
 };
 
@@ -135,14 +135,14 @@ const labelClasses = computed(() => {
                         </span>
                     </button>
                 </li>
-                <li v-for="option in flatOptions" :key="option[valueKey]">
+                <li v-for="option in flatOptions" :key="option[optionValue]">
                     <button
                         type="button"
                         class="inline-flex w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-white"
                         @click="selectOption(option)"
                     >
                         <span class="inline-flex items-center">
-                            {{ option[labelKey] }}
+                            {{ option[optionLabel] }}
                         </span>
                     </button>
                 </li>

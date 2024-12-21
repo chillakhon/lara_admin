@@ -3,19 +3,34 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PageContent extends Model
 {
-    protected $fillable = ['page_id', 'block_name', 'language'];
+    protected $fillable = [
+        'page_id',
+        'content_block_id',
+        'field_values',
+        'order'
+    ];
 
-    public function images(): MorphMany
+    protected $casts = [
+        'field_values' => 'array'
+    ];
+
+    /**
+     * Get the page that owns the content.
+     */
+    public function page(): BelongsTo
     {
-        return $this->morphMany(Image::class, 'imageable');
+        return $this->belongsTo(Page::class);
     }
 
-    public function customFields()
+    /**
+     * Get the content block that owns the content.
+     */
+    public function contentBlock(): BelongsTo
     {
-        return $this->hasMany(CustomField::class);
+        return $this->belongsTo(ContentBlock::class);
     }
 } 
