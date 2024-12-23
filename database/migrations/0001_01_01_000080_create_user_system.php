@@ -14,37 +14,32 @@ class CreateUserSystem extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('type'); // 'admin', 'manager', 'client'
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
             $table->index('email');
-            $table->index('type');
         });
 
-        // Admin users table
-        Schema::create('admin_users', function (Blueprint $table) {
+        // User profiles table
+        Schema::create('user_profiles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('first_name');
-            $table->string('last_name');
-            $table->string('role'); // 'admin', 'manager', etc.
-            $table->json('permissions')->nullable();
-            $table->timestamps();
-        });
-
-        // Clients table
-        Schema::create('clients', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('client_level_id')->nullable()->constrained('client_levels');
             $table->string('first_name');
             $table->string('last_name');
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
+            $table->timestamps();
+            $table->index('phone');
+        });
+
+        // Clients table (сохраняем, но упрощаем)
+        Schema::create('clients', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('client_level_id')->nullable()->constrained('client_levels');
             $table->decimal('bonus_balance', 10, 2)->default(0);
             $table->timestamps();
             $table->softDeletes();
-            $table->index('phone');
         });
 
         // Password reset tokens table
@@ -70,7 +65,7 @@ class CreateUserSystem extends Migration
         Schema::dropIfExists('sessions');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('clients');
-        Schema::dropIfExists('admin_users');
+        Schema::dropIfExists('user_profiles');
         Schema::dropIfExists('users');
     }
 }

@@ -3,18 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable, HasFactory;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'email',
         'password',
-        'type'
     ];
 
     protected $hidden = [
@@ -27,13 +27,9 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public const TYPE_CLIENT = 'client';
-    public const TYPE_ADMIN = 'admin';
-    public const TYPE_MANAGER = 'manager';
-
-    public function adminUser()
+    public function profile()
     {
-        return $this->hasOne(AdminUser::class);
+        return $this->hasOne(UserProfile::class);
     }
 
     public function client()
@@ -41,27 +37,63 @@ class User extends Authenticatable
         return $this->hasOne(Client::class);
     }
 
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'user_roles')
+            ->withTimestamps();
+    }
+
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class, 'user_permissions')
+            ->withTimestamps();
+    }
+
     public function hasRole($role)
     {
-        return $this->type === $role;
+        if (is_string($role)) {
+            return $this->roles->where('slug', $role)->isNotEmpty();
+        }
+        return $role->intersect($this->roles)->isNotEmpty();
     }
 
     public function hasAnyRole($roles)
     {
-        return in_array($this->type, (array) $roles);
+        if (is_string($roles)) {
+            $roles = [$roles];
+        }
+        return $this->roles->whereIn('slug', $roles)->isNotEmpty();
     }
 
     public function hasPermission($permission)
     {
-        if ($this->type === 'client') {
-            return false;
+        // Проверяем прямые права пользователя
+        if ($this->permissions->where('slug', $permission)->isNotEmpty()) {
+            return true;
         }
 
-        return $this->adminUser->permissions && in_array($permission, $this->adminUser->permissions);
+        // Проверяем права через роли
+        foreach ($this->roles as $role) {
+            if ($role->permissions->where('slug', $permission)->isNotEmpty()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    public function isClient(): bool
+    public function hasAnyPermission($permissions)
     {
-        return $this->type === self::TYPE_CLIENT;
+        if (is_string($permissions)) {
+            $permissions = [$permissions];
+        }
+
+        foreach ($permissions as $permission) {
+            if ($this->hasPermission($permission)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

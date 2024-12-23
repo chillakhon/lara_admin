@@ -7,6 +7,7 @@ use App\Models\TaskStatus;
 use App\Models\TaskPriority;
 use App\Models\TaskLabel;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -28,45 +29,67 @@ class TaskController extends Controller
         $tasks = Task::with([
             'status',
             'priority',
-            'creator',
-            'assignee.adminUser',
+            'creator.profile',
+            'assignee.profile',
             'labels',
-            'comments.user'
+            'comments.user.profile'
         ])->get();
+
+        // Получаем пользователей, исключая клиентов
+        $users = User::whereHas('roles', function($query) {
+                $query->where('slug', '!=', 'client');
+            })
+            ->with('profile')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'email' => $user->email,
+                    'name' => $user->profile->full_name,
+                    'display_name' => $user->profile->full_name ?: $user->email
+                ];
+            });
 
         return Inertia::render('Dashboard/Tasks/Index', [
             'tasks' => $tasks->map(function ($task) {
-                if ($task->assignee) {
-                    $task->assignee = [
+                return [
+                    'id' => $task->id,
+                    'title' => $task->title,
+                    'description' => $task->description,
+                    'status' => $task->status,
+                    'priority' => $task->priority,
+                    'creator' => $task->creator ? [
+                        'id' => $task->creator->id,
+                        'name' => $task->creator->profile->full_name,
+                        'email' => $task->creator->email,
+                    ] : null,
+                    'assignee' => $task->assignee ? [
                         'id' => $task->assignee->id,
+                        'name' => $task->assignee->profile->full_name,
                         'email' => $task->assignee->email,
-                        'name' => $task->assignee->adminUser ? 
-                            $task->assignee->adminUser->first_name . ' ' . $task->assignee->adminUser->last_name : null,
-                        'display_name' => $task->assignee->adminUser ? 
-                            $task->assignee->adminUser->first_name . ' ' . $task->assignee->adminUser->last_name : 
-                            $task->assignee->email
-                    ];
-                }
-                return $task;
+                    ] : null,
+                    'labels' => $task->labels,
+                    'due_date' => $task->due_date,
+                    'estimated_time' => $task->estimated_time,
+                    'created_at' => $task->created_at,
+                    'comments' => $task->comments->map(function ($comment) {
+                        return [
+                            'id' => $comment->id,
+                            'content' => $comment->content,
+                            'user' => [
+                                'id' => $comment->user->id,
+                                'name' => $comment->user->profile->full_name,
+                                'email' => $comment->user->email,
+                            ],
+                            'created_at' => $comment->created_at,
+                        ];
+                    }),
+                ];
             }),
             'statuses' => TaskStatus::orderBy('order')->get(),
             'priorities' => TaskPriority::orderBy('level')->get(),
             'labels' => TaskLabel::get(),
-            'users' => User::where('type', '!=', 'client')
-                ->with('adminUser')
-                ->get()
-                ->map(function ($user) {
-                    return [
-                        'id' => $user->id,
-                        'email' => $user->email,
-                        'type' => $user->type,
-                        'name' => $user->adminUser ? 
-                            $user->adminUser->first_name . ' ' . $user->adminUser->last_name : null,
-                        'display_name' => $user->adminUser ? 
-                            $user->adminUser->first_name . ' ' . $user->adminUser->last_name : 
-                            $user->email
-                    ];
-                }),
+            'users' => $users,
             'filters' => $filters
         ]);
     }
@@ -115,22 +138,69 @@ class TaskController extends Controller
         $task->load([
             'status', 
             'priority', 
-            'creator', 
-            'assignee', 
+            'creator.profile', 
+            'assignee.profile', 
             'labels',
             'parent',
             'subtasks',
-            'comments.user',
+            'comments.user.profile',
             'attachments',
-            'history.user'
+            'history.user.profile'
         ]);
 
+        // Получаем пользователей для формы назначения
+        $users = User::whereHas('roles', function($query) {
+                $query->where('slug', '!=', 'client');
+            })
+            ->with('profile')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'email' => $user->email,
+                    'name' => $user->profile->full_name,
+                    'display_name' => $user->profile->full_name ?: $user->email
+                ];
+            });
+
         return Inertia::render('Dashboard/Tasks/Show', [
-            'task' => $task,
+            'task' => [
+                'id' => $task->id,
+                'title' => $task->title,
+                'description' => $task->description,
+                'status' => $task->status,
+                'priority' => $task->priority,
+                'creator' => $task->creator ? [
+                    'id' => $task->creator->id,
+                    'name' => $task->creator->profile->full_name,
+                    'email' => $task->creator->email,
+                ] : null,
+                'assignee' => $task->assignee ? [
+                    'id' => $task->assignee->id,
+                    'name' => $task->assignee->profile->full_name,
+                    'email' => $task->assignee->email,
+                ] : null,
+                'labels' => $task->labels,
+                'due_date' => $task->due_date,
+                'estimated_time' => $task->estimated_time,
+                'created_at' => $task->created_at,
+                'comments' => $task->comments->map(function ($comment) {
+                    return [
+                        'id' => $comment->id,
+                        'content' => $comment->content,
+                        'user' => [
+                            'id' => $comment->user->id,
+                            'name' => $comment->user->profile->full_name,
+                            'email' => $comment->user->email,
+                        ],
+                        'created_at' => $comment->created_at,
+                    ];
+                }),
+            ],
             'statuses' => TaskStatus::all(),
             'priorities' => TaskPriority::all(),
             'labels' => TaskLabel::all(),
-            'users' => User::where('type', '!=', 'client')->get()
+            'users' => $users
         ]);
     }
 

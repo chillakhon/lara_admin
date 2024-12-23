@@ -49,21 +49,21 @@ Route::get('/test', function () {
         'message' => 'If you see this, Inertia is working!'
     ]);
 });
+Route::get('/', function () {
+    return redirect()->route('login');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard/Index');
     })->name('dashboard');
 
-    Route::prefix('dashboard')->name('dashboard.')->group(function () {
-        //categories
-        Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
-        Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
-        Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
-        Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+    Route::prefix('dashboard')->name('dashboard.')->middleware(['role:super-admin,admin,manager'])->group(function () {
+        // Categories
+        Route::resource('categories', CategoryController::class)->except(['create', 'edit', 'show']);
 
         // Options
-        Route::prefix('options')->name('options.')->group(function () {
+        Route::group(['prefix' => 'options', 'as' => 'options.'], function () {
             Route::get('/', [OptionController::class, 'index'])->name('index');
             Route::post('/', [OptionController::class, 'store'])->name('store');
             Route::put('/{option}', [OptionController::class, 'update'])->name('update');
@@ -71,34 +71,58 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 
         // Materials
-        Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
-        Route::post('/materials', [MaterialController::class, 'store'])->name('materials.store');
-        Route::put('/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
-        Route::delete('/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
-        Route::post('/materials/{material}/add-stock', [MaterialController::class, 'addStock'])->name('dashboard.materials.add-stock');
-        Route::post('/materials/{material}/remove-stock', [MaterialController::class, 'removeStock'])->name('dashboard.materials.remove-stock');
+        Route::group(['prefix' => 'materials', 'as' => 'materials.'], function () {
+            Route::get('/', [MaterialController::class, 'index'])->name('index');
+            Route::post('/', [MaterialController::class, 'store'])->name('store');
+            Route::put('/{material}', [MaterialController::class, 'update'])->name('update');
+            Route::delete('/{material}', [MaterialController::class, 'destroy'])->name('destroy');
+            Route::post('/{material}/add-stock', [MaterialController::class, 'addStock'])->name('add-stock');
+            Route::post('/{material}/remove-stock', [MaterialController::class, 'removeStock'])->name('remove-stock');
+        });
 
         // Products
-        Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-        Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
-        Route::post('/products', [ProductController::class, 'store'])->name('products.store');
-        Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
-        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
-        Route::post('/products/{product}/components', [ProductController::class, 'addComponent'])->name('products.addComponent');
-        Route::delete('/products/{product}/components/{component}', [ProductController::class, 'removeComponent'])->name('products.removeComponent');
-        Route::get('/products/{product}/calculate-cost', [ProductController::class, 'calculateCost'])->name('products.calculateCost');
-        Route::post('/products/{product}/options/attach', [ProductController::class, 'attachOptions'])
-            ->name('products.options.attach');
-        Route::post('products/{product}/variants/bulk-update', [ProductVariantController::class, 'bulkUpdate'])
-            ->name('products.variants.bulk-update');
+        Route::group(['prefix' => 'products', 'as' => 'products.', 'middleware' => ['permission:products.view,products.manage']], function () {
+            Route::get('/', [ProductController::class, 'index'])->name('index');
+            Route::get('/{product}', [ProductController::class, 'show'])->name('show');
+            Route::post('/', [ProductController::class, 'store'])->name('store');
+            Route::put('/{product}', [ProductController::class, 'update'])->name('update');
+            Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
+            Route::post('/{product}/components', [ProductController::class, 'addComponent'])->name('addComponent');
+            Route::delete('/{product}/components/{component}', [ProductController::class, 'removeComponent'])->name('removeComponent');
+            Route::get('/{product}/calculate-cost', [ProductController::class, 'calculateCost'])->name('calculateCost');
+            Route::post('/{product}/options/attach', [ProductController::class, 'attachOptions'])
+                ->name('options.attach');
+            Route::post('/{product}/variants/bulk-update', [ProductVariantController::class, 'bulkUpdate'])
+                ->name('variants.bulk-update');
+            //Options
+            Route::post('/{product}/options', [ProductController::class, 'storeOption'])
+                ->name('options.store');
+            Route::put('/{product}/options/{option}', [ProductController::class, 'updateOption'])
+                ->name('options.update');
+            Route::delete('/{product}/options/{option}', [ProductController::class, 'destroyOption'])
+                ->name('options.destroy');
+            //variants
+            Route::post('/{product}/variants', [ProductVariantController::class, 'store'])->name('variants.store');
+            Route::put('/variants/{variant}', [ProductVariantController::class, 'update'])->name('variants.update');
+            Route::delete('/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('variants.destroy');
+            Route::post('/{product}/variants/generate', [ProductController::class, 'generateVariants'])
+                ->name('products.variants.generate');
 
-        // Product Options
-        Route::post('products/{product}/options', [ProductController::class, 'storeOption'])
-            ->name('products.options.store');
-        Route::put('products/{product}/options/{option}', [ProductController::class, 'updateOption'])
-            ->name('products.options.update');
-        Route::delete('products/{product}/options/{option}', [ProductController::class, 'destroyOption'])
-            ->name('products.options.destroy');
+            //images
+            Route::post('/{product}/images', [ProductImageController::class, 'store'])->name('images.store');
+            Route::delete('/{product}/images/{image}/{variant}', [ProductImageController::class, 'destroy'])->name('images.destroy');
+            Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain'])->name('images.setMain');
+
+            Route::post(
+                '/{product}/variants/{variant}/images',
+                [ProductVariantController::class, 'addImages']
+            )->name('variants.images.store');
+
+            Route::delete(
+                '/{product}/variants/{variant}/images/{image}',
+                [ProductVariantController::class, 'destroyImage']
+            )->name('variants.images.destroy');
+        });
 
         // Product Variants
         Route::prefix('product-variants')->name('product-variants.')->group(function () {
@@ -111,80 +135,55 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 
         Route::group(['prefix' => 'recipes', 'as' => 'recipes.'], function () {
-            // Список всех рецептов
+
             Route::get('/', [RecipeController::class, 'index'])
                 ->name('index');
-
-            // Форма создания нового рецепта
             Route::get('/create', [RecipeController::class, 'create'])
                 ->name('create');
-
-            // Сохранение нового рецепта
             Route::post('/', [RecipeController::class, 'store'])
                 ->name('store');
-
-            // Просмотр рецепта
             Route::get('/{recipe}', [RecipeController::class, 'show'])
                 ->name('show');
-
-            // Форма редактирования рецепта
             Route::get('/{recipe}/edit', [RecipeController::class, 'edit'])
                 ->name('edit');
-
-            // Обновление рецепта
             Route::put('/{recipe}', [RecipeController::class, 'update'])
                 ->name('update');
-
-            // Удаление рецепта
             Route::delete('/{recipe}', [RecipeController::class, 'destroy'])
                 ->name('destroy');
-
-            // Расчет стоимости производства
             Route::post('/estimate-cost', [RecipeController::class, 'estimateCost'])
                 ->name('estimate-cost');
-
-
             Route::post('/{recipe}/cost-rates', [RecipeController::class, 'storeCostRates'])
                 ->name('cost-rates.store');
+
+            Route::post('/{recipe}/duplicate', [RecipeController::class, 'duplicate'])->name('duplicate');
+            Route::get('/{recipe}/compare/{otherRecipe}', [RecipeController::class, 'compare'])->name('compare');
         });
 
+        // Cost Categories
         Route::get('/cost-categories', [CostCategoryController::class, 'index'])
             ->name('cost-categories.index');
-        Route::post('/products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
-        Route::put('/products/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
-        Route::delete('/products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
-        Route::post('products/{product}/variants/generate', [ProductController::class, 'generateVariants'])
-            ->name('products.variants.generate');
 
-        Route::post('/products/{product}/images', [ProductImageController::class, 'store'])->name('product.images.store');
-        Route::delete('/products/{product}/images/{image}/{variant}', [ProductImageController::class, 'destroy'])->name('product.images.destroy');
-        Route::patch('/products/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain'])->name('product.images.setMain');
+        Route::group(['prefix' => 'clients', 'as' => 'clients.'], function () {
+            Route::get('/', [ClientController::class, 'index'])->name('index');
+            Route::get('/{client}', [ClientController::class, 'show'])->name('show');
+            Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
+            Route::put('/{client}', [ClientController::class, 'update'])->name('update');
+            Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
+        });
 
-        Route::delete(
-            '/products/{product}/variants/{variant}/images/{image}',
-            [ProductVariantController::class, 'destroyImage']
-        )->name('products.variants.images.destroy');
+        Route::group(['prefix' => 'orders', 'as' => 'orders.'], function () {
+            Route::get('/', [OrderController::class, 'index'])->name('index');
+            Route::put('/{order}', [OrderController::class, 'update'])->name('update');
+            Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
+        });
 
-        Route::post(
-            '/products/{product}/variants/{variant}/images',
-            [ProductVariantController::class, 'addImages']
-        )->name('products.variants.images.store');
-
-        Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
-        Route::get('/clients/{client}', [ClientController::class, 'show'])->name('clients.show');
-        Route::get('/clients/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit');
-        Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update');
-        Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('dashboard.clients.destroy');
-
-        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-        Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
-        Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
-
-        Route::get('/promo-codes', [PromoCodeController::class, 'index'])->name('promo-codes.index');
-        Route::post('/promo-codes', [PromoCodeController::class, 'store'])->name('promo-codes.store');
-        Route::put('/promo-codes/{promoCode}', [PromoCodeController::class, 'update'])->name('promo-codes.update');
-        Route::delete('/promo-codes/{promoCode}', [PromoCodeController::class, 'destroy'])->name('promo-codes.destroy');
-        Route::get('/promo-codes/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('promo-codes.usage');
+        Route::group(['prefix' => 'promo-codes', 'as' => 'promo-codes.'], function () {
+            Route::get('/', [PromoCodeController::class, 'index'])->name('index');
+            Route::post('/', [PromoCodeController::class, 'store'])->name('store');
+            Route::put('/{promoCode}', [PromoCodeController::class, 'update'])->name('update');
+            Route::delete('/{promoCode}', [PromoCodeController::class, 'destroy'])->name('destroy');
+            Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('usage');
+        });
 
         // Инвентарь
         Route::prefix('inventory')->name('inventory.')->group(function () {
@@ -201,23 +200,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->name('release-reservation');
         });
 
-        Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-        Route::post('/inventory/add', [InventoryController::class, 'addStock'])->name('inventory.add');
-        Route::post('/inventory/remove', [InventoryController::class, 'removeStock'])->name('inventory.remove');
-        Route::get('/inventory/transactions', [InventoryController::class, 'transactions'])->name('inventory.transactions');
-
-        // Рецепты
-        Route::prefix('recipes')->name('recipes.')->group(function () {
-            Route::get('/', [RecipeController::class, 'index'])->name('index');
-            Route::get('/create', [RecipeController::class, 'create'])->name('create');
-            Route::post('/', [RecipeController::class, 'store'])->name('store');
-            Route::get('/{recipe}', [RecipeController::class, 'show'])->name('show');
-            Route::get('/{recipe}/edit', [RecipeController::class, 'edit'])->name('edit');
-            Route::put('/{recipe}', [RecipeController::class, 'update'])->name('update');
-            Route::delete('/{recipe}', [RecipeController::class, 'destroy'])->name('destroy');
-            Route::post('/{recipe}/duplicate', [RecipeController::class, 'duplicate'])->name('duplicate');
-            Route::get('/{recipe}/compare/{otherRecipe}', [RecipeController::class, 'compare'])->name('compare');
-        });
 
         // Производство
         Route::prefix('production')->name('production.')->group(function () {
@@ -238,7 +220,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
         // Orders
-        Route::prefix('orders')->name('orders.')->group(function () {
+        Route::prefix('orders')->name('orders.')->middleware(['role:super-admin,admin,manager', 'permission:orders.view,orders.manage'])->group(function () {
             Route::get('/', [OrderController::class, 'index'])->name('index');
             Route::post('/', [OrderController::class, 'store'])->name('store');
             Route::get('/{order}', [OrderController::class, 'show'])->name('show');
@@ -253,27 +235,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
         // Маршруты, доступные только администраторам
-        Route::middleware(['role:admin'])->group(function () {
+        Route::middleware(['role:super-admin,admin'])->group(function () {
             // Управление пользователями
-            Route::get('/users', [UserController::class, 'index'])->name('users.index');
-            Route::post('/users', [UserController::class, 'store'])->name('users.store');
-            Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-            Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+            Route::prefix('users')->name('users.')->group(function () {
+                Route::get('/', [UserController::class, 'index'])
+                    ->middleware('permission:users.view')
+                    ->name('index');
+                Route::post('/', [UserController::class, 'store'])
+                    ->middleware('permission:users.create')
+                    ->name('store');
+                Route::put('/{user}', [UserController::class, 'update'])
+                    ->middleware('permission:users.edit')
+                    ->name('update');
+                Route::delete('/{user}', [UserController::class, 'destroy'])
+                    ->middleware('permission:users.delete')
+                    ->name('destroy');
+            });
 
-            // Управление ролями
-            Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
-            Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
-            Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
-            Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
-
-            // Управление разрешениями
-            Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
-            Route::post('/permissions', [PermissionController::class, 'store'])->name('permissions.store');
-            Route::put('/permissions/{permission}', [PermissionController::class, 'update'])->name('permissions.update');
-            Route::delete('/permissions/{permission}', [PermissionController::class, 'destroy'])->name('permissions.destroy');
-
-            // Обновление разрешений для роли
-            Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.updatePermissions');
+            // Управление ролями и разрешениями (только для супер-админа)
+            Route::middleware(['role:super-admin'])->group(function () {
+                Route::resource('roles', RoleController::class);
+                Route::resource('permissions', PermissionController::class);
+                Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
+                    ->name('roles.updatePermissions');
+            });
         });
 
         // Content Management Routes
@@ -391,26 +376,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/shipments/{shipment}/cancel', [ShipmentController::class, 'cancel'])->name('shipments.cancel');
         });
 
-        Route::prefix('settings')->name('settings.')->group(function () {
+        Route::group(['prefix' => 'settings', 'as' => 'settings.'], function () {
             Route::get('/general', [SettingsController::class, 'general'])->name('general');
             Route::post('/general', [SettingsController::class, 'updateGeneral']);
-            
+
             Route::get('/integrations', [SettingsController::class, 'integrations'])->name('integrations');
             Route::post('/integrations', [SettingsController::class, 'updateIntegrations']);
-            
+
             Route::get('/api-keys', [SettingsController::class, 'apiKeys'])->name('api-keys');
             Route::post('/api-keys', [SettingsController::class, 'updateApiKeys']);
             Route::delete('/api-keys/{key}', [SettingsController::class, 'deleteApiKey']);
-            
+
             Route::get('/notifications', [SettingsController::class, 'notifications'])->name('notifications');
             Route::post('/notifications', [SettingsController::class, 'updateNotifications']);
+
+            Route::get('/payment', [SettingsController::class, 'payment'])->name('payment');
+            Route::post('/payment', [SettingsController::class, 'updatePayment'])->name('payment.update');
+
+            Route::get('/delivery', [SettingsController::class, 'delivery'])->name('delivery');
+            Route::post('/delivery', [SettingsController::class, 'updateDelivery'])->name('delivery.update');
+
+            Route::get('/{type}', [SettingsController::class, 'show'])
+                ->middleware('permission:settings.manage')
+                ->name('show');
+            Route::post('/{type}', [SettingsController::class, 'update'])
+                ->middleware('permission:settings.manage')
+                ->name('update');
         });
-
-        Route::get('/settings/payment', [SettingsController::class, 'payment'])->name('settings.payment');
-        Route::post('/settings/payment', [SettingsController::class, 'updatePayment'])->name('settings.payment.update');
-
-        Route::get('/settings/delivery', [SettingsController::class, 'delivery'])->name('settings.delivery');
-        Route::post('/settings/delivery', [SettingsController::class, 'updateDelivery'])->name('settings.delivery.update');
     });
 });
 
@@ -452,7 +444,7 @@ Route::prefix('tracking')->name('tracking.')->group(function () {
     Route::get('/', function () {
         return Inertia::render('Tracking/Index');
     })->name('index');
-    
+
     Route::get('/{tracking_number}', [TrackingController::class, 'show'])->name('show');
 });
 

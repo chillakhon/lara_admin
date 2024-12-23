@@ -17,10 +17,7 @@ class Client extends Model
      */
     protected $fillable = [
         'user_id',
-        'first_name',
-        'last_name',
-        'phone',
-        'address',
+        'client_level_id',
         'bonus_balance',
     ];
 
@@ -42,13 +39,11 @@ class Client extends Model
     }
 
     /**
-     * Get the full name of the client.
-     *
-     * @return string
+     * Get the level that owns the client.
      */
-    public function getFullNameAttribute()
+    public function level()
     {
-        return "{$this->first_name} {$this->last_name}";
+        return $this->belongsTo(ClientLevel::class, 'client_level_id');
     }
 
     /**
@@ -57,5 +52,15 @@ class Client extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Get the full name of the client.
+     *
+     * @return string
+     */
+    public function getFullNameAttribute()
+    {
+        return $this->user->profile->full_name;
     }
 }

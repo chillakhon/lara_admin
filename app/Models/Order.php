@@ -22,6 +22,20 @@ class Order extends Model
     const PAYMENT_STATUS_FAILED = 'failed';
     const PAYMENT_STATUS_REFUNDED = 'refunded';
 
+    const STATUSES = [
+        ['value' => 'new', 'label' => 'Новый'],
+        ['value' => 'processing', 'label' => 'В обработке'],
+        ['value' => 'completed', 'label' => 'Завершен'],
+        ['value' => 'cancelled', 'label' => 'Отменен'],
+    ];
+
+    const PAYMENT_STATUSES = [
+        ['value' => 'pending', 'label' => 'Ожидает оплаты'],
+        ['value' => 'paid', 'label' => 'Оплачен'],
+        ['value' => 'failed', 'label' => 'Ошибка оплаты'],
+        ['value' => 'refunded', 'label' => 'Возврат'],
+    ];
+
     protected $fillable = [
         'order_number',
         'client_id',
