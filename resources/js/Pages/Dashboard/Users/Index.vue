@@ -1,6 +1,6 @@
 <script setup>
-import {ref, computed} from 'vue';
-import {useForm} from '@inertiajs/vue3';
+import {ref, computed, onMounted, watch} from 'vue';
+import {useForm, router} from '@inertiajs/vue3';
 import DashboardLayout from '@/Layouts/DashboardLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import InputLabel from '@/Components/InputLabel.vue';
@@ -8,61 +8,107 @@ import TextInput from '@/Components/TextInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import BreadCrumbs from "@/Components/BreadCrumbs.vue";
 import SelectDropdown from "@/Components/SelectDropdown.vue";
+import Checkbox from '@/Components/Checkbox.vue';
+import debounce from 'lodash/debounce';
+import Badge from '@/Components/Badge.vue';
+import Pagination from '@/Components/Pagination.vue';
 
 const props = defineProps({
-    users: Array, Object
-})
+    users: Object,
+    roles: Array,
+    permissions: Array,
+    statuses: Array,
+    filters: Object
+});
 
 const breadCrumbs = [
     {
         name: 'Пользователи',
         link: route('dashboard.users.index')
     }
-]
+];
 
-const searchQuery = ref('');
+const search = ref(props.filters.search || '');
+const selectedRole = ref(props.filters.role || '');
+const selectedStatus = ref(props.filters.status || 'all');
+
+// Обновляем функцию updateFilters для более отзывчивого UI
+const updateFilters = debounce(() => {
+    router.get(
+        route('dashboard.users.index'),
+        { 
+            search: search.value || null, 
+            role: selectedRole.value || null,
+            status: selectedStatus.value === 'all' ? null : selectedStatus.value
+        },
+        { 
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            only: ['users']
+        }
+    );
+}, 300);
+
+// Следим за изменениями фильтров
+watch([search, selectedRole, selectedStatus], updateFilters);
+
+// Добавляем вычисляемое свойство для отображения статуса фильтрации
+const isFiltering = computed(() => {
+    return search.value || selectedRole.value || selectedStatus.value !== 'all';
+});
+
+// Функция сброса фильтров
+const resetFilters = () => {
+    search.value = '';
+    selectedRole.value = '';
+    selectedStatus.value = 'all';
+};
+
 const showModal = ref(false);
+const showRolesModal = ref(false);
 const modalMode = ref('create');
 const selectedUser = ref(null);
+const selectedRoles = ref([]);
+const selectedPermissions = ref([]);
 
 const form = useForm({
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
     email: '',
-    position: '',
-    role: 'user',
+    password: '',
+    roles: [],
+    permissions: [],
 });
 
 const filteredUsers = computed(() => {
     if (!props.users || !props.users.data) return [];
-
-    return props.users.data.filter(user =>
-        (user.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ?? false) ||
-        (user.email?.toLowerCase().includes(searchQuery.value.toLowerCase()) ?? false) ||
-        (user.position?.toLowerCase().includes(searchQuery.value.toLowerCase()) ?? false)
-    );
+    return props.users.data;
 });
 
 const openModal = (mode, user = null) => {
     modalMode.value = mode;
     selectedUser.value = user;
+    
     if (mode === 'edit' && user) {
-        const [firstName, ...lastNameParts] = (user.name ?? '').split(' ');
-        form.firstName = firstName;
-        form.lastName = lastNameParts.join(' ');
-        form.email = user.email ?? '';
-        form.position = user.position ?? '';
-        form.role = user.role?.name?.toLowerCase() ?? 'user';
+        form.first_name = user.profile?.first_name || '';
+        form.last_name = user.profile?.last_name || '';
+        form.email = user.email;
+        form.roles = user.roles?.map(role => role.id) || [];
+        form.permissions = user.permissions?.map(permission => permission.id) || [];
     } else {
         form.reset();
+        form.roles = [];
+        form.permissions = [];
     }
     showModal.value = true;
 };
 
-const closeModal = () => {
-    showModal.value = false;
-    form.reset();
-    selectedUser.value = null;
+const openRolesModal = (user) => {
+    selectedUser.value = user;
+    selectedRoles.value = user.roles?.map(role => role.id) || [];
+    selectedPermissions.value = user.permissions?.map(permission => permission.id) || [];
+    showRolesModal.value = true;
 };
 
 const submitForm = () => {
@@ -79,6 +125,30 @@ const submitForm = () => {
     }
 };
 
+const updateUserRoles = () => {
+    const formData = {
+        roles: selectedRoles.value,
+        permissions: selectedPermissions.value,
+    };
+    
+    form.put(route('dashboard.users.update', selectedUser.value.id), formData, {
+        preserveScroll: true,
+        onSuccess: () => {
+            showRolesModal.value = false;
+            selectedUser.value = null;
+        }
+    });
+};
+
+const closeModal = () => {
+    showModal.value = false;
+    showRolesModal.value = false;
+    form.reset();
+    selectedUser.value = null;
+    selectedRoles.value = [];
+    selectedPermissions.value = [];
+};
+
 const deleteUser = () => {
     if (selectedUser.value) {
         form.delete(route('dashboard.users.destroy', selectedUser.value.id), {
@@ -93,144 +163,362 @@ const deleteUser = () => {
     <DashboardLayout>
         <template #header>
             <BreadCrumbs :breadcrumbs="breadCrumbs"/>
-            <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">Все пользователи</h1>
-            <div class="sm:flex">
-                <div
-                    class="items-center hidden mb-3 sm:flex sm:divide-x sm:divide-gray-100 sm:mb-0 dark:divide-gray-700">
-                    <form class="lg:pr-3" action="#" method="GET">
-                        <label for="users-search" class="sr-only">Поиск</label>
-                        <div class="relative mt-1 lg:w-64 xl:w-96">
-                            <input type="text" name="email" id="users-search"
-                                   class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                   placeholder="Поиск пользователей" v-model="searchQuery">
-                        </div>
-                    </form>
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl dark:text-white">
+                    Управление пользователями
+                </h1>
+                <PrimaryButton @click="openModal('create')" class="hidden md:flex">
+                    <template #icon-left>
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M12 4v16m8-8H4"/>
+                        </svg>
+                    </template>
+                    Добавить пользователя
+                </PrimaryButton>
+            </div>
+            
+            <!-- Фильтры -->
+            <div class="mt-4 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <!-- Поиск -->
+                    <div class="flex-1">
+                        <input
+                            type="text"
+                            v-model="search"
+                            placeholder="Поиск по имени, email или роли..."
+                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                        />
+                    </div>
+
+                    <!-- Фильтр по ролям -->
+                    <div class="w-full md:w-48">
+                        <select
+                            v-model="selectedRole"
+                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                        >
+                            <option value="">Все роли</option>
+                            <option v-for="role in roles" :key="role.id" :value="role.slug">
+                                {{ role.name }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Фильтр по статусу -->
+                    <div class="w-full md:w-48">
+                        <select
+                            v-model="selectedStatus"
+                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                        >
+                            <option v-for="status in statuses" :key="status.value" :value="status.value">
+                                {{ status.label }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Кнопка сброса фильтров -->
+                    <PrimaryButton 
+                        v-if="isFiltering" 
+                        @click="resetFilters" 
+                        type="secondary" 
+                        class="md:w-auto"
+                    >
+                        Сбросить фильтры
+                    </PrimaryButton>
                 </div>
-                <div class="flex items-center ml-auto space-x-2 sm:space-x-3">
-                    <PrimaryButton type="default" @click="openModal('create')"
-                                   class="inline-flex items-center justify-center w-1/2 px-3 py-2 text-sm font-medium text-center text-white rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 sm:w-auto dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        <template #icon-left>
-                            <svg class="w-5 h-5 mr-2 -ml-1" fill="currentColor" viewBox="0 0 20 20"
-                                 xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd"
-                                      d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                                      clip-rule="evenodd"></path>
-                            </svg>
-                        </template>
+
+                <!-- Мобильная кнопка добавления -->
+                <div class="mt-4 md:hidden">
+                    <PrimaryButton @click="openModal('create')" class="w-full">
                         Добавить пользователя
                     </PrimaryButton>
                 </div>
             </div>
         </template>
+
         <template #default>
-            <div class="flex flex-col">
+            <!-- Таблица пользователей -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <div class="inline-block min-w-full align-middle">
-                        <div class="overflow-hidden shadow">
-                            <table class="min-w-full divide-y divide-gray-200 table-fixed dark:divide-gray-600">
-                                <thead class="bg-gray-100 dark:bg-gray-700">
-                                <tr>
-                                    <th scope="col"
-                                        class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                        Имя
-                                    </th>
-                                    <th scope="col"
-                                        class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                        Email
-                                    </th>
-                                    <th scope="col"
-                                        class="p-4 text-xs font-medium text-left text-gray-500 uppercase dark:text-gray-400">
-                                        Роль
-                                    </th>
-                                    <th scope="col" class="p-4">
-                                    </th>
-                                </tr>
+                        <div class="overflow-hidden shadow-sm rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Пользователь
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Email
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Роли
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Статус
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Действия
+                                        </th>
+                                    </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                                <tr v-for="user in filteredUsers" :key="user.id"
-                                    class="hover:bg-gray-100 dark:hover:bg-gray-700">
-                                    <td class="flex items-center p-4 mr-12 space-x-6 whitespace-nowrap">
-                                        <div class="text-sm font-normal text-gray-500 dark:text-gray-400">
-                                            <div class="text-base font-semibold text-gray-900 dark:text-white">
-                                                {{ user.name }}
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="text-sm font-medium text-gray-900">
+                                                    {{ user.profile?.first_name }} {{ user.profile?.last_name }}
+                                                </div>
                                             </div>
-                                            <div class="text-sm font-normal text-gray-500 dark:text-gray-400">
-                                                {{ user.email }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">{{ user.email }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex flex-wrap gap-1">
+                                                <Badge 
+                                                    v-for="role in user.roles" 
+                                                    :key="role.id"
+                                                    :type="getBadgeType(role.slug)"
+                                                    size="sm"
+                                                >
+                                                    {{ role.name }}
+                                                </Badge>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                        {{ user.position }}
-                                    </td>
-                                    <td class="p-4 text-base font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                        {{ user.role?.name }}
-                                    </td>
-                                    <!-- ... rest of your template ... -->
-                                </tr>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <Badge 
+                                                :type="user.email_verified_at ? 'green' : 'yellow'"
+                                                size="sm"
+                                            >
+                                                {{ user.email_verified_at ? 'Подтвержден' : 'Не подтвержден' }}
+                                            </Badge>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div class="flex space-x-2">
+                                                <PrimaryButton @click="openRolesModal(user)" size="sm">
+                                                    Роли
+                                                </PrimaryButton>
+                                                <PrimaryButton @click="openModal('edit', user)" size="sm">
+                                                    Изменить
+                                                </PrimaryButton>
+                                                <PrimaryButton @click="openModal('delete', user)" type="red" size="sm">
+                                                    Удалить
+                                                </PrimaryButton>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
+
+                <!-- Информация о количестве записей -->
+                <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                        Показано {{ users.from }} - {{ users.to }} из {{ users.total }} записей
+                    </div>
+                </div>
             </div>
 
-            <!-- User Modal -->
+            <!-- Пагинация -->
+            <div class="mt-6">
+                <Pagination :links="users.links" />
+            </div>
+
+            <!-- Модальные окна остаются без изменений -->
             <Modal :show="showModal" @close="closeModal">
-                <template #title v-if="modalMode === 'create'">
-                    Добавить нового пользователя
-                </template>
-                <template #title v-if="modalMode === 'edit'">
-                    Редактировать пользователя
-                </template>
-                <template #title v-if="modalMode === 'delete'">
-                    Удалить пользователя
+                <template #title>
+                    {{ modalMode === 'create' ? 'Добавить пользователя' : 
+                       modalMode === 'edit' ? 'Редактировать пользователя' : 'Удалить пользователя' }}
                 </template>
 
                 <template #content v-if="modalMode !== 'delete'">
-                    <form @submit.prevent="submitForm">
-                        <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-6 sm:col-span-3">
-                                <TextInput label="Имя" v-model="form.first_name" type="text" required/>
+                    <form @submit.prevent="submitForm" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <InputLabel for="first_name" value="Имя"/>
+                                <TextInput 
+                                    id="first_name" 
+                                    v-model="form.first_name" 
+                                    type="text" 
+                                    :error="form.errors.first_name"
+                                    required
+                                />
+                                <div v-if="form.errors.first_name" class="text-red-500 text-sm mt-1">
+                                    {{ form.errors.first_name }}
+                                </div>
                             </div>
-                            <div class="col-span-6 sm:col-span-3">
-                                <TextInput label="Фамилия" v-model="form.last_name" type="text" required/>
+                            <div>
+                                <InputLabel for="last_name" value="Фамилия"/>
+                                <TextInput 
+                                    id="last_name" 
+                                    v-model="form.last_name" 
+                                    type="text" 
+                                    :error="form.errors.last_name"
+                                    required
+                                />
+                                <div v-if="form.errors.last_name" class="text-red-500 text-sm mt-1">
+                                    {{ form.errors.last_name }}
+                                </div>
                             </div>
-                            <div class="col-span-6 sm:col-span-3">
-                                <TextInput label="Email" v-model="form.email" type="email" class="mt-1 block w-full"
-                                           required/>
+                        </div>
+                        <div>
+                            <InputLabel for="email" value="Email"/>
+                            <TextInput 
+                                id="email" 
+                                v-model="form.email" 
+                                type="email" 
+                                :error="form.errors.email"
+                                required
+                            />
+                            <div v-if="form.errors.email" class="text-red-500 text-sm mt-1">
+                                {{ form.errors.email }}
                             </div>
-                            <div class="col-span-6 sm:col-span-3">
-                                <InputLabel for="role" value="Роль"/>
-                                <SelectDropdown
-                                    v-model="form.role"
-                                    :options="[{label: 'Администратор', value: 'admin'}, {label: 'Менеджер', value: 'manager'}]"
-                                ></SelectDropdown>
+                        </div>
+                        <div v-if="modalMode === 'create'">
+                            <InputLabel for="password" value="Пароль"/>
+                            <TextInput 
+                                id="password" 
+                                v-model="form.password" 
+                                type="password" 
+                                :error="form.errors.password"
+                                required
+                            />
+                            <div v-if="form.errors.password" class="text-red-500 text-sm mt-1">
+                                {{ form.errors.password }}
                             </div>
-                            <div v-if="modalMode === 'create'" class="col-span-6 sm:col-span-3">
-                                <TextInput label="Пароль" v-model="form.password" type="password"
-                                           class="mt-1 block w-full" required/>
+                        </div>
+                        
+                        <!-- Добавляем выбор ролей при создании -->
+                        <div>
+                            <InputLabel value="Роли"/>
+                            <div class="mt-2 space-y-2">
+                                <div v-for="role in props.roles" :key="role.id" class="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        :id="'create-role-' + role.id"
+                                        :value="role.id"
+                                        v-model="form.roles"
+                                        class="mr-2"
+                                    />
+                                    <label :for="'create-role-' + role.id">{{ role.name }}</label>
+                                </div>
+                            </div>
+                            <div v-if="form.errors.roles" class="text-red-500 text-sm mt-1">
+                                {{ form.errors.roles }}
+                            </div>
+                        </div>
+
+                        <!-- Добавляем выбор разрешений при создании -->
+                        <div>
+                            <InputLabel value="Разрешения"/>
+                            <div class="mt-2 space-y-2">
+                                <div v-for="permission in props.permissions" :key="permission.id" class="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        :id="'create-permission-' + permission.id"
+                                        :value="permission.id"
+                                        v-model="form.permissions"
+                                        class="mr-2"
+                                    />
+                                    <label :for="'create-permission-' + permission.id">{{ permission.name }}</label>
+                                </div>
+                            </div>
+                            <div v-if="form.errors.permissions" class="text-red-500 text-sm mt-1">
+                                {{ form.errors.permissions }}
                             </div>
                         </div>
                     </form>
                 </template>
                 <template v-else #content>
-                    <p class="text-sm text-gray-500">
-                        Вы уверены, что хотите удалить этого пользователя? Это действие нельзя отменить.
+                    <p class="text-sm text-gray-600">
+                        Вы уверены, что хотите удалить пользователя? Это действие нельзя отменить.
                     </p>
                 </template>
 
-                <template #footer v-if="modalMode !== 'delete'">
-                    <PrimaryButton @click="submitForm" class="mr-3">{{
-                            modalMode === 'create' ? 'Добавить' : 'Сохранить'
-                        }}
-                    </PrimaryButton>
-                    <PrimaryButton type="red" @click="closeModal">Отмена</PrimaryButton>
+                <template #footer>
+                    <div class="flex justify-end space-x-2">
+                        <PrimaryButton v-if="modalMode !== 'delete'" @click="submitForm">
+                            {{ modalMode === 'create' ? 'Добавить' : 'Сохранить' }}
+                        </PrimaryButton>
+                        <PrimaryButton v-else @click="deleteUser" type="red">
+                            Удалить
+                        </PrimaryButton>
+                        <PrimaryButton @click="closeModal" type="secondary">
+                            Отмена
+                        </PrimaryButton>
+                    </div>
                 </template>
-                <template #footer v-else>
-                    <PrimaryButton @click="deleteUser" class="mr-3">Удалить</PrimaryButton>
-                    <PrimaryButton type="red" @click="closeModal">Отмена</PrimaryButton>
+            </Modal>
+
+            <!-- Roles Modal -->
+            <Modal :show="showRolesModal" @close="closeModal">
+                <template #title>
+                    Управление ролями и разрешениями
+                </template>
+
+                <template #content>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-lg font-medium">Роли</h3>
+                            <div class="mt-2 space-y-2">
+                                <div v-for="role in props.roles" :key="role.id" class="flex items-center">
+                                    <Checkbox
+                                        :id="'role-' + role.id"
+                                        v-model:checked="selectedRoles"
+                                        :value="role.id"
+                                        class="mr-2"
+                                    />
+                                    <label :for="'role-' + role.id">{{ role.name }}</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-medium">Прямые разрешения</h3>
+                            <div class="mt-2 space-y-2">
+                                <div v-for="permission in props.permissions" :key="permission.id" 
+                                     class="flex items-center">
+                                    <Checkbox
+                                        :id="'permission-' + permission.id"
+                                        v-model:checked="selectedPermissions"
+                                        :value="permission.id"
+                                        class="mr-2"
+                                    />
+                                    <label :for="'permission-' + permission.id">{{ permission.name }}</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template #footer>
+                    <div class="flex justify-end space-x-2">
+                        <PrimaryButton @click="updateUserRoles">
+                            Сохранить
+                        </PrimaryButton>
+                        <PrimaryButton @click="closeModal" type="secondary">
+                            Отмена
+                        </PrimaryButton>
+                    </div>
                 </template>
             </Modal>
         </template>
     </DashboardLayout>
 </template>
+
+<script>
+// Вспомогательная функция для определения типа бейджа роли
+const getBadgeType = (roleSlug) => {
+    const types = {
+        'super-admin': 'red',
+        'admin': 'purple',
+        'manager': 'blue',
+        'client': 'green',
+        'default': 'gray'
+    };
+    return types[roleSlug] || types.default;
+};
+</script>

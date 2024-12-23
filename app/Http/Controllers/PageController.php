@@ -2,21 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Page;
+use App\Models\Field;
+use App\Models\FieldValue;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class PageController extends Controller
 {
     public function index()
     {
-        $pages = Page::query()
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
         return Inertia::render('Dashboard/Content/Pages/Index', [
-            'pages' => $pages
+            'pages' => Page::latest()->paginate(10),
+            'fields' => Field::with('children')->whereNull('parent_id')->get()
         ]);
     }
 
@@ -24,36 +23,82 @@ class PageController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:pages,slug',
+            'slug' => 'required|string|max:255|unique:pages,slug',
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'fields' => 'array'
         ]);
 
-        Page::create($validated);
+        DB::transaction(function () use ($validated) {
+            $page = Page::create([
+                'title' => $validated['title'],
+                'slug' => $validated['slug'],
+                'meta_title' => $validated['meta_title'],
+                'meta_description' => $validated['meta_description'],
+                'is_active' => $validated['is_active']
+            ]);
 
-        return redirect()->back()->with('success', 'Страница успешно создана');
+            $this->saveFieldValues($page, $validated['fields'] ?? []);
+        });
+
+        return redirect()->back();
     }
 
     public function update(Request $request, Page $page)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:pages,slug,' . $page->id,
+            'slug' => 'required|string|max:255|unique:pages,slug,' . $page->id,
             'meta_title' => 'nullable|string|max:255',
             'meta_description' => 'nullable|string',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'fields' => 'array'
         ]);
 
-        $page->update($validated);
+        DB::transaction(function () use ($validated, $page) {
+            $page->update([
+                'title' => $validated['title'],
+                'slug' => $validated['slug'],
+                'meta_title' => $validated['meta_title'],
+                'meta_description' => $validated['meta_description'],
+                'is_active' => $validated['is_active']
+            ]);
 
-        return redirect()->back()->with('success', 'Страница успешно обновлена');
+            $this->saveFieldValues($page, $validated['fields'] ?? []);
+        });
+
+        return redirect()->back();
     }
 
     public function destroy(Page $page)
     {
         $page->delete();
+        return redirect()->back();
+    }
 
-        return redirect()->back()->with('success', 'Страница успешно удалена');
+    private function saveFieldValues(Page $page, array $values, ?FieldValue $parent = null)
+    {
+        foreach ($values as $key => $value) {
+            $field = Field::where('key', $key)->first();
+            
+            if (!$field) continue;
+
+            $fieldValue = new FieldValue([
+                'page_id' => $page->id,
+                'field_id' => $field->id,
+                'value' => $value,
+                'parent_id' => $parent?->id
+            ]);
+
+            $fieldValue->save();
+
+            // Рекурсивно сохраняем значения для repeater
+            if ($field->type === 'repeater' && is_array($value)) {
+                foreach ($value as $index => $item) {
+                    $this->saveFieldValues($page, $item, $fieldValue);
+                }
+            }
+        }
     }
 }

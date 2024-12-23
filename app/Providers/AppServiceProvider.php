@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use App\Services\PaymentService;
+use App\Services\DeliveryManager;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,7 +16,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton('delivery', function ($app) {
+            return new DeliveryManager();
+        });
+        $this->app->singleton('payment', function ($app) {
+            return new PaymentService(config('payment'));
+        });
     }
 
     /**

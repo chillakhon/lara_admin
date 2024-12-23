@@ -5,21 +5,27 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
 {
-    public function handle(Request $request, Closure $next, ...$roles)
+    public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        Log::info('User: ' . ($request->user() ? $request->user()->id : 'No user'));
-        Log::info('User type: ' . ($request->user() ? $request->user()->type : 'No type'));
+        if (!$request->user()) {
+            Log::info('Access denied: No authenticated user');
+            return redirect()->route('login');
+        }
+
+        Log::info('User: ' . $request->user()->id);
         Log::info('Required roles: ' . implode(', ', $roles));
 
-        if (empty($roles) || ($request->user() && $request->user()->hasAnyRole($roles))) {
+        if ($request->user()->hasAnyRole($roles)) {
             Log::info('Access granted');
             return $next($request);
         }
 
-        Log::info('Access denied');
-        return redirect()->route('dashboard')->with('error', 'У вас нет прав для доступа к этой странице.');
+        Log::info('Access denied: Missing required roles');
+        return redirect()->route('dashboard')
+            ->with('error', 'У вас нет необходимых ролей для доступа к этой странице.');
     }
 }

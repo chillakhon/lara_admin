@@ -6,6 +6,9 @@ use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\PromoCodeController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\LeadController;
+use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\DeliveryController;
+use App\Http\Controllers\Api\ShipmentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,5 +32,27 @@ Route::prefix('orders')->group(function () {
 
 Route::prefix('leads')->group(function () {
     Route::post('/', [LeadController::class, 'store']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('reviews', [ReviewController::class, 'index']);
+    Route::post('reviews', [ReviewController::class, 'store']);
+    Route::prefix('reviews')->group(function () {
+        Route::get('/', [ReviewController::class, 'index']);
+        Route::post('/', [ReviewController::class, 'store']);
+        Route::get('product/{product}', [ReviewController::class, 'productReviews']);
+    });
+    Route::get('/shipments', [ShipmentController::class, 'userShipments'])
+        ->name('shipments.index');
+});
+
+Route::prefix('delivery')->name('delivery.')->group(function () {
+    Route::post('/calculate', [DeliveryController::class, 'calculate'])->name('calculate');
+    
+    Route::post('/available-methods', [DeliveryController::class, 'getAvailableMethods'])
+        ->name('available-methods');
+    
+    Route::get('/track/{tracking_number}', [DeliveryController::class, 'track'])
+        ->name('track');
 });
 

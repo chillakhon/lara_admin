@@ -20,8 +20,12 @@
     "dependencies": {
         "@braks/revue-draggable": "^0.3.0-5",
         "@headlessui/vue": "^1.7.23",
+        "@heroicons/vue": "^2.2.0",
+        "@tinymce/tinymce-vue": "^6.1.0",
+        "date-fns": "^4.1.0",
         "flowbite": "^2.5.1",
         "flowbite-vue": "^0.1.6",
-        "lodash": "^4.17.21"
+        "lodash": "^4.17.21",
+        "vuedraggable": "^4.1.0"
     }
 }

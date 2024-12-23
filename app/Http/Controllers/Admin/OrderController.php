@@ -4,20 +4,26 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\User;
+use App\Models\Role;
+use App\Models\Client;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use App\Models\User;
-use App\Models\Client;
 
 class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with(['client', 'lead', 'items.product', 'history'])
-            ->latest();
+        $query = Order::with([
+            'client.user.profile',
+            'lead',
+            'items.product',
+            'items.productVariant',
+            'history'
+        ])->latest();
 
         // Фильтры
         if ($request->has('status')) {
@@ -28,38 +34,54 @@ class OrderController extends Controller
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
-                    ->orWhereHas('client', function($q) use ($search) {
+                    ->orWhereHas('client.user.profile', function($q) use ($search) {
                         $q->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%")
-                            ->orWhere('phone', 'like', "%{$search}%");
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('client', function($q) use ($search) {
+                        $q->where('phone', 'like', "%{$search}%");
                     });
             });
         }
 
+        $orders = $query->paginate(15)
+            ->through(function($order) {
+                return [
+                    'id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'status' => $order->status,
+                    'payment_status' => $order->payment_status,
+                    'total_amount' => $order->total_amount,
+                    'discount_amount' => $order->discount_amount,
+                    'created_at' => $order->created_at,
+                    'client' => $order->client ? [
+                        'id' => $order->client->id,
+                        'full_name' => $order->client->user->profile->full_name,
+                        'email' => $order->client->user->email,
+                        'phone' => $order->client->phone,
+                    ] : null,
+                    'lead' => $order->lead,
+                    'items' => $order->items->map(function($item) {
+                        return [
+                            'id' => $item->id,
+                            'product' => [
+                                'id' => $item->product->id,
+                                'name' => $item->product->name,
+                                'image' => $item->product->getFirstMediaUrl('images'),
+                            ],
+                            'variant' => $item->productVariant,
+                            'quantity' => $item->quantity,
+                            'price' => $item->price,
+                        ];
+                    }),
+                ];
+            });
+
         return Inertia::render('Dashboard/Orders/Index', [
-            'orders' => $query->paginate(15),
-            'statuses' => Order::getStatuses(),
+            'orders' => $orders,
+            'statuses' => Order::STATUSES,
+            'filters' => $request->only(['search', 'status']),
         ]);
-    }
-
-    public function update(Request $request, Order $order)
-    {
-        $validated = $request->validate([
-            'status' => 'required|string',
-            'comment' => 'nullable|string',
-        ]);
-
-        $order->update([
-            'status' => $validated['status']
-        ]);
-
-        $order->history()->create([
-            'user_id' => $request->user()->id,
-            'status' => $validated['status'],
-            'comment' => $validated['comment'],
-        ]);
-
-        return redirect()->back();
     }
 
     public function createClient(Request $request)
@@ -77,14 +99,22 @@ class OrderController extends Controller
             $user = User::create([
                 'email' => $validated['email'],
                 'password' => Hash::make(Str::random(12)),
-                'type' => User::TYPE_CLIENT
+                'email_verified_at' => now(),
             ]);
+
+            // Создаем профиль пользователя
+            $user->profile()->create([
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+            ]);
+
+            // Назначаем роль клиента
+            $clientRole = Role::where('slug', 'client')->first();
+            $user->roles()->attach($clientRole);
 
             // Создаем клиента
             $client = Client::create([
                 'user_id' => $user->id,
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
                 'phone' => $validated['phone'],
             ]);
 
@@ -102,4 +132,6 @@ class OrderController extends Controller
 
         return redirect()->back()->with('success', 'Клиент успешно создан и привязан к заказу');
     }
+
+    // ... остальные методы контроллера ...
 } 

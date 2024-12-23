@@ -29,8 +29,8 @@
                                 <td class="px-4 py-3">{{ group.name }}</td>
                                 <td class="px-4 py-3">{{ group.fields?.length || 0 }}</td>
                                 <td class="px-4 py-3">
-                                    <ContextMenu 
-                                        :items="menuItems" 
+                                    <ContextMenu
+                                        :items="menuItems"
                                         @action="(action) => handleMenuAction(action, group)"
                                     />
                                 </td>
@@ -48,13 +48,13 @@
             </template>
             <template #content>
                 <form @submit.prevent="submitForm" class="space-y-6">
-                    <TextInput 
-                        v-model="form.name" 
-                        label="Название группы" 
-                        :error="form.errors.name" 
+                    <TextInput
+                        v-model="form.name"
+                        label="Название группы"
+                        :error="form.errors.name"
                         required
                     />
-                    
+
                     <div class="space-y-4">
                         <h3 class="font-medium">Поля группы</h3>
                         <div v-for="(field, index) in form.fields" :key="index" class="space-y-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -64,7 +64,7 @@
                                     Удалить
                                 </button>
                             </div>
-                            
+
                             <SelectInput
                                 v-model="field.field_type_id"
                                 :options="availableFieldTypes"
@@ -72,33 +72,33 @@
                                 :error="form.errors[`fields.${index}.field_type_id`]"
                                 required
                             />
-                            
-                            <TextInput 
+
+                            <TextInput
                                 v-model="field.name"
                                 label="Название поля"
                                 :error="form.errors[`fields.${index}.name`]"
                                 required
                             />
-                            
-                            <TextInput 
+
+                            <TextInput
                                 v-model="field.key"
                                 label="Ключ поля"
                                 :error="form.errors[`fields.${index}.key`]"
                                 required
                             />
-                            
+
                             <div class="flex items-center gap-2">
-                                <input 
-                                    type="checkbox" 
-                                    v-model="field.required" 
+                                <input
+                                    type="checkbox"
+                                    v-model="field.required"
                                     :id="'required-' + index"
                                 />
                                 <label :for="'required-' + index">Обязательное поле</label>
                             </div>
                         </div>
-                        
-                        <button 
-                            @click.prevent="addField" 
+
+                        <button
+                            @click.prevent="addField"
                             class="w-full py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 hover:text-gray-700 dark:hover:text-gray-400"
                         >
                             Добавить поле
@@ -128,7 +128,6 @@ import SelectInput from '@/Components/SelectInput.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import Pagination from '@/Components/Pagination.vue';
 import ContextMenu from '@/Components/ContextMenu.vue';
-import { PlusIcon } from '@heroicons/vue/24/outline';
 
 const props = defineProps({
     fieldGroups: Object,
@@ -143,7 +142,7 @@ const breadCrumbs = [
 const showModal = ref(false);
 const editingGroup = ref(null);
 
-const availableFieldTypes = computed(() => 
+const availableFieldTypes = computed(() =>
     props.fieldTypes.map(type => ({
         id: type.id,
         name: type.name
