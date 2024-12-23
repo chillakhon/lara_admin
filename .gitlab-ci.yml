@@ -24,6 +24,10 @@ project_build:
       - public/build/
     expire_in: 10 mins
 
+before_script:
+  - composer update --no-interaction --no-progress
+  # или
+  - composer install --no-interaction --no-progress --ignore-platform-reqs
 
 test_deploy:
   stage: deploy
