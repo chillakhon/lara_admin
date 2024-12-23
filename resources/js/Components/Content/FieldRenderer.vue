@@ -33,7 +33,8 @@
                             <div class="space-y-4">
                                 <FieldRenderer
                                     :fields="field.children"
-                                    v-model="element"
+                                    :model-value="element"
+                                    @update:model-value="updateRepeaterItem(field.key, index, $event)"
                                     :errors="errors"
                                 />
                             </div>
@@ -184,6 +185,15 @@ const removeRepeaterItem = (key, index) => {
 
 const updateOrder = () => {
     emit('update:modelValue', { ...props.modelValue });
+};
+
+const updateRepeaterItem = (fieldKey, index, newValue) => {
+    const values = [...props.modelValue[fieldKey]];
+    values[index] = newValue;
+    emit('update:modelValue', {
+        ...props.modelValue,
+        [fieldKey]: values
+    });
 };
 </script>
 

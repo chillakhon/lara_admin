@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import DashboardLayout from '@/Layouts/DashboardLayout.vue';
 import Badge from '@/Components/Badge.vue';
 
 const props = defineProps({
@@ -33,7 +33,7 @@ function formatDate(date) {
 </script>
 
 <template>
-    <AppLayout>
+    <DashboardLayout>
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
@@ -103,5 +103,5 @@ function formatDate(date) {
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </DashboardLayout>
 </template> 

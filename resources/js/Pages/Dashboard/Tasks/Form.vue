@@ -7,7 +7,7 @@ import TextInput from '@/Components/TextInput.vue';
 import SelectDropdown from '@/Components/SelectDropdown.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import Badge from '@/Components/Badge.vue';
-import { Editor } from '@tinymce/tinymce-vue';
+import Editor from '@tinymce/tinymce-vue';
 
 const props = defineProps({
     task: {
@@ -184,7 +184,7 @@ const submitForm = () => {
                                 <TextInput
                                     v-model="form.estimated_time"
                                     type="number"
-                                    label="Оценка вре��ени (в минутах)"
+                                    label="Оценка времени (в минутах)"
                                     :error="form.errors.estimated_time"
                                 />
 
