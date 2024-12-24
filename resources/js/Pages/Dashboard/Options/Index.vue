@@ -489,7 +489,7 @@ watch(selectedCategory, performSearch);
                     <div>
                         <SelectDropdown
                             v-model="form.category_id"
-                            :options="categories.map(c => ({ value: c.id, label: c.name }))"
+                            :options="categories.map(c => ({ id: c.id, name: c.name }))"
                             label="Категория"
                             :error="form.errors.category_id"
                             required
