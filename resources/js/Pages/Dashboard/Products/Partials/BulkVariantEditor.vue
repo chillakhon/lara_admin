@@ -84,12 +84,12 @@ const filteredVariants = computed(() => {
 
 // Расширенные действия для массового обновления
 const bulkUpdateActions = [
-    {value: 'images', label: 'Загрузить изображения'},
-    {value: 'price', label: 'Установить цену'},
-    {value: 'additional_cost', label: 'Установить доп. стоимость'},
-    {value: 'active', label: 'Изменить статус'},
-    {value: 'sku', label: 'Обновить SKU'},
-    {value: 'name', label: 'Обновить название'}
+    {id: 'images', name: 'Загрузить изображения'},
+    {id: 'price', name: 'Установить цену'},
+    {id: 'additional_cost', name: 'Установить доп. стоимость'},
+    {id: 'active', name: 'Изменить статус'},
+    {id: 'sku', name: 'Обновить SKU'},
+    {id: 'name', name: 'Обновить название'}
 ];
 
 // Обработка drag-and-drop
@@ -261,9 +261,9 @@ const handleFileSelect = (event) => {
                             <SelectDropdown
                                 v-model="filter.optionId"
                                 :options="props.product.options.map(opt => ({
-                                        value: opt.id,
-                                        label: opt.name
-                                    }))"
+                                    id: opt.id,
+                                    name: opt.name
+                                }))"
                                 class="mb-2"
                                 placeholder="Выберите опцию"
                             />
@@ -316,7 +316,10 @@ const handleFileSelect = (event) => {
                     <InputLabel value="Выберите действие"/>
                     <SelectDropdown
                         v-model="selectedAction"
-                        :options="bulkUpdateActions"
+                        :options="bulkUpdateActions.map(action => ({
+                            id: action.id,
+                            name: action.name
+                        }))"
                         class="mt-1"
                     />
 

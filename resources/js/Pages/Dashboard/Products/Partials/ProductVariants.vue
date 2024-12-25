@@ -89,20 +89,25 @@ const generateSKU = (name, optionValues, index) => {
 
 // Генерация вариантов на основе выбранных опций
 const generateVariants = () => {
+    // Получаем выбранные опции
     const selectedOptions = props.product.options.filter(opt =>
         generationForm.selected_options.includes(opt.id)
     );
 
+    // Получаем массивы значений для каждой опции
     const optionValueArrays = selectedOptions.map(opt => opt.values);
+    
+    // Генерируем все возможные комбинации
     const combinations = generateCombinations(optionValueArrays);
 
-    const variants = combinations.map((combination, index) => {
-        // Название может быть простым или с опциями
+    // Создаем варианты на основе комбинаций
+    return combinations.map((combination, index) => {
+        // Формируем название
         const name = generationForm.include_options_in_name
             ? [props.product.name, ...combination.map(v => v.name)].join(' - ')
             : props.product.name;
 
-        // SKU всегда должен включать информацию о вариантах для уникальности
+        // Генерируем SKU
         const sku = generationForm.generate_skus
             ? generateSKU(props.product.name, combination, index)
             : '';
@@ -110,26 +115,47 @@ const generateVariants = () => {
         return {
             name,
             sku,
-            price: generationForm.base_price,
+            price: parseFloat(generationForm.base_price) || 0,
             additional_cost: 0,
-            type: props.product.type,
+            type: props.product.type || 'simple',
             unit_id: props.product.default_unit_id,
             is_active: true,
-            option_values: combination.map(v => v.id)
+            option_values: combination.map(v => v.id) // Сохраняем только ID значений опций
         };
     });
-
-    return variants;
 };
 
 const saveGeneratedVariants = () => {
+    if (!generationForm.base_price || generationForm.selected_options.length === 0) {
+        return;
+    }
+
     const variants = generateVariants();
-    useForm({variants}).post(route('dashboard.products.variants.generate', props.product.id), {
+    
+    // Создаем форму с правильной структурой данных
+    const form = useForm({
+        variants: variants.map(variant => ({
+            name: variant.name,
+            sku: variant.sku,
+            price: variant.price,
+            additional_cost: variant.additional_cost,
+            type: variant.type,
+            unit_id: variant.unit_id,
+            is_active: variant.is_active,
+            option_values: variant.option_values // Массив ID значений опций
+        }))
+    });
+
+    // Отправляем запрос
+    form.post(route('dashboard.products.variants.generate', props.product.id), {
         preserveScroll: true,
         onSuccess: () => {
             showGenerateModal.value = false;
             generationForm.reset();
         },
+        onError: (errors) => {
+            console.error('Ошибки при генерации вариантов:', errors);
+        }
     });
 };
 
