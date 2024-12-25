@@ -41,6 +41,7 @@ use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\ConversationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -106,7 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/variants/{variant}', [ProductVariantController::class, 'update'])->name('variants.update');
             Route::delete('/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('variants.destroy');
             Route::post('/{product}/variants/generate', [ProductController::class, 'generateVariants'])
-                ->name('products.variants.generate');
+                ->name('variants.generate');
 
             //images
             Route::post('/{product}/images', [ProductImageController::class, 'store'])->name('images.store');
@@ -402,6 +403,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{type}', [SettingsController::class, 'update'])
                 ->middleware('permission:settings.manage')
                 ->name('update');
+        });
+
+        // Conversations routes
+        Route::group(['prefix' => 'conversations', 'as' => 'conversations.'], function () {
+            Route::get('/', [ConversationController::class, 'index'])->name('index');
+            Route::get('/{conversation}', [ConversationController::class, 'show'])->name('show');
+            Route::post('/{conversation}/reply', [ConversationController::class, 'reply'])->name('reply');
+            Route::post('/{conversation}/close', [ConversationController::class, 'close'])->name('close');
+            Route::post('/{conversation}/assign', [ConversationController::class, 'assign'])->name('assign');
         });
     });
 });
