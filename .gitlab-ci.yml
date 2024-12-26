@@ -54,6 +54,7 @@ test_deploy:
       sshpass -e ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "cat << EOF > $SSH_APP_PATH/.htaccess
       <IfModule mod_rewrite.c>
       RewriteEngine On
+      RewriteRule ^storage/(.*)$ public/storage/$1 [L]
       RewriteCond %{REQUEST_URI} !/public
       RewriteRule ^(.*)$ public/\$1 [L]
       </IfModule>
@@ -108,13 +109,15 @@ atmo_deploy:
     - export SSHPASS=$SSH_PASSWORD
 
     - sshpass -e ssh $SSH_USER@$SSH_HOST -o stricthostkeychecking=no "
-      rm -rf $SSH_APP_PATH/*
+      cd $SSH_APP_PATH && \
+      find . -maxdepth 1 ! -name 'storage' ! -name '.' ! -name '..' -exec rm -rf {} +
       "
 
     - |
       sshpass -e ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "cat << EOF > $SSH_APP_PATH/.htaccess
       <IfModule mod_rewrite.c>
       RewriteEngine On
+      RewriteRule ^storage/(.*)$ public/storage/$1 [L]
       RewriteCond %{REQUEST_URI} !/public
       RewriteRule ^(.*)$ public/\$1 [L]
       </IfModule>
@@ -122,7 +125,7 @@ atmo_deploy:
 
     - sshpass -e ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "cat $SSH_APP_PATH/.htaccess"
 
-    - sshpass -e scp -o stricthostkeychecking=no -r * $SSH_USER@$SSH_HOST:$SSH_APP_PATH
+    - sshpass -e scp -o stricthostkeychecking=no -r $(ls -A | grep -v "storage") $SSH_USER@$SSH_HOST:$SSH_APP_PATH
     - sshpass -e ssh $SSH_USER@$SSH_HOST -o stricthostkeychecking=no "
       cd $SSH_APP_PATH
       && rm -rf .env
@@ -148,4 +151,5 @@ atmo_deploy:
       && php8.3 artisan config:cache
       && php8.3 artisan route:clear
       && php8.3 artisan view:clear
+      && php8.3 artisan storage:link
       "
