@@ -108,14 +108,7 @@ atmo_deploy:
       echo "Password is set: $([[ -n $SSH_PASSWORD ]] && echo 'Yes' || echo 'No')"
     - export SSHPASS=$SSH_PASSWORD
 
-    - sshpass -e ssh $SSH_USER@$SSH_HOST -o stricthostkeychecking=no "
-      cd $SSH_APP_PATH && \
-      for file in *; do \
-        if [ \"\$file\" != \"storage\" ] && [ \"\$file\" != \".\" ] && [ \"\$file\" != \"..\" ]; then \
-          rm -rf \"\$file\"; \
-        fi \
-      done
-      "
+    - sshpass -e ssh $SSH_USER@$SSH_HOST -o stricthostkeychecking=no "cd $SSH_APP_PATH && for file in *; do if [ \"\$file\" != \"storage\" ] && [ \"\$file\" != \".\" ] && [ \"\$file\" != \"..\" ]; then rm -rf \"\$file\"; fi; done"
 
     - |
       sshpass -e ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "cat << EOF > $SSH_APP_PATH/.htaccess
