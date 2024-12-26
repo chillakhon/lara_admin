@@ -125,6 +125,14 @@ class ProductController extends Controller
         $product->update($validated);
         $product->categories()->sync($validated['categories']);
 
+        // Преобразуем массив опций в формат для sync
+        $options = collect($request->options ?? [])->mapWithKeys(function ($option) {
+            return [$option['option_id'] => ['is_required' => $option['is_required']]];
+        })->all();
+
+        // Синхронизируем опции
+        $product->options()->sync($options);
+
         return redirect()->back()->with('success', 'Товар успешно обновлен');
     }
 
@@ -409,10 +417,14 @@ class ProductController extends Controller
             'options.*.is_required' => 'required|boolean',
         ]);
 
+        // Используем attach() вместо sync()
         foreach ($validated['options'] as $optionData) {
-            $product->options()->attach($optionData['option_id'], [
-                'is_required' => $optionData['is_required']
-            ]);
+            // Проверяем, не существует ли уже такая связь
+            if (!$product->options()->where('option_id', $optionData['option_id'])->exists()) {
+                $product->options()->attach($optionData['option_id'], [
+                    'is_required' => $optionData['is_required']
+                ]);
+            }
         }
 
         return redirect()->back()->with('success', 'Опции успешно добавлены к товару');
