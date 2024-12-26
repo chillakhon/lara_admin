@@ -110,7 +110,11 @@ atmo_deploy:
 
     - sshpass -e ssh $SSH_USER@$SSH_HOST -o stricthostkeychecking=no "
       cd $SSH_APP_PATH && \
-      find . -maxdepth 1 ! -name 'storage' ! -name '.' ! -name '..' -exec rm -rf {} +
+      for file in *; do \
+        if [ \"\$file\" != \"storage\" ] && [ \"\$file\" != \".\" ] && [ \"\$file\" != \"..\" ]; then \
+          rm -rf \"\$file\"; \
+        fi \
+      done
       "
 
     - |
