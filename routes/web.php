@@ -42,6 +42,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\Admin\LeadTypeController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -471,6 +472,12 @@ Route::prefix('webhook')->name('webhook.')->group(function () {
     Route::post('yandexpay', [WebhookController::class, 'yandexPay'])->name('yandexpay');
     Route::post('cloudpayment', [WebhookController::class, 'cloudPayment'])->name('cloudpayment');
     Route::post('robokassa', [WebhookController::class, 'robokassa'])->name('robokassa');
+});
+
+// В группу маршрутов с middleware ['auth', 'role:super-admin']
+Route::prefix('dashboard')->name('dashboard.')->middleware(['role:super-admin'])->group(function () {
+    // Lead Types
+    Route::resource('lead-types', LeadTypeController::class)->except(['show']);
 });
 
 require __DIR__ . '/auth.php';

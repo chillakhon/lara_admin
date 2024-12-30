@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             UnitsTableSeeder::class,
             CategorySeeder::class,
             CostCategorySeeder::class,
+            LeadTypeSeeder::class,
         ]);
     }
 }

@@ -8,6 +8,7 @@ use App\Models\LeadType;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class LeadController extends Controller
 {
@@ -23,36 +24,21 @@ class LeadController extends Controller
 
             $leadType = LeadType::where('code', $request->type)->firstOrFail();
             
-            // Проверяем обязательные поля
-            if ($leadType->required_fields) {
-                foreach ($leadType->required_fields as $field) {
-                    if (!isset($request->data[$field])) {
-                        throw new \Exception("Field {$field} is required");
-                    }
-                }
+            $validator = Validator::make($request->data, $this->getValidationRules($leadType));
+            
+            if ($validator->fails()) {
+                throw new \Exception($validator->errors()->first());
             }
 
-            // Ищем существующего клиента по телефону или email
-            $client = null;
-            $phone = $request->data['phone'] ?? null;
-            $email = $request->data['email'] ?? null;
+            $normalizedData = $this->normalizeData($request->data);
+            
+            $client = $this->findOrInitializeClient($normalizedData);
 
-            if ($phone) {
-                $client = Client::where('phone', $phone)->first();
-            }
-
-            if (!$client && $email) {
-                $client = Client::whereHas('user', function($q) use ($email) {
-                    $q->where('email', $email);
-                })->first();
-            }
-
-            // Создаем заявку
             $lead = Lead::create([
                 'lead_type_id' => $leadType->id,
-                'client_id' => $client?->id, // Если клиент найден, привязываем его
+                'client_id' => $client?->id,
                 'status' => Lead::STATUS_NEW,
-                'data' => $request->data,
+                'data' => $normalizedData,
                 'source' => $request->header('Referer'),
                 'utm_source' => $request->utm_source,
                 'utm_medium' => $request->utm_medium,
@@ -63,13 +49,7 @@ class LeadController extends Controller
                 'user_agent' => $request->userAgent()
             ]);
 
-            // Записываем историю
-            $lead->history()->create([
-                'status' => Lead::STATUS_NEW,
-                'comment' => $client 
-                    ? 'Заявка создана и привязана к существующему клиенту' 
-                    : 'Заявка создана'
-            ]);
+            $this->createLeadHistory($lead, $client);
 
             DB::commit();
 
@@ -86,5 +66,83 @@ class LeadController extends Controller
                 'message' => $e->getMessage()
             ], 400);
         }
+    }
+
+    private function getValidationRules(LeadType $leadType): array
+    {
+        $rules = [];
+
+        foreach ($leadType->required_fields as $field) {
+            switch ($field) {
+                case 'phone':
+                    $rules['phone'] = 'required|string|regex:/^[0-9\+\-\(\)\s]{10,}$/';
+                    break;
+                case 'email':
+                    $rules['email'] = 'required|email';
+                    break;
+                case 'name':
+                    $rules['name'] = 'required|string|min:2|max:100';
+                    break;
+                case 'message':
+                    $rules['message'] = 'required|string|max:1000';
+                    break;
+                default:
+                    $rules[$field] = 'required';
+            }
+        }
+
+        return $rules;
+    }
+
+    private function normalizeData(array $data): array
+    {
+        $normalized = [];
+
+        if (isset($data['phone'])) {
+            $normalized['phone'] = preg_replace('/[^0-9+]/', '', $data['phone']);
+        }
+
+        if (isset($data['email'])) {
+            $normalized['email'] = strtolower(trim($data['email']));
+        }
+
+        if (isset($data['name'])) {
+            $normalized['name'] = ucwords(trim($data['name']));
+        }
+
+        foreach ($data as $key => $value) {
+            if (!isset($normalized[$key])) {
+                $normalized[$key] = is_string($value) ? trim($value) : $value;
+            }
+        }
+
+        return $normalized;
+    }
+
+    private function findOrInitializeClient(array $data)
+    {
+        if (!empty($data['phone'])) {
+            $client = Client::where('phone', $data['phone'])->first();
+            if ($client) return $client;
+        }
+
+        if (!empty($data['email'])) {
+            $client = Client::whereHas('user', function($q) use ($data) {
+                $q->where('email', $data['email']);
+            })->first();
+            if ($client) return $client;
+        }
+
+        return null;
+    }
+
+    private function createLeadHistory(Lead $lead, ?Client $client)
+    {
+        $lead->history()->create([
+            'status' => Lead::STATUS_NEW,
+            'comment' => $client 
+                ? 'Заявка создана и привязана к существующему клиенту' 
+                : 'Заявка создана'
+        ]);
     }
 } 
