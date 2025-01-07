@@ -2,6 +2,10 @@
 
 import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import {computed, ref} from "vue";
+import { useSidebar } from '@/composables/useSidebar';
+
+const { isCollapsed } = useSidebar();
+
 const isNotificationOpen = ref(false);
 const isAppsOpen = ref(false)
 
@@ -18,7 +22,7 @@ const changeLightScheme = () => {
         <div class="py-3 px-3 lg:px-5 lg:pl-3">
             <div class="flex justify-between items-center">
                 <div class="flex justify-start items-center">
-                    <button id="toggleSidebar" aria-expanded="true" aria-controls="sidebar"
+                    <button @click="isCollapsed = !isCollapsed" id="toggleSidebar" aria-expanded="true" aria-controls="sidebar"
                             class="hidden p-2 mr-3 text-gray-600 rounded cursor-pointer lg:inline hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700">
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                             <path fill-rule="evenodd"
