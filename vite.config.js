@@ -17,6 +17,12 @@ export default defineConfig({
             },
         }),
     ],
+    server: {
+        host: '0.0.0.0',
+        hmr: {
+            host: 'localhost'
+        },
+    },
     resolve: {
         alias: {
             '@': '/resources/js',

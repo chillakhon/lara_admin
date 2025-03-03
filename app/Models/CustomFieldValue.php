@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Model;
+
 class CustomFieldValue extends Model
 {
     protected $fillable = ['page_content_id', 'custom_field_id', 'value'];
-    
+
     protected $casts = [
         'value' => 'json'
     ];

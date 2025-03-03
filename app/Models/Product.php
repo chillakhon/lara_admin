@@ -196,9 +196,15 @@ class Product extends Model
     public function getAverageRatingAttribute(): float
     {
         return $this->reviews()
-            ->published()
-            ->verified()
+            ->where('is_published', true)
             ->avg('rating') ?? 0;
+    }
+
+    public function getReviewsCountAttribute()
+    {
+        return $this->reviews()
+            ->where('is_published', true)
+            ->count();
     }
 
 }

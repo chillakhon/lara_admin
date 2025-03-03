@@ -8,8 +8,28 @@ use App\Http\Resources\ProductResource;
 use App\Http\Resources\ProductDetailResource;
 use Illuminate\Http\Request;
 
+/**
+ * @OA\Info(title="My API", version="1.0")
+ * @OA\Server(url="http://localhost/api")
+ */
 class ProductController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/products",
+     *     summary="Get list of products",
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of products"
+     *     )
+     * )
+     */
+    public function index2()
+    {
+        // Логика для получения списка продуктов
+        echo 'dd';
+    }
+
     public function index(Request $request)
     {
         $query = Product::query()

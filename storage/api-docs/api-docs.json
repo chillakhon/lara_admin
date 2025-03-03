@@ -1,0 +1,25 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "My API",
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost/api"
+        }
+    ],
+    "paths": {
+        "/api/products": {
+            "get": {
+                "summary": "Get list of products",
+                "operationId": "5d03861d644a2f52e4ed10ec9770ca8c",
+                "responses": {
+                    "200": {
+                        "description": "List of products"
+                    }
+                }
+            }
+        }
+    }
+}

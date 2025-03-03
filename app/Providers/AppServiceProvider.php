@@ -29,9 +29,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if($this->app->environment('production') || $this->app->environment('development') || $this->app->environment('local')) {
-            URL::forceScheme('https');
-        }
+        // if($this->app->environment('production') || $this->app->environment('development') || $this->app->environment('local')) {
+        //     URL::forceScheme('https');
+        // }
 
         Relation::morphMap([
             'Material' => \App\Models\Material::class,

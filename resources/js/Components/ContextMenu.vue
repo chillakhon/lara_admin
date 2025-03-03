@@ -26,11 +26,7 @@
                 :aria-labelledby="`${id}-dropdown-button`"
             >
                 <li v-for="item in regularItems" :key="item.text">
-                    <a
-                        href="#"
-                        @click.prevent="handleItemClick(item)"
-                        class="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                    >
+                    <a @click.prevent="handleItemClick(item)" >
                         {{ item.text }}
                     </a>
                 </li>

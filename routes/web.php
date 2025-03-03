@@ -36,15 +36,17 @@ use App\Http\Controllers\Admin\ReviewController;
 use App\Http\Controllers\DeliveryMethodController;
 use App\Http\Controllers\DeliveryZoneController;
 use App\Http\Controllers\DeliveryRateController;
-use App\Http\Controllers\ShipmentController;
+//use App\Http\Controllers\ShipmentController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\Admin\LeadTypeController;
+use App\Http\Controllers\Admin\DiscountController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\DashboardController;
 
 Route::get('/test', function () {
     return Inertia::render('Test', [
@@ -135,6 +137,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/{variant}/stock-movements', [ProductVariantController::class, 'stockMovements'])
                 ->name('stock-movements');
         });
+
+
+        Route::resource('discounts', DiscountController::class);
+        Route::post('discounts/{discount}/attach-products', [DiscountController::class, 'attachProducts'])
+            ->name('discounts.attach-products');
+        Route::post('discounts/{discount}/attach-variants', [DiscountController::class, 'attachVariants'])
+            ->name('discounts.attach-variants');
 
         Route::group(['prefix' => 'recipes', 'as' => 'recipes.'], function () {
 
@@ -372,10 +381,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/rates/{rate}', [DeliveryRateController::class, 'destroy'])->name('rates.destroy');
 
             // Отправления
-            Route::get('/shipments', [ShipmentController::class, 'index'])->name('shipments.index');
-            Route::put('/shipments/{shipment}', [ShipmentController::class, 'update'])->name('shipments.update');
-            Route::get('/shipments/{shipment}/print-label', [ShipmentController::class, 'printLabel'])->name('shipments.print-label');
-            Route::post('/shipments/{shipment}/cancel', [ShipmentController::class, 'cancel'])->name('shipments.cancel');
+            // Route::get('/shipments', [ShipmentController::class, 'index'])->name('shipments.index');
+            // Route::put('/shipments/{shipment}', [ShipmentController::class, 'update'])->name('shipments.update');
+            // Route::get('/shipments/{shipment}/print-label', [ShipmentController::class, 'printLabel'])->name('shipments.print-label');
+            // Route::post('/shipments/{shipment}/cancel', [ShipmentController::class, 'cancel'])->name('shipments.cancel');
         });
 
         Route::group(['prefix' => 'settings', 'as' => 'settings.'], function () {
@@ -479,5 +488,8 @@ Route::prefix('dashboard')->name('dashboard.')->middleware(['role:super-admin'])
     // Lead Types
     Route::resource('lead-types', LeadTypeController::class)->except(['show']);
 });
+
+Route::get('/dashboard/analytics', [DashboardController::class, 'getAnalytics'])
+    ->name('dashboard.analytics');
 
 require __DIR__ . '/auth.php';

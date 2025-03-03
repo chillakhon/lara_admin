@@ -10,12 +10,21 @@ use App\Models\LeadType;
 use App\Models\Product;
 use App\Models\PromoCode;
 use App\Models\DeliveryMethod;
+use App\Models\OrderDiscount;
+use App\Services\DiscountService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
+    protected $discountService;
+
+    public function __construct(DiscountService $discountService)
+    {
+        $this->discountService = $discountService;
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -164,12 +173,37 @@ class OrderController extends Controller
                 'total_amount' => $order->total_amount + $deliveryRate['price']
             ]);
 
+            // Применяем скидки к каждому товару
+            foreach ($order->items as $item) {
+                $appliedDiscounts = $this->discountService->calculateDiscounts(
+                    $item->product,
+                    $item->variant,
+                    $item->quantity,
+                    $order->client
+                );
+
+                foreach ($appliedDiscounts as $discount) {
+                    OrderDiscount::create([
+                        'order_id' => $order->id,
+                        'discount_id' => $discount['discount']->id,
+                        'discountable_type' => $discount['target_type'],
+                        'discountable_id' => $discount['target_id'],
+                        'original_price' => $discount['original_price'],
+                        'discount_amount' => $discount['discount_amount'],
+                        'final_price' => $discount['final_price']
+                    ]);
+                }
+            }
+
+            // Пересчитываем итоговую сумму заказа
+            $order->recalculateTotal();
+            
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Order created successfully',
-                'order' => $order->load('items', 'client', 'lead', 'promoCode', 'deliveryMethod'),
+                'order' => $order->load('items', 'client', 'lead', 'promoCode', 'deliveryMethod', 'discounts'),
             ], 201);
 
         } catch (\Exception $e) {

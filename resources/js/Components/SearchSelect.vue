@@ -10,21 +10,21 @@
 
     const props = defineProps({
         modelValue: {
-            type: [String, Number, Object],
+            type: [String, Number, Object, Array],
             default: null,
         },
         type: {
             type: String,
-            required: true, // 'products', 'categories', 'orders', etc.
+            required: true, // 'products', 'categories', 'variants', etc.
         },
         placeholder: {
             type: String,
             default: 'Поиск...',
         },
-        showVariants: {
-            type: Boolean,
-            default: false,
-        },
+        productIds: {
+            type: Array,
+            default: () => []
+        }
     });
 
     const emit = defineEmits(['update:modelValue', 'change']);
@@ -55,19 +55,17 @@
 
             isLoading.value = true;
             try {
-                console.log('Sending search request:', {
+                const params = {
                     query: newQuery,
-                    type: props.type,
-                });
+                    type: props.type
+                };
 
-                const response = await axios.get(route('api.search'), {
-                    params: {
-                        query: newQuery,
-                        type: props.type,
-                    },
-                });
+                // Добавляем параметр product_ids для вариантов
+                if (props.type === 'variants' && props.productIds.length > 0) {
+                    params.product_ids = props.productIds;
+                }
 
-                console.log('Search response:', response.data);
+                const response = await axios.get(route('api.search'), { params });
                 results.value = response.data;
             } catch (error) {
                 console.error('Search error:', error);
