@@ -12,6 +12,7 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
+    const TYPE_CLIENT = 'user';
     protected $fillable = [
         'email',
         'password',

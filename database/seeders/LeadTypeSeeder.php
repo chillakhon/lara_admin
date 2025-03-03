@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\LeadType;
 use Illuminate\Database\Seeder;
 
-class LeadTypeSeeder extends Class
+class LeadTypeSeeder extends Seeder
 {
     public function run()
     {
@@ -31,4 +31,4 @@ class LeadTypeSeeder extends Class
             LeadType::create($type);
         }
     }
-} 
+}
