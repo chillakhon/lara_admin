@@ -1,5 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Api\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Api\Auth\NewPasswordController;
+use App\Http\Controllers\Api\Auth\PasswordController;
+use App\Http\Controllers\Api\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Api\Auth\RegisteredUserController;
+use App\Http\Controllers\Api\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\MaterialController;
 use App\Http\Controllers\Api\ProductController;
@@ -9,8 +16,9 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\DeliveryController;
-//use App\Http\Controllers\Api\ShipmentController;
 use App\Http\Controllers\Api\LeadTypeController;
+use App\Http\Controllers\Api\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Api\Auth\ConfirmablePasswordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Product;
@@ -21,9 +29,8 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-
-//Route::get('/products', [ProductController::class, 'index2']);
-//Route::get('/products', [ProductController::class, 'index']);
+//client
+Route::get('/products', [ProductController::class, 'index'])->middleware('auth:sanctum');
 Route::get('/products/{slug}', [ProductController::class, 'show']);
 
 Route::get('/categories', [CategoryController::class, 'index']);
@@ -51,7 +58,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::get('/shipments', [ShipmentController::class, 'userShipments'])
     //     ->name('shipments.index');
 });
-
 Route::prefix('delivery')->name('delivery.')->group(function () {
     Route::post('/calculate', [DeliveryController::class, 'calculate'])->name('calculate');
 
@@ -62,10 +68,31 @@ Route::prefix('delivery')->name('delivery.')->group(function () {
         ->name('track');
 });
 
+//admin panel api dashboard
 
-//admin panel api
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/products', [ProductController::class, 'index']);
+
+//auth user
+Route::middleware('guest')->group(function () {
+    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::post('login', [AuthenticatedSessionController::class, 'login']);
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
+    Route::post('reset-password', [NewPasswordController::class, 'store']);
+});
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('verify-email', EmailVerificationPromptController::class);
+    Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
+        ->middleware(['signed', 'throttle:6,1']);
+    Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+        ->middleware('throttle:6,1');
+    Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
+
+    Route::put('password', [PasswordController::class, 'update']);
+
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy']);
+});
+
+
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     Route::middleware(['role:super-admin,admin,manager'])->group(function () {
         // Categories

@@ -9,7 +9,6 @@ use App\Http\Resources\ProductDetailResource;
 use Illuminate\Http\Request;
 
 /**
- * @OA\Info(title="My API", version="1.0")
  * @OA\Server(url="http://localhost/api")
  */
 class ProductController extends Controller
