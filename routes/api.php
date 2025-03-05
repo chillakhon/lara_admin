@@ -42,7 +42,6 @@ Route::prefix('orders')->group(function () {
     Route::get('/user', [OrderController::class, 'getUserOrders']);
     Route::post('/', [OrderController::class, 'store']);
 });
-
 Route::prefix('leads')->group(function () {
     Route::post('/', [LeadController::class, 'store']);
 });
@@ -69,7 +68,6 @@ Route::prefix('delivery')->name('delivery.')->group(function () {
 });
 
 //admin panel api dashboard
-
 
 //auth user
 Route::middleware('guest')->group(function () {
@@ -108,17 +106,17 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
         // Materials
         Route::group(['prefix' => 'materials', 'as' => 'materials.'], function () {
-            Route::get('/', [MaterialController::class, 'index'])->name('index');
-            Route::post('/', [MaterialController::class, 'store'])->name('store');
-            Route::put('/{material}', [MaterialController::class, 'update'])->name('update');
-            Route::delete('/{material}', [MaterialController::class, 'destroy'])->name('destroy');
-            Route::post('/{material}/add-stock', [MaterialController::class, 'addStock'])->name('add-stock');
-            Route::post('/{material}/remove-stock', [MaterialController::class, 'removeStock'])->name('remove-stock');
+            Route::get('/', [MaterialController::class, 'index']);
+            Route::post('/', [MaterialController::class, 'store']);
+            Route::put('/{material}', [MaterialController::class, 'update']);
+            Route::delete('/{material}', [MaterialController::class, 'destroy']);
+            Route::post('/{material}/add-stock', [MaterialController::class, 'addStock']);
+            Route::post('/{material}/remove-stock', [MaterialController::class, 'removeStock']);
         });
 
 //        // Products
-//        Route::group(['prefix' => 'products', 'as' => 'products.', 'middleware' => ['permission:products.view,products.manage']], function () {
-//            Route::get('/', [ProductController::class, 'index'])->name('index');
+        Route::group(['prefix' => 'products', 'as' => 'products.', 'middleware' => ['permission:products.view,products.manage']], function () {
+            Route::get('/', [ProductController::class, 'index']);
 //            Route::get('/{product}', [ProductController::class, 'show'])->name('show');
 //            Route::post('/', [ProductController::class, 'store'])->name('store');
 //            Route::put('/{product}', [ProductController::class, 'update'])->name('update');
@@ -158,7 +156,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //                '/{product}/variants/{variant}/images/{image}',
 //                [ProductVariantController::class, 'destroyImage']
 //            )->name('variants.images.destroy');
-//        });
+        });
 //
 //        // Product Variants
 //        Route::prefix('product-variants')->name('product-variants.')->group(function () {
