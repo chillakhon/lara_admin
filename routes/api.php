@@ -1,29 +1,26 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\MaterialController;
+use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Api\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Api\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Api\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Api\Auth\NewPasswordController;
 use App\Http\Controllers\Api\Auth\PasswordController;
 use App\Http\Controllers\Api\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\Api\MaterialController;
-use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\Api\SearchController;
-use App\Http\Controllers\Api\PromoCodeController;
-use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\Api\LeadController;
-use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\DeliveryController;
+use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\LeadTypeController;
-use App\Http\Controllers\Api\Auth\EmailVerificationPromptController;
-use App\Http\Controllers\Api\Auth\ConfirmablePasswordController;
+use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PromoCodeController;
+use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\SearchController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Models\Product;
-use App\Models\ProductVariant;
-use App\Models\Category;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -117,8 +114,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //        // Products
         Route::group(['prefix' => 'products', 'as' => 'products.', 'middleware' => ['permission:products.view,products.manage']], function () {
             Route::get('/', [ProductController::class, 'index']);
+            Route::post('/', [ProductController::class, 'store']);
+
 //            Route::get('/{product}', [ProductController::class, 'show'])->name('show');
-//            Route::post('/', [ProductController::class, 'store'])->name('store');
 //            Route::put('/{product}', [ProductController::class, 'update'])->name('update');
 //            Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
 //            Route::post('/{product}/components', [ProductController::class, 'addComponent'])->name('addComponent');

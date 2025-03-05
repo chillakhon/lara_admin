@@ -9,7 +9,25 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+/**
+ * @OA\Schema(
+ *     schema="Product",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="name", type="string"),
+ *     @OA\Property(property="slug", type="string"),
+ *     @OA\Property(property="description", type="string", nullable=true),
+ *     @OA\Property(property="type", type="string", enum={"simple", "manufactured", "composite"}),
+ *     @OA\Property(property="default_unit_id", type="integer", nullable=true),
+ *     @OA\Property(property="is_active", type="boolean"),
+ *     @OA\Property(property="has_variants", type="boolean"),
+ *     @OA\Property(property="allow_preorder", type="boolean"),
+ *     @OA\Property(property="after_purchase_processing_time", type="integer"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time"),
+ *     @OA\Property(property="categories", type="array", @OA\Items(ref="#/components/schemas/Category"))
+ * )
+ */
 class Product extends Model
 {
     use HasFactory, SoftDeletes;

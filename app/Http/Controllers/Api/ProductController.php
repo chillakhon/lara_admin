@@ -72,7 +72,6 @@ class ProductController extends Controller
 
         return ProductResource::collection($products);
     }
-
     public function show($slug)
     {
         $product = Product::where('slug', $slug)
@@ -91,4 +90,8 @@ class ProductController extends Controller
 
         return new ProductDetailResource($product);
     }
+
+
+
+
 }

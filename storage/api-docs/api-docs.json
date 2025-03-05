@@ -724,99 +724,6 @@
                 }
             }
         },
-        "/api/materials": {
-            "get": {
-                "tags": [
-                    "Materials"
-                ],
-                "summary": "Получить список материалов",
-                "description": "Получить список материалов",
-                "operationId": "5f90e5ed7d0e44b67d3fb4893d531d21",
-                "responses": {
-                    "200": {
-                        "description": "Список материалов",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Material"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "tags": [
-                    "Materials"
-                ],
-                "summary": "Создать новый материал",
-                "description": "Создать новый материал",
-                "operationId": "3368b7d9a38b578df661984351ea78b3",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "title",
-                                    "unit_id"
-                                ],
-                                "properties": {
-                                    "title": {
-                                        "type": "string",
-                                        "example": "Бетон"
-                                    },
-                                    "unit_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Материал создан"
-                    },
-                    "422": {
-                        "description": "Ошибка валидации"
-                    }
-                }
-            }
-        },
-        "/api/materials/{id}": {
-            "delete": {
-                "tags": [
-                    "Materials"
-                ],
-                "summary": "Удалить материал",
-                "description": "Удалить материал",
-                "operationId": "99a136c3942a510c263cbd4a32ac5392",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Материал удален"
-                    },
-                    "400": {
-                        "description": "Ошибка: материал нельзя удалить"
-                    }
-                }
-            }
-        },
         "/api/products": {
             "get": {
                 "summary": "Get list of products",
@@ -831,31 +738,80 @@
     },
     "components": {
         "schemas": {
-            "Material": {
-                "title": "Material",
-                "description": "Схема материала",
+            "Category": {
                 "properties": {
                     "id": {
-                        "type": "integer",
-                        "example": 1
+                        "type": "integer"
                     },
-                    "title": {
-                        "type": "string",
-                        "example": "Бетон"
+                    "name": {
+                        "type": "string"
                     },
-                    "unit_id": {
-                        "type": "integer",
-                        "example": 2
+                    "slug": {
+                        "type": "string"
                     },
                     "created_at": {
                         "type": "string",
-                        "format": "date-time",
-                        "example": "2024-03-01T12:00:00Z"
+                        "format": "date-time"
                     },
                     "updated_at": {
                         "type": "string",
-                        "format": "date-time",
-                        "example": "2024-03-02T15:30:00Z"
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Product": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "simple",
+                            "manufactured",
+                            "composite"
+                        ]
+                    },
+                    "default_unit_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "has_variants": {
+                        "type": "boolean"
+                    },
+                    "allow_preorder": {
+                        "type": "boolean"
+                    },
+                    "after_purchase_processing_time": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Category"
+                        }
                     }
                 },
                 "type": "object"
@@ -891,10 +847,6 @@
         }
     },
     "tags": [
-        {
-            "name": "Materials",
-            "description": "API для управления материалами"
-        },
         {
             "name": "Authentication",
             "description": "Authentication"
