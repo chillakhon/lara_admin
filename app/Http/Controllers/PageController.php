@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 
-class PageController extends Controller
+class .)PageController extends Controller
 {
     public function index()
     {
@@ -81,7 +81,7 @@ class PageController extends Controller
     {
         foreach ($values as $key => $value) {
             $field = Field::where('key', $key)->first();
-            
+
             if (!$field) continue;
 
             $fieldValue = new FieldValue([

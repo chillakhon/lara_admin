@@ -13,6 +13,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+/**
+ * @OA\Tag(name="Products", description="API для управления товарами")
+ */
 class ProductController extends Controller
 {
     protected $materialService;
@@ -22,6 +25,16 @@ class ProductController extends Controller
         $this->materialService = $materialService;
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/admin/products",
+     *     summary="Получение списка товаров",
+     *     tags={"Products"},
+     *     @OA\Parameter(name="search", in="query", description="Поиск по названию и описанию", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="category", in="query", description="Фильтр по категории", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Список товаров")
+     * )
+     */
     public function index(Request $request)
     {
         $products = Product::with(['categories', 'options', 'variants'])
@@ -43,12 +56,30 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/admin/products/{id}",
+     *     summary="Получение информации о товаре",
+     *     tags={"Products"},
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID товара", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Данные товара")
+     * )
+     */
     public function show(Product $product)
     {
         $product->load(['categories', 'options.values', 'variants.optionValues.option', 'variants.images', 'variants.unit', 'defaultUnit']);
         return response()->json($product);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/admin/products",
+     *     summary="Создание нового товара",
+     *     tags={"Products"},
+     *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/Product")),
+     *     @OA\Response(response=201, description="Товар создан")
+     * )
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -67,11 +98,19 @@ class ProductController extends Controller
         $product = Product::create(array_merge($validated, ['slug' => Str::slug($validated['name'])]));
         $product->categories()->sync($validated['categories']);
 
-        return response()->json([
-            'message' => 'Product created successfully',
-            'product' => $product], 201);
+        return response()->json(['message' => 'Product created successfully', 'product' => $product], 201);
     }
 
+    /**
+     * @OA\Put(
+     *     path="/api/admin/products/{id}",
+     *     summary="Обновление товара",
+     *     tags={"Products"},
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID товара", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/Product")),
+     *     @OA\Response(response=200, description="Товар обновлен")
+     * )
+     */
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
@@ -93,26 +132,18 @@ class ProductController extends Controller
         return response()->json(['message' => 'Product updated successfully', 'product' => $product]);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/admin/products/{id}",
+     *     summary="Удаление товара",
+     *     tags={"Products"},
+     *     @OA\Parameter(name="id", in="path", required=true, description="ID товара", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Товар удален")
+     * )
+     */
     public function destroy(Product $product)
     {
         $product->delete();
         return response()->json(['message' => 'Product deleted successfully']);
-    }
-
-    public function storeImages(Request $request, Product $product)
-    {
-        $request->validate([
-            'images' => 'required|array',
-            'images.*' => 'required|image|max:5120',
-        ]);
-
-        $uploadedImages = [];
-        foreach ($request->file('images') as $image) {
-            $path = $image->store('products', 'public');
-            $imageModel = $product->images()->create(['path' => $path, 'url' => Storage::url($path)]);
-            $uploadedImages[] = $imageModel;
-        }
-
-        return response()->json(['message' => 'Images uploaded successfully', 'images' => $uploadedImages]);
     }
 }
