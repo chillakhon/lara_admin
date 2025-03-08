@@ -115,6 +115,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         // Materials
         Route::group(['prefix' => 'materials', 'as' => 'materials.'], function () {
             Route::get('/', [MaterialController::class, 'index']);
+            Route::get('/{material}', [MaterialController::class, 'show']);
             Route::post('/', [MaterialController::class, 'store']);
             Route::put('/{material}', [MaterialController::class, 'update']);
             Route::delete('/{material}', [MaterialController::class, 'destroy']);
