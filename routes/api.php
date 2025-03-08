@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\MaterialController;
+use App\Http\Controllers\Api\Admin\OptionController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\UnitController;
 use App\Http\Controllers\Api\Auth\AuthenticatedSessionController;
@@ -104,12 +105,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         });
 
         // Options
-//        Route::group(['prefix' => 'options', 'as' => 'options.'], function () {
-//            Route::get('/', [OptionController::class, 'index'])->name('index');
-//            Route::post('/', [OptionController::class, 'store'])->name('store');
-//            Route::put('/{option}', [OptionController::class, 'update'])->name('update');
-//            Route::delete('/{option}', [OptionController::class, 'destroy'])->name('destroy');
-//        });
+        Route::group(['prefix' => 'options', 'as' => 'options.'], function () {
+            Route::get('/', [OptionController::class, 'index'])->name('index');
+            Route::post('/', [OptionController::class, 'store'])->name('store');
+            Route::put('/{option}', [OptionController::class, 'update'])->name('update');
+            Route::delete('/{option}', [OptionController::class, 'destroy'])->name('destroy');
+        });
 
         // Materials
         Route::group(['prefix' => 'materials', 'as' => 'materials.'], function () {
