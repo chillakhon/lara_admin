@@ -5,620 +5,7 @@
         "description": "API for managing resources",
         "version": "1.0.0"
     },
-    "servers": [
-        {
-            "url": "http://localhost/api"
-        }
-    ],
     "paths": {
-        "/api/products/{product}/generate-variants": {
-            "post": {
-                "tags": [
-                    "Product Variants"
-                ],
-                "summary": "Generate multiple variants for a product",
-                "operationId": "fcb3f0890195b71e789fbcb5bbc2a782",
-                "parameters": [
-                    {
-                        "name": "product",
-                        "in": "path",
-                        "description": "ID of the product",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "variants"
-                                ],
-                                "properties": {
-                                    "variants": {
-                                        "type": "array",
-                                        "items": {
-                                            "required": [
-                                                "name",
-                                                "sku",
-                                                "price",
-                                                "option_values"
-                                            ],
-                                            "properties": {
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "Variant 1"
-                                                },
-                                                "sku": {
-                                                    "type": "string",
-                                                    "example": "variant-1-unique-sku"
-                                                },
-                                                "price": {
-                                                    "type": "number",
-                                                    "format": "float",
-                                                    "example": 19.99
-                                                },
-                                                "option_values": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Variants generated successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Variants generated successfully"
-                                        },
-                                        "variants": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "name": {
-                                                        "type": "string",
-                                                        "example": "Variant 1"
-                                                    },
-                                                    "sku": {
-                                                        "type": "string",
-                                                        "example": "variant-1-unique-sku"
-                                                    },
-                                                    "price": {
-                                                        "type": "number",
-                                                        "format": "float",
-                                                        "example": 19.99
-                                                    },
-                                                    "type": {
-                                                        "type": "string",
-                                                        "example": "simple"
-                                                    },
-                                                    "unit_id": {
-                                                        "type": "integer",
-                                                        "example": 1
-                                                    },
-                                                    "is_active": {
-                                                        "type": "boolean",
-                                                        "example": true
-                                                    },
-                                                    "option_values": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "properties": {
-                                                                "id": {
-                                                                    "type": "integer",
-                                                                    "example": 1
-                                                                },
-                                                                "name": {
-                                                                    "type": "string",
-                                                                    "example": "Option Value 1"
-                                                                }
-                                                            },
-                                                            "type": "object"
-                                                        }
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "The given data was invalid."
-                                        },
-                                        "errors": {
-                                            "properties": {
-                                                "variants.0.sku": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "example": "The variants.0.sku has already been taken."
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Failed to generate variants"
-                                        },
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Error message details"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/products/{product}/variants": {
-            "post": {
-                "tags": [
-                    "Product Variants"
-                ],
-                "summary": "Create a new product variant",
-                "operationId": "8d8d98fd6736b71dbda0aa287fe85ce0",
-                "parameters": [
-                    {
-                        "name": "product",
-                        "in": "path",
-                        "description": "ID of the product",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name",
-                                    "sku",
-                                    "price",
-                                    "type"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Variant 1"
-                                    },
-                                    "sku": {
-                                        "type": "string",
-                                        "example": "variant-1-unique-sku"
-                                    },
-                                    "price": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 19.99
-                                    },
-                                    "additional_cost": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 2.5
-                                    },
-                                    "type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "simple",
-                                            "manufactured",
-                                            "composite"
-                                        ],
-                                        "example": "simple"
-                                    },
-                                    "unit_id": {
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "is_active": {
-                                        "type": "boolean",
-                                        "example": true
-                                    },
-                                    "option_values": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "integer"
-                                        },
-                                        "example": [
-                                            1,
-                                            2,
-                                            3
-                                        ]
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Product variant created successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Product variant created successfully"
-                                        },
-                                        "variant": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "Variant 1"
-                                                },
-                                                "sku": {
-                                                    "type": "string",
-                                                    "example": "variant-1-unique-sku"
-                                                },
-                                                "price": {
-                                                    "type": "number",
-                                                    "format": "float",
-                                                    "example": 19.99
-                                                },
-                                                "additional_cost": {
-                                                    "type": "number",
-                                                    "format": "float",
-                                                    "example": 2.5
-                                                },
-                                                "type": {
-                                                    "type": "string",
-                                                    "example": "simple"
-                                                },
-                                                "unit_id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "is_active": {
-                                                    "type": "boolean",
-                                                    "example": true
-                                                },
-                                                "option_values": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "integer",
-                                                                "example": 1
-                                                            },
-                                                            "name": {
-                                                                "type": "string",
-                                                                "example": "Option Value 1"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "The given data was invalid."
-                                        },
-                                        "errors": {
-                                            "properties": {
-                                                "sku": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "example": "The sku has already been taken."
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Failed to create product variant"
-                                        },
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Error message details"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/products/variants/{variant}": {
-            "put": {
-                "tags": [
-                    "Product Variants"
-                ],
-                "summary": "Update a product variant",
-                "operationId": "69e76700e327cb4aec61829dfb18585e",
-                "parameters": [
-                    {
-                        "name": "variant",
-                        "in": "path",
-                        "description": "ID of the variant",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "name",
-                                    "price",
-                                    "stock"
-                                ],
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "example": "Updated Variant Name"
-                                    },
-                                    "price": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 29.99
-                                    },
-                                    "stock": {
-                                        "type": "integer",
-                                        "example": 100
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Variant updated successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Variant updated successfully"
-                                        },
-                                        "variant": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "Updated Variant Name"
-                                                },
-                                                "price": {
-                                                    "type": "number",
-                                                    "format": "float",
-                                                    "example": 29.99
-                                                },
-                                                "stock": {
-                                                    "type": "integer",
-                                                    "example": 100
-                                                },
-                                                "created_at": {
-                                                    "type": "string",
-                                                    "format": "date-time",
-                                                    "example": "2023-10-10T12:00:00.000000Z"
-                                                },
-                                                "updated_at": {
-                                                    "type": "string",
-                                                    "format": "date-time",
-                                                    "example": "2023-10-10T12:05:00.000000Z"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "The given data was invalid."
-                                        },
-                                        "errors": {
-                                            "properties": {
-                                                "price": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "example": "The price must be at least 0."
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/products/{product}/variants/{variant}": {
-            "delete": {
-                "tags": [
-                    "Product Variants"
-                ],
-                "summary": "Delete a product variant",
-                "operationId": "6108e12e2d7fad66c1da8919131291bd",
-                "parameters": [
-                    {
-                        "name": "product",
-                        "in": "path",
-                        "description": "ID of the product",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "variant",
-                        "in": "path",
-                        "description": "ID of the variant",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Product variant deleted successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Product variant deleted successfully"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Failed to delete product variant"
-                                        },
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Error message details"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ]
-            }
-        },
         "/api/categories": {
             "get": {
                 "tags": [
@@ -1540,6 +927,614 @@
                 }
             }
         },
+        "/api/products/{product}/generate-variants": {
+            "post": {
+                "tags": [
+                    "Product Variants"
+                ],
+                "summary": "Generate multiple variants for a product",
+                "operationId": "fcb3f0890195b71e789fbcb5bbc2a782",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID of the product",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "variants"
+                                ],
+                                "properties": {
+                                    "variants": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "name",
+                                                "sku",
+                                                "price",
+                                                "option_values"
+                                            ],
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Variant 1"
+                                                },
+                                                "sku": {
+                                                    "type": "string",
+                                                    "example": "variant-1-unique-sku"
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 19.99
+                                                },
+                                                "option_values": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Variants generated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Variants generated successfully"
+                                        },
+                                        "variants": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Variant 1"
+                                                    },
+                                                    "sku": {
+                                                        "type": "string",
+                                                        "example": "variant-1-unique-sku"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 19.99
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "simple"
+                                                    },
+                                                    "unit_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "option_values": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Option Value 1"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "variants.0.sku": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The variants.0.sku has already been taken."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to generate variants"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error message details"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/products/{product}/variants": {
+            "post": {
+                "tags": [
+                    "Product Variants"
+                ],
+                "summary": "Create a new product variant",
+                "operationId": "8d8d98fd6736b71dbda0aa287fe85ce0",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID of the product",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "sku",
+                                    "price",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Variant 1"
+                                    },
+                                    "sku": {
+                                        "type": "string",
+                                        "example": "variant-1-unique-sku"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 19.99
+                                    },
+                                    "additional_cost": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 2.5
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "simple",
+                                            "manufactured",
+                                            "composite"
+                                        ],
+                                        "example": "simple"
+                                    },
+                                    "unit_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "option_values": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Product variant created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product variant created successfully"
+                                        },
+                                        "variant": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Variant 1"
+                                                },
+                                                "sku": {
+                                                    "type": "string",
+                                                    "example": "variant-1-unique-sku"
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 19.99
+                                                },
+                                                "additional_cost": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 2.5
+                                                },
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "simple"
+                                                },
+                                                "unit_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "option_values": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Option Value 1"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "sku": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The sku has already been taken."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to create product variant"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error message details"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/products/variants/{variant}": {
+            "put": {
+                "tags": [
+                    "Product Variants"
+                ],
+                "summary": "Update a product variant",
+                "operationId": "69e76700e327cb4aec61829dfb18585e",
+                "parameters": [
+                    {
+                        "name": "variant",
+                        "in": "path",
+                        "description": "ID of the variant",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price",
+                                    "stock"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Updated Variant Name"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 29.99
+                                    },
+                                    "stock": {
+                                        "type": "integer",
+                                        "example": 100
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Variant updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Variant updated successfully"
+                                        },
+                                        "variant": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Updated Variant Name"
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 29.99
+                                                },
+                                                "stock": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2023-10-10T12:00:00.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2023-10-10T12:05:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "price": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The price must be at least 0."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/products/{product}/variants/{variant}": {
+            "delete": {
+                "tags": [
+                    "Product Variants"
+                ],
+                "summary": "Delete a product variant",
+                "operationId": "6108e12e2d7fad66c1da8919131291bd",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID of the product",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "variant",
+                        "in": "path",
+                        "description": "ID of the variant",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product variant deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product variant deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to delete product variant"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error message details"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/units": {
             "get": {
                 "tags": [
@@ -2293,17 +2288,6 @@
                     }
                 }
             }
-        },
-        "/api/products": {
-            "get": {
-                "summary": "Get list of products",
-                "operationId": "5d03861d644a2f52e4ed10ec9770ca8c",
-                "responses": {
-                    "200": {
-                        "description": "List of products"
-                    }
-                }
-            }
         }
     },
     "components": {
@@ -2386,6 +2370,28 @@
                 },
                 "type": "object"
             },
+            "Unit": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "abbreviation": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "description": "Описание",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "User": {
                 "properties": {
                     "id": {
@@ -2417,6 +2423,22 @@
         }
     },
     "tags": [
+        {
+            "name": "Categories",
+            "description": "Categories"
+        },
+        {
+            "name": "Products",
+            "description": "Products"
+        },
+        {
+            "name": "Product Variants",
+            "description": "Product Variants"
+        },
+        {
+            "name": "Units",
+            "description": "Units"
+        },
         {
             "name": "Authentication",
             "description": "Authentication"
