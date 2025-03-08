@@ -184,10 +184,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //        Route::post('discounts/{discount}/attach-variants', [DiscountController::class, 'attachVariants'])
 //            ->name('discounts.attach-variants');
 //
-//        Route::group(['prefix' => 'recipes', 'as' => 'recipes.'], function () {
-//
-//            Route::get('/', [RecipeController::class, 'index'])
-//                ->name('index');
+        Route::group(['prefix' => 'recipes', 'as' => 'recipes.'], function () {
+
+            Route::get('/', [RecipeController::class, 'index']);
+
 //            Route::get('/create', [RecipeController::class, 'create'])
 //                ->name('create');
 //            Route::post('/', [RecipeController::class, 'store'])
@@ -207,7 +207,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //
 //            Route::post('/{recipe}/duplicate', [RecipeController::class, 'duplicate'])->name('duplicate');
 //            Route::get('/{recipe}/compare/{otherRecipe}', [RecipeController::class, 'compare'])->name('compare');
-//        });
+        });
 
         // Cost Categories
 //        Route::get('/cost-categories', [CostCategoryController::class, 'index'])
