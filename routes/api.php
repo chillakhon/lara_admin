@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\ProductController;
+use App\Http\Controllers\Api\Admin\ProductVariantController;
 use App\Http\Controllers\Api\Admin\UnitController;
 use App\Http\Controllers\Api\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\Auth\ConfirmablePasswordController;
@@ -12,7 +14,6 @@ use App\Http\Controllers\Api\Auth\PasswordController;
 use App\Http\Controllers\Api\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\Auth\VerifyEmailController;
-use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\LeadTypeController;
@@ -144,11 +145,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            Route::delete('/{product}/options/{option}', [ProductController::class, 'destroyOption'])
 //                ->name('options.destroy');
 //            //variants
-//            Route::post('/{product}/variants', [ProductVariantController::class, 'store'])->name('variants.store');
-//            Route::put('/variants/{variant}', [ProductVariantController::class, 'update'])->name('variants.update');
-//            Route::delete('/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('variants.destroy');
-//            Route::post('/{product}/variants/generate', [ProductController::class, 'generateVariants'])
-//                ->name('variants.generate');
+            Route::post('/{product}/variants', [ProductVariantController::class, 'store']);
+            Route::put('/variants/{variant}', [ProductVariantController::class, 'update']);
+            Route::delete('/{product}/variants/{variant}', [ProductVariantController::class, 'destroy']);
+            Route::post('/{product}/variants/generate', [ProductController::class, 'generateVariants']);
 //
 //            //images
 //            Route::post('/{product}/images', [ProductImageController::class, 'store'])->name('images.store');
