@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\ProductController;
+use App\Http\Controllers\Api\Admin\UnitController;
 use App\Http\Controllers\Api\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Api\Auth\EmailVerificationNotificationController;
@@ -11,7 +12,7 @@ use App\Http\Controllers\Api\Auth\PasswordController;
 use App\Http\Controllers\Api\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\Auth\VerifyEmailController;
-use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\LeadTypeController;
@@ -30,7 +31,7 @@ Route::get('/user', function (Request $request) {
 Route::get('/products', [ProductController::class, 'index'])->middleware('auth:sanctum');
 //Route::get('/products/{slug}', [ProductController::class, 'show']);
 
-Route::get('/categories', [CategoryController::class, 'index']);
+//Route::get('/categories', [CategoryController::class, 'index']);
 
 Route::get('search', [SearchController::class, 'search'])->name('api.search');
 Route::post('/promo-codes/validate', [PromoCodeController::class, 'validate'])->name('api.promo-codes.validate');
@@ -91,7 +92,16 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     Route::middleware(['role:super-admin,admin,manager'])->group(function () {
         // Categories
-//        Route::resource('categories', CategoryController::class)->except(['create', 'edit', 'show']);
+        Route::group(['prefix' => 'categories', 'as' => 'categories.'], function () {
+            Route::get('/', [CategoryController::class, 'index']);
+            Route::post('/', [CategoryController::class, 'store']);
+            Route::put('/{category}', [CategoryController::class, 'update']);
+            Route::delete('/{category}', [CategoryController::class, 'destroy']);
+        });
+        // Units
+        Route::group(['prefix' => 'units', 'as' => 'units.'], function () {
+            Route::get('/', [UnitController::class, 'index']);
+        });
 
         // Options
 //        Route::group(['prefix' => 'options', 'as' => 'options.'], function () {
