@@ -28,7 +28,7 @@ Route::get('/user', function (Request $request) {
 
 //client
 Route::get('/products', [ProductController::class, 'index'])->middleware('auth:sanctum');
-Route::get('/products/{slug}', [ProductController::class, 'show']);
+//Route::get('/products/{slug}', [ProductController::class, 'show']);
 
 Route::get('/categories', [CategoryController::class, 'index']);
 
@@ -116,9 +116,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/', [ProductController::class, 'index']);
             Route::post('/', [ProductController::class, 'store']);
 
-//            Route::get('/{product}', [ProductController::class, 'show'])->name('show');
-//            Route::put('/{product}', [ProductController::class, 'update'])->name('update');
-//            Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
+            Route::get('/{product}', [ProductController::class, 'show'])->name('show');
+            Route::put('/{product}', [ProductController::class, 'update'])->name('update');
+            Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
 //            Route::post('/{product}/components', [ProductController::class, 'addComponent'])->name('addComponent');
 //            Route::delete('/{product}/components/{component}', [ProductController::class, 'removeComponent'])->name('removeComponent');
 //            Route::get('/{product}/calculate-cost', [ProductController::class, 'calculateCost'])->name('calculateCost');
