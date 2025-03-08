@@ -5,6 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @OA\Schema(
+ *     schema="Unit",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", format="int64"),
+ *     @OA\Property(property="name", type="string", maxLength=255),
+ *     @OA\Property(property="abbreviation", type="string", maxLength=255),
+ *     @OA\Property(property="description", type="string", description="Описание", nullable=true)
+ * )
+ */
 class Unit extends Model
 {
     use HasFactory;
