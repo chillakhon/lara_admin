@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\ProductController;
+use App\Http\Controllers\Api\Admin\ProductVariantController;
 use App\Http\Controllers\Api\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Api\Auth\EmailVerificationNotificationController;
@@ -65,7 +66,6 @@ Route::prefix('delivery')->name('delivery.')->group(function () {
 });
 
 //admin panel api dashboard
-
 //auth user
 Route::middleware('guest')->group(function () {
     Route::post('register', [RegisteredUserController::class, 'store']);
@@ -134,11 +134,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            Route::delete('/{product}/options/{option}', [ProductController::class, 'destroyOption'])
 //                ->name('options.destroy');
 //            //variants
-//            Route::post('/{product}/variants', [ProductVariantController::class, 'store'])->name('variants.store');
-//            Route::put('/variants/{variant}', [ProductVariantController::class, 'update'])->name('variants.update');
-//            Route::delete('/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('variants.destroy');
-//            Route::post('/{product}/variants/generate', [ProductController::class, 'generateVariants'])
-//                ->name('variants.generate');
+            Route::post('/{product}/variants', [ProductVariantController::class, 'store']);
+            Route::put('/variants/{variant}', [ProductVariantController::class, 'update']);
+            Route::delete('/{product}/variants/{variant}', [ProductVariantController::class, 'destroy']);
+            Route::post('/{product}/variants/generate', [ProductController::class, 'generateVariants']);
 //
 //            //images
 //            Route::post('/{product}/images', [ProductImageController::class, 'store'])->name('images.store');
@@ -155,16 +154,14 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //                [ProductVariantController::class, 'destroyImage']
 //            )->name('variants.images.destroy');
         });
-//
-//        // Product Variants
-//        Route::prefix('product-variants')->name('product-variants.')->group(function () {
-//            Route::get('/{variant}/recipes', [ProductVariantController::class, 'recipes'])
-//                ->name('recipes');
-//            Route::get('/{variant}/production-history', [ProductVariantController::class, 'productionHistory'])
-//                ->name('production-history');
-//            Route::get('/{variant}/stock-movements', [ProductVariantController::class, 'stockMovements'])
-//                ->name('stock-movements');
-//        });
+
+        // Product Variants
+        Route::prefix('product-variants')->name('product-variants.')->group(function () {
+
+            Route::get('/{variant}/recipes', [ProductVariantController::class, 'recipes']);
+            Route::get('/{variant}/production-history', [ProductVariantController::class, 'productionHistory']);
+            Route::get('/{variant}/stock-movements', [ProductVariantController::class, 'stockMovements']);
+        });
 //
 //
 //        Route::resource('discounts', DiscountController::class);

@@ -22,6 +22,7 @@ class ProductVariant extends Model
         'name',
         'sku',
         'price',
+        'stock',
         'additional_cost',
         'type',
         'unit_id',
