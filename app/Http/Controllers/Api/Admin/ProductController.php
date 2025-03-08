@@ -23,6 +23,58 @@ class ProductController extends Controller
         $this->materialService = $materialService;
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/products",
+     *     summary="Получить список продуктов",
+     *     description="Возвращает список продуктов с фильтрацией по названию, описанию и категориям.",
+     *     operationId="getProducts",
+     *     tags={"Products"},
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Поиск по названию, описанию или категории",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="category",
+     *         in="query",
+     *         description="Фильтр по категории (ID категории)",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Список продуктов",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="current_page", type="integer"),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Product Name"),
+     *                     @OA\Property(property="description", type="string", example="Product Description"),
+     *                     @OA\Property(property="categories", type="array",
+     *                         @OA\Items(
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="name", type="string", example="Category Name")
+     *                         )
+     *                     ),
+     *                     @OA\Property(property="options", type="array", @OA\Items(type="object")),
+     *                     @OA\Property(property="variants", type="array", @OA\Items(type="object")),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 )
+     *             ),
+     *             @OA\Property(property="per_page", type="integer", example=10),
+     *             @OA\Property(property="total", type="integer", example=100)
+     *         )
+     *     )
+     * )
+     */
     public function index(Request $request)
     {
         $products = Product::with(['categories', 'options', 'variants'])
@@ -44,12 +96,144 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/products/{product}",
+     *     summary="Получить информацию о продукте",
+     *     description="Возвращает детальную информацию о продукте с категориями, вариантами и опциями.",
+     *     operationId="getProduct",
+     *     tags={"Products"},
+     *     @OA\Parameter(
+     *         name="product",
+     *         in="path",
+     *         description="ID продукта",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Детальная информация о продукте",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="name", type="string", example="Product Name"),
+     *             @OA\Property(property="description", type="string", example="Product Description"),
+     *             @OA\Property(property="defaultUnit", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Unit Name")
+     *             ),
+     *             @OA\Property(property="categories", type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Category Name")
+     *                 )
+     *             ),
+     *             @OA\Property(property="options", type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Option Name"),
+     *                     @OA\Property(property="values", type="array",
+     *                         @OA\Items(
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="value", type="string", example="Red")
+     *                         )
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(property="variants", type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=10),
+     *                     @OA\Property(property="optionValues", type="array",
+     *                         @OA\Items(
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="value", type="string", example="Large"),
+     *                             @OA\Property(property="option", type="object",
+     *                                 @OA\Property(property="id", type="integer", example=1),
+     *                                 @OA\Property(property="name", type="string", example="Size")
+     *                             )
+     *                         )
+     *                     ),
+     *                     @OA\Property(property="images", type="array",
+     *                         @OA\Items(
+     *                             type="object",
+     *                             @OA\Property(property="url", type="string", example="https://example.com/image.jpg")
+     *                         )
+     *                     ),
+     *                     @OA\Property(property="unit", type="object",
+     *                         @OA\Property(property="id", type="integer", example=2),
+     *                         @OA\Property(property="name", type="string", example="Kilogram")
+     *                     )
+     *                 )
+     *             ),
+     *             @OA\Property(property="created_at", type="string", format="date-time"),
+     *             @OA\Property(property="updated_at", type="string", format="date-time")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Продукт не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Product not found")
+     *         )
+     *     )
+     * )
+     */
+
     public function show(Product $product)
     {
         $product->load(['categories', 'options.values', 'variants.optionValues.option', 'variants.images', 'variants.unit', 'defaultUnit']);
         return response()->json($product);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/products",
+     *     summary="Создать новый продукт",
+     *     description="Создает новый продукт и привязывает его к категориям.",
+     *     operationId="createProduct",
+     *     tags={"Products"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name", "type", "categories"},
+     *             @OA\Property(property="name", type="string", example="New Product"),
+     *             @OA\Property(property="description", type="string", nullable=true, example="Product description"),
+     *             @OA\Property(property="type", type="string", enum={"simple", "manufactured", "composite"}, example="simple"),
+     *             @OA\Property(property="default_unit_id", type="integer", nullable=true, example=1),
+     *             @OA\Property(property="is_active", type="boolean", example=true),
+     *             @OA\Property(property="has_variants", type="boolean", example=false),
+     *             @OA\Property(property="allow_preorder", type="boolean", example=false),
+     *             @OA\Property(property="after_purchase_processing_time", type="integer", example=2),
+     *             @OA\Property(property="categories", type="array",
+     *                 @OA\Items(type="integer", example=1)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Продукт создан успешно",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Product created successfully"),
+     *             @OA\Property(property="product", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="New Product"),
+     *                 @OA\Property(property="slug", type="string", example="new-product"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации"
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -73,6 +257,63 @@ class ProductController extends Controller
             'product' => $product], 201);
     }
 
+    /**
+     * @OA\Put(
+     *     path="/api/products/{product}",
+     *     summary="Обновить продукт",
+     *     description="Обновляет существующий продукт по его ID.",
+     *     operationId="updateProduct",
+     *     tags={"Products"},
+     *     @OA\Parameter(
+     *         name="product",
+     *         in="path",
+     *         description="ID продукта",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="Updated Product"),
+     *             @OA\Property(property="description", type="string", nullable=true, example="Updated description"),
+     *             @OA\Property(property="type", type="string", enum={"simple", "manufactured", "composite"}, example="manufactured"),
+     *             @OA\Property(property="default_unit_id", type="integer", nullable=true, example=2),
+     *             @OA\Property(property="is_active", type="boolean", example=true),
+     *             @OA\Property(property="has_variants", type="boolean", example=true),
+     *             @OA\Property(property="allow_preorder", type="boolean", example=true),
+     *             @OA\Property(property="after_purchase_processing_time", type="integer", example=5),
+     *             @OA\Property(property="categories", type="array",
+     *                 @OA\Items(type="integer", example=2)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Продукт успешно обновлён",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Product updated successfully"),
+     *             @OA\Property(property="product", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Updated Product"),
+     *                 @OA\Property(property="slug", type="string", example="updated-product"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Продукт не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Product not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации"
+     *     )
+     * )
+     */
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
@@ -94,6 +335,36 @@ class ProductController extends Controller
         return response()->json(['message' => 'Product updated successfully', 'product' => $product]);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/products/{product}",
+     *     summary="Удалить продукт",
+     *     description="Удаляет продукт по его ID.",
+     *     operationId="deleteProduct",
+     *     tags={"Products"},
+     *     @OA\Parameter(
+     *         name="product",
+     *         in="path",
+     *         description="ID продукта",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Продукт успешно удалён",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Product deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Продукт не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Product not found")
+     *         )
+     *     )
+     * )
+     */
     public function destroy(Product $product)
     {
         $product->delete();
