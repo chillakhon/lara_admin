@@ -18,7 +18,7 @@ use Illuminate\Http\JsonResponse;
  *         description="Successful operation",
  *         @OA\JsonContent(
  *             type="array",
- *             @OA\Items(ref="#/components/schemas/CostCategoryResource")
+ *             @OA\Items(ref="#/components/schemas/CostCategory")
  *         )
  *     ),
  *     @OA\Response(

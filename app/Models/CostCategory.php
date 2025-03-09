@@ -5,6 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @OA\Schema(
+ *     schema="CostCategory",
+ *     type="object",
+ *     required={"id", "name", "type", "is_active", "created_at", "updated_at"},
+ *     @OA\Property(property="id", type="integer", description="Unique identifier of the cost category"),
+ *     @OA\Property(property="name", type="string", description="Name of the cost category"),
+ *     @OA\Property(property="type", type="string", description="Type of the cost category (e.g., 'Material', 'Labor', etc.)"),
+ *     @OA\Property(property="description", type="string", nullable=true, description="Description of the cost category"),
+ *     @OA\Property(property="is_active", type="boolean", description="Whether the cost category is active"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", description="Timestamp when the cost category was created"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", description="Timestamp when the cost category was last updated")
+ * )
+ */
 class CostCategory extends Model
 {
     protected $fillable = [
