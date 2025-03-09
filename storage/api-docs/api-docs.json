@@ -3074,7 +3074,7 @@
         "/recipes": {
             "get": {
                 "tags": [
-                    "Recipes / техкарты"
+                    "Recipes"
                 ],
                 "summary": "Get a list of all recipes with related data",
                 "description": "Fetches all recipes with their related products, selected variants, items, and other associated data.",
@@ -4917,10 +4917,6 @@
         {
             "name": "Promo Codes",
             "description": "Promo Codes"
-        },
-        {
-            "name": "Recipes / техкарты",
-            "description": "Recipes / техкарты"
         },
         {
             "name": "Recipes",
