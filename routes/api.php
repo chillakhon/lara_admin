@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\CategoryController;
+use App\Http\Controllers\Api\Admin\CostCategoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\ProductVariantController;
+use App\Http\Controllers\Api\Admin\RecipeController;
 use App\Http\Controllers\Api\Admin\UnitController;
 use App\Http\Controllers\Api\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\Auth\ConfirmablePasswordController;
@@ -187,15 +189,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::group(['prefix' => 'recipes', 'as' => 'recipes.'], function () {
 
             Route::get('/', [RecipeController::class, 'index']);
+            Route::post('/', [RecipeController::class, 'store']);
+            Route::get('/{recipe}', [RecipeController::class, 'show']);
+            Route::get('/{recipe}/edit', [RecipeController::class, 'edit']);
 
-//            Route::get('/create', [RecipeController::class, 'create'])
-//                ->name('create');
-//            Route::post('/', [RecipeController::class, 'store'])
-//                ->name('store');
-//            Route::get('/{recipe}', [RecipeController::class, 'show'])
-//                ->name('show');
-//            Route::get('/{recipe}/edit', [RecipeController::class, 'edit'])
-//                ->name('edit');
 //            Route::put('/{recipe}', [RecipeController::class, 'update'])
 //                ->name('update');
 //            Route::delete('/{recipe}', [RecipeController::class, 'destroy'])
@@ -209,9 +206,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            Route::get('/{recipe}/compare/{otherRecipe}', [RecipeController::class, 'compare'])->name('compare');
         });
 
-        // Cost Categories
-//        Route::get('/cost-categories', [CostCategoryController::class, 'index'])
-//            ->name('cost-categories.index');
+//         Cost Categories
+        Route::get('/cost-categories', [CostCategoryController::class, 'index']);
 //
 //        Route::group(['prefix' => 'clients', 'as' => 'clients.'], function () {
 //            Route::get('/', [ClientController::class, 'index'])->name('index');

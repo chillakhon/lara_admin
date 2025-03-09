@@ -309,6 +309,33 @@
                 }
             }
         },
+        "/cost-categories": {
+            "get": {
+                "tags": [
+                    "Cost Categories"
+                ],
+                "summary": "Get list of active cost categories",
+                "operationId": "bb4ce6b949fd5b6381062dee1d0e2104",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CostCategoryResource"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/api/materials": {
             "get": {
                 "tags": [
@@ -2675,6 +2702,27 @@
     },
     "components": {
         "schemas": {
+            "CostCategoryResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Category Name"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "Type"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
             "Category": {
                 "properties": {
                     "id": {
@@ -2834,6 +2882,10 @@
         {
             "name": "Categories",
             "description": "Categories"
+        },
+        {
+            "name": "Cost Categories",
+            "description": "Cost Categories"
         },
         {
             "name": "Materials",
