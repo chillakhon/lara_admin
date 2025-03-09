@@ -1945,6 +1945,477 @@
                 ]
             }
         },
+        "/recipes": {
+            "get": {
+                "tags": [
+                    "Recipes"
+                ],
+                "summary": "Get a list of all recipes with related data",
+                "description": "Fetches all recipes with their related products, selected variants, items, and other associated data.",
+                "operationId": "getRecipes",
+                "responses": {
+                    "200": {
+                        "description": "List of recipes successfully fetched",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Recipe"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Recipes"
+                ],
+                "summary": "Create a new recipe",
+                "description": "Creates a new recipe with related items, products, and cost rates.",
+                "operationId": "createRecipe",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "output_quantity",
+                                    "output_unit_id",
+                                    "items",
+                                    "products",
+                                    "cost_rates"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Name of the recipe",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Description of the recipe",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "output_quantity": {
+                                        "description": "Quantity produced by the recipe",
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "output_unit_id": {
+                                        "description": "ID of the unit used for output quantity",
+                                        "type": "integer"
+                                    },
+                                    "instructions": {
+                                        "description": "Instructions for making the recipe",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "production_time": {
+                                        "description": "Time required to produce the recipe",
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "is_active": {
+                                        "description": "Whether the recipe is active",
+                                        "type": "boolean"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "component_type",
+                                                "component_id",
+                                                "quantity",
+                                                "unit_id"
+                                            ],
+                                            "properties": {
+                                                "component_type": {
+                                                    "description": "The type of component (Material or Product)",
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "Material",
+                                                        "Product"
+                                                    ]
+                                                },
+                                                "component_id": {
+                                                    "description": "The ID of the component",
+                                                    "type": "integer"
+                                                },
+                                                "quantity": {
+                                                    "description": "Quantity of the component",
+                                                    "type": "number",
+                                                    "format": "float"
+                                                },
+                                                "unit_id": {
+                                                    "description": "Unit ID for the component",
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "products": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "product_id"
+                                            ],
+                                            "properties": {
+                                                "product_id": {
+                                                    "description": "ID of the product",
+                                                    "type": "integer"
+                                                },
+                                                "variant_id": {
+                                                    "description": "ID of the product variant",
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "is_default": {
+                                                    "description": "Whether the product is the default",
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "cost_rates": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "cost_category_id",
+                                                "rate_per_unit",
+                                                "fixed_rate"
+                                            ],
+                                            "properties": {
+                                                "cost_category_id": {
+                                                    "description": "ID of the cost category",
+                                                    "type": "integer"
+                                                },
+                                                "rate_per_unit": {
+                                                    "description": "Cost rate per unit",
+                                                    "type": "number",
+                                                    "format": "float"
+                                                },
+                                                "fixed_rate": {
+                                                    "description": "Fixed cost rate",
+                                                    "type": "number",
+                                                    "format": "float"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Recipe created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Recipe"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            }
+        },
+        "/recipes/{recipe}": {
+            "get": {
+                "tags": [
+                    "Recipes"
+                ],
+                "summary": "Get a specific recipe",
+                "description": "Fetches details of a specific recipe by its ID, including related items and units.",
+                "operationId": "getRecipe",
+                "parameters": [
+                    {
+                        "name": "recipe",
+                        "in": "path",
+                        "description": "ID of the recipe to retrieve",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recipe retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Recipe"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recipe not found"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Recipes"
+                ],
+                "summary": "Update a specific recipe",
+                "description": "Updates the details of a specific recipe including items, products, and cost rates.",
+                "operationId": "updateRecipe",
+                "parameters": [
+                    {
+                        "name": "recipe",
+                        "in": "path",
+                        "description": "ID of the recipe to update",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "output_quantity": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0.001
+                                    },
+                                    "output_unit_id": {
+                                        "type": "integer",
+                                        "format": "int64"
+                                    },
+                                    "instructions": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "production_time": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "nullable": true
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "component_type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "Material",
+                                                        "Product"
+                                                    ]
+                                                },
+                                                "component_id": {
+                                                    "type": "integer",
+                                                    "format": "int64"
+                                                },
+                                                "quantity": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "minimum": 0.001
+                                                },
+                                                "unit_id": {
+                                                    "type": "integer",
+                                                    "format": "int64"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "products": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "format": "int64"
+                                                },
+                                                "variant_id": {
+                                                    "type": "integer",
+                                                    "format": "int64",
+                                                    "nullable": true
+                                                },
+                                                "is_default": {
+                                                    "type": "boolean",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "cost_rates": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "cost_category_id": {
+                                                    "type": "integer",
+                                                    "format": "int64"
+                                                },
+                                                "rate_per_unit": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "minimum": 0
+                                                },
+                                                "fixed_rate": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Recipe updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Recipe"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error"
+                    },
+                    "404": {
+                        "description": "Recipe not found"
+                    },
+                    "500": {
+                        "description": "Internal server error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Recipes"
+                ],
+                "summary": "Delete a specific recipe",
+                "description": "Deletes a specific recipe, ensuring it is not used in any production batches and not the only recipe for any product.",
+                "operationId": "deleteRecipe",
+                "parameters": [
+                    {
+                        "name": "recipe",
+                        "in": "path",
+                        "description": "ID of the recipe to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recipe successfully deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Recipe successfully deleted"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Validation or business logic error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Cannot delete recipe used in production batches"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recipe not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Recipe not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Failed to delete recipe: Some error message"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/units": {
             "get": {
                 "tags": [
@@ -2826,6 +3297,181 @@
                 },
                 "type": "object"
             },
+            "ProductionBatchCost": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "production_batch_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "cost_category_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Recipe": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "output_quantity": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "output_unit_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "production_time": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RecipeCostRate": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "recipe_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "cost_category_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "rate_per_unit": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "fixed_rate": {
+                        "type": "number",
+                        "format": "float",
+                        "default": 0
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "RecipeItem": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "recipe_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "component_type": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "component_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "quantity": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "unit_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "waste_percentage": {
+                        "type": "number",
+                        "format": "float",
+                        "default": 0
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "default": 0
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "Unit": {
                 "properties": {
                     "id": {
@@ -2898,6 +3544,10 @@
         {
             "name": "Product Variants",
             "description": "Product Variants"
+        },
+        {
+            "name": "Recipes",
+            "description": "Recipes"
         },
         {
             "name": "Units",

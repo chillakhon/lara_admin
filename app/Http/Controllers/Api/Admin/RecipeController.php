@@ -29,6 +29,27 @@ class RecipeController extends Controller
         $this->productionCostService = $productionCostService;
     }
 
+    /**
+     * @OA\Get(
+     *     path="/recipes",
+     *     operationId="getRecipes",
+     *     tags={"Recipes"},
+     *     summary="Get a list of all recipes with related data",
+     *     description="Fetches all recipes with their related products, selected variants, items, and other associated data.",
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of recipes successfully fetched",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(ref="#/components/schemas/Recipe")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error"
+     *     )
+     * )
+     */
     public function index()
     {
         $recipes = Recipe::with([
@@ -46,6 +67,79 @@ class RecipeController extends Controller
         return response()->json($recipes);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/recipes",
+     *     operationId="createRecipe",
+     *     tags={"Recipes"},
+     *     summary="Create a new recipe",
+     *     description="Creates a new recipe with related items, products, and cost rates.",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 required={"name", "output_quantity", "output_unit_id", "items", "products", "cost_rates"},
+     *                 @OA\Property(property="name", type="string", description="Name of the recipe"),
+     *                 @OA\Property(property="description", type="string", nullable=true, description="Description of the recipe"),
+     *                 @OA\Property(property="output_quantity", type="number", format="float", description="Quantity produced by the recipe"),
+     *                 @OA\Property(property="output_unit_id", type="integer", description="ID of the unit used for output quantity"),
+     *                 @OA\Property(property="instructions", type="string", nullable=true, description="Instructions for making the recipe"),
+     *                 @OA\Property(property="production_time", type="integer", nullable=true, description="Time required to produce the recipe"),
+     *                 @OA\Property(property="is_active", type="boolean", description="Whether the recipe is active"),
+     *                 @OA\Property(
+     *                     property="items",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         required={"component_type", "component_id", "quantity", "unit_id"},
+     *                         @OA\Property(property="component_type", type="string", enum={"Material", "Product"}, description="The type of component (Material or Product)"),
+     *                         @OA\Property(property="component_id", type="integer", description="The ID of the component"),
+     *                         @OA\Property(property="quantity", type="number", format="float", description="Quantity of the component"),
+     *                         @OA\Property(property="unit_id", type="integer", description="Unit ID for the component")
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="products",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         required={"product_id"},
+     *                         @OA\Property(property="product_id", type="integer", description="ID of the product"),
+     *                         @OA\Property(property="variant_id", type="integer", nullable=true, description="ID of the product variant"),
+     *                         @OA\Property(property="is_default", type="boolean", description="Whether the product is the default")
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="cost_rates",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         required={"cost_category_id", "rate_per_unit", "fixed_rate"},
+     *                         @OA\Property(property="cost_category_id", type="integer", description="ID of the cost category"),
+     *                         @OA\Property(property="rate_per_unit", type="number", format="float", description="Cost rate per unit"),
+     *                         @OA\Property(property="fixed_rate", type="number", format="float", description="Fixed cost rate")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Recipe created successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Recipe")
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error"
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -111,11 +205,117 @@ class RecipeController extends Controller
         return response()->json($recipe, 201);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/recipes/{recipe}",
+     *     operationId="getRecipe",
+     *     tags={"Recipes"},
+     *     summary="Get a specific recipe",
+     *     description="Fetches details of a specific recipe by its ID, including related items and units.",
+     *     @OA\Parameter(
+     *         name="recipe",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the recipe to retrieve",
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Recipe retrieved successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Recipe")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Recipe not found"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error"
+     *     )
+     * )
+     */
     public function show(Recipe $recipe)
     {
         return response()->json($recipe->load(['items.component', 'items.unit']));
     }
 
+    /**
+     * @OA\Put(
+     *     path="/recipes/{recipe}",
+     *     operationId="updateRecipe",
+     *     tags={"Recipes"},
+     *     summary="Update a specific recipe",
+     *     description="Updates the details of a specific recipe including items, products, and cost rates.",
+     *     @OA\Parameter(
+     *         name="recipe",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the recipe to update",
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="name", type="string", maxLength=255),
+     *             @OA\Property(property="description", type="string", nullable=true),
+     *             @OA\Property(property="output_quantity", type="number", format="float", minimum=0.001),
+     *             @OA\Property(property="output_unit_id", type="integer", format="int64"),
+     *             @OA\Property(property="instructions", type="string", nullable=true),
+     *             @OA\Property(property="production_time", type="integer", minimum=1, nullable=true),
+     *             @OA\Property(property="is_active", type="boolean"),
+     *             @OA\Property(
+     *                 property="items",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="component_type", type="string", enum={"Material", "Product"}),
+     *                     @OA\Property(property="component_id", type="integer", format="int64"),
+     *                     @OA\Property(property="quantity", type="number", format="float", minimum=0.001),
+     *                     @OA\Property(property="unit_id", type="integer", format="int64")
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="products",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="product_id", type="integer", format="int64"),
+     *                     @OA\Property(property="variant_id", type="integer", format="int64", nullable=true),
+     *                     @OA\Property(property="is_default", type="boolean", nullable=true)
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="cost_rates",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="cost_category_id", type="integer", format="int64"),
+     *                     @OA\Property(property="rate_per_unit", type="number", format="float", minimum=0),
+     *                     @OA\Property(property="fixed_rate", type="number", format="float", minimum=0)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Recipe updated successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Recipe")
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Recipe not found"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error"
+     *     )
+     * )
+     */
     public function update(Request $request, Recipe $recipe)
     {
         $validated = $request->validate([
@@ -190,6 +390,54 @@ class RecipeController extends Controller
         }
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/recipes/{recipe}",
+     *     operationId="deleteRecipe",
+     *     tags={"Recipes"},
+     *     summary="Delete a specific recipe",
+     *     description="Deletes a specific recipe, ensuring it is not used in any production batches and not the only recipe for any product.",
+     *     @OA\Parameter(
+     *         name="recipe",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the recipe to delete",
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Recipe successfully deleted",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="Recipe successfully deleted")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation or business logic error",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="error", type="string", example="Cannot delete recipe used in production batches")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Recipe not found",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="error", type="string", example="Recipe not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="error", type="string", example="Failed to delete recipe: Some error message")
+     *         )
+     *     )
+     * )
+     */
     public function destroy(Recipe $recipe)
     {
         DB::beginTransaction();

@@ -6,6 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @OA\Schema(
+ *     schema="ProductionBatchCost",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", format="int64"),
+ *     @OA\Property(property="production_batch_id", type="integer", format="int64"),
+ *     @OA\Property(property="cost_category_id", type="integer", format="int64"),
+ *     @OA\Property(property="amount", type="number", format="float"),
+ *     @OA\Property(property="notes", type="string", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ */
 class ProductionBatchCost extends Model
 {
     use SoftDeletes;
