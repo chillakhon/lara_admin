@@ -5,6 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @OA\Schema(
+ *     schema="RecipeCostRate",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", format="int64"),
+ *     @OA\Property(property="recipe_id", type="integer", format="int64"),
+ *     @OA\Property(property="cost_category_id", type="integer", format="int64"),
+ *     @OA\Property(property="rate_per_unit", type="number", format="float"),
+ *     @OA\Property(property="fixed_rate", type="number", format="float", default=0.00),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time")
+ * )
+ */
 class RecipeCostRate extends Model
 {
     protected $fillable = [
