@@ -19,11 +19,44 @@ class ClientController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/api/admin/clients",
-     *     summary="Получение списка клиентов",
+     *     path="/clients",
+     *     operationId="getClients",
      *     tags={"Clients"},
-     *     @OA\Parameter(name="search", in="query", description="Поиск по имени или email", @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Список клиентов")
+     *     summary="Get all clients",
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of clients",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Client")
+     *             ),
+     *             @OA\Property(
+     *                 property="links",
+     *                 type="object",
+     *                 @OA\Property(property="first", type="string"),
+     *                 @OA\Property(property="last", type="string"),
+     *                 @OA\Property(property="prev", type="string"),
+     *                 @OA\Property(property="next", type="string")
+     *             ),
+     *             @OA\Property(
+     *                 property="meta",
+     *                 type="object",
+     *                 @OA\Property(property="current_page", type="integer"),
+     *                 @OA\Property(property="from", type="integer"),
+     *                 @OA\Property(property="last_page", type="integer"),
+     *                 @OA\Property(property="per_page", type="integer"),
+     *                 @OA\Property(property="to", type="integer"),
+     *                 @OA\Property(property="total", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request"
+     *     )
      * )
      */
     public function index(Request $request)
@@ -34,22 +67,36 @@ class ClientController extends Controller
         return response()->json($clients);
     }
 
+
     /**
      * @OA\Post(
-     *     path="/api/admin/clients",
-     *     summary="Создание клиента",
+     *     path="/clients",
+     *     operationId="storeClient",
      *     tags={"Clients"},
+     *     summary="Create a new client",
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             required={"first_name", "last_name", "email", "password"},
-     *             @OA\Property(property="first_name", type="string"),
-     *             @OA\Property(property="last_name", type="string"),
-     *             @OA\Property(property="email", type="string", format="email"),
-     *             @OA\Property(property="password", type="string", format="password"),
+     *             @OA\Property(property="first_name", type="string", maxLength=255, description="First name of the client"),
+     *             @OA\Property(property="last_name", type="string", maxLength=255, description="Last name of the client"),
+     *             @OA\Property(property="email", type="string", format="email", maxLength=255, description="Email address of the client"),
+     *             @OA\Property(property="password", type="string", minLength=8, description="Password for the client account")
      *         )
      *     ),
-     *     @OA\Response(response=201, description="Клиент успешно создан")
+     *     @OA\Response(
+     *         response=201,
+     *         description="Client successfully created",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="Client successfully created"),
+     *             @OA\Property(property="client", ref="#/components/schemas/Client")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request, validation failed"
+     *     )
      * )
      */
     public function store(Request $request)
@@ -76,11 +123,28 @@ class ClientController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/admin/clients/{id}",
-     *     summary="Получение информации о клиенте",
+     *     path="/clients/{client}",
+     *     operationId="showClient",
      *     tags={"Clients"},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Данные клиента")
+     *     summary="Get a specific client by ID",
+     *     @OA\Parameter(
+     *         name="client",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the client to fetch",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Client data",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/Client"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Client not found"
+     *     )
      * )
      */
     public function show(Client $client)
@@ -88,21 +152,44 @@ class ClientController extends Controller
         return response()->json($client);
     }
 
+
     /**
      * @OA\Put(
-     *     path="/api/admin/clients/{id}",
-     *     summary="Обновление данных клиента",
+     *     path="/clients/{client}",
+     *     operationId="updateClient",
      *     tags={"Clients"},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     summary="Update a specific client",
+     *     @OA\Parameter(
+     *         name="client",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the client to update",
+     *         @OA\Schema(type="integer")
+     *     ),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="first_name", type="string"),
-     *             @OA\Property(property="last_name", type="string"),
-     *             @OA\Property(property="email", type="string", format="email"),
+     *             type="object",
+     *             @OA\Property(property="first_name", type="string", maxLength=255),
+     *             @OA\Property(property="last_name", type="string", maxLength=255),
+     *             @OA\Property(property="email", type="string", format="email", maxLength=255)
      *         )
      *     ),
-     *     @OA\Response(response=200, description="Клиент обновлен")
+     *     @OA\Response(
+     *         response=200,
+     *         description="Client successfully updated",
+     *         @OA\JsonContent(
+     *             ref="#/components/schemas/Client"
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Client not found"
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Invalid input"
+     *     )
      * )
      */
     public function update(Request $request, Client $client)
@@ -114,16 +201,40 @@ class ClientController extends Controller
         ]);
 
         $client->update($validated);
+
         return response()->json(['message' => 'Клиент обновлен', 'client' => $client]);
     }
 
+
     /**
      * @OA\Delete(
-     *     path="/api/admin/clients/{id}",
-     *     summary="Удаление клиента",
+     *     path="/clients/{client}",
+     *     operationId="deleteClient",
      *     tags={"Clients"},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Клиент удален")
+     *     summary="Delete a specific client",
+     *     @OA\Parameter(
+     *         name="client",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the client to delete",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Client successfully deleted",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="Client deleted")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Client not found"
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Error deleting client"
+     *     )
      * )
      */
     public function destroy(Client $client)
@@ -131,4 +242,5 @@ class ClientController extends Controller
         $client->delete();
         return response()->json(['message' => 'Клиент удален']);
     }
+
 }

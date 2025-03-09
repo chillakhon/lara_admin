@@ -8,9 +8,7 @@ use App\Services\ProductionService;
 use Carbon\Carbon;
 use Inertia\Inertia;
 
-/**
- * @OA\Info(title="Production API", version="1.0.0")
- */
+
 class ProductionController extends Controller
 {
     protected $productionService;

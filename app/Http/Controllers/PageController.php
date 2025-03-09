@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 
-class .)PageController extends Controller
+class PageController extends Controller
 {
     public function index()
     {
