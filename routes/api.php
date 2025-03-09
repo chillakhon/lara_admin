@@ -191,12 +191,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/', [RecipeController::class, 'index']);
             Route::post('/', [RecipeController::class, 'store']);
             Route::get('/{recipe}', [RecipeController::class, 'show']);
-            Route::get('/{recipe}/edit', [RecipeController::class, 'edit']);
+            //Route::get('/{recipe}/edit', [RecipeController::class, 'edit']);
 
-//            Route::put('/{recipe}', [RecipeController::class, 'update'])
-//                ->name('update');
-//            Route::delete('/{recipe}', [RecipeController::class, 'destroy'])
-//                ->name('destroy');
+            Route::put('/{recipe}', [RecipeController::class, 'update'])
+                ->name('update');
+            Route::delete('/{recipe}', [RecipeController::class, 'destroy'])
+                ->name('destroy');
 //            Route::post('/estimate-cost', [RecipeController::class, 'estimateCost'])
 //                ->name('estimate-cost');
 //            Route::post('/{recipe}/cost-rates', [RecipeController::class, 'storeCostRates'])
