@@ -6,6 +6,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @OA\Schema(
+ *     schema="Client",
+ *     type="object",
+ *     required={"id", "user_id", "bonus_balance", "created_at", "updated_at"},
+ *     @OA\Property(property="id", type="integer", description="Unique identifier of the client"),
+ *     @OA\Property(property="user_id", type="integer", description="ID of the associated user"),
+ *     @OA\Property(property="client_level_id", type="integer", nullable=true, description="ID of the client's level"),
+ *     @OA\Property(property="bonus_balance", type="number", format="float", description="The bonus balance of the client"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", description="Timestamp when the client was created"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", description="Timestamp when the client was last updated"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true, description="Timestamp when the client was deleted, null if not deleted")
+ * )
+ */
 class Client extends Model
 {
     use HasFactory, SoftDeletes;

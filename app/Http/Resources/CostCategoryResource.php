@@ -6,32 +6,6 @@ namespace App\Http\Resources;
 use App\Models\CostCategory;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/**
- * @OA\Schema(
- *     schema="CostCategoryResource",
- *     type="object",
- *     @OA\Property(
- *         property="id",
- *         type="integer",
- *         example=1
- *     ),
- *     @OA\Property(
- *         property="name",
- *         type="string",
- *         example="Category Name"
- *     ),
- *     @OA\Property(
- *         property="type",
- *         type="string",
- *         example="Type"
- *     ),
- *     @OA\Property(
- *         property="is_active",
- *         type="boolean",
- *         example=true
- *     )
- * )
- */
 class CostCategoryResource extends JsonResource
 {
 

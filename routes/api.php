@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\CategoryController;
+use App\Http\Controllers\Api\Admin\ClientController;
+use App\Http\Controllers\Api\Admin\ClientLevelController;
 use App\Http\Controllers\Api\Admin\CostCategoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\ProductController;
@@ -209,13 +211,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //         Cost Categories
         Route::get('/cost-categories', [CostCategoryController::class, 'index']);
 //
-//        Route::group(['prefix' => 'clients', 'as' => 'clients.'], function () {
-//            Route::get('/', [ClientController::class, 'index'])->name('index');
-//            Route::get('/{client}', [ClientController::class, 'show'])->name('show');
-//            Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
-//            Route::put('/{client}', [ClientController::class, 'update'])->name('update');
-//            Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
-//        });
+        Route::group(['prefix' => 'clients', 'as' => 'clients.'], function () {
+            Route::get('/', [ClientController::class, 'index'])->name('index');
+            Route::get('/{client}', [ClientController::class, 'show'])->name('show');
+            Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');            Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
+            Route::put('/{client}', [ClientController::class, 'update'])->name('update');
+            Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
+        });
 //
 //        Route::group(['prefix' => 'orders', 'as' => 'orders.'], function () {
 //            Route::get('/', [OrderController::class, 'index'])->name('index');
@@ -223,13 +225,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
 //        });
 //
-//        Route::group(['prefix' => 'promo-codes', 'as' => 'promo-codes.'], function () {
-//            Route::get('/', [PromoCodeController::class, 'index'])->name('index');
-//            Route::post('/', [PromoCodeController::class, 'store'])->name('store');
-//            Route::put('/{promoCode}', [PromoCodeController::class, 'update'])->name('update');
-//            Route::delete('/{promoCode}', [PromoCodeController::class, 'destroy'])->name('destroy');
-//            Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('usage');
-//        });
+        Route::group(['prefix' => 'promo-codes', 'as' => 'promo-codes.'], function () {
+            Route::get('/', [PromoCodeController::class, 'index'])->name('index');
+            Route::post('/', [PromoCodeController::class, 'store'])->name('store');
+            Route::put('/{promoCode}', [PromoCodeController::class, 'update'])->name('update');
+            Route::delete('/{promoCode}', [PromoCodeController::class, 'destroy'])->name('destroy');
+            Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('usage');
+        });
 //
 //        // Инвентарь
 //        Route::prefix('inventory')->name('inventory.')->group(function () {
@@ -342,14 +344,27 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            // Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
 //        });
 //
-//        Route::resource('client-levels', ClientLevelController::class);
-//
-//
-//        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
-//        Route::put('/leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
-//        Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
-//        Route::post('/leads/create-client', [LeadController::class, 'createClient'])->name('leads.create-client');
-//
+        // Для получения всех уровней клиентов
+        Route::get('client-levels', [ClientLevelController::class, 'index'])->name('client-levels.index');
+
+        // Для создания нового уровня клиента
+        Route::post('client-levels', [ClientLevelController::class, 'store'])->name('client-levels.store');
+
+        // Для получения конкретного уровня клиента по ID
+
+        // Для обновления уровня клиента
+        Route::put('client-levels/{clientLevel}', [ClientLevelController::class, 'update'])->name('client-levels.update');
+
+        // Для удаления уровня клиента
+        Route::delete('client-levels/{clientLevel}', [ClientLevelController::class, 'destroy'])->name('client-levels.destroy');
+
+
+
+        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
+        Route::put('/leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
+        Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
+        Route::post('/leads/create-client', [LeadController::class, 'createClient'])->name('leads.create-client');
+
 //
 //        // Задачи
 //        Route::prefix('tasks')->name('tasks.')->group(function () {

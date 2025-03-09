@@ -309,6 +309,493 @@
                 }
             }
         },
+        "/clients": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Get all clients",
+                "operationId": "getClients",
+                "responses": {
+                    "200": {
+                        "description": "List of clients",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Client"
+                                            }
+                                        },
+                                        "links": {
+                                            "properties": {
+                                                "first": {
+                                                    "type": "string"
+                                                },
+                                                "last": {
+                                                    "type": "string"
+                                                },
+                                                "prev": {
+                                                    "type": "string"
+                                                },
+                                                "next": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "from": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "to": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Create a new client",
+                "operationId": "storeClient",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "description": "First name of the client",
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "last_name": {
+                                        "description": "Last name of the client",
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "email": {
+                                        "description": "Email address of the client",
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "password": {
+                                        "description": "Password for the client account",
+                                        "type": "string",
+                                        "minLength": 8
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Client successfully created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client successfully created"
+                                        },
+                                        "client": {
+                                            "$ref": "#/components/schemas/Client"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request, validation failed"
+                    }
+                }
+            }
+        },
+        "/clients/{client}": {
+            "get": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Get a specific client by ID",
+                "operationId": "showClient",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "description": "ID of the client to fetch",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Client"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Update a specific client",
+                "operationId": "updateClient",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "description": "ID of the client to update",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Client successfully updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Client"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client not found"
+                    },
+                    "400": {
+                        "description": "Invalid input"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Clients"
+                ],
+                "summary": "Delete a specific client",
+                "operationId": "deleteClient",
+                "parameters": [
+                    {
+                        "name": "client",
+                        "in": "path",
+                        "description": "ID of the client to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client successfully deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client deleted"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client not found"
+                    },
+                    "400": {
+                        "description": "Error deleting client"
+                    }
+                }
+            }
+        },
+        "/client-levels": {
+            "get": {
+                "tags": [
+                    "ClientLevels"
+                ],
+                "summary": "Get all client levels",
+                "description": "Returns a list of all client levels",
+                "operationId": "getClientLevels",
+                "responses": {
+                    "200": {
+                        "description": "List of client levels",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ClientLevel"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "ClientLevels"
+                ],
+                "summary": "Create a new client level",
+                "description": "Creates a new client level based on the provided data",
+                "operationId": "createClientLevel",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "threshold",
+                                    "calculation_type",
+                                    "discount_percentage"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Name of the client level",
+                                        "type": "string"
+                                    },
+                                    "threshold": {
+                                        "description": "Threshold for the client level",
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "calculation_type": {
+                                        "description": "Type of calculation for the client level",
+                                        "type": "string",
+                                        "enum": [
+                                            "order_count",
+                                            "order_sum"
+                                        ]
+                                    },
+                                    "discount_percentage": {
+                                        "description": "Discount percentage for the client level",
+                                        "type": "number",
+                                        "format": "float"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Client level successfully created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClientLevel"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input data"
+                    }
+                }
+            }
+        },
+        "/client-levels/{clientLevel}": {
+            "put": {
+                "tags": [
+                    "ClientLevels"
+                ],
+                "summary": "Update a client level",
+                "description": "Updates an existing client level based on the provided data",
+                "operationId": "updateClientLevel",
+                "parameters": [
+                    {
+                        "name": "clientLevel",
+                        "in": "path",
+                        "description": "ID of the client level to update",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "threshold",
+                                    "calculation_type",
+                                    "discount_percentage"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Name of the client level",
+                                        "type": "string"
+                                    },
+                                    "threshold": {
+                                        "description": "Threshold for the client level",
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "calculation_type": {
+                                        "description": "Type of calculation for the client level",
+                                        "type": "string",
+                                        "enum": [
+                                            "order_count",
+                                            "order_sum"
+                                        ]
+                                    },
+                                    "discount_percentage": {
+                                        "description": "Discount percentage for the client level",
+                                        "type": "number",
+                                        "format": "float"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Client level successfully updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClientLevel"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input data"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "ClientLevels"
+                ],
+                "summary": "Delete a client level",
+                "description": "Deletes a client level by its ID",
+                "operationId": "deleteClientLevel",
+                "parameters": [
+                    {
+                        "name": "clientLevel",
+                        "in": "path",
+                        "description": "ID of the client level to delete",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client level successfully deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client level deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client level not found"
+                    }
+                }
+            }
+        },
         "/cost-categories": {
             "get": {
                 "tags": [
@@ -324,7 +811,7 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/components/schemas/CostCategoryResource"
+                                        "$ref": "#/components/schemas/CostCategory"
                                     }
                                 }
                             }
@@ -1945,6 +2432,645 @@
                 ]
             }
         },
+        "/production": {
+            "get": {
+                "tags": [
+                    "Production"
+                ],
+                "summary": "Get all production batches",
+                "operationId": "getProductionBatches",
+                "responses": {
+                    "200": {
+                        "description": "List of production batches",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProductionBatch"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/production/batches": {
+            "post": {
+                "tags": [
+                    "Production"
+                ],
+                "summary": "Создать новую производственную партию",
+                "operationId": "createProductionBatch",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "quantity"
+                                ],
+                                "properties": {
+                                    "quantity": {
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "planned_start_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "notes": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Производственная партия создана",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ProductionBatch"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ввод"
+                    }
+                }
+            }
+        },
+        "/production/batches/{batch}/start": {
+            "post": {
+                "tags": [
+                    "Production"
+                ],
+                "summary": "Запуск производственной партии",
+                "description": "Метод для запуска производственной партии по ID.",
+                "operationId": "startProductionBatch",
+                "parameters": [
+                    {
+                        "name": "batch",
+                        "in": "path",
+                        "description": "ID производственной партии",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Производственная партия успешно запущена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Производственная партия запущена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка запуска производственной партии",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Ошибка: Невозможно запустить партию"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/promo-codes": {
+            "get": {
+                "tags": [
+                    "Promo Codes"
+                ],
+                "summary": "Получить список промокодов",
+                "operationId": "a8b5002368297050fae9c04c9a73c47e",
+                "responses": {
+                    "200": {
+                        "description": "Список промокодов",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "code": {
+                                                "type": "string",
+                                                "example": "DISCOUNT10"
+                                            },
+                                            "discount": {
+                                                "type": "number",
+                                                "example": 10
+                                            },
+                                            "expires_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-12-31T23:59:59Z"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Promo Codes"
+                ],
+                "summary": "Создать промокод",
+                "operationId": "181d215156336487beac00b40f5345e8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code",
+                                    "discount_amount",
+                                    "discount_type"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "DISCOUNT20"
+                                    },
+                                    "discount_amount": {
+                                        "type": "number",
+                                        "example": 20
+                                    },
+                                    "discount_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "percentage",
+                                            "fixed"
+                                        ],
+                                        "example": "percentage"
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-01-01"
+                                    },
+                                    "expires_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-12-31"
+                                    },
+                                    "max_uses": {
+                                        "type": "integer",
+                                        "example": 100
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Промокод успешно создан",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Promo code created successfully."
+                                        },
+                                        "promo_code": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "DISCOUNT20"
+                                                },
+                                                "discount_amount": {
+                                                    "type": "number",
+                                                    "example": 20
+                                                },
+                                                "discount_type": {
+                                                    "type": "string",
+                                                    "example": "percentage"
+                                                },
+                                                "starts_at": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-01-01"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-12-31"
+                                                },
+                                                "max_uses": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/promo-codes/{id}": {
+            "put": {
+                "tags": [
+                    "Promo Codes"
+                ],
+                "summary": "Обновить промокод",
+                "operationId": "163896574eab053abed61e78ca029cba",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID промокода",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code",
+                                    "discount_amount",
+                                    "discount_type"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "DISCOUNT30"
+                                    },
+                                    "discount_amount": {
+                                        "type": "number",
+                                        "example": 30
+                                    },
+                                    "discount_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "percentage",
+                                            "fixed"
+                                        ],
+                                        "example": "fixed"
+                                    },
+                                    "starts_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-02-01"
+                                    },
+                                    "expires_at": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-12-31"
+                                    },
+                                    "max_uses": {
+                                        "type": "integer",
+                                        "example": 150
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Промокод успешно обновлен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Promo code updated successfully."
+                                        },
+                                        "promo_code": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "code": {
+                                                    "type": "string",
+                                                    "example": "DISCOUNT30"
+                                                },
+                                                "discount_amount": {
+                                                    "type": "number",
+                                                    "example": 30
+                                                },
+                                                "discount_type": {
+                                                    "type": "string",
+                                                    "example": "fixed"
+                                                },
+                                                "starts_at": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-02-01"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-12-31"
+                                                },
+                                                "max_uses": {
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Promo Codes"
+                ],
+                "summary": "Удалить промокод",
+                "operationId": "020b32ce3e6851f0eb9975340a500ab8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID промокода",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Промокод успешно удален",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Promo code deleted successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Промокод не найден",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Promo code not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/promo-codes/{id}/usage": {
+            "get": {
+                "tags": [
+                    "Promo Codes"
+                ],
+                "summary": "Получить статистику использования промокода",
+                "operationId": "ab890b4297eb77eabc86e472a831bfed",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID промокода",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Детальная информация об использовании промокода",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "string",
+                                            "example": "DISCOUNT2024"
+                                        },
+                                        "total_uses": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "usages": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    },
+                                                    "order": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1001
+                                                            },
+                                                            "order_number": {
+                                                                "type": "string",
+                                                                "example": "ORD-20240308-XYZ"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "client": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 50
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Иван Иванов"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "discount_amount": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 500
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-03-08T12:00:00Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Промокод не найден",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Promo code not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/recipes": {
             "get": {
                 "tags": [
@@ -3173,27 +4299,6 @@
     },
     "components": {
         "schemas": {
-            "CostCategoryResource": {
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "name": {
-                        "type": "string",
-                        "example": "Category Name"
-                    },
-                    "type": {
-                        "type": "string",
-                        "example": "Type"
-                    },
-                    "is_active": {
-                        "type": "boolean",
-                        "example": true
-                    }
-                },
-                "type": "object"
-            },
             "Category": {
                 "properties": {
                     "id": {
@@ -3210,6 +4315,133 @@
                         "format": "date-time"
                     },
                     "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Client": {
+                "required": [
+                    "id",
+                    "user_id",
+                    "bonus_balance",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier of the client",
+                        "type": "integer"
+                    },
+                    "user_id": {
+                        "description": "ID of the associated user",
+                        "type": "integer"
+                    },
+                    "client_level_id": {
+                        "description": "ID of the client's level",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "bonus_balance": {
+                        "description": "The bonus balance of the client",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "created_at": {
+                        "description": "Timestamp when the client was created",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Timestamp when the client was last updated",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "description": "Timestamp when the client was deleted, null if not deleted",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ClientLevel": {
+                "required": [
+                    "name",
+                    "threshold",
+                    "calculation_type",
+                    "discount_percentage"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "ID of the client level",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "description": "Name of the client level",
+                        "type": "string"
+                    },
+                    "threshold": {
+                        "description": "Threshold for the client level",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "calculation_type": {
+                        "description": "Calculation type for the client level",
+                        "type": "string",
+                        "enum": [
+                            "order_count",
+                            "order_sum"
+                        ]
+                    },
+                    "discount_percentage": {
+                        "description": "Discount percentage for the client level",
+                        "type": "number",
+                        "format": "float"
+                    }
+                },
+                "type": "object"
+            },
+            "CostCategory": {
+                "required": [
+                    "id",
+                    "name",
+                    "type",
+                    "is_active",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier of the cost category",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "description": "Name of the cost category",
+                        "type": "string"
+                    },
+                    "type": {
+                        "description": "Type of the cost category (e.g., 'Material', 'Labor', etc.)",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "Description of the cost category",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "description": "Whether the cost category is active",
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "description": "Timestamp when the cost category was created",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Timestamp when the cost category was last updated",
                         "type": "string",
                         "format": "date-time"
                     }
@@ -3293,6 +4525,131 @@
                         "items": {
                             "$ref": "#/components/schemas/Category"
                         }
+                    }
+                },
+                "type": "object"
+            },
+            "ProductionBatch": {
+                "required": [
+                    "id",
+                    "batch_number",
+                    "recipe_id",
+                    "product_variant_id",
+                    "planned_quantity",
+                    "status",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier for the production batch",
+                        "type": "integer"
+                    },
+                    "batch_number": {
+                        "description": "The batch number",
+                        "type": "string"
+                    },
+                    "recipe_id": {
+                        "description": "ID of the associated recipe",
+                        "type": "integer"
+                    },
+                    "product_variant_id": {
+                        "description": "ID of the associated product variant",
+                        "type": "integer"
+                    },
+                    "planned_quantity": {
+                        "description": "The planned quantity for the production batch",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "actual_quantity": {
+                        "description": "The actual quantity produced",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "status": {
+                        "description": "The status of the production batch",
+                        "type": "string",
+                        "enum": [
+                            "planned",
+                            "pending",
+                            "in_progress",
+                            "completed",
+                            "cancelled",
+                            "failed"
+                        ]
+                    },
+                    "unit_cost": {
+                        "description": "The unit cost of production",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "total_material_cost": {
+                        "description": "The total cost of materials used in the production batch",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "additional_costs": {
+                        "description": "Any additional costs for the production batch",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "planned_start_date": {
+                        "description": "Planned start date for the production batch",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "planned_end_date": {
+                        "description": "Planned end date for the production batch",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "started_at": {
+                        "description": "Actual start date of the production batch",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "completed_at": {
+                        "description": "Actual completion date of the production batch",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_by": {
+                        "description": "ID of the user who created the production batch",
+                        "type": "integer"
+                    },
+                    "completed_by": {
+                        "description": "ID of the user who completed the production batch",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "description": "Additional notes for the production batch",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Timestamp when the production batch was created",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Timestamp when the production batch was last updated",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "description": "Timestamp when the production batch was deleted",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -3526,8 +4883,16 @@
     },
     "tags": [
         {
+            "name": "Clients",
+            "description": "API для управления клиентами"
+        },
+        {
             "name": "Categories",
             "description": "Categories"
+        },
+        {
+            "name": "ClientLevels",
+            "description": "ClientLevels"
         },
         {
             "name": "Cost Categories",
@@ -3544,6 +4909,14 @@
         {
             "name": "Product Variants",
             "description": "Product Variants"
+        },
+        {
+            "name": "Production",
+            "description": "Production"
+        },
+        {
+            "name": "Promo Codes",
+            "description": "Promo Codes"
         },
         {
             "name": "Recipes",
