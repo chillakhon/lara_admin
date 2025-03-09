@@ -33,7 +33,7 @@ class RecipeController extends Controller
      * @OA\Get(
      *     path="/recipes",
      *     operationId="getRecipes",
-     *     tags={"Recipes / техкарты"},
+     *     tags={"Recipes"},
      *     summary="Get a list of all recipes with related data",
      *     description="Fetches all recipes with their related products, selected variants, items, and other associated data.",
      *     @OA\Response(
