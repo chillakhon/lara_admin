@@ -189,7 +189,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            ->name('discounts.attach-variants');
 //
         Route::group(['prefix' => 'recipes', 'as' => 'recipes.'], function () {
-
             Route::get('/', [RecipeController::class, 'index']);
             Route::post('/', [RecipeController::class, 'store']);
             Route::get('/{recipe}', [RecipeController::class, 'show']);
