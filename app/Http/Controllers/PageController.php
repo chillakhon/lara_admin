@@ -81,7 +81,7 @@ class PageController extends Controller
     {
         foreach ($values as $key => $value) {
             $field = Field::where('key', $key)->first();
-            
+
             if (!$field) continue;
 
             $fieldValue = new FieldValue([
