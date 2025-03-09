@@ -6,6 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @OA\Schema(
+ *     schema="Recipe",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", format="int64"),
+ *     @OA\Property(property="name", type="string", maxLength=255),
+ *     @OA\Property(property="description", type="string", nullable=true),
+ *     @OA\Property(property="output_quantity", type="number", format="float"),
+ *     @OA\Property(property="output_unit_id", type="integer", format="int64"),
+ *     @OA\Property(property="is_active", type="boolean"),
+ *     @OA\Property(property="instructions", type="string", nullable=true),
+ *     @OA\Property(property="production_time", type="integer", nullable=true),
+ *     @OA\Property(property="created_by", type="integer", format="int64"),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true)
+ * )
+ */
 class Recipe extends Model
 {
     use SoftDeletes;

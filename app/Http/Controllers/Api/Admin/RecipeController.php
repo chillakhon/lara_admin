@@ -14,7 +14,6 @@ use App\Services\RecipeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Inertia\Inertia;
 
 class RecipeController extends Controller
 {
@@ -22,7 +21,7 @@ class RecipeController extends Controller
     protected $productionCostService;
 
     public function __construct(
-        RecipeService $recipeService,
+        RecipeService         $recipeService,
         ProductionCostService $productionCostService
     )
     {
@@ -30,10 +29,31 @@ class RecipeController extends Controller
         $this->productionCostService = $productionCostService;
     }
 
+    /**
+     * @OA\Get(
+     *     path="/recipes",
+     *     operationId="getRecipes",
+     *     tags={"Recipes"},
+     *     summary="Get a list of all recipes with related data",
+     *     description="Fetches all recipes with their related products, selected variants, items, and other associated data.",
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of recipes successfully fetched",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(ref="#/components/schemas/Recipe")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error"
+     *     )
+     * )
+     */
     public function index()
     {
         $recipes = Recipe::with([
-            'products' => function($query) {
+            'products' => function ($query) {
                 $query->with(['variants']);
             },
             'selectedVariants',
@@ -41,38 +61,85 @@ class RecipeController extends Controller
             'items.unit',
             'outputUnit',
             'createdBy',
-            'costRates.category' // Оставляем для будущих записей
+            'costRates.category'
         ])->get();
 
-        // Отдельно получаем все доступные категории затрат
-        $costCategories = CostCategory::where('is_active', true)
-            ->orderBy('type')
-            ->orderBy('name')
-            ->get()
-            ->map(function($category) {
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'type' => $category->type,
-                    'type_name' => CostCategory::getTypes()[$category->type] ?? $category->type,
-                    'description' => $category->description
-                ];
-            });
-
-        Log::info('Available cost categories:', [
-            'categories' => $costCategories->toArray()
-        ]);
-
-        return Inertia::render('Dashboard/Recipes/Index', [
-            'recipes' => $recipes,
-            'products' => Product::with('variants')->get(),
-            'materials' => Material::with(['inventoryBalance', 'unit'])->get(),
-            'units' => Unit::all(),
-            'costCategories' => $costCategories // Передаем категории затрат
-        ]);
+        return response()->json($recipes);
     }
 
-
+    /**
+     * @OA\Post(
+     *     path="/recipes",
+     *     operationId="createRecipe",
+     *     tags={"Recipes"},
+     *     summary="Create a new recipe",
+     *     description="Creates a new recipe with related items, products, and cost rates.",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 required={"name", "output_quantity", "output_unit_id", "items", "products", "cost_rates"},
+     *                 @OA\Property(property="name", type="string", description="Name of the recipe"),
+     *                 @OA\Property(property="description", type="string", nullable=true, description="Description of the recipe"),
+     *                 @OA\Property(property="output_quantity", type="number", format="float", description="Quantity produced by the recipe"),
+     *                 @OA\Property(property="output_unit_id", type="integer", description="ID of the unit used for output quantity"),
+     *                 @OA\Property(property="instructions", type="string", nullable=true, description="Instructions for making the recipe"),
+     *                 @OA\Property(property="production_time", type="integer", nullable=true, description="Time required to produce the recipe"),
+     *                 @OA\Property(property="is_active", type="boolean", description="Whether the recipe is active"),
+     *                 @OA\Property(
+     *                     property="items",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         required={"component_type", "component_id", "quantity", "unit_id"},
+     *                         @OA\Property(property="component_type", type="string", enum={"Material", "Product"}, description="The type of component (Material or Product)"),
+     *                         @OA\Property(property="component_id", type="integer", description="The ID of the component"),
+     *                         @OA\Property(property="quantity", type="number", format="float", description="Quantity of the component"),
+     *                         @OA\Property(property="unit_id", type="integer", description="Unit ID for the component")
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="products",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         required={"product_id"},
+     *                         @OA\Property(property="product_id", type="integer", description="ID of the product"),
+     *                         @OA\Property(property="variant_id", type="integer", nullable=true, description="ID of the product variant"),
+     *                         @OA\Property(property="is_default", type="boolean", description="Whether the product is the default")
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="cost_rates",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         required={"cost_category_id", "rate_per_unit", "fixed_rate"},
+     *                         @OA\Property(property="cost_category_id", type="integer", description="ID of the cost category"),
+     *                         @OA\Property(property="rate_per_unit", type="number", format="float", description="Cost rate per unit"),
+     *                         @OA\Property(property="fixed_rate", type="number", format="float", description="Fixed cost rate")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Recipe created successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Recipe")
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Bad request"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error"
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -109,7 +176,6 @@ class RecipeController extends Controller
             'is_active' => $validated['is_active'] ?? true
         ]);
 
-        // Добавляем компоненты рецепта
         foreach ($validated['items'] as $item) {
             $recipe->items()->create([
                 'component_type' => $item['component_type'],
@@ -119,7 +185,6 @@ class RecipeController extends Controller
             ]);
         }
 
-        // Привязываем продукты и варианты
         foreach ($validated['products'] as $productData) {
             $recipe->products()->attach($productData['product_id'], [
                 'product_variant_id' => $productData['variant_id'] ?? null,
@@ -137,14 +202,122 @@ class RecipeController extends Controller
             }
         }
 
-        return redirect()->route('dashboard.recipes.index')
-            ->with('success', 'Рецепт успешно создан');
+        return response()->json($recipe, 201);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/recipes/{recipe}",
+     *     operationId="getRecipe",
+     *     tags={"Recipes"},
+     *     summary="Get a specific recipe",
+     *     description="Fetches details of a specific recipe by its ID, including related items and units.",
+     *     @OA\Parameter(
+     *         name="recipe",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the recipe to retrieve",
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Recipe retrieved successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Recipe")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Recipe not found"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error"
+     *     )
+     * )
+     */
+    public function show(Recipe $recipe)
+    {
+        return response()->json($recipe->load(['items.component', 'items.unit']));
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/recipes/{recipe}",
+     *     operationId="updateRecipe",
+     *     tags={"Recipes"},
+     *     summary="Update a specific recipe",
+     *     description="Updates the details of a specific recipe including items, products, and cost rates.",
+     *     @OA\Parameter(
+     *         name="recipe",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the recipe to update",
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="name", type="string", maxLength=255),
+     *             @OA\Property(property="description", type="string", nullable=true),
+     *             @OA\Property(property="output_quantity", type="number", format="float", minimum=0.001),
+     *             @OA\Property(property="output_unit_id", type="integer", format="int64"),
+     *             @OA\Property(property="instructions", type="string", nullable=true),
+     *             @OA\Property(property="production_time", type="integer", minimum=1, nullable=true),
+     *             @OA\Property(property="is_active", type="boolean"),
+     *             @OA\Property(
+     *                 property="items",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="component_type", type="string", enum={"Material", "Product"}),
+     *                     @OA\Property(property="component_id", type="integer", format="int64"),
+     *                     @OA\Property(property="quantity", type="number", format="float", minimum=0.001),
+     *                     @OA\Property(property="unit_id", type="integer", format="int64")
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="products",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="product_id", type="integer", format="int64"),
+     *                     @OA\Property(property="variant_id", type="integer", format="int64", nullable=true),
+     *                     @OA\Property(property="is_default", type="boolean", nullable=true)
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="cost_rates",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="cost_category_id", type="integer", format="int64"),
+     *                     @OA\Property(property="rate_per_unit", type="number", format="float", minimum=0),
+     *                     @OA\Property(property="fixed_rate", type="number", format="float", minimum=0)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Recipe updated successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Recipe")
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Recipe not found"
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error"
+     *     )
+     * )
+     */
     public function update(Request $request, Recipe $recipe)
     {
-        Log::info('Updating recipe', ['request' => $request->all()]);
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -168,10 +341,8 @@ class RecipeController extends Controller
             'cost_rates.*.fixed_rate' => 'required|numeric|min:0'
         ]);
 
+        DB::beginTransaction();
         try {
-            DB::beginTransaction();
-
-            // Обновляем основные данные рецепта
             $recipe->update([
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
@@ -182,7 +353,6 @@ class RecipeController extends Controller
                 'is_active' => $validated['is_active'] ?? true
             ]);
 
-            // Обновляем компоненты
             $recipe->items()->delete();
             foreach ($validated['items'] as $item) {
                 $recipe->items()->create([
@@ -193,16 +363,8 @@ class RecipeController extends Controller
                 ]);
             }
 
-            // Удаляем старые связи с продуктами
             $recipe->products()->detach();
-
-            // Удаляем дубликаты из массива продуктов
-            $uniqueProducts = collect($validated['products'])->unique(function ($product) {
-                return $product['product_id'] . '-' . $product['variant_id'];
-            })->values()->all();
-
-            // Добавляем новые связи
-            foreach ($uniqueProducts as $productData) {
+            foreach ($validated['products'] as $productData) {
                 $recipe->products()->attach($productData['product_id'], [
                     'product_variant_id' => $productData['variant_id'],
                     'is_default' => $productData['is_default'],
@@ -221,20 +383,88 @@ class RecipeController extends Controller
             }
 
             DB::commit();
-
-            return redirect()->route('dashboard.recipes.index')
-                ->with('success', 'Рецепт успешно обновлен');
-
+            return response()->json($recipe);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error updating recipe', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            return response()->json(['error' => 'Ошибка при обновлении рецепта: ' . $e->getMessage()], 500);
+        }
+    }
 
-            return redirect()->back()
-                ->withErrors(['error' => 'Ошибка при обновлении рецепта: ' . $e->getMessage()])
-                ->withInput();
+    /**
+     * @OA\Delete(
+     *     path="/recipes/{recipe}",
+     *     operationId="deleteRecipe",
+     *     tags={"Recipes"},
+     *     summary="Delete a specific recipe",
+     *     description="Deletes a specific recipe, ensuring it is not used in any production batches and not the only recipe for any product.",
+     *     @OA\Parameter(
+     *         name="recipe",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the recipe to delete",
+     *         @OA\Schema(type="integer", format="int64")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Recipe successfully deleted",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="Recipe successfully deleted")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation or business logic error",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="error", type="string", example="Cannot delete recipe used in production batches")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Recipe not found",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="error", type="string", example="Recipe not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="error", type="string", example="Failed to delete recipe: Some error message")
+     *         )
+     *     )
+     * )
+     */
+    public function destroy(Recipe $recipe)
+    {
+        DB::beginTransaction();
+        try {
+            if ($recipe->productionBatches()->exists()) {
+                throw new \Exception('Невозможно удалить рецепт, который используется в производственных партиях');
+            }
+
+            $productsWithSingleRecipe = $recipe->products()
+                ->whereDoesntHave('recipes', function ($query) use ($recipe) {
+                    $query->where('recipes.id', '!=', $recipe->id);
+                })
+                ->exists();
+
+            if ($productsWithSingleRecipe) {
+                throw new \Exception('Невозможно удалить единственный рецепт для продукта');
+            }
+
+            $recipe->products()->detach();
+            $recipe->items()->delete();
+            $recipe->delete();
+
+            DB::commit();
+            return response()->json(['message' => 'Рецепт успешно удален']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Не удалось удалить рецепт: ' . $e->getMessage()], 500);
         }
     }
 
@@ -248,29 +478,25 @@ class RecipeController extends Controller
 
         $recipe = Recipe::with(['items.component', 'costRates.category'])->findOrFail($validated['recipe_id']);
 
-        // Получаем стоимость материалов
         $materialsCost = $this->recipeService->calculateEstimatedCost(
             $recipe,
             $validated['strategy'],
-            (float) $validated['quantity']
+            (float)$validated['quantity']
         );
 
-        // Получаем производственные затраты
         $productionCosts = $this->productionCostService->calculateEstimatedCosts(
             $recipe,
-            (float) $validated['quantity']
+            (float)$validated['quantity']
         );
 
-        // Рассчитываем общую стоимость
         $totalCost = $materialsCost['materials_cost'] +
             $productionCosts['labor'] +
             $productionCosts['overhead'] +
             $productionCosts['management'];
 
-        $quantity = (float) $validated['quantity'];
+        $quantity = (float)$validated['quantity'];
         $costPerUnit = $quantity > 0 ? $totalCost / $quantity : 0;
 
-        // Объединяем результаты
         return response()->json([
             'materials_cost' => $materialsCost['materials_cost'],
             'materials_details' => $materialsCost['components'],
@@ -280,7 +506,7 @@ class RecipeController extends Controller
             'total_cost' => $totalCost,
             'cost_per_unit' => $costPerUnit,
             'cost_details' => array_merge(
-                array_map(function($component) {
+                array_map(function ($component) {
                     return [
                         'type' => 'material',
                         'name' => $component['name'],
@@ -311,71 +537,9 @@ class RecipeController extends Controller
             'cost_rates.*.fixed_rate' => 'required|numeric|min:0'
         ]);
 
-        $recipe->costRates()->delete(); // Удаляем старые ставки
+        $recipe->costRates()->delete();
         $recipe->costRates()->createMany($validated['cost_rates']);
 
         return response()->json(['message' => 'Ставки затрат успешно обновлены']);
-    }
-
-
-
-    public function show(Recipe $recipe)
-    {
-        // Рассчитываем стоимость по всем стратегиям для сравнения
-        $costEstimations = collect($this->recipeService->getAvailableCostStrategies())
-            ->mapWithKeys(function ($label, $strategy) use ($recipe) {
-                return [
-                    $strategy => $this->recipeService->calculateEstimatedCost($recipe, $strategy)
-                ];
-            });
-
-        return Inertia::render('Dashboard/Recipes/Show', [
-            'recipe' => $recipe->load(['items.component', 'items.unit']),
-            'costEstimations' => $costEstimations,
-            'availableCostStrategies' => $this->recipeService->getAvailableCostStrategies()
-        ]);
-    }
-
-    public function destroy(Recipe $recipe)
-    {
-        try {
-            DB::beginTransaction();
-
-            // Проверяем, не используется ли рецепт в производстве
-            if ($recipe->productionBatches()->exists()) {
-                throw new \Exception('Невозможно удалить рецепт, который используется в производственных партиях');
-            }
-
-            // Проверяем, не является ли рецепт единственным для какого-либо продукта
-            $productsWithSingleRecipe = $recipe->products()
-                ->whereDoesntHave('recipes', function($query) use ($recipe) {
-                    $query->where('recipes.id', '!=', $recipe->id);
-                })
-                ->exists();
-
-            if ($productsWithSingleRecipe) {
-                throw new \Exception('Невозможно удалить единственный рецепт для продукта');
-            }
-
-            // Удаляем связи с продуктами
-            $recipe->products()->detach();
-
-            // Удаляем компоненты рецепта
-            $recipe->items()->delete();
-
-            // Удаляем сам рецепт
-            $recipe->delete();
-
-            DB::commit();
-
-            return redirect()->route('dashboard.recipes.index')
-                ->with('success', 'Рецепт успешно удален');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return redirect()->route('dashboard.recipes.index')
-                ->with('error', 'Не удалось удалить рецепт: ' . $e->getMessage());
-        }
     }
 }
