@@ -99,47 +99,7 @@ class ProductionController extends Controller
             ], 400);
         }
     }
-    /**
-     * @OA\Get(
-     *     path="/production/create/{recipe}",
-     *     operationId="createProductionBatch",
-     *     tags={"Production"},
-     *     summary="Создание производственной партии для рецепта",
-     *     @OA\Parameter(
-     *         name="recipe",
-     *         in="path",
-     *         required=true,
-     *         description="ID рецепта",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Страница для создания производственной партии",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="recipe", type="object", ref="#/components/schemas/Recipe"),
-     *             @OA\Property(property="currentStock", type="integer", description="Текущий остаток"),
-     *             @OA\Property(property="estimatedCost", type="number", format="float", description="Оценочная стоимость")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Неверный запрос"
-     *     )
-     * )
-     */
-    public function create(Recipe $recipe)
-    {
-        return Inertia::render('Dashboard/Production/Create', [
-            'recipe' => $recipe->load([
-                'productVariant.product',
-                'items.component.inventoryBalance',
-                'outputUnit'
-            ]),
-            'currentStock' => $recipe->productVariant->getCurrentStock(),
-            'estimatedCost' => $this->recipeService->calculateEstimatedCost($recipe)
-        ]);
-    }
+
     /**
      * @OA\Post(
      *     path="/production/batches/{batch}/start",
