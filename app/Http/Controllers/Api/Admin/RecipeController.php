@@ -14,7 +14,6 @@ use App\Services\RecipeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Inertia\Inertia;
 
 class RecipeController extends Controller
 {
@@ -22,7 +21,7 @@ class RecipeController extends Controller
     protected $productionCostService;
 
     public function __construct(
-        RecipeService $recipeService,
+        RecipeService         $recipeService,
         ProductionCostService $productionCostService
     )
     {
@@ -33,7 +32,7 @@ class RecipeController extends Controller
     public function index()
     {
         $recipes = Recipe::with([
-            'products' => function($query) {
+            'products' => function ($query) {
                 $query->with(['variants']);
             },
             'selectedVariants',
@@ -41,37 +40,11 @@ class RecipeController extends Controller
             'items.unit',
             'outputUnit',
             'createdBy',
-            'costRates.category' // Оставляем для будущих записей
+            'costRates.category'
         ])->get();
 
-        // Отдельно получаем все доступные категории затрат
-        $costCategories = CostCategory::where('is_active', true)
-            ->orderBy('type')
-            ->orderBy('name')
-            ->get()
-            ->map(function($category) {
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'type' => $category->type,
-                    'type_name' => CostCategory::getTypes()[$category->type] ?? $category->type,
-                    'description' => $category->description
-                ];
-            });
-
-        Log::info('Available cost categories:', [
-            'categories' => $costCategories->toArray()
-        ]);
-
-        return Inertia::render('Dashboard/Recipes/Index', [
-            'recipes' => $recipes,
-            'products' => Product::with('variants')->get(),
-            'materials' => Material::with(['inventoryBalance', 'unit'])->get(),
-            'units' => Unit::all(),
-            'costCategories' => $costCategories // Передаем категории затрат
-        ]);
+        return response()->json($recipes);
     }
-
 
     public function store(Request $request)
     {
@@ -109,7 +82,6 @@ class RecipeController extends Controller
             'is_active' => $validated['is_active'] ?? true
         ]);
 
-        // Добавляем компоненты рецепта
         foreach ($validated['items'] as $item) {
             $recipe->items()->create([
                 'component_type' => $item['component_type'],
@@ -119,7 +91,6 @@ class RecipeController extends Controller
             ]);
         }
 
-        // Привязываем продукты и варианты
         foreach ($validated['products'] as $productData) {
             $recipe->products()->attach($productData['product_id'], [
                 'product_variant_id' => $productData['variant_id'] ?? null,
@@ -137,14 +108,16 @@ class RecipeController extends Controller
             }
         }
 
-        return redirect()->route('dashboard.recipes.index')
-            ->with('success', 'Рецепт успешно создан');
+        return response()->json($recipe, 201);
+    }
+
+    public function show(Recipe $recipe)
+    {
+        return response()->json($recipe->load(['items.component', 'items.unit']));
     }
 
     public function update(Request $request, Recipe $recipe)
     {
-        Log::info('Updating recipe', ['request' => $request->all()]);
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -168,10 +141,8 @@ class RecipeController extends Controller
             'cost_rates.*.fixed_rate' => 'required|numeric|min:0'
         ]);
 
+        DB::beginTransaction();
         try {
-            DB::beginTransaction();
-
-            // Обновляем основные данные рецепта
             $recipe->update([
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
@@ -182,7 +153,6 @@ class RecipeController extends Controller
                 'is_active' => $validated['is_active'] ?? true
             ]);
 
-            // Обновляем компоненты
             $recipe->items()->delete();
             foreach ($validated['items'] as $item) {
                 $recipe->items()->create([
@@ -193,16 +163,8 @@ class RecipeController extends Controller
                 ]);
             }
 
-            // Удаляем старые связи с продуктами
             $recipe->products()->detach();
-
-            // Удаляем дубликаты из массива продуктов
-            $uniqueProducts = collect($validated['products'])->unique(function ($product) {
-                return $product['product_id'] . '-' . $product['variant_id'];
-            })->values()->all();
-
-            // Добавляем новые связи
-            foreach ($uniqueProducts as $productData) {
+            foreach ($validated['products'] as $productData) {
                 $recipe->products()->attach($productData['product_id'], [
                     'product_variant_id' => $productData['variant_id'],
                     'is_default' => $productData['is_default'],
@@ -221,20 +183,40 @@ class RecipeController extends Controller
             }
 
             DB::commit();
-
-            return redirect()->route('dashboard.recipes.index')
-                ->with('success', 'Рецепт успешно обновлен');
-
+            return response()->json($recipe);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error updating recipe', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            return response()->json(['error' => 'Ошибка при обновлении рецепта: ' . $e->getMessage()], 500);
+        }
+    }
 
-            return redirect()->back()
-                ->withErrors(['error' => 'Ошибка при обновлении рецепта: ' . $e->getMessage()])
-                ->withInput();
+    public function destroy(Recipe $recipe)
+    {
+        DB::beginTransaction();
+        try {
+            if ($recipe->productionBatches()->exists()) {
+                throw new \Exception('Невозможно удалить рецепт, который используется в производственных партиях');
+            }
+
+            $productsWithSingleRecipe = $recipe->products()
+                ->whereDoesntHave('recipes', function ($query) use ($recipe) {
+                    $query->where('recipes.id', '!=', $recipe->id);
+                })
+                ->exists();
+
+            if ($productsWithSingleRecipe) {
+                throw new \Exception('Невозможно удалить единственный рецепт для продукта');
+            }
+
+            $recipe->products()->detach();
+            $recipe->items()->delete();
+            $recipe->delete();
+
+            DB::commit();
+            return response()->json(['message' => 'Рецепт успешно удален']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Не удалось удалить рецепт: ' . $e->getMessage()], 500);
         }
     }
 
@@ -248,29 +230,25 @@ class RecipeController extends Controller
 
         $recipe = Recipe::with(['items.component', 'costRates.category'])->findOrFail($validated['recipe_id']);
 
-        // Получаем стоимость материалов
         $materialsCost = $this->recipeService->calculateEstimatedCost(
             $recipe,
             $validated['strategy'],
-            (float) $validated['quantity']
+            (float)$validated['quantity']
         );
 
-        // Получаем производственные затраты
         $productionCosts = $this->productionCostService->calculateEstimatedCosts(
             $recipe,
-            (float) $validated['quantity']
+            (float)$validated['quantity']
         );
 
-        // Рассчитываем общую стоимость
         $totalCost = $materialsCost['materials_cost'] +
             $productionCosts['labor'] +
             $productionCosts['overhead'] +
             $productionCosts['management'];
 
-        $quantity = (float) $validated['quantity'];
+        $quantity = (float)$validated['quantity'];
         $costPerUnit = $quantity > 0 ? $totalCost / $quantity : 0;
 
-        // Объединяем результаты
         return response()->json([
             'materials_cost' => $materialsCost['materials_cost'],
             'materials_details' => $materialsCost['components'],
@@ -280,7 +258,7 @@ class RecipeController extends Controller
             'total_cost' => $totalCost,
             'cost_per_unit' => $costPerUnit,
             'cost_details' => array_merge(
-                array_map(function($component) {
+                array_map(function ($component) {
                     return [
                         'type' => 'material',
                         'name' => $component['name'],
@@ -311,71 +289,9 @@ class RecipeController extends Controller
             'cost_rates.*.fixed_rate' => 'required|numeric|min:0'
         ]);
 
-        $recipe->costRates()->delete(); // Удаляем старые ставки
+        $recipe->costRates()->delete();
         $recipe->costRates()->createMany($validated['cost_rates']);
 
         return response()->json(['message' => 'Ставки затрат успешно обновлены']);
-    }
-
-
-
-    public function show(Recipe $recipe)
-    {
-        // Рассчитываем стоимость по всем стратегиям для сравнения
-        $costEstimations = collect($this->recipeService->getAvailableCostStrategies())
-            ->mapWithKeys(function ($label, $strategy) use ($recipe) {
-                return [
-                    $strategy => $this->recipeService->calculateEstimatedCost($recipe, $strategy)
-                ];
-            });
-
-        return Inertia::render('Dashboard/Recipes/Show', [
-            'recipe' => $recipe->load(['items.component', 'items.unit']),
-            'costEstimations' => $costEstimations,
-            'availableCostStrategies' => $this->recipeService->getAvailableCostStrategies()
-        ]);
-    }
-
-    public function destroy(Recipe $recipe)
-    {
-        try {
-            DB::beginTransaction();
-
-            // Проверяем, не используется ли рецепт в производстве
-            if ($recipe->productionBatches()->exists()) {
-                throw new \Exception('Невозможно удалить рецепт, который используется в производственных партиях');
-            }
-
-            // Проверяем, не является ли рецепт единственным для какого-либо продукта
-            $productsWithSingleRecipe = $recipe->products()
-                ->whereDoesntHave('recipes', function($query) use ($recipe) {
-                    $query->where('recipes.id', '!=', $recipe->id);
-                })
-                ->exists();
-
-            if ($productsWithSingleRecipe) {
-                throw new \Exception('Невозможно удалить единственный рецепт для продукта');
-            }
-
-            // Удаляем связи с продуктами
-            $recipe->products()->detach();
-
-            // Удаляем компоненты рецепта
-            $recipe->items()->delete();
-
-            // Удаляем сам рецепт
-            $recipe->delete();
-
-            DB::commit();
-
-            return redirect()->route('dashboard.recipes.index')
-                ->with('success', 'Рецепт успешно удален');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return redirect()->route('dashboard.recipes.index')
-                ->with('error', 'Не удалось удалить рецепт: ' . $e->getMessage());
-        }
     }
 }
