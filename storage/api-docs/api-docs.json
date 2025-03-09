@@ -1206,6 +1206,321 @@
                 }
             }
         },
+        "/api/options": {
+            "get": {
+                "tags": [
+                    "Options"
+                ],
+                "summary": "Получить список опций",
+                "operationId": "a6d4f7e7cc5323de3948a2b7682ea52b",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Поиск по названию опции",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "Фильтр по категории",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список опций",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "options": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Option"
+                                            }
+                                        },
+                                        "categories": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Category"
+                                            }
+                                        },
+                                        "filters": {
+                                            "properties": {
+                                                "search": {
+                                                    "type": "string"
+                                                },
+                                                "category": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Options"
+                ],
+                "summary": "Создать новую опцию",
+                "operationId": "b15963c055ff1f30760b5c4b7bc9d9cb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "category_id",
+                                    "values"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Название опции",
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "category_id": {
+                                        "description": "ID категории",
+                                        "type": "integer"
+                                    },
+                                    "is_required": {
+                                        "description": "Обязательность опции",
+                                        "type": "boolean"
+                                    },
+                                    "order": {
+                                        "description": "Порядковый номер",
+                                        "type": "integer",
+                                        "minimum": 0
+                                    },
+                                    "values": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "name",
+                                                "order"
+                                            ],
+                                            "properties": {
+                                                "name": {
+                                                    "description": "Название значения",
+                                                    "type": "string",
+                                                    "maxLength": 255
+                                                },
+                                                "value": {
+                                                    "description": "Значение",
+                                                    "type": "string",
+                                                    "maxLength": 255,
+                                                    "nullable": true
+                                                },
+                                                "color_code": {
+                                                    "description": "Цветовой код",
+                                                    "type": "string",
+                                                    "maxLength": 255,
+                                                    "nullable": true
+                                                },
+                                                "order": {
+                                                    "description": "Порядковый номер",
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                },
+                                                "image": {
+                                                    "description": "Изображение (максимальный размер 2MB)",
+                                                    "type": "string",
+                                                    "format": "binary",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "minItems": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Опция успешно создана",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Опция успешно создана"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ошибка валидации"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера при создании опции",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Произошла ошибка при создании опции"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/options/{option}": {
+            "put": {
+                "tags": [
+                    "Options"
+                ],
+                "summary": "Обновить опцию",
+                "operationId": "dc4de5e229d7c1af78a8da222173b323",
+                "parameters": [
+                    {
+                        "name": "option",
+                        "in": "path",
+                        "description": "ID опции для обновления",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Option"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Опция успешно обновлена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Опция успешно обновлена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при обновлении опции",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Произошла ошибка при обновлении опции"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Options"
+                ],
+                "summary": "Удалить опцию",
+                "operationId": "1aec1667eeab2959d89e4d0324b7416a",
+                "parameters": [
+                    {
+                        "name": "option",
+                        "in": "path",
+                        "description": "ID опции для удаления",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Опция успешно удалена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Опция успешно удалена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при удалении опции",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Произошла ошибка при удалении опции"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/products": {
             "get": {
                 "tags": [
@@ -2015,6 +2330,169 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/products/{product}/components": {
+            "post": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Add a component to a product",
+                "operationId": "be1d160d7cdbcc012496f365df39c140",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID of the product",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "material_id",
+                                    "quantity"
+                                ],
+                                "properties": {
+                                    "material_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "quantity": {
+                                        "type": "number",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Component added successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Component added successfully."
+                                        },
+                                        "component": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/products/{product}/components/{component}": {
+            "delete": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Remove a component from a product",
+                "operationId": "c39fef756941c25c2d01d2b2dac33407",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID of the product",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "component",
+                        "in": "path",
+                        "description": "ID of the component",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Component removed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Component removed successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Component not found"
+                    }
+                }
+            }
+        },
+        "/api/products/{product}/calculate-cost": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Calculate the cost of a product",
+                "operationId": "65daccdb048c578eb42ff56348419191",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID of the product",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calculated product cost",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The calculated cost is: 100"
+                                        },
+                                        "cost": {
+                                            "type": "number",
+                                            "example": 100
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Product not found"
+                    }
+                }
             }
         },
         "/api/products/{product}/variants": {
@@ -4473,6 +4951,61 @@
                 },
                 "type": "object"
             },
+            "Option": {
+                "description": "Модель опции",
+                "properties": {
+                    "id": {
+                        "description": "ID опции",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Название опции",
+                        "type": "string",
+                        "example": "Цвет"
+                    },
+                    "type": {
+                        "description": "Тип опции",
+                        "type": "string",
+                        "example": "select"
+                    },
+                    "category_id": {
+                        "description": "ID категории, к которой принадлежит опция",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_required": {
+                        "description": "Обязательная ли опция",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "order": {
+                        "description": "Порядок сортировки",
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "created_at": {
+                        "description": "Дата и время создания",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-10-01T12:00:00Z"
+                    },
+                    "updated_at": {
+                        "description": "Дата и время обновления",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-10-01T12:00:00Z"
+                    },
+                    "deleted_at": {
+                        "description": "Дата и время удаления (если опция удалена)",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-10-01T12:00:00Z",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "Product": {
                 "properties": {
                     "id": {
@@ -4885,6 +5418,10 @@
         {
             "name": "Clients",
             "description": "API для управления клиентами"
+        },
+        {
+            "name": "Options",
+            "description": "API для управления опциями"
         },
         {
             "name": "Categories",
