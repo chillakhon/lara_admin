@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
+use App\Http\Controllers\Api\Admin\OptionController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\ProductVariantController;
+use App\Http\Controllers\Api\Admin\ProductionBatchController;
+use App\Http\Controllers\Api\Admin\ProductionController;
 use App\Http\Controllers\Api\Admin\UnitController;
 use App\Http\Controllers\Api\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\Auth\ConfirmablePasswordController;
@@ -17,7 +20,7 @@ use App\Http\Controllers\Api\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\LeadTypeController;
-use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\PromoCodeController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\SearchController;
@@ -105,12 +108,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         });
 
         // Options
-//        Route::group(['prefix' => 'options', 'as' => 'options.'], function () {
-//            Route::get('/', [OptionController::class, 'index'])->name('index');
-//            Route::post('/', [OptionController::class, 'store'])->name('store');
-//            Route::put('/{option}', [OptionController::class, 'update'])->name('update');
-//            Route::delete('/{option}', [OptionController::class, 'destroy'])->name('destroy');
-//        });
+        Route::group(['prefix' => 'options', 'as' => 'options.'], function () {
+            Route::get('/', [OptionController::class, 'index'])->name('index');
+            Route::post('/', [OptionController::class, 'store'])->name('store');
+            Route::put('/{option}', [OptionController::class, 'update'])->name('update');
+            Route::delete('/{option}', [OptionController::class, 'destroy'])->name('destroy');
+        });
 
         // Materials
         Route::group(['prefix' => 'materials', 'as' => 'materials.'], function () {
@@ -252,36 +255,36 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //
 //
 //        // Производство
-//        Route::prefix('production')->name('production.')->group(function () {
-//            Route::get('/', [ProductionController::class, 'index'])->name('index');
-//            Route::get('/create/{recipe}', [ProductionController::class, 'create'])->name('create');
-//            Route::post('/batches', [ProductionBatchController::class, 'store'])->name('store');
-//            Route::get('/batches/{batch}', [ProductionController::class, 'show'])->name('show');
-//            Route::post('/batches/{batch}/start', [ProductionController::class, 'start'])->name('start');
-//            Route::post('/batches/{batch}/complete', [ProductionController::class, 'complete'])->name('complete');
-//            Route::post('/batches/{batch}/cancel', [ProductionController::class, 'cancel'])->name('cancel');
-//            Route::post('/batches/{batch}/add-costs', [ProductionController::class, 'addCosts'])->name('addCosts');
-//
-//            // Статистика и отчеты
-//            Route::get('/statistics', [ProductionController::class, 'statistics'])->name('statistics');
-//            Route::get('/pending', [ProductionController::class, 'pending'])->name('pending');
-//            Route::get('/history', [ProductionController::class, 'history'])->name('history');
-//        });
+        Route::prefix('production')->name('production.')->group(function () {
+            Route::get('/', [ProductionController::class, 'index'])->name('index');
+            Route::get('/create/{recipe}', [ProductionController::class, 'create'])->name('create');
+            Route::post('/batches', [ProductionBatchController::class, 'store'])->name('store');
+            Route::get('/batches/{batch}', [ProductionController::class, 'show'])->name('show');
+            Route::post('/batches/{batch}/start', [ProductionController::class, 'start'])->name('start');
+            Route::post('/batches/{batch}/complete', [ProductionController::class, 'complete'])->name('complete');
+            Route::post('/batches/{batch}/cancel', [ProductionController::class, 'cancel'])->name('cancel');
+            Route::post('/batches/{batch}/add-costs', [ProductionController::class, 'addCosts'])->name('addCosts');
+
+            // Статистика и отчеты
+            Route::get('/statistics', [ProductionController::class, 'statistics'])->name('statistics');
+            Route::get('/pending', [ProductionController::class, 'pending'])->name('pending');
+            Route::get('/history', [ProductionController::class, 'history'])->name('history');
+        });
 //
 //
 //        // Orders
-//        Route::prefix('orders')->name('orders.')->middleware(['role:super-admin,admin,manager', 'permission:orders.view,orders.manage'])->group(function () {
-//            Route::get('/', [OrderController::class, 'index'])->name('index');
-//            Route::post('/', [OrderController::class, 'store'])->name('store');
-//            Route::get('/{order}', [OrderController::class, 'show'])->name('show');
-//            Route::put('/{order}', [OrderController::class, 'update'])->name('update');
-//            Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
-//
-//            // Дополнительные действия с заказами
-//            Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
-//            Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');
-//            Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');
-//        });
+        Route::prefix('orders')->name('orders.')->middleware(['role:super-admin,admin,manager', 'permission:orders.view,orders.manage'])->group(function () {
+            Route::get('/', [OrderController::class, 'index'])->name('index');
+            Route::post('/', [OrderController::class, 'store'])->name('store');
+            Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+            Route::put('/{order}', [OrderController::class, 'update'])->name('update');
+            Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
+
+            // Дополнительные действия с заказами
+            Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
+            Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');
+            Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');
+        });
 //
 //
 //        // Маршруты, доступные только администраторам
