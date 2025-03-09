@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Admin\ClientController;
 use App\Http\Controllers\Api\Admin\ClientLevelController;
 use App\Http\Controllers\Api\Admin\CostCategoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
+use App\Http\Controllers\Api\Admin\OptionController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\ProductVariantController;
 use App\Http\Controllers\Api\Admin\RecipeController;
@@ -108,13 +109,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/', [UnitController::class, 'index']);
         });
 
-        // Options
-//        Route::group(['prefix' => 'options', 'as' => 'options.'], function () {
-//            Route::get('/', [OptionController::class, 'index'])->name('index');
-//            Route::post('/', [OptionController::class, 'store'])->name('store');
-//            Route::put('/{option}', [OptionController::class, 'update'])->name('update');
-//            Route::delete('/{option}', [OptionController::class, 'destroy'])->name('destroy');
-//        });
+//         Options
+        Route::group(['prefix' => 'options', 'as' => 'options.'], function () {
+            Route::get('/', [OptionController::class, 'index']);
+            Route::post('/', [OptionController::class, 'store']);
+            Route::put('/{option}', [OptionController::class, 'update']);
+            Route::delete('/{option}', [OptionController::class, 'destroy']);
+        });
 
         // Materials
         Route::group(['prefix' => 'materials', 'as' => 'materials.'], function () {
@@ -132,14 +133,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/', [ProductController::class, 'index']);
             Route::post('/', [ProductController::class, 'store']);
 
-            Route::get('/{product}', [ProductController::class, 'show'])->name('show');
-            Route::put('/{product}', [ProductController::class, 'update'])->name('update');
-            Route::delete('/{product}', [ProductController::class, 'destroy'])->name('destroy');
-//            Route::post('/{product}/components', [ProductController::class, 'addComponent'])->name('addComponent');
-//            Route::delete('/{product}/components/{component}', [ProductController::class, 'removeComponent'])->name('removeComponent');
-//            Route::get('/{product}/calculate-cost', [ProductController::class, 'calculateCost'])->name('calculateCost');
-//            Route::post('/{product}/options/attach', [ProductController::class, 'attachOptions'])
-//                ->name('options.attach');
+            Route::get('/{product}', [ProductController::class, 'show']);
+            Route::put('/{product}', [ProductController::class, 'update']);
+            Route::delete('/{product}', [ProductController::class, 'destroy']);
+            Route::post('/{product}/components', [ProductController::class, 'addComponent']);
+            Route::delete('/{product}/components/{component}', [ProductController::class, 'removeComponent']);
+            Route::get('/{product}/calculate-cost', [ProductController::class, 'calculateCost']);
+//            Route::post('/{product}/options/attach', [ProductController::class, 'attachOptions']);
 //            Route::post('/{product}/variants/bulk-update', [ProductVariantController::class, 'bulkUpdate'])
 //                ->name('variants.bulk-update');
 //            //Options
@@ -192,12 +192,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/', [RecipeController::class, 'index']);
             Route::post('/', [RecipeController::class, 'store']);
             Route::get('/{recipe}', [RecipeController::class, 'show']);
-            //Route::get('/{recipe}/edit', [RecipeController::class, 'edit']);
+            Route::put('/{recipe}', [RecipeController::class, 'update']);
+            Route::delete('/{recipe}', [RecipeController::class, 'destroy']);
 
-            Route::put('/{recipe}', [RecipeController::class, 'update'])
-                ->name('update');
-            Route::delete('/{recipe}', [RecipeController::class, 'destroy'])
-                ->name('destroy');
 //            Route::post('/estimate-cost', [RecipeController::class, 'estimateCost'])
 //                ->name('estimate-cost');
 //            Route::post('/{recipe}/cost-rates', [RecipeController::class, 'storeCostRates'])

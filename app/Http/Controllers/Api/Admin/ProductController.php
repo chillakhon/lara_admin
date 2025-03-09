@@ -388,8 +388,6 @@ class ProductController extends Controller
         return response()->json(['message' => 'Images uploaded successfully', 'images' => $uploadedImages]);
     }
 
-
-
     /**
      * @OA\Post(
      *     path="/api/products/{product}/generate-variants",
@@ -526,4 +524,132 @@ class ProductController extends Controller
             ], 500);
         }
     }
+
+
+    /**
+     * @OA\Post(
+     *     path="/api/products/{product}/components",
+     *     summary="Add a component to a product",
+     *     tags={"Products"},
+     *     @OA\Parameter(
+     *         name="product",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the product",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"material_id", "quantity"},
+     *             @OA\Property(property="material_id", type="integer", example=1),
+     *             @OA\Property(property="quantity", type="number", example=5)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Component added successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Component added successfully."),
+     *             @OA\Property(property="component", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
+    public function addComponent(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'material_id' => 'required|exists:materials,id',
+            'quantity' => 'required|numeric|min:0',
+        ]);
+
+        $component = $product->components()->create($validated);
+
+        return response()->json([
+            'message' => 'Component added successfully.',
+            'component' => $component
+        ], 201);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/products/{product}/components/{component}",
+     *     summary="Remove a component from a product",
+     *     tags={"Products"},
+     *     @OA\Parameter(
+     *         name="product",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the product",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="component",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the component",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Component removed successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Component removed successfully.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Component not found"
+     *     )
+     * )
+     */
+    public function removeComponent(Product $product, $componentId)
+    {
+        $product->components()->findOrFail($componentId)->delete();
+
+        return response()->json([
+            'message' => 'Component removed successfully.'
+        ], 200);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/products/{product}/calculate-cost",
+     *     summary="Calculate the cost of a product",
+     *     tags={"Products"},
+     *     @OA\Parameter(
+     *         name="product",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the product",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Calculated product cost",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The calculated cost is: 100"),
+     *             @OA\Property(property="cost", type="number", example=100)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Product not found"
+     *     )
+     * )
+     */
+    public function calculateCost(Product $product)
+    {
+        $cost = $this->materialService->calculateProductCost($product);
+
+        return response()->json([
+            'message' => "The calculated cost is: $cost",
+            'cost' => $cost
+        ], 200);
+    }
+
 }
