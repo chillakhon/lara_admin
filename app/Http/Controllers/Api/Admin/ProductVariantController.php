@@ -387,6 +387,58 @@ class ProductVariantController extends Controller
     /**
      * Удаление изображения варианта продукта.
      */
+    /**
+     * @OA\Delete(
+     *     path="/api/products/{product}/variants/{variant}/images/{image}",
+     *     summary="Удаление изображения варианта продукта",
+     *     description="Удаляет изображение, прикрепленное к варианту продукта. Если изображение больше не используется в других продуктах, оно удаляется из базы данных.",
+     *     operationId="destroyImage",
+     *     tags={"Product Variants"},
+     *     @OA\Parameter(
+     *         name="product",
+     *         in="path",
+     *         required=true,
+     *         description="ID продукта",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="variant",
+     *         in="path",
+     *         required=true,
+     *         description="ID варианта продукта",
+     *         @OA\Schema(type="integer", example=5)
+     *     ),
+     *     @OA\Parameter(
+     *         name="image",
+     *         in="path",
+     *         required=true,
+     *         description="ID изображения",
+     *         @OA\Schema(type="integer", example=10)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Изображение успешно удалено",
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(property="message", type="string", example="Image deleted successfully")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Ошибка удаления изображения",
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(property="message", type="string", example="Failed to delete image"),
+     *                 @OA\Property(property="error", type="string", example="Database error message")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+
     public function destroyImage(Product $product, ProductVariant $variant, Image $image)
     {
         try {
@@ -415,6 +467,77 @@ class ProductVariantController extends Controller
 
     /**
      * Добавление изображений к варианту продукта.
+     */
+    /**
+     * @OA\Post(
+     *     path="/api/products/{product}/variants/{variant}/images",
+     *     summary="Add images to a product variant",
+     *     tags={"Product Variants"},
+     *     @OA\Parameter(
+     *         name="product",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the product",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="variant",
+     *         in="path",
+     *         required=true,
+     *         description="ID of the product variant",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"images"},
+     *                 @OA\Property(
+     *                     property="images",
+     *                     type="array",
+     *                     @OA\Items(type="string", format="binary")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Images added successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Images added successfully"),
+     *             @OA\Property(
+     *                 property="images",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Image")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="images",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The images field is required.")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Internal server error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Failed to add images"),
+     *             @OA\Property(property="error", type="string", example="Error message details")
+     *         )
+     *     )
+     * )
      */
     public function addImages(Request $request, Product $product, ProductVariant $variant)
     {

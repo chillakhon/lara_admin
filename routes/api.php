@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Admin\CostCategoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\OptionController;
 use App\Http\Controllers\Api\Admin\ProductController;
+use App\Http\Controllers\Api\Admin\ProductImageController;
 use App\Http\Controllers\Api\Admin\ProductVariantController;
 use App\Http\Controllers\Api\Admin\RecipeController;
 use App\Http\Controllers\Api\Admin\UnitController;
@@ -156,19 +157,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/{product}/variants/generate', [ProductController::class, 'generateVariants']);
 //
 //            //images
-//            Route::post('/{product}/images', [ProductImageController::class, 'store'])->name('images.store');
-//            Route::delete('/{product}/images/{image}/{variant}', [ProductImageController::class, 'destroy'])->name('images.destroy');
-//            Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain'])->name('images.setMain');
-//
-//            Route::post(
-//                '/{product}/variants/{variant}/images',
-//                [ProductVariantController::class, 'addImages']
-//            )->name('variants.images.store');
-//
-//            Route::delete(
-//                '/{product}/variants/{variant}/images/{image}',
-//                [ProductVariantController::class, 'destroyImage']
-//            )->name('variants.images.destroy');
+            Route::post('/{product}/images', [ProductImageController::class, 'store']);
+            Route::delete('/{product}/images/{image}/{variant}', [ProductImageController::class, 'destroy']);
+            Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
+
+            Route::post('/{product}/variants/{variant}/images', [ProductVariantController::class, 'addImages']);
+            Route::delete('/{product}/variants/{variant}/images/{image}', [ProductVariantController::class, 'destroyImage']);
         });
 //
 //        // Product Variants

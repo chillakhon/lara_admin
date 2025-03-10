@@ -17,17 +17,44 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *     @OA\Property(property="name", type="string"),
  *     @OA\Property(property="slug", type="string"),
  *     @OA\Property(property="description", type="string", nullable=true),
- *     @OA\Property(property="type", type="string", enum={"simple", "manufactured", "composite"}),
+ *     @OA\Property(
+ *         property="type",
+ *         type="string",
+ *         enum={"simple", "manufactured", "composite"}
+ *     ),
  *     @OA\Property(property="default_unit_id", type="integer", nullable=true),
  *     @OA\Property(property="is_active", type="boolean"),
  *     @OA\Property(property="has_variants", type="boolean"),
  *     @OA\Property(property="allow_preorder", type="boolean"),
  *     @OA\Property(property="after_purchase_processing_time", type="integer"),
+ *
+ *     @OA\Property(property="price", type="number", format="float", nullable=true),
+ *     @OA\Property(property="cost_price", type="number", format="float", nullable=true),
+ *     @OA\Property(property="stock_quantity", type="integer", example=0),
+ *     @OA\Property(property="min_order_quantity", type="integer", example=1),
+ *     @OA\Property(property="max_order_quantity", type="integer", nullable=true),
+ *     @OA\Property(property="is_featured", type="boolean", default=false),
+ *     @OA\Property(property="is_new", type="boolean", default=false),
+ *     @OA\Property(property="discount_price", type="number", format="float", nullable=true),
+ *     @OA\Property(property="sku", type="string", nullable=true),
+ *     @OA\Property(property="currency", type="string", nullable=true),
+ *     @OA\Property(property="barcode", type="string", nullable=true),
+ *     @OA\Property(property="weight", type="number", format="float", nullable=true),
+ *     @OA\Property(property="length", type="number", format="float", nullable=true),
+ *     @OA\Property(property="width", type="number", format="float", nullable=true),
+ *     @OA\Property(property="height", type="number", format="float", nullable=true),
+ *
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time"),
- *     @OA\Property(property="categories", type="array", @OA\Items(ref="#/components/schemas/Category"))
+ *
+ *     @OA\Property(
+ *         property="categories",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/Category")
+ *     )
  * )
  */
+
 class Product extends Model
 {
     use HasFactory, SoftDeletes;
@@ -39,12 +66,36 @@ class Product extends Model
         'type',
         'default_unit_id',
         'is_active',
-        'has_variants'
+        'has_variants',
+        'price',
+        'cost_price',
+        'stock_quantity',
+        'min_order_quantity',
+        'max_order_quantity',
+        'is_featured',
+        'is_new',
+        'discount_price',
+        'sku',
+        'barcode',
+        'weight',
+        'length',
+        'width',
+        'height',
+        'currency'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'has_variants' => 'boolean',
+        'is_featured' => 'boolean',
+        'is_new' => 'boolean',
+        'price' => 'decimal:2',
+        'cost_price' => 'decimal:2',
+        'discount_price' => 'decimal:2',
+        'weight' => 'decimal:3',
+        'length' => 'decimal:2',
+        'width' => 'decimal:2',
+        'height' => 'decimal:2'
     ];
 
 
