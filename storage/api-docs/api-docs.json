@@ -1635,9 +1635,8 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "Создать новый продукт",
-                "description": "Создает новый продукт и привязывает его к категориям.",
-                "operationId": "createProduct",
+                "summary": "Create a new product",
+                "operationId": "433d1eb377353a163ba249878346670e",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -1646,12 +1645,13 @@
                                 "required": [
                                     "name",
                                     "type",
+                                    "price",
                                     "categories"
                                 ],
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "example": "New Product"
+                                        "example": "Product Name"
                                     },
                                     "description": {
                                         "type": "string",
@@ -1682,17 +1682,95 @@
                                     },
                                     "allow_preorder": {
                                         "type": "boolean",
-                                        "example": false
+                                        "example": true
                                     },
                                     "after_purchase_processing_time": {
                                         "type": "integer",
-                                        "example": 2
+                                        "example": 3
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 99.99
+                                    },
+                                    "cost_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 50,
+                                        "nullable": true
+                                    },
+                                    "stock_quantity": {
+                                        "type": "integer",
+                                        "example": 100
+                                    },
+                                    "min_order_quantity": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "max_order_quantity": {
+                                        "type": "integer",
+                                        "example": 10,
+                                        "nullable": true
+                                    },
+                                    "is_featured": {
+                                        "type": "boolean",
+                                        "example": false,
+                                        "nullable": true
+                                    },
+                                    "is_new": {
+                                        "type": "boolean",
+                                        "example": true,
+                                        "nullable": true
+                                    },
+                                    "discount_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 89.99,
+                                        "nullable": true
+                                    },
+                                    "sku": {
+                                        "type": "string",
+                                        "example": "SKU12345",
+                                        "nullable": true
+                                    },
+                                    "barcode": {
+                                        "type": "string",
+                                        "example": "123456789012",
+                                        "nullable": true
+                                    },
+                                    "weight": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1.5,
+                                        "nullable": true
+                                    },
+                                    "length": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10,
+                                        "nullable": true
+                                    },
+                                    "width": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 5,
+                                        "nullable": true
+                                    },
+                                    "height": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 2,
+                                        "nullable": true
                                     },
                                     "categories": {
                                         "type": "array",
                                         "items": {
                                             "type": "integer",
-                                            "example": 1
+                                            "example": [
+                                                1,
+                                                2
+                                            ]
                                         }
                                     }
                                 },
@@ -1703,36 +1781,33 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Продукт создан успешно",
+                        "description": "Product created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Product"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Product created successfully"
+                                            "example": "The given data was invalid."
                                         },
-                                        "product": {
+                                        "errors": {
                                             "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
                                                 "name": {
-                                                    "type": "string",
-                                                    "example": "New Product"
-                                                },
-                                                "slug": {
-                                                    "type": "string",
-                                                    "example": "new-product"
-                                                },
-                                                "created_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
-                                                },
-                                                "updated_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The name field is required."
+                                                    }
                                                 }
                                             },
                                             "type": "object"
@@ -1742,9 +1817,6 @@
                                 }
                             }
                         }
-                    },
-                    "422": {
-                        "description": "Ошибка валидации"
                     }
                 }
             }
@@ -2495,6 +2567,214 @@
                 }
             }
         },
+        "/api/products/{product}/images": {
+            "post": {
+                "tags": [
+                    "Product Images"
+                ],
+                "summary": "Загружает изображения для продукта и привязывает их к вариантам",
+                "operationId": "8a62add867e58bc352648e87e2baaa45",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID продукта",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "images",
+                                    "variants"
+                                ],
+                                "properties": {
+                                    "images[]": {
+                                        "description": "Массив изображений",
+                                        "type": "array",
+                                        "items": {
+                                            "description": "Файл изображения",
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    },
+                                    "variants": {
+                                        "description": "Массив ID вариантов продукта, к которым будет привязано изображение",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Изображения успешно загружены",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Images uploaded successfully."
+                                        },
+                                        "images": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Image"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/{product}/images/{image}/{variant}": {
+            "delete": {
+                "tags": [
+                    "Product Images"
+                ],
+                "summary": "Удаляет изображение для указанного варианта продукта",
+                "operationId": "7ea387b7b071da2a77f1bf7e3da693a2",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID продукта",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "image",
+                        "in": "path",
+                        "description": "ID изображения",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "variant",
+                        "in": "path",
+                        "description": "ID варианта продукта, к которому привязано изображение",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Изображение успешно удалено",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Image deleted successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/{product}/images/{image}/{variant}/main": {
+            "patch": {
+                "tags": [
+                    "Product Images"
+                ],
+                "summary": "Устанавливает изображение как главное для указанного варианта продукта",
+                "operationId": "0c51ce8be5a05dbe77a7fc489cf145b6",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID продукта",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "image",
+                        "in": "path",
+                        "description": "ID изображения",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "variant",
+                        "in": "path",
+                        "description": "ID варианта продукта (из URL)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "variant_id"
+                                ],
+                                "properties": {
+                                    "variant_id": {
+                                        "description": "ID варианта продукта для установки главного изображения",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Главное изображение успешно установлено",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Main image set successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/products/{product}/variants": {
             "post": {
                 "tags": [
@@ -2908,6 +3188,209 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/products/{product}/variants/{variant}/images/{image}": {
+            "delete": {
+                "tags": [
+                    "Product Variants"
+                ],
+                "summary": "Удаление изображения варианта продукта",
+                "description": "Удаляет изображение, прикрепленное к варианту продукта. Если изображение больше не используется в других продуктах, оно удаляется из базы данных.",
+                "operationId": "destroyImage",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID продукта",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "variant",
+                        "in": "path",
+                        "description": "ID варианта продукта",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    },
+                    {
+                        "name": "image",
+                        "in": "path",
+                        "description": "ID изображения",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Изображение успешно удалено",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Image deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка удаления изображения",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to delete image"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Database error message"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/products/{product}/variants/{variant}/images": {
+            "post": {
+                "tags": [
+                    "Product Variants"
+                ],
+                "summary": "Add images to a product variant",
+                "operationId": "11efbb87fa539af6e66b18661b62c241",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID of the product",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "variant",
+                        "in": "path",
+                        "description": "ID of the product variant",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "images"
+                                ],
+                                "properties": {
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Images added successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Images added successfully"
+                                        },
+                                        "images": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Image"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "images": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The images field is required."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to add images"
+                                        },
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Error message details"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         },
         "/production": {
@@ -4926,6 +5409,42 @@
                 },
                 "type": "object"
             },
+            "Image": {
+                "title": "Image",
+                "required": [
+                    "path",
+                    "url",
+                    "is_main",
+                    "order"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "path": {
+                        "description": "Относительный путь к изображению на сервере",
+                        "type": "string",
+                        "example": "product_images/1/abc123.jpg"
+                    },
+                    "url": {
+                        "description": "Полный URL для доступа к изображению",
+                        "type": "string",
+                        "example": "https://example.com/storage/product_images/1/abc123.jpg"
+                    },
+                    "is_main": {
+                        "description": "Флаг, указывающий, является ли изображение основным",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "order": {
+                        "description": "Порядок сортировки изображения",
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
             "Material": {
                 "properties": {
                     "id": {
@@ -5044,6 +5563,73 @@
                     },
                     "after_purchase_processing_time": {
                         "type": "integer"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "cost_price": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "stock_quantity": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "min_order_quantity": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "max_order_quantity": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "is_featured": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "is_new": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "discount_price": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "sku": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "currency": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "barcode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "weight": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "length": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "width": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "height": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
                     },
                     "created_at": {
                         "type": "string",
@@ -5446,6 +6032,10 @@
         {
             "name": "Product Variants",
             "description": "Product Variants"
+        },
+        {
+            "name": "Product Images",
+            "description": "Product Images"
         },
         {
             "name": "Production",
