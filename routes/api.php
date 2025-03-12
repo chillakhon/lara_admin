@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\ClientController;
 use App\Http\Controllers\Api\Admin\ClientLevelController;
 use App\Http\Controllers\Api\Admin\CostCategoryController;
+use App\Http\Controllers\Api\Admin\InventoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\OptionController;
 use App\Http\Controllers\Api\Admin\ProductController;
@@ -226,19 +227,22 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         });
 //
 //        // Инвентарь
-//        Route::prefix('inventory')->name('inventory.')->group(function () {
-//            Route::get('/', [InventoryController::class, 'index'])->name('index');
-//            Route::post('/add', [InventoryController::class, 'addStock'])->name('add');
-//            Route::post('/remove', [InventoryController::class, 'removeStock'])->name('remove');
-//            Route::get('/transactions', [InventoryController::class, 'transactions'])->name('transactions');
-//
-//            Route::get('/component-usage', [InventoryController::class, 'componentUsage'])
-//                ->name('component-usage');
-//            Route::post('/reserve-components', [InventoryController::class, 'reserveComponents'])
-//                ->name('reserve-components');
-//            Route::post('/release-reservation/{reservation}', [InventoryController::class, 'releaseReservation'])
-//                ->name('release-reservation');
-//        });
+        Route::prefix('inventory')->name('inventory.')->group(function () {
+            Route::get('/', [InventoryController::class, 'index'])->name('index');
+            Route::post('/add', [InventoryController::class, 'addStock'])->name('add');
+            Route::post('/remove', [InventoryController::class, 'removeStock'])->name('remove');
+            Route::get('/transactions', [InventoryController::class, 'transactions'])->name('transactions');
+            Route::get('/stock', [InventoryController::class, 'getStock'])->name('stock');
+            Route::get('/transactions/history', [InventoryController::class, 'getTransactionHistory'])->name('transactions.history');
+
+
+            Route::get('/component-usage', [InventoryController::class, 'componentUsage'])
+                ->name('component-usage');
+            Route::post('/reserve-components', [InventoryController::class, 'reserveComponents'])
+                ->name('reserve-components');
+            Route::post('/release-reservation/{reservation}', [InventoryController::class, 'releaseReservation'])
+                ->name('release-reservation');
+        });
 //
 //
 //        // Производство
@@ -352,10 +356,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
-        Route::put('/leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
-        Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
-        Route::post('/leads/create-client', [LeadController::class, 'createClient'])->name('leads.create-client');
+//        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
+//        Route::put('/leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
+//        Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
+//        Route::post('/leads/create-client', [LeadController::class, 'createClient'])->name('leads.create-client');
 
 //
 //        // Задачи
