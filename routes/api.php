@@ -91,9 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
         ->middleware('throttle:6,1');
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
-
     Route::put('password', [PasswordController::class, 'update']);
-
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy']);
 });
 
@@ -252,17 +250,17 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::prefix('production')->name('production.')->group(function () {
             Route::get('/', [ProductionController::class, 'index'])->name('index');
             Route::get('/create/{recipe}', [ProductionController::class, 'create'])->name('create');
-            Route::post('/batches', [ProductionBatchController::class, 'store'])->name('store');
-            Route::get('/batches/{batch}', [ProductionController::class, 'show'])->name('show');
+//            Route::post('/batches', [ProductionBatchController::class, 'store'])->name('store');
+//            Route::get('/batches/{batch}', [ProductionController::class, 'show'])->name('show');
             Route::post('/batches/{batch}/start', [ProductionController::class, 'start'])->name('start');
             Route::post('/batches/{batch}/complete', [ProductionController::class, 'complete'])->name('complete');
             Route::post('/batches/{batch}/cancel', [ProductionController::class, 'cancel'])->name('cancel');
-            Route::post('/batches/{batch}/add-costs', [ProductionController::class, 'addCosts'])->name('addCosts');
+//            Route::post('/batches/{batch}/add-costs', [ProductionController::class, 'addCosts'])->name('addCosts');
 
             // Статистика и отчеты
-            Route::get('/statistics', [ProductionController::class, 'statistics'])->name('statistics');
-            Route::get('/pending', [ProductionController::class, 'pending'])->name('pending');
-            Route::get('/history', [ProductionController::class, 'history'])->name('history');
+//            Route::get('/statistics', [ProductionController::class, 'statistics'])->name('statistics');
+//            Route::get('/pending', [ProductionController::class, 'pending'])->name('pending');
+//            Route::get('/history', [ProductionController::class, 'history'])->name('history');
         });
 //
 //
