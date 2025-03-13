@@ -15,7 +15,7 @@ class ClientLevelController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/client-levels",
+     *     path="/api/client-levels",
      *     operationId="getClientLevels",
      *     tags={"ClientLevels"},
      *     summary="Get all client levels",
@@ -42,7 +42,7 @@ class ClientLevelController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/client-levels",
+     *     path="/api/client-levels",
      *     operationId="createClientLevel",
      *     tags={"ClientLevels"},
      *     summary="Create a new client level",
@@ -84,7 +84,7 @@ class ClientLevelController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/client-levels/{clientLevel}",
+     *     path="/api/client-levels/{clientLevel}",
      *     operationId="updateClientLevel",
      *     tags={"ClientLevels"},
      *     summary="Update a client level",
@@ -133,7 +133,7 @@ class ClientLevelController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/client-levels/{clientLevel}",
+     *     path="/api/client-levels/{clientLevel}",
      *     operationId="deleteClientLevel",
      *     tags={"ClientLevels"},
      *     summary="Delete a client level",

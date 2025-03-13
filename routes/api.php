@@ -26,7 +26,7 @@ use App\Http\Controllers\Api\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\LeadTypeController;
-use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\PromoCodeController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\SearchController;
@@ -204,13 +204,16 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //         Cost Categories
         Route::get('/cost-categories', [CostCategoryController::class, 'index']);
 //
-        Route::group(['prefix' => 'clients', 'as' => 'clients.'], function () {
+        Route::group(['prefix' => 'clients', 'as' => 'clients.', 'middleware' => 'auth:api'], function () {
             Route::get('/', [ClientController::class, 'index'])->name('index');
             Route::get('/{client}', [ClientController::class, 'show'])->name('show');
-            Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');            Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
+            Route::post('/', [ClientController::class, 'store'])->name('store');
+            Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
             Route::put('/{client}', [ClientController::class, 'update'])->name('update');
             Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
         });
+
+
 //
 //        Route::group(['prefix' => 'orders', 'as' => 'orders.'], function () {
 //            Route::get('/', [OrderController::class, 'index'])->name('index');
@@ -265,11 +268,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //
 //        // Orders
         Route::prefix('orders')->name('orders.')->middleware(['role:super-admin,admin,manager', 'permission:orders.view,orders.manage'])->group(function () {
-            Route::get('/', [OrderController::class, 'index'])->name('index');
-            Route::post('/', [OrderController::class, 'store'])->name('store');
-            Route::get('/{order}', [OrderController::class, 'show'])->name('show');
-            Route::put('/{order}', [OrderController::class, 'update'])->name('update');
-            Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
+            Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+            Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+            Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+            Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+            Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
 
             // Дополнительные действия с заказами
             Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');

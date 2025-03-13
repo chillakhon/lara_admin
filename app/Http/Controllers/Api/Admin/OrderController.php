@@ -1,74 +1,70 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Client;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Inertia\Inertia;
 
 class OrderController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/orders",
-     *     operationId="getOrders",
+     *     path="/api/orders",
+     *     summary="Получение списка заказов",
      *     tags={"Orders"},
-     *     summary="Get list of orders",
-     *     description="Retrieve a paginated list of orders with filtering and searching options.",
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
-     *         description="Filter orders by status (e.g., 'pending', 'completed'). Use 'all' to fetch all orders.",
      *         required=false,
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Search orders by order number or client name.",
      *         required=false,
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Successful response",
+     *         description="Список заказов",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="orders", type="array", @OA\Items(
      *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="order_number", type="string", example="ORD123456"),
-     *                 @OA\Property(property="status", type="string", example="pending"),
-     *                 @OA\Property(property="payment_status", type="string", example="paid"),
-     *                 @OA\Property(property="total_amount", type="number", format="float", example=99.99),
-     *                 @OA\Property(property="discount_amount", type="number", format="float", example=5.00),
-     *                 @OA\Property(property="items_count", type="integer", example=3),
-     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2025-03-10T12:34:56Z"),
-     *                 @OA\Property(property="client", type="object", nullable=true,
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="full_name", type="string", example="John Doe"),
-     *                     @OA\Property(property="email", type="string", example="john@example.com"),
-     *                     @OA\Property(property="phone", type="string", example="+1234567890")
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="order_number", type="string"),
+     *                 @OA\Property(property="status", type="string"),
+     *                 @OA\Property(property="payment_status", type="string"),
+     *                 @OA\Property(property="total_amount", type="number"),
+     *                 @OA\Property(property="discount_amount", type="number"),
+     *                 @OA\Property(property="items_count", type="integer"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="client", type="object",
+     *                     @OA\Property(property="id", type="integer"),
+     *                     @OA\Property(property="full_name", type="string"),
+     *                     @OA\Property(property="email", type="string"),
+     *                     @OA\Property(property="phone", type="string")
      *                 ),
      *                 @OA\Property(property="items", type="array", @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="id", type="integer"),
      *                     @OA\Property(property="product", type="object",
-     *                         @OA\Property(property="id", type="integer", example=10),
-     *                         @OA\Property(property="name", type="string", example="Product Name"),
-     *                         @OA\Property(property="image", type="string", example="https://example.com/image.jpg")
+     *                         @OA\Property(property="id", type="integer"),
+     *                         @OA\Property(property="name", type="string"),
+     *                         @OA\Property(property="image", type="string")
      *                     ),
-     *                     @OA\Property(property="variant", type="object", nullable=true),
-     *                     @OA\Property(property="quantity", type="integer", example=2),
-     *                     @OA\Property(property="price", type="number", format="float", example=49.99)
+     *                     @OA\Property(property="variant", type="object"),
+     *                     @OA\Property(property="quantity", type="integer"),
+     *                     @OA\Property(property="price", type="number")
      *                 ))
      *             ))
      *         )
-     *     )
+     *     ),
+     *     @OA\Response(response=400, description="Ошибка запроса")
      * )
      */
     public function index(Request $request)
@@ -85,9 +81,9 @@ class OrderController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
+            $query->where(function($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
-                    ->orWhereHas('client.user.profile', function ($q) use ($search) {
+                    ->orWhereHas('client.user.profile', function($q) use ($search) {
                         $q->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%");
                     });
@@ -96,7 +92,7 @@ class OrderController extends Controller
 
         $orders = $query->latest()
             ->paginate(15)
-            ->through(function ($order) {
+            ->through(function($order) {
                 return [
                     'id' => $order->id,
                     'order_number' => $order->order_number,
@@ -112,7 +108,7 @@ class OrderController extends Controller
                         'email' => $order->client->user->email,
                         'phone' => $order->client->phone,
                     ] : null,
-                    'items' => $order->items->map(function ($item) {
+                    'items' => $order->items->map(function($item) {
                         return [
                             'id' => $item->id,
                             'product' => [
@@ -130,63 +126,67 @@ class OrderController extends Controller
 
         return response()->json([
             'orders' => $orders,
-        ], Response::HTTP_OK);
+            'filters' => $request->only(['status', 'search']),
+            'clients' => Client::with('user.profile')
+                ->get()
+                ->map(function($client) {
+                    return [
+                        'id' => $client->id,
+                        'full_name' => $client->user->profile->full_name,
+                        'email' => $client->user->email,
+                        'phone' => $client->phone,
+                    ];
+                }),
+            'products' => Product::with(['variants'])
+                ->where('is_active', true)
+                ->get(),
+            'statuses' => Order::STATUSES,
+            'paymentStatuses' => Order::PAYMENT_STATUSES,
+        ]);
     }
-
 
     /**
      * @OA\Post(
-     *     path="/orders",
-     *     operationId="createOrder",
+     *     path="/api/orders",
+     *     summary="Создание нового заказа",
      *     tags={"Orders"},
-     *     summary="Create a new order",
-     *     description="Create a new order with associated items and return the created order.",
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             type="object",
      *             required={"client_id", "items", "status", "payment_status"},
-     *             @OA\Property(property="client_id", type="integer", example=1, description="ID of the client"),
-     *             @OA\Property(property="items", type="array", description="List of order items",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     required={"product_id", "quantity", "price"},
-     *                     @OA\Property(property="product_id", type="integer", example=10, description="Product ID"),
-     *                     @OA\Property(property="variant_id", type="integer", nullable=true, example=5, description="Variant ID (optional)"),
-     *                     @OA\Property(property="quantity", type="number", format="float", example=2, description="Quantity of product"),
-     *                     @OA\Property(property="price", type="number", format="float", example=49.99, description="Price per unit")
-     *                 )
-     *             ),
-     *             @OA\Property(property="notes", type="string", nullable=true, example="Urgent delivery", description="Additional order notes"),
-     *             @OA\Property(property="status", type="string", enum={"new", "processing", "completed", "cancelled"}, example="new", description="Order status"),
-     *             @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "failed", "refunded"}, example="pending", description="Payment status")
+     *             @OA\Property(property="client_id", type="integer", example=1),
+     *             @OA\Property(property="items", type="array", @OA\Items(
+     *                 type="object",
+     *                 required={"product_id", "quantity", "price"},
+     *                 @OA\Property(property="product_id", type="integer", example=10),
+     *                 @OA\Property(property="variant_id", type="integer", nullable=true, example=null),
+     *                 @OA\Property(property="quantity", type="number", example=2),
+     *                 @OA\Property(property="price", type="number", example=1999.99)
+     *             )),
+     *             @OA\Property(property="notes", type="string", nullable=true, example="Доставить до 18:00"),
+     *             @OA\Property(property="status", type="string", enum={"new", "processing", "completed", "cancelled"}, example="new"),
+     *             @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "failed", "refunded"}, example="pending")
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Order created successfully",
+     *         description="Заказ успешно создан",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="message", type="string", example="Order successfully created"),
+     *             @OA\Property(property="message", type="string", example="Заказ успешно создан"),
      *             @OA\Property(property="order", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="order_number", type="string", example="ORD-20250310-1234"),
-     *                 @OA\Property(property="total_amount", type="number", format="float", example=99.98),
-     *                 @OA\Property(property="status", type="string", example="new"),
-     *                 @OA\Property(property="payment_status", type="string", example="pending"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2025-03-10T12:34:56Z"),
-     *                 @OA\Property(property="items", type="array", @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="product_id", type="integer", example=10),
-     *                     @OA\Property(property="variant_id", type="integer", nullable=true, example=5),
-     *                     @OA\Property(property="quantity", type="number", format="float", example=2),
-     *                     @OA\Property(property="price", type="number", format="float", example=49.99)
-     *                 ))
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="order_number", type="string"),
+     *                 @OA\Property(property="status", type="string"),
+     *                 @OA\Property(property="payment_status", type="string"),
+     *                 @OA\Property(property="total_amount", type="number"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time")
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=422, description="Validation error")
+     *     @OA\Response(response=400, description="Ошибка валидации"),
+     *     @OA\Response(response=500, description="Ошибка сервера")
      * )
      */
     public function store(Request $request)
@@ -203,257 +203,266 @@ class OrderController extends Controller
             'payment_status' => 'required|in:pending,paid,failed,refunded',
         ]);
 
-        $order = Order::create([
-            'client_id' => $validated['client_id'],
-            'order_number' => 'ORD-' . date('Ymd') . '-' . random_int(1000, 9999),
-            'total_amount' => 0,
-            'status' => $validated['status'],
-            'payment_status' => $validated['payment_status'],
-            'notes' => $validated['notes'] ?? null,
-        ]);
+        try {
+            $order = Order::create([
+                'client_id' => $validated['client_id'],
+                'order_number' => 'ORD-' . date('Ymd') . '-' . random_int(1000, 9999),
+                'total_amount' => 0,
+                'status' => $validated['status'],
+                'payment_status' => $validated['payment_status'],
+                'notes' => $validated['notes'] ?? null,
+            ]);
 
-        foreach ($validated['items'] as $item) {
-            $order->items()->create($item);
+            foreach ($validated['items'] as $item) {
+                $order->items()->create($item);
+            }
+
+            $order->updateTotalAmount();
+
+            // Добавляем запись в историю
+            $order->history()->create([
+                'status' => $order->status,
+                'payment_status' => $order->payment_status,
+                'comment' => 'Заказ создан',
+                'user_id' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'message' => 'Заказ успешно создан',
+                'order' => [
+                    'id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'status' => $order->status,
+                    'payment_status' => $order->payment_status,
+                    'total_amount' => $order->total_amount,
+                    'created_at' => $order->created_at,
+                ]
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Ошибка сервера: ' . $e->getMessage()], 500);
         }
-
-        $order->updateTotalAmount();
-
-        $order->history()->create([
-            'status' => $order->status,
-            'payment_status' => $order->payment_status,
-            'comment' => 'Заказ создан',
-            'user_id' => auth()->id(),
-        ]);
-
-        return response()->json([
-            'message' => 'Заказ успешно создан',
-            'order' => $order->load('items'),
-        ], Response::HTTP_CREATED);
     }
 
     /**
      * @OA\Get(
-     *     path="/orders/{order}",
-     *     operationId="getOrder",
+     *     path="/api/orders/{order}",
+     *     summary="Получение информации о заказе",
      *     tags={"Orders"},
-     *     summary="Get order details",
-     *     description="Retrieve detailed information about a specific order.",
      *     @OA\Parameter(
      *         name="order",
      *         in="path",
      *         required=true,
-     *         description="ID of the order",
-     *         @OA\Schema(type="integer")
+     *         description="ID заказа",
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Successful response",
+     *         description="Детали заказа",
      *         @OA\JsonContent(
      *             type="object",
      *             @OA\Property(property="id", type="integer", example=1),
-     *             @OA\Property(property="order_number", type="string", example="ORD-20250310-1234"),
+     *             @OA\Property(property="order_number", type="string", example="ORD-20250313-1234"),
      *             @OA\Property(property="status", type="string", example="new"),
      *             @OA\Property(property="payment_status", type="string", example="pending"),
-     *             @OA\Property(property="total_amount", type="number", format="float", example=99.98),
-     *             @OA\Property(property="discount_amount", type="number", format="float", example=10.00),
-     *             @OA\Property(property="created_at", type="string", format="date-time", example="2025-03-10T12:34:56Z"),
-     *             @OA\Property(property="notes", type="string", nullable=true, example="Urgent delivery"),
+     *             @OA\Property(property="total_amount", type="number", example=5999.99),
+     *             @OA\Property(property="discount_amount", type="number", example=1000),
+     *             @OA\Property(property="created_at", type="string", format="date-time", example="2025-03-13T12:34:56Z"),
+     *             @OA\Property(property="notes", type="string", example="Доставить до 18:00"),
      *             @OA\Property(property="client", type="object", nullable=true,
-     *                 @OA\Property(property="id", type="integer", example=5),
-     *                 @OA\Property(property="full_name", type="string", example="John Doe"),
-     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
-     *                 @OA\Property(property="phone", type="string", example="+123456789")
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="full_name", type="string", example="Иван Иванов"),
+     *                 @OA\Property(property="email", type="string", example="ivan@example.com"),
+     *                 @OA\Property(property="phone", type="string", example="+79161234567")
      *             ),
      *             @OA\Property(property="items", type="array", @OA\Items(
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=10),
      *                 @OA\Property(property="product", type="object",
-     *                     @OA\Property(property="id", type="integer", example=3),
-     *                     @OA\Property(property="name", type="string", example="Medical Gloves"),
+     *                     @OA\Property(property="id", type="integer", example=5),
+     *                     @OA\Property(property="name", type="string", example="Медицинская форма"),
      *                     @OA\Property(property="image", type="string", example="https://example.com/image.jpg")
      *                 ),
-     *                 @OA\Property(property="variant", type="object",
-     *                     @OA\Property(property="id", type="integer", example=15),
-     *                     @OA\Property(property="name", type="string", example="Size M")
-     *                 ),
-     *                 @OA\Property(property="quantity", type="number", format="float", example=2),
-     *                 @OA\Property(property="price", type="number", format="float", example=49.99)
+     *                 @OA\Property(property="variant", type="object", nullable=true),
+     *                 @OA\Property(property="quantity", type="integer", example=2),
+     *                 @OA\Property(property="price", type="number", example=2999.99)
      *             )),
      *             @OA\Property(property="history", type="array", @OA\Items(
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="status", type="string", example="processing"),
-     *                 @OA\Property(property="payment_status", type="string", example="paid"),
-     *                 @OA\Property(property="comment", type="string", example="Updated by admin"),
-     *                 @OA\Property(property="user", type="object",
-     *                     @OA\Property(property="name", type="string", example="Admin User")
+     *                 @OA\Property(property="status", type="string", example="new"),
+     *                 @OA\Property(property="payment_status", type="string", example="pending"),
+     *                 @OA\Property(property="comment", type="string", example="Заказ создан"),
+     *                 @OA\Property(property="user", type="object", nullable=true,
+     *                     @OA\Property(property="name", type="string", example="Менеджер Иван")
      *                 ),
-     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2025-03-10T12:34:56Z")
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2025-03-13T12:34:56Z")
      *             ))
      *         )
      *     ),
-     *     @OA\Response(response=404, description="Order not found")
+     *     @OA\Response(response=404, description="Заказ не найден"),
+     *     @OA\Response(response=500, description="Ошибка сервера")
      * )
      */
     public function show(Order $order)
     {
-        $order->load([
-            'client.user.profile',
-            'items.product',
-            'items.productVariant',
-            'history.user'
-        ]);
+        try {
+            $order->load([
+                'client.user.profile',
+                'items.product',
+                'items.productVariant',
+                'history.user'
+            ]);
 
-        return response()->json([
-            'id' => $order->id,
-            'order_number' => $order->order_number,
-            'status' => $order->status,
-            'payment_status' => $order->payment_status,
-            'total_amount' => $order->total_amount,
-            'discount_amount' => $order->discount_amount,
-            'created_at' => $order->created_at,
-            'notes' => $order->notes,
-            'client' => $order->client ? [
-                'id' => $order->client->id,
-                'full_name' => $order->client->user->profile->full_name,
-                'email' => $order->client->user->email,
-                'phone' => $order->client->phone,
-            ] : null,
-            'items' => $order->items->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'product' => [
-                        'id' => $item->product->id,
-                        'name' => $item->product->name,
-                        'image' => $item->product->getFirstMediaUrl('images'),
-                    ],
-                    'variant' => $item->productVariant ? [
-                        'id' => $item->productVariant->id,
-                        'name' => $item->productVariant->name,
-                    ] : null,
-                    'quantity' => $item->quantity,
-                    'price' => $item->price,
-                ];
-            }),
-            'history' => $order->history->map(function ($record) {
-                return [
-                    'id' => $record->id,
-                    'status' => $record->status,
-                    'payment_status' => $record->payment_status,
-                    'comment' => $record->comment,
-                    'user' => $record->user ? [
-                        'name' => $record->user->profile->full_name,
-                    ] : null,
-                    'created_at' => $record->created_at,
-                ];
-            }),
-        ], Response::HTTP_OK);
+            return response()->json([
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'status' => $order->status,
+                'payment_status' => $order->payment_status,
+                'total_amount' => $order->total_amount,
+                'discount_amount' => $order->discount_amount,
+                'created_at' => $order->created_at,
+                'notes' => $order->notes,
+                'client' => $order->client ? [
+                    'id' => $order->client->id,
+                    'full_name' => $order->client->user->profile->full_name,
+                    'email' => $order->client->user->email,
+                    'phone' => $order->client->phone,
+                ] : null,
+                'items' => $order->items->map(function($item) {
+                    return [
+                        'id' => $item->id,
+                        'product' => [
+                            'id' => $item->product->id,
+                            'name' => $item->product->name,
+                            'image' => $item->product->getFirstMediaUrl('images'),
+                        ],
+                        'variant' => $item->productVariant,
+                        'quantity' => $item->quantity,
+                        'price' => $item->price,
+                    ];
+                }),
+                'history' => $order->history->map(function($record) {
+                    return [
+                        'id' => $record->id,
+                        'status' => $record->status,
+                        'payment_status' => $record->payment_status,
+                        'comment' => $record->comment,
+                        'user' => $record->user ? [
+                            'name' => $record->user->profile->full_name,
+                        ] : null,
+                        'created_at' => $record->created_at,
+                    ];
+                }),
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Ошибка сервера: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
      * @OA\Put(
-     *     path="/orders/{order}",
-     *     operationId="updateOrder",
+     *     path="/api/orders/{order}",
+     *     summary="Обновление заказа",
      *     tags={"Orders"},
-     *     summary="Update an order",
-     *     description="Update the status and payment status of an order.",
      *     @OA\Parameter(
      *         name="order",
      *         in="path",
      *         required=true,
-     *         description="ID of the order",
-     *         @OA\Schema(type="integer")
+     *         description="ID заказа",
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             required={"status", "payment_status"},
-     *             @OA\Property(property="status", type="string", example="processing", enum={"new", "processing", "completed", "cancelled"}),
-     *             @OA\Property(property="payment_status", type="string", example="paid", enum={"pending", "paid", "failed", "refunded"}),
-     *             @OA\Property(property="notes", type="string", nullable=true, example="Customer requested urgent delivery")
+     *             @OA\Property(property="status", type="string", enum={"new", "processing", "completed", "cancelled"}, example="processing"),
+     *             @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "failed", "refunded"}, example="paid"),
+     *             @OA\Property(property="notes", type="string", nullable=true, example="Обновлен менеджером")
      *         )
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Order updated successfully",
+     *         description="Заказ успешно обновлен",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="message", type="string", example="Order updated successfully"),
+     *             @OA\Property(property="message", type="string", example="Заказ успешно обновлен"),
      *             @OA\Property(property="order", type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="status", type="string", example="processing"),
      *                 @OA\Property(property="payment_status", type="string", example="paid"),
-     *                 @OA\Property(property="notes", type="string", nullable=true, example="Customer requested urgent delivery"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2025-03-10T12:45:00Z")
+     *                 @OA\Property(property="notes", type="string", example="Обновлен менеджером")
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=400, description="Validation error"),
-     *     @OA\Response(response=404, description="Order not found")
+     *     @OA\Response(response=422, description="Ошибка валидации"),
+     *     @OA\Response(response=500, description="Ошибка сервера")
      * )
      */
     public function update(Request $request, Order $order)
     {
-        $validated = $request->validate([
-            'status' => 'required|string|in:new,processing,completed,cancelled',
-            'payment_status' => 'required|string|in:pending,paid,failed,refunded',
-            'notes' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'status' => 'required|string|in:new,processing,completed,cancelled',
+                'payment_status' => 'required|string|in:pending,paid,failed,refunded',
+                'notes' => 'nullable|string',
+            ]);
 
-        $order->update($validated);
+            $order->update($validated);
 
-        // Добавляем запись в историю
-        $order->history()->create([
-            'status' => $validated['status'],
-            'payment_status' => $validated['payment_status'],
-            'comment' => 'Заказ обновлен',
-            'user_id' => auth()->id(),
-        ]);
+            // Добавляем запись в историю
+            $order->history()->create([
+                'status' => $validated['status'],
+                'payment_status' => $validated['payment_status'],
+                'comment' => 'Заказ обновлен',
+                'user_id' => auth()->id(),
+            ]);
 
-        return response()->json([
-            'message' => 'Order updated successfully',
-            'order' => [
-                'id' => $order->id,
-                'status' => $order->status,
-                'payment_status' => $order->payment_status,
-                'notes' => $order->notes,
-                'updated_at' => $order->updated_at,
-            ],
-        ], Response::HTTP_OK);
+            return response()->json([
+                'message' => 'Заказ успешно обновлен',
+                'order' => [
+                    'id' => $order->id,
+                    'status' => $order->status,
+                    'payment_status' => $order->payment_status,
+                    'notes' => $order->notes,
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Ошибка сервера: ' . $e->getMessage()], 500);
+        }
     }
-
     /**
      * @OA\Delete(
-     *     path="/orders/{order}",
-     *     operationId="deleteOrder",
+     *     path="/api/orders/{order}",
+     *     summary="Удаление заказа",
      *     tags={"Orders"},
-     *     summary="Delete an order",
-     *     description="Deletes a specific order by its ID.",
      *     @OA\Parameter(
      *         name="order",
      *         in="path",
      *         required=true,
-     *         description="ID of the order",
-     *         @OA\Schema(type="integer")
+     *         description="ID заказа",
+     *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Order deleted successfully",
+     *         description="Заказ успешно удален",
      *         @OA\JsonContent(
      *             type="object",
-     *             @OA\Property(property="message", type="string", example="Order deleted successfully")
+     *             @OA\Property(property="message", type="string", example="Заказ успешно удален")
      *         )
      *     ),
-     *     @OA\Response(response=404, description="Order not found")
+     *     @OA\Response(response=404, description="Заказ не найден"),
+     *     @OA\Response(response=500, description="Ошибка сервера")
      * )
      */
+
     public function destroy(Order $order)
     {
-        $order->delete();
-
-        return response()->json([
-            'message' => 'Order deleted successfully'
-        ], Response::HTTP_OK);
+        try {
+            $order->delete();
+            return response()->json(['message' => 'Заказ успешно удален'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Ошибка сервера: ' . $e->getMessage()], 500);
+        }
     }
 
 }
