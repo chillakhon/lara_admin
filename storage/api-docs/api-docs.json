@@ -309,7 +309,7 @@
                 }
             }
         },
-        "/clients": {
+        "/api/clients": {
             "get": {
                 "tags": [
                     "Clients"
@@ -385,7 +385,7 @@
                     "Clients"
                 ],
                 "summary": "Create a new client",
-                "operationId": "storeClient",
+                "operationId": "createClient",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -451,7 +451,7 @@
                 }
             }
         },
-        "/clients/{client}": {
+        "/api/clients/{client}": {
             "get": {
                 "tags": [
                     "Clients"
@@ -589,7 +589,7 @@
                 }
             }
         },
-        "/client-levels": {
+        "/api/client-levels": {
             "get": {
                 "tags": [
                     "ClientLevels"
@@ -680,7 +680,7 @@
                 }
             }
         },
-        "/client-levels/{clientLevel}": {
+        "/api/client-levels/{clientLevel}": {
             "put": {
                 "tags": [
                     "ClientLevels"
@@ -819,6 +819,557 @@
                     },
                     "500": {
                         "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/api/inventory": {
+            "get": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Получение списка материалов, продуктов и их остатков",
+                "description": "Возвращает список материалов, продуктов, единиц измерения и их инвентарных остатков.",
+                "operationId": "7c227c4262e24f13a13e9c85eac11923",
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "materials": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "title": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "products": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "has_variants": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "variants": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "product_id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "sku": {
+                                                                    "type": "string"
+                                                                },
+                                                                "unit_id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "inventoryBalance": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer"
+                                                                        },
+                                                                        "item_id": {
+                                                                            "type": "integer"
+                                                                        },
+                                                                        "item_type": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "total_quantity": {
+                                                                            "type": "number",
+                                                                            "format": "float"
+                                                                        },
+                                                                        "average_price": {
+                                                                            "type": "number",
+                                                                            "format": "float"
+                                                                        },
+                                                                        "unit": {
+                                                                            "properties": {
+                                                                                "id": {
+                                                                                    "type": "integer"
+                                                                                },
+                                                                                "name": {
+                                                                                    "type": "string"
+                                                                                }
+                                                                            },
+                                                                            "type": "object"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "units": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "materialsInventory": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "item": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "unit": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "productsInventory": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "item": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "has_variants": {
+                                                                        "type": "boolean"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "unit": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/inventory/add": {
+            "post": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Добавить товар на склад",
+                "description": "Добавляет материалы, продукты или их варианты на склад с указанием цены, количества и даты получения.",
+                "operationId": "4070383f1b94aea5a791f3919810353e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "item_type",
+                                    "item_id",
+                                    "quantity",
+                                    "price_per_unit",
+                                    "unit_id",
+                                    "received_date"
+                                ],
+                                "properties": {
+                                    "item_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "material",
+                                            "product",
+                                            "variant"
+                                        ]
+                                    },
+                                    "item_id": {
+                                        "type": "integer"
+                                    },
+                                    "quantity": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "price_per_unit": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "unit_id": {
+                                        "type": "integer"
+                                    },
+                                    "received_date": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Запас успешно добавлен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Запас успешно добавлен"
+                                        },
+                                        "batch": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                }
+            }
+        },
+        "/api/inventory/remove": {
+            "post": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Списать товар со склада",
+                "description": "Списывает материалы, продукты или их варианты со склада.",
+                "operationId": "f21c0c40ee3e3ae4416acf4713abf751",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "item_type",
+                                    "item_id",
+                                    "quantity"
+                                ],
+                                "properties": {
+                                    "item_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "material",
+                                            "product",
+                                            "variant"
+                                        ]
+                                    },
+                                    "item_id": {
+                                        "type": "integer"
+                                    },
+                                    "quantity": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "minimum": 0
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Запас успешно списан",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Запас успешно списан"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                }
+            }
+        },
+        "/api/inventory/stock": {
+            "get": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Получить остаток товара",
+                "operationId": "5e1f83fb5110890bc366c529676c9b18",
+                "parameters": [
+                    {
+                        "name": "item_type",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "material",
+                                "product",
+                                "variant"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "item_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Остаток найден"
+                    },
+                    "404": {
+                        "description": "Ошибка: не найдено"
+                    }
+                }
+            }
+        },
+        "/api/inventory/transactions/history": {
+            "get": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Получить историю транзакций",
+                "operationId": "8864f9d2c9cdecbf081e156cbb794d88",
+                "parameters": [
+                    {
+                        "name": "item_type",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "material",
+                                "product",
+                                "variant"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "item_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "История транзакций"
+                    },
+                    "400": {
+                        "description": "Ошибка запроса"
+                    }
+                }
+            }
+        },
+        "/api/inventory/transactions": {
+            "get": {
+                "tags": [
+                    "Inventory"
+                ],
+                "summary": "Получить список транзакций",
+                "description": "Возвращает список всех складских транзакций с пагинацией.",
+                "operationId": "3f5f8bc5298fbb8aa8dd8641d7cd33bd",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Номер страницы",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список транзакций",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "transactions": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "item": {
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "unit": {
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "user": {
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "quantity": {
+                                                        "type": "number"
+                                                    },
+                                                    "price_per_unit": {
+                                                        "type": "number"
+                                                    },
+                                                    "type": {
+                                                        "type": "string"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "pagination": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
                     }
                 }
             }
@@ -1517,6 +2068,590 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/api/orders": {
+            "get": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Получение списка заказов",
+                "operationId": "a52cc0f0c9f4a6f60bc5667eba749ea5",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список заказов",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "orders": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "order_number": {
+                                                        "type": "string"
+                                                    },
+                                                    "status": {
+                                                        "type": "string"
+                                                    },
+                                                    "payment_status": {
+                                                        "type": "string"
+                                                    },
+                                                    "total_amount": {
+                                                        "type": "number"
+                                                    },
+                                                    "discount_amount": {
+                                                        "type": "number"
+                                                    },
+                                                    "items_count": {
+                                                        "type": "integer"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "client": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "full_name": {
+                                                                "type": "string"
+                                                            },
+                                                            "email": {
+                                                                "type": "string"
+                                                            },
+                                                            "phone": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "items": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "product": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer"
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "image": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                },
+                                                                "variant": {
+                                                                    "type": "object"
+                                                                },
+                                                                "quantity": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "price": {
+                                                                    "type": "number"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка запроса"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Создание нового заказа",
+                "operationId": "771840800db48e3ea68609d646b7bb31",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "client_id",
+                                    "items",
+                                    "status",
+                                    "payment_status"
+                                ],
+                                "properties": {
+                                    "client_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "product_id",
+                                                "quantity",
+                                                "price"
+                                            ],
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "variant_id": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "quantity": {
+                                                    "type": "number",
+                                                    "example": 2
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "example": 1999.99
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Доставить до 18:00",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "new",
+                                            "processing",
+                                            "completed",
+                                            "cancelled"
+                                        ],
+                                        "example": "new"
+                                    },
+                                    "payment_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "paid",
+                                            "failed",
+                                            "refunded"
+                                        ],
+                                        "example": "pending"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Заказ успешно создан",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Заказ успешно создан"
+                                        },
+                                        "order": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "order_number": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "payment_status": {
+                                                    "type": "string"
+                                                },
+                                                "total_amount": {
+                                                    "type": "number"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка валидации"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                }
+            }
+        },
+        "/api/orders/{order}": {
+            "get": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Получение информации о заказе",
+                "operationId": "7fb3499b608bffe74f9c24c08890acfe",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "description": "ID заказа",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Детали заказа",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "order_number": {
+                                            "type": "string",
+                                            "example": "ORD-20250313-1234"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "new"
+                                        },
+                                        "payment_status": {
+                                            "type": "string",
+                                            "example": "pending"
+                                        },
+                                        "total_amount": {
+                                            "type": "number",
+                                            "example": 5999.99
+                                        },
+                                        "discount_amount": {
+                                            "type": "number",
+                                            "example": 1000
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-03-13T12:34:56Z"
+                                        },
+                                        "notes": {
+                                            "type": "string",
+                                            "example": "Доставить до 18:00"
+                                        },
+                                        "client": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "full_name": {
+                                                    "type": "string",
+                                                    "example": "Иван Иванов"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "ivan@example.com"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "+79161234567"
+                                                }
+                                            },
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "items": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 10
+                                                    },
+                                                    "product": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 5
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Медицинская форма"
+                                                            },
+                                                            "image": {
+                                                                "type": "string",
+                                                                "example": "https://example.com/image.jpg"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "variant": {
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "quantity": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "example": 2999.99
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "history": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "example": "new"
+                                                    },
+                                                    "payment_status": {
+                                                        "type": "string",
+                                                        "example": "pending"
+                                                    },
+                                                    "comment": {
+                                                        "type": "string",
+                                                        "example": "Заказ создан"
+                                                    },
+                                                    "user": {
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Менеджер Иван"
+                                                            }
+                                                        },
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-03-13T12:34:56Z"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Заказ не найден"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Обновление заказа",
+                "operationId": "c9f5aa7bf8602cafd588f97f4bd755ce",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "description": "ID заказа",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status",
+                                    "payment_status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "new",
+                                            "processing",
+                                            "completed",
+                                            "cancelled"
+                                        ],
+                                        "example": "processing"
+                                    },
+                                    "payment_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "paid",
+                                            "failed",
+                                            "refunded"
+                                        ],
+                                        "example": "paid"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Обновлен менеджером",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Заказ успешно обновлен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Заказ успешно обновлен"
+                                        },
+                                        "order": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "processing"
+                                                },
+                                                "payment_status": {
+                                                    "type": "string",
+                                                    "example": "paid"
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "example": "Обновлен менеджером"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Удаление заказа",
+                "operationId": "89aa54257a5a0b714d86b76123735a64",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "description": "ID заказа",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Заказ успешно удален",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Заказ успешно удален"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Заказ не найден"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
                     }
                 }
             }
@@ -3393,16 +4528,279 @@
                 }
             }
         },
-        "/production": {
+        "/api/admin/production/batches": {
+            "get": {
+                "summary": "Получить список производственных партий",
+                "description": "Возвращает список производственных партий, ожидающих обработки.",
+                "operationId": "2963eee01d4f799ae1cf08cc1d14a08c",
+                "responses": {
+                    "200": {
+                        "description": "Список производственных партий",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/ProductionBatch"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                }
+            }
+        },
+        "/api/admin/production/batches/{batch}/start": {
+            "post": {
+                "summary": "Начать производство для партии",
+                "description": "Запускает производство для указанной производственной партии.",
+                "operationId": "48a065e8b6991090922b2a31ff8c3f9e",
+                "parameters": [
+                    {
+                        "name": "batch",
+                        "in": "path",
+                        "description": "ID производственной партии",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Производство успешно начато",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Производство начато"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка начала производства",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "description": "Ошибка",
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Производственная партия не найдена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "description": "Партия не найдена",
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/production/batches/{batch}/cancel": {
+            "post": {
+                "summary": "Отменить производство для партии",
+                "description": "Отменяет производство для указанной производственной партии.",
+                "operationId": "b537bcacf9e06b2c419fa89f61f6ed01",
+                "parameters": [
+                    {
+                        "name": "batch",
+                        "in": "path",
+                        "description": "ID производственной партии",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "description": "Причина отмены",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Производство успешно отменено",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Производственная партия отменена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка отмены производства",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "description": "Ошибка",
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Производственная партия не найдена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "description": "Партия не найдена",
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/production/estimate": {
+            "post": {
+                "tags": [
+                    "Production"
+                ],
+                "summary": "Оценить доступность компонентов и время производства",
+                "description": "Данный метод позволяет оценить доступность компонентов для производства и время его выполнения.",
+                "operationId": "56330cdb2d4639dcc3afe977e6be1789",
+                "requestBody": {
+                    "description": "Данные для оценки",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "recipe_id",
+                                    "quantity"
+                                ],
+                                "properties": {
+                                    "recipe_id": {
+                                        "description": "ID рецепта",
+                                        "type": "integer"
+                                    },
+                                    "quantity": {
+                                        "description": "Количество продукции",
+                                        "type": "number",
+                                        "format": "float"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Успешный ответ с оценкой доступности компонентов и времени",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "availability": {
+                                            "description": "Информация о доступности компонентов",
+                                            "type": "object"
+                                        },
+                                        "timing": {
+                                            "description": "Оценка времени производства",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации данных",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "description": "Описание ошибки",
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/production": {
             "get": {
                 "tags": [
                     "Production"
                 ],
-                "summary": "Get all production batches",
-                "operationId": "getProductionBatches",
+                "summary": "Получить список партий производства",
+                "operationId": "f2c2e24337778a9c5e16e1c3757629aa",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Номер страницы для пагинации",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "List of production batches",
+                        "description": "Список партий производства",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3410,7 +4808,49 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/ProductionBatch"
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "recipe": {
+                                                        "properties": {
+                                                            "productVariant": {
+                                                                "properties": {
+                                                                    "product": {
+                                                                        "type": "string",
+                                                                        "example": "Product Name"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "outputUnit": {
+                                                                "type": "string",
+                                                                "example": "kg"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "createdBy": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "John Doe"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-03-11T12:00:00Z"
+                                                    }
+                                                },
+                                                "type": "object"
                                             }
                                         }
                                     },
@@ -3422,13 +4862,99 @@
                 }
             }
         },
-        "/production/batches": {
+        "/api/production/create/{recipe}": {
+            "get": {
+                "tags": [
+                    "Production"
+                ],
+                "summary": "Получение данных для создания производственной партии",
+                "operationId": "ee44fb9b7708cd9d0c848a7949ea3389",
+                "parameters": [
+                    {
+                        "name": "recipe",
+                        "in": "path",
+                        "description": "ID рецепта",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Данные о рецепте для производства",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "recipe": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "productVariant": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Товар X"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 5
+                                                            },
+                                                            "component": {
+                                                                "type": "string",
+                                                                "example": "Сырье A"
+                                                            },
+                                                            "inventoryBalance": {
+                                                                "type": "integer",
+                                                                "example": 100
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "currentStock": {
+                                            "type": "integer",
+                                            "example": 50
+                                        },
+                                        "estimatedCost": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 1500.5
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/batches": {
             "post": {
                 "tags": [
                     "Production"
                 ],
                 "summary": "Создать новую производственную партию",
-                "operationId": "createProductionBatch",
+                "operationId": "2e6d8327af9bcd14d8432f538ec7e7fa",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -3440,14 +4966,17 @@
                                 "properties": {
                                     "quantity": {
                                         "type": "number",
-                                        "format": "float"
+                                        "format": "float",
+                                        "example": 10.5
                                     },
                                     "planned_start_date": {
                                         "type": "string",
-                                        "format": "date"
+                                        "format": "date",
+                                        "example": "2025-04-01"
                                     },
                                     "notes": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "Дополнительные заметки"
                                     }
                                 },
                                 "type": "object"
@@ -3457,29 +4986,75 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Производственная партия создана",
+                        "description": "Производственная партия успешно создана",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ProductionBatch"
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "quantity": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 10.5
+                                                },
+                                                "planned_start_date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-04-01"
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "example": "Дополнительные заметки"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-03-11T12:00:00Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Производственная партия создана"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
                     },
                     "400": {
-                        "description": "Неверный ввод"
+                        "description": "Ошибка валидации или другая ошибка",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Ошибка создания партии"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
         },
-        "/production/batches/{batch}/start": {
+        "/api/batches/{batch}/start": {
             "post": {
                 "tags": [
                     "Production"
                 ],
                 "summary": "Запуск производственной партии",
-                "description": "Метод для запуска производственной партии по ID.",
-                "operationId": "startProductionBatch",
+                "operationId": "048aabc756def636dcd2de2567f207e2",
                 "parameters": [
                     {
                         "name": "batch",
@@ -3487,7 +5062,8 @@
                         "description": "ID производственной партии",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
@@ -3509,14 +5085,198 @@
                         }
                     },
                     "400": {
-                        "description": "Ошибка запуска производственной партии",
+                        "description": "Ошибка запуска",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "error": {
                                             "type": "string",
-                                            "example": "Ошибка: Невозможно запустить партию"
+                                            "example": "Произошла ошибка при запуске"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/production/batches/{batch}/complete": {
+            "post": {
+                "tags": [
+                    "Production"
+                ],
+                "summary": "Завершение производственной партии",
+                "operationId": "695b691311509bfd7d677db7e21eefc5",
+                "parameters": [
+                    {
+                        "name": "batch",
+                        "in": "path",
+                        "description": "ID производственной партии",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "actual_quantity": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 100.5
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Партия завершена успешно",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Партия завершена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Производственная партия успешно завершена"
+                                        },
+                                        "batch": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "completed"
+                                                },
+                                                "actual_quantity": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 100.5
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка завершения",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Недостаточно сырья"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/production/batches/{batch}/cancel": {
+            "post": {
+                "tags": [
+                    "Production"
+                ],
+                "summary": "Отмена производственной партии",
+                "operationId": "95534fc3c762242d899b137122dc954e",
+                "parameters": [
+                    {
+                        "name": "batch",
+                        "in": "path",
+                        "description": "ID производственной партии",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "maxLength": 1000,
+                                        "example": "Нет необходимых компонентов"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Партия отменена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Производственная партия отменена"
+                                        },
+                                        "batch": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "cancelled"
+                                                },
+                                                "reason": {
+                                                    "type": "string",
+                                                    "example": "Нет необходимых компонентов"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка отмены",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Партия уже завершена и не может быть отменена"
                                         }
                                     },
                                     "type": "object"
@@ -6022,8 +7782,16 @@
             "description": "Cost Categories"
         },
         {
+            "name": "Inventory",
+            "description": "Inventory"
+        },
+        {
             "name": "Materials",
             "description": "Materials"
+        },
+        {
+            "name": "Orders",
+            "description": "Orders"
         },
         {
             "name": "Products",

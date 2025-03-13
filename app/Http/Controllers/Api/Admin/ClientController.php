@@ -19,7 +19,7 @@ class ClientController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/clients",
+     *     path="/api/clients",
      *     operationId="getClients",
      *     tags={"Clients"},
      *     summary="Get all clients",
@@ -70,8 +70,8 @@ class ClientController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/clients",
-     *     operationId="storeClient",
+     *     path="/api/clients",
+     *     operationId="createClient",
      *     tags={"Clients"},
      *     summary="Create a new client",
      *     @OA\RequestBody(
@@ -123,7 +123,7 @@ class ClientController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/clients/{client}",
+     *    path="/api/clients/{client}",
      *     operationId="showClient",
      *     tags={"Clients"},
      *     summary="Get a specific client by ID",
@@ -155,7 +155,7 @@ class ClientController extends Controller
 
     /**
      * @OA\Put(
-     *     path="/clients/{client}",
+     *     path="/api/clients/{client}",
      *     operationId="updateClient",
      *     tags={"Clients"},
      *     summary="Update a specific client",
@@ -208,7 +208,7 @@ class ClientController extends Controller
 
     /**
      * @OA\Delete(
-     *     path="/clients/{client}",
+     *     path="/api/clients/{client}",
      *     operationId="deleteClient",
      *     tags={"Clients"},
      *     summary="Delete a specific client",
