@@ -63,9 +63,9 @@ class OrderController extends Controller
      *                     @OA\Property(property="quantity", type="integer"),
      *                     @OA\Property(property="price", type="number")
      *                 )),
-     *                 @OA\Property(property="delivery_date", type="string", format="date-time"), // Дата доставки
+     *                 @OA\Property(property="delivery_date", type="string", format="date-time"),
      *                 @OA\Property(property="delivery_method", type="object",
-     *                     @OA\Property(property="name", type="string"), // Метод доставки
+     *                     @OA\Property(property="name", type="string"),
      *                     @OA\Property(property="description", type="string")
      *                 )
      *             ))
@@ -182,11 +182,11 @@ class OrderController extends Controller
      *             @OA\Property(property="notes", type="string", nullable=true, example="Доставить до 18:00"),
      *             @OA\Property(property="status", type="string", enum={"new", "processing", "completed", "cancelled"}, example="new"),
      *             @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "failed", "refunded"}, example="pending"),
-     *             @OA\Property(property="delivery_date", type="string", format="date-time", nullable=true, example="2025-03-18T15:00:00Z"),  // Дата доставки
+     *             @OA\Property(property="delivery_date", type="string", format="date-time", nullable=true, example="2025-03-18T15:00:00Z"),
      *             @OA\Property(property="delivery_method", type="object", nullable=true,
      *                 @OA\Property(property="name", type="string", example="Курьерская доставка"),
      *                 @OA\Property(property="description", type="string", example="Доставка курьером до двери")
-     *             )  // Метод доставки
+     *             )
      *         )
      *     ),
      *     @OA\Response(
@@ -303,11 +303,11 @@ class OrderController extends Controller
      *             @OA\Property(property="discount_amount", type="number", example=1000),
      *             @OA\Property(property="created_at", type="string", format="date-time", example="2025-03-13T12:34:56Z"),
      *             @OA\Property(property="notes", type="string", example="Доставить до 18:00"),
-     *             @OA\Property(property="delivery_date", type="string", format="date-time", example="2025-03-18T15:00:00Z"), // Дата доставки
+     *             @OA\Property(property="delivery_date", type="string", format="date-time", example="2025-03-18T15:00:00Z"),
      *             @OA\Property(property="delivery_method", type="object",
      *                 @OA\Property(property="name", type="string", example="Курьерская доставка"),
      *                 @OA\Property(property="description", type="string", example="Доставка курьером до двери")
-     *             ), // Метод доставки
+     *             ),
      *             @OA\Property(property="client", type="object", nullable=true,
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="full_name", type="string", example="Иван Иванов"),

@@ -2183,6 +2183,21 @@
                                                             },
                                                             "type": "object"
                                                         }
+                                                    },
+                                                    "delivery_date": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "delivery_method": {
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "description": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "type": "object"
                                                     }
                                                 },
                                                 "type": "object"
@@ -2275,6 +2290,26 @@
                                             "refunded"
                                         ],
                                         "example": "pending"
+                                    },
+                                    "delivery_date": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-03-18T15:00:00Z",
+                                        "nullable": true
+                                    },
+                                    "delivery_method": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Курьерская доставка"
+                                            },
+                                            "description": {
+                                                "type": "string",
+                                                "example": "Доставка курьером до двери"
+                                            }
+                                        },
+                                        "type": "object",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -2313,6 +2348,23 @@
                                                 "created_at": {
                                                     "type": "string",
                                                     "format": "date-time"
+                                                },
+                                                "delivery_date": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "delivery_method": {
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "description": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
                                                 }
                                             },
                                             "type": "object"
@@ -2390,6 +2442,24 @@
                                         "notes": {
                                             "type": "string",
                                             "example": "Доставить до 18:00"
+                                        },
+                                        "delivery_date": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-03-18T15:00:00Z"
+                                        },
+                                        "delivery_method": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Курьерская доставка"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "example": "Доставка курьером до двери"
+                                                }
+                                            },
+                                            "type": "object"
                                         },
                                         "client": {
                                             "properties": {
@@ -2559,6 +2629,20 @@
                                         "type": "string",
                                         "example": "Обновлен менеджером",
                                         "nullable": true
+                                    },
+                                    "delivery_date": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-03-15T12:00:00Z",
+                                        "nullable": true
+                                    },
+                                    "delivery_method": {
+                                        "type": "object",
+                                        "example": {
+                                            "method": "courier",
+                                            "details": "Доставить до двери"
+                                        },
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -2594,6 +2678,18 @@
                                                 "notes": {
                                                     "type": "string",
                                                     "example": "Обновлен менеджером"
+                                                },
+                                                "delivery_date": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-03-15T12:00:00Z"
+                                                },
+                                                "delivery_method": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "method": "courier",
+                                                        "details": "Доставить до двери"
+                                                    }
                                                 }
                                             },
                                             "type": "object"
