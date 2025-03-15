@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('production_batches', function (Blueprint $table) {
             $table->id();
             $table->string('batch_number')->unique();
-            $table->foreignId('recipe_id')->constrained();
-            $table->foreignId('product_variant_id')->constrained();
+            $table->foreignId('recipe_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_variant_id')->constrained()->onDelete('cascade');
             $table->decimal('planned_quantity', 10, 3);
             $table->decimal('actual_quantity', 10, 3)->nullable();
             $table->enum('status', [
@@ -33,13 +33,14 @@ return new class extends Migration
             $table->timestamp('planned_end_date')->nullable();
             $table->timestamp('started_at')->nullable();
             $table->timestamp('completed_at')->nullable();
-            $table->foreignId('created_by')->constrained('users');
-            $table->foreignId('completed_by')->nullable()->constrained('users');
+            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('completed_by')->nullable()->constrained('users')->onDelete('set null');
             $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
     }
+
 
     /**
      * Reverse the migrations.
