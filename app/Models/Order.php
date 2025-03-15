@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+
 
 class Order extends Model
 {
@@ -57,15 +59,27 @@ class Order extends Model
         'utm_term',
         'ip_address',
         'user_agent',
-        'notes'
+        'notes',
+        'delivery_method_id',
+        'delivery_date',
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'paid_at' => 'datetime',
+        'delivery_date' => 'datetime',
     ];
 
+    public function deliveryMethod(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryMethod::class);
+    }
+
+    public function deliveryDate(): HasOne
+    {
+        return $this->hasOne(DeliveryDate::class);
+    }
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
@@ -90,6 +104,8 @@ class Order extends Model
     {
         return $this->hasMany(OrderPayment::class);
     }
+
+
 
     public function promoCode()
     {

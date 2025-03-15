@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Client;
 use App\Models\Product;
+use App\Models\DeliveryDate;
+use App\Models\DeliveryMethod;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -60,7 +62,12 @@ class OrderController extends Controller
      *                     @OA\Property(property="variant", type="object"),
      *                     @OA\Property(property="quantity", type="integer"),
      *                     @OA\Property(property="price", type="number")
-     *                 ))
+     *                 )),
+     *                 @OA\Property(property="delivery_date", type="string", format="date-time"), // Дата доставки
+     *                 @OA\Property(property="delivery_method", type="object",
+     *                     @OA\Property(property="name", type="string"), // Метод доставки
+     *                     @OA\Property(property="description", type="string")
+     *                 )
      *             ))
      *         )
      *     ),
@@ -72,7 +79,9 @@ class OrderController extends Controller
         $query = Order::with([
             'client.user.profile',
             'items.product',
-            'items.productVariant'
+            'items.productVariant',
+            'deliveryMethod', // Добавляем связь с методом доставки
+            'deliveryDate'   // Добавляем связь с датой доставки
         ])->withCount('items');
 
         if ($request->has('status') && $request->status !== 'all') {
@@ -92,7 +101,7 @@ class OrderController extends Controller
 
         $orders = $query->latest()
             ->paginate(15)
-            ->through(function($order) {
+            ->map(function($order) {
                 return [
                     'id' => $order->id,
                     'order_number' => $order->order_number,
@@ -121,6 +130,11 @@ class OrderController extends Controller
                             'price' => $item->price,
                         ];
                     }),
+                    'delivery_date' => $order->deliveryDate ? $order->deliveryDate->date : null,
+                    'delivery_method' => $order->deliveryMethod ? [
+                        'name' => $order->deliveryMethod->name,
+                        'description' => $order->deliveryMethod->description,
+                    ] : null,
                 ];
             });
 
@@ -145,6 +159,7 @@ class OrderController extends Controller
         ]);
     }
 
+
     /**
      * @OA\Post(
      *     path="/api/orders",
@@ -166,7 +181,12 @@ class OrderController extends Controller
      *             )),
      *             @OA\Property(property="notes", type="string", nullable=true, example="Доставить до 18:00"),
      *             @OA\Property(property="status", type="string", enum={"new", "processing", "completed", "cancelled"}, example="new"),
-     *             @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "failed", "refunded"}, example="pending")
+     *             @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "failed", "refunded"}, example="pending"),
+     *             @OA\Property(property="delivery_date", type="string", format="date-time", nullable=true, example="2025-03-18T15:00:00Z"),  // Дата доставки
+     *             @OA\Property(property="delivery_method", type="object", nullable=true,
+     *                 @OA\Property(property="name", type="string", example="Курьерская доставка"),
+     *                 @OA\Property(property="description", type="string", example="Доставка курьером до двери")
+     *             )  // Метод доставки
      *         )
      *     ),
      *     @OA\Response(
@@ -181,7 +201,12 @@ class OrderController extends Controller
      *                 @OA\Property(property="status", type="string"),
      *                 @OA\Property(property="payment_status", type="string"),
      *                 @OA\Property(property="total_amount", type="number"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time")
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="delivery_date", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(property="delivery_method", type="object", nullable=true,
+     *                     @OA\Property(property="name", type="string"),
+     *                     @OA\Property(property="description", type="string")
+     *                 )
      *             )
      *         )
      *     ),
@@ -201,6 +226,11 @@ class OrderController extends Controller
             'notes' => 'nullable|string',
             'status' => 'required|in:new,processing,completed,cancelled',
             'payment_status' => 'required|in:pending,paid,failed,refunded',
+            'delivery_date' => 'nullable|date_format:Y-m-d H:i:s',
+            'delivery_method' => 'nullable|array',
+            'delivery_method.name' => 'nullable|string',
+            'delivery_method.description' => 'nullable|string',
+            'data' => 'nullable|string',
         ]);
 
         try {
@@ -211,6 +241,9 @@ class OrderController extends Controller
                 'status' => $validated['status'],
                 'payment_status' => $validated['payment_status'],
                 'notes' => $validated['notes'] ?? null,
+                'delivery_date' => $validated['delivery_date'] ?? null,
+                'delivery_method' => $validated['delivery_method'] ?? null,
+                'data' => $validated['data'] ?? null,
             ]);
 
             foreach ($validated['items'] as $item) {
@@ -219,7 +252,6 @@ class OrderController extends Controller
 
             $order->updateTotalAmount();
 
-            // Добавляем запись в историю
             $order->history()->create([
                 'status' => $order->status,
                 'payment_status' => $order->payment_status,
@@ -236,6 +268,9 @@ class OrderController extends Controller
                     'payment_status' => $order->payment_status,
                     'total_amount' => $order->total_amount,
                     'created_at' => $order->created_at,
+                    'delivery_date' => $order->delivery_date,
+                    'delivery_method' => $order->delivery_method,
+                    'data' => $order->data,
                 ]
             ], 201);
         } catch (\Exception $e) {
@@ -268,6 +303,11 @@ class OrderController extends Controller
      *             @OA\Property(property="discount_amount", type="number", example=1000),
      *             @OA\Property(property="created_at", type="string", format="date-time", example="2025-03-13T12:34:56Z"),
      *             @OA\Property(property="notes", type="string", example="Доставить до 18:00"),
+     *             @OA\Property(property="delivery_date", type="string", format="date-time", example="2025-03-18T15:00:00Z"), // Дата доставки
+     *             @OA\Property(property="delivery_method", type="object",
+     *                 @OA\Property(property="name", type="string", example="Курьерская доставка"),
+     *                 @OA\Property(property="description", type="string", example="Доставка курьером до двери")
+     *             ), // Метод доставки
      *             @OA\Property(property="client", type="object", nullable=true,
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="full_name", type="string", example="Иван Иванов"),
@@ -322,6 +362,8 @@ class OrderController extends Controller
                 'discount_amount' => $order->discount_amount,
                 'created_at' => $order->created_at,
                 'notes' => $order->notes,
+                'delivery_date' => $order->delivery_date, // Добавляем дату доставки
+                'delivery_method' => $order->delivery_method ? json_decode($order->delivery_method) : null, // Метод доставки
                 'client' => $order->client ? [
                     'id' => $order->client->id,
                     'full_name' => $order->client->user->profile->full_name,
@@ -358,7 +400,6 @@ class OrderController extends Controller
             return response()->json(['error' => 'Ошибка сервера: ' . $e->getMessage()], 500);
         }
     }
-
     /**
      * @OA\Put(
      *     path="/api/orders/{order}",
@@ -377,7 +418,9 @@ class OrderController extends Controller
      *             required={"status", "payment_status"},
      *             @OA\Property(property="status", type="string", enum={"new", "processing", "completed", "cancelled"}, example="processing"),
      *             @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "failed", "refunded"}, example="paid"),
-     *             @OA\Property(property="notes", type="string", nullable=true, example="Обновлен менеджером")
+     *             @OA\Property(property="notes", type="string", nullable=true, example="Обновлен менеджером"),
+     *             @OA\Property(property="delivery_date", type="string", format="date-time", nullable=true, example="2025-03-15T12:00:00Z"),
+     *             @OA\Property(property="delivery_method", type="object", nullable=true, example={"method": "courier", "details": "Доставить до двери"})
      *         )
      *     ),
      *     @OA\Response(
@@ -390,7 +433,9 @@ class OrderController extends Controller
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="status", type="string", example="processing"),
      *                 @OA\Property(property="payment_status", type="string", example="paid"),
-     *                 @OA\Property(property="notes", type="string", example="Обновлен менеджером")
+     *                 @OA\Property(property="notes", type="string", example="Обновлен менеджером"),
+     *                 @OA\Property(property="delivery_date", type="string", format="date-time", example="2025-03-15T12:00:00Z"),
+     *                 @OA\Property(property="delivery_method", type="object", example={"method": "courier", "details": "Доставить до двери"})
      *             )
      *         )
      *     ),
@@ -405,6 +450,8 @@ class OrderController extends Controller
                 'status' => 'required|string|in:new,processing,completed,cancelled',
                 'payment_status' => 'required|string|in:pending,paid,failed,refunded',
                 'notes' => 'nullable|string',
+                'delivery_date' => 'nullable|date_format:Y-m-d\TH:i:s\Z', // Валидация для даты доставки
+                'delivery_method' => 'nullable|json', // Валидация для метода доставки (должен быть JSON-объект)
             ]);
 
             $order->update($validated);
@@ -424,12 +471,15 @@ class OrderController extends Controller
                     'status' => $order->status,
                     'payment_status' => $order->payment_status,
                     'notes' => $order->notes,
+                    'delivery_date' => $order->delivery_date, // Добавляем дату доставки
+                    'delivery_method' => $order->delivery_method, // Добавляем метод доставки
                 ]
             ], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Ошибка сервера: ' . $e->getMessage()], 500);
         }
     }
+
     /**
      * @OA\Delete(
      *     path="/api/orders/{order}",
