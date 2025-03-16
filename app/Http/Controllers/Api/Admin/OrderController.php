@@ -41,8 +41,9 @@ class OrderController extends Controller
      *                 @OA\Property(property="order_number", type="string"),
      *                 @OA\Property(property="status", type="string"),
      *                 @OA\Property(property="payment_status", type="string"),
-     *                 @OA\Property(property="total_amount", type="number"),
-     *                 @OA\Property(property="discount_amount", type="number"),
+     *                 @OA\Property(property="is_paid", type="boolean"),
+     *                 @OA\Property(property="total_amount", type="string"),
+     *                 @OA\Property(property="discount_amount", type="string"),
      *                 @OA\Property(property="items_count", type="integer"),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
      *                 @OA\Property(property="client", type="object",
@@ -66,8 +67,10 @@ class OrderController extends Controller
      *                 @OA\Property(property="delivery_date", type="string", format="date-time"),
      *                 @OA\Property(property="delivery_method", type="object",
      *                     @OA\Property(property="name", type="string"),
-     *                     @OA\Property(property="description", type="string")
-     *                 )
+     *                     @OA\Property(property="description", type="string"),
+     *                     @OA\Property(property="type", type="string")
+     *                 ),
+     *                 @OA\Property(property="delivery_target", type="string", nullable=true)
      *             ))
      *         )
      *     ),
@@ -80,8 +83,9 @@ class OrderController extends Controller
             'client.user.profile',
             'items.product',
             'items.productVariant',
-            'deliveryMethod', // Добавляем связь с методом доставки
-            'deliveryDate'   // Добавляем связь с датой доставки
+            'deliveryMethod', // Метод доставки
+            'deliveryDate',   // Дата доставки
+            'deliveryTarget'  // Пункт выдачи или адрес доставки
         ])->withCount('items');
 
         if ($request->has('status') && $request->status !== 'all') {
@@ -107,10 +111,11 @@ class OrderController extends Controller
                     'order_number' => $order->order_number,
                     'status' => $order->status,
                     'payment_status' => $order->payment_status,
-                    'total_amount' => $order->total_amount,
-                    'discount_amount' => $order->discount_amount,
+                    'is_paid' => $order->payment_status === 'paid', // Булево поле для оплаты
+                    'total_amount' => number_format($order->total_amount, 2, '.', ' ') . ' руб', // Форматирование суммы
+                    'discount_amount' => number_format($order->discount_amount, 2, '.', ' ') . ' руб', // Форматирование скидки
                     'items_count' => $order->items_count,
-                    'created_at' => $order->created_at,
+                    'created_at' => $order->created_at->format('d.m.Y H:i'), // Форматирование даты
                     'client' => $order->client ? [
                         'id' => $order->client->id,
                         'full_name' => $order->client->user->profile->full_name,
@@ -130,11 +135,13 @@ class OrderController extends Controller
                             'price' => $item->price,
                         ];
                     }),
-                    'delivery_date' => $order->deliveryDate ? $order->deliveryDate->date : null,
+                    'delivery_date' => $order->deliveryDate ? $order->deliveryDate->date->format('d.m.Y H:i') : null, // Форматирование даты доставки
                     'delivery_method' => $order->deliveryMethod ? [
                         'name' => $order->deliveryMethod->name,
                         'description' => $order->deliveryMethod->description,
+                        'type' => $order->deliveryMethod->type, // Тип доставки (например, "Пункт самовывоза")
                     ] : null,
+                    'delivery_target' => $order->deliveryTarget ? $order->deliveryTarget->name : null, // Пункт выдачи или адрес доставки
                 ];
             });
 
@@ -158,7 +165,6 @@ class OrderController extends Controller
             'paymentStatuses' => Order::PAYMENT_STATUSES,
         ]);
     }
-
 
     /**
      * @OA\Post(
