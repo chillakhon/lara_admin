@@ -16,20 +16,28 @@ class Order extends Model
 
     const STATUS_NEW = 'new';
     const STATUS_PROCESSING = 'processing';
-    const STATUS_COMPLETED = 'completed';
-    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_APPROVED = 'approved'; // Согласован
+    const STATUS_SHIPPED = 'shipped';   // Отгружен
+    const STATUS_COMPLETED = 'completed'; // Доставлен
+    const STATUS_RETURN_IN_PROGRESS = 'return_in_progress'; // В процессе возврата
+    const STATUS_CANCELLED = 'cancelled'; // Отменен
+    const STATUS_RETURNED = 'returned'; // Возврат
+
+    const STATUSES = [
+        ['value' => self::STATUS_NEW, 'label' => 'Новый'],
+        ['value' => self::STATUS_PROCESSING, 'label' => 'В обработке'],
+        ['value' => self::STATUS_APPROVED, 'label' => 'Согласован'],
+        ['value' => self::STATUS_SHIPPED, 'label' => 'Отгружен'],
+        ['value' => self::STATUS_COMPLETED, 'label' => 'Доставлен'],
+        ['value' => self::STATUS_RETURN_IN_PROGRESS, 'label' => 'В процессе возврата'],
+        ['value' => self::STATUS_CANCELLED, 'label' => 'Отменен'],
+        ['value' => self::STATUS_RETURNED, 'label' => 'Возврат'],
+    ];
 
     const PAYMENT_STATUS_PENDING = 'pending';
     const PAYMENT_STATUS_PAID = 'paid';
     const PAYMENT_STATUS_FAILED = 'failed';
     const PAYMENT_STATUS_REFUNDED = 'refunded';
-
-    const STATUSES = [
-        ['value' => 'new', 'label' => 'Новый'],
-        ['value' => 'processing', 'label' => 'В обработке'],
-        ['value' => 'completed', 'label' => 'Завершен'],
-        ['value' => 'cancelled', 'label' => 'Отменен'],
-    ];
 
     const PAYMENT_STATUSES = [
         ['value' => 'pending', 'label' => 'Ожидает оплаты'],
@@ -117,11 +125,14 @@ class Order extends Model
         return [
             self::STATUS_NEW => 'Новый',
             self::STATUS_PROCESSING => 'В обработке',
-            self::STATUS_COMPLETED => 'Завершен',
+            self::STATUS_APPROVED => 'Согласован', // Добавлено
+            self::STATUS_SHIPPED => 'Отгружен',   // Добавлено
+            self::STATUS_COMPLETED => 'Доставлен', // Обновлено (было "Завершен")
+            self::STATUS_RETURN_IN_PROGRESS => 'В процессе возврата', // Добавлено
             self::STATUS_CANCELLED => 'Отменен',
+            self::STATUS_RETURNED => 'Возврат', // Добавлено
         ];
     }
-
     public static function getPaymentStatuses(): array
     {
         return [

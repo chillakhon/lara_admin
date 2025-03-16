@@ -24,6 +24,10 @@ class DeliveryMethod extends Model
         'is_active' => 'boolean',
         'settings' => 'array'
     ];
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 
     public function zones(): HasMany
     {
@@ -45,4 +49,4 @@ class DeliveryMethod extends Model
         $className = $this->provider_class;
         return new $className($this->settings);
     }
-} 
+}
