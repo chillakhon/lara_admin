@@ -237,12 +237,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/transactions/history', [InventoryController::class, 'getTransactionHistory'])->name('transactions.history');
 
 
-            Route::get('/component-usage', [InventoryController::class, 'componentUsage'])
-                ->name('component-usage');
-            Route::post('/reserve-components', [InventoryController::class, 'reserveComponents'])
-                ->name('reserve-components');
-            Route::post('/release-reservation/{reservation}', [InventoryController::class, 'releaseReservation'])
-                ->name('release-reservation');
+//            Route::get('/component-usage', [InventoryController::class, 'componentUsage'])
+//                ->name('component-usage');
+//            Route::post('/reserve-components', [InventoryController::class, 'reserveComponents'])
+//                ->name('reserve-components');
+//            Route::post('/release-reservation/{reservation}', [InventoryController::class, 'releaseReservation'])
+//                ->name('release-reservation');
         });
 //
 //
