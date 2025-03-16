@@ -22,6 +22,7 @@ class OrderController extends Controller
      *         name="status",
      *         in="query",
      *         required=false,
+     *         description="Статус заказа для фильтрации (open, closed, deleted)",
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\Parameter(
