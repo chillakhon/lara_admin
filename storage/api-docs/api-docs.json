@@ -2083,6 +2083,7 @@
                     {
                         "name": "status",
                         "in": "query",
+                        "description": "Статус заказа для фильтрации (open, closed, deleted)",
                         "required": false,
                         "schema": {
                             "type": "string"
@@ -2120,11 +2121,14 @@
                                                     "payment_status": {
                                                         "type": "string"
                                                     },
+                                                    "is_paid": {
+                                                        "type": "boolean"
+                                                    },
                                                     "total_amount": {
-                                                        "type": "number"
+                                                        "type": "string"
                                                     },
                                                     "discount_amount": {
-                                                        "type": "number"
+                                                        "type": "string"
                                                     },
                                                     "items_count": {
                                                         "type": "integer"
@@ -2195,9 +2199,16 @@
                                                             },
                                                             "description": {
                                                                 "type": "string"
+                                                            },
+                                                            "type": {
+                                                                "type": "string"
                                                             }
                                                         },
                                                         "type": "object"
+                                                    },
+                                                    "delivery_target": {
+                                                        "type": "string",
+                                                        "nullable": true
                                                     }
                                                 },
                                                 "type": "object"
