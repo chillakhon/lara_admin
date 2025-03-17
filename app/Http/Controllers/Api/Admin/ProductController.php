@@ -280,7 +280,7 @@ class ProductController extends Controller
             'is_featured' => 'nullable|boolean',
             'is_new' => 'nullable|boolean',
             'discount_price' => 'nullable|numeric|min:0',
-            'sku' => 'nullable|string|unique:products,sku',
+//            'sku' => 'nullable|string|unique:products,sku',
             'barcode' => 'nullable|string|unique:products,barcode',
             'weight' => 'nullable|numeric|min:0',
             'length' => 'nullable|numeric|min:0',
