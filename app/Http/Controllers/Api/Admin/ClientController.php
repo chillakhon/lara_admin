@@ -17,56 +17,6 @@ use App\Models\ClientLevel;
  */
 class ClientController extends Controller
 {
-    /**
-     * @OA\Get(
-     *     path="/api/clients",
-     *     operationId="getClients",
-     *     tags={"Clients"},
-     *     summary="Get all clients",
-     *     @OA\Response(
-     *         response=200,
-     *         description="List of clients",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/Client")
-     *             ),
-     *             @OA\Property(
-     *                 property="links",
-     *                 type="object",
-     *                 @OA\Property(property="first", type="string"),
-     *                 @OA\Property(property="last", type="string"),
-     *                 @OA\Property(property="prev", type="string"),
-     *                 @OA\Property(property="next", type="string")
-     *             ),
-     *             @OA\Property(
-     *                 property="meta",
-     *                 type="object",
-     *                 @OA\Property(property="current_page", type="integer"),
-     *                 @OA\Property(property="from", type="integer"),
-     *                 @OA\Property(property="last_page", type="integer"),
-     *                 @OA\Property(property="per_page", type="integer"),
-     *                 @OA\Property(property="to", type="integer"),
-     *                 @OA\Property(property="total", type="integer")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Bad request"
-     *     )
-     * )
-     */
-    public function index(Request $request)
-    {
-        $clients = Client::with(['user.profile', 'level'])
-            ->paginate(10);
-
-        return response()->json($clients);
-    }
-
 
     /**
      * @OA\Post(

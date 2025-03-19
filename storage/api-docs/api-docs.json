@@ -314,59 +314,82 @@
                 "tags": [
                     "Clients"
                 ],
-                "summary": "Get all clients",
-                "operationId": "getClients",
+                "summary": "Получение списка клиентов",
+                "operationId": "9d8601e8851a4f15e65763141b213541",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Поиск по имени, фамилии или email",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "level",
+                        "in": "query",
+                        "description": "Фильтр по уровню клиента",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Фильтр по статусу (active, inactive)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Сортировка (напр., created_at,desc)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "List of clients",
+                        "description": "Список клиентов",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "data": {
+                                        "clients": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/Client"
+                                                "type": "object"
                                             }
                                         },
-                                        "links": {
-                                            "properties": {
-                                                "first": {
-                                                    "type": "string"
-                                                },
-                                                "last": {
-                                                    "type": "string"
-                                                },
-                                                "prev": {
-                                                    "type": "string"
-                                                },
-                                                "next": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "type": "object"
+                                        "levels": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
                                         },
-                                        "meta": {
-                                            "properties": {
-                                                "current_page": {
-                                                    "type": "integer"
-                                                },
-                                                "from": {
-                                                    "type": "integer"
-                                                },
-                                                "last_page": {
-                                                    "type": "integer"
-                                                },
-                                                "per_page": {
-                                                    "type": "integer"
-                                                },
-                                                "to": {
-                                                    "type": "integer"
-                                                },
-                                                "total": {
-                                                    "type": "integer"
-                                                }
-                                            },
+                                        "statuses": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "sortOptions": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "filters": {
                                             "type": "object"
                                         }
                                     },
@@ -374,9 +397,6 @@
                                 }
                             }
                         }
-                    },
-                    "400": {
-                        "description": "Bad request"
                     }
                 }
             },
@@ -384,8 +404,8 @@
                 "tags": [
                     "Clients"
                 ],
-                "summary": "Create a new client",
-                "operationId": "createClient",
+                "summary": "Создание нового клиента",
+                "operationId": "b3cabc74db0332332cce9fe2afd34aab",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -399,25 +419,43 @@
                                 ],
                                 "properties": {
                                     "first_name": {
-                                        "description": "First name of the client",
                                         "type": "string",
-                                        "maxLength": 255
+                                        "example": "Иван"
                                     },
                                     "last_name": {
-                                        "description": "Last name of the client",
                                         "type": "string",
-                                        "maxLength": 255
+                                        "example": "Петров"
                                     },
                                     "email": {
-                                        "description": "Email address of the client",
                                         "type": "string",
                                         "format": "email",
-                                        "maxLength": 255
+                                        "example": "ivan.petrov@example.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+79001112233",
+                                        "nullable": true
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Москва, ул. Ленина, д. 10",
+                                        "nullable": true
                                     },
                                     "password": {
-                                        "description": "Password for the client account",
                                         "type": "string",
-                                        "minLength": 8
+                                        "format": "password",
+                                        "example": "securePassword123"
+                                    },
+                                    "level_id": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "bonus_balance": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 100.5,
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -427,17 +465,50 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Client successfully created",
+                        "description": "Клиент успешно создан",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Client successfully created"
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
                                         },
-                                        "client": {
-                                            "$ref": "#/components/schemas/Client"
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "ivan.petrov@example.com"
+                                                },
+                                                "email_verified_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-03-18T12:00:00Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "phone": {
+                                            "type": "string",
+                                            "example": "+79001112233"
+                                        },
+                                        "address": {
+                                            "type": "string",
+                                            "example": "Москва, ул. Ленина, д. 10"
+                                        },
+                                        "bonus_balance": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 100.5
+                                        },
+                                        "level_id": {
+                                            "type": "integer",
+                                            "example": 1,
+                                            "nullable": true
                                         }
                                     },
                                     "type": "object"
@@ -445,43 +516,121 @@
                             }
                         }
                     },
-                    "400": {
-                        "description": "Bad request, validation failed"
+                    "422": {
+                        "description": "Ошибка валидации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
         },
-        "/api/clients/{client}": {
+        "/api/clients/{id}": {
             "get": {
                 "tags": [
                     "Clients"
                 ],
-                "summary": "Get a specific client by ID",
-                "operationId": "showClient",
+                "summary": "Получение информации о клиенте",
+                "operationId": "a4949d805e433b15ebfc5c17254c2b5f",
                 "parameters": [
                     {
-                        "name": "client",
+                        "name": "id",
                         "in": "path",
-                        "description": "ID of the client to fetch",
+                        "description": "ID клиента",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Client data",
+                        "description": "Детальная информация о клиенте",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Client"
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "client@example.com"
+                                                },
+                                                "email_verified_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-03-18T12:00:00Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "statistics": {
+                                            "properties": {
+                                                "total_orders": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "total_spent": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 1250.5
+                                                },
+                                                "average_order_value": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 125.05
+                                                },
+                                                "last_order_date": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-03-17T15:30:00Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
                     },
                     "404": {
-                        "description": "Client not found"
+                        "description": "Клиент не найден",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -489,16 +638,17 @@
                 "tags": [
                     "Clients"
                 ],
-                "summary": "Update a specific client",
-                "operationId": "updateClient",
+                "summary": "Обновление данных клиента",
+                "operationId": "dcace6dfc9fbe44daea0d06e89e0aef2",
                 "parameters": [
                     {
-                        "name": "client",
+                        "name": "id",
                         "in": "path",
-                        "description": "ID of the client to update",
+                        "description": "ID клиента",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
@@ -507,19 +657,34 @@
                     "content": {
                         "application/json": {
                             "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "email"
+                                ],
                                 "properties": {
                                     "first_name": {
                                         "type": "string",
-                                        "maxLength": 255
+                                        "example": "Иван"
                                     },
                                     "last_name": {
                                         "type": "string",
-                                        "maxLength": 255
+                                        "example": "Иванов"
                                     },
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "maxLength": 255
+                                        "example": "ivan@example.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+79111234567",
+                                        "nullable": true
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Москва, ул. Ленина, 10",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -529,20 +694,69 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Client successfully updated",
+                        "description": "Клиент успешно обновлён",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Client"
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "ivan@example.com"
+                                        },
+                                        "profile": {
+                                            "properties": {
+                                                "first_name": {
+                                                    "type": "string",
+                                                    "example": "Иван"
+                                                },
+                                                "last_name": {
+                                                    "type": "string",
+                                                    "example": "Иванов"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "phone": {
+                                            "type": "string",
+                                            "example": "+79111234567"
+                                        },
+                                        "address": {
+                                            "type": "string",
+                                            "example": "Москва, ул. Ленина, 10"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-03-18T12:00:00Z"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
                     },
-                    "404": {
-                        "description": "Client not found"
-                    },
-                    "400": {
-                        "description": "Invalid input"
+                    "422": {
+                        "description": "Ошибка валидации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ошибка валидации"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -550,29 +764,30 @@
                 "tags": [
                     "Clients"
                 ],
-                "summary": "Delete a specific client",
-                "operationId": "deleteClient",
+                "summary": "Удаление клиента",
+                "operationId": "807e431c6a992dad73f0aae13051a268",
                 "parameters": [
                     {
-                        "name": "client",
+                        "name": "id",
                         "in": "path",
-                        "description": "ID of the client to delete",
+                        "description": "ID клиента",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "example": 1
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Client successfully deleted",
+                        "description": "Клиент успешно удалён",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Client deleted"
+                                            "example": "Client deleted successfully"
                                         }
                                     },
                                     "type": "object"
@@ -581,10 +796,20 @@
                         }
                     },
                     "404": {
-                        "description": "Client not found"
-                    },
-                    "400": {
-                        "description": "Error deleting client"
+                        "description": "Клиент не найден",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Client not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 }
             }
