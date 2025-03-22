@@ -86,11 +86,11 @@ class ProductImageController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $imageFile) {
                 $image = $this->saveProductImage($imageFile, $product);
-                foreach ($validated['variants'] as $variantId) {
-                    $product->images()->attach($image->id, [
-                        'product_variant_id' => $variantId,
-                    ]);
-                }
+//                foreach ($validated['variants'] as $variantId) {
+//                    $product->images()->attach($image->id, [
+//                        'product_variant_id' => $variantId,
+//                    ]);
+//                }
                 $createdImages[] = $image;
             }
         }
@@ -121,12 +121,12 @@ class ProductImageController extends Controller
         }
 
         // Сохраняем оригинальное изображение
-        $img = $manager->make($file);
+        $img = $manager->read($file);
         $img->save(storage_path('app/public/' . $path));
 
         // Создаем и сохраняем миниатюру
-        $thumb = $manager->make($file);
-        $thumb->fit(300, 300);
+        $thumb = $manager->read($file);
+        $thumb->cover(300, 300);
         $thumbPath = $directory . '/thumb_' . $filename;
         $thumb->save(storage_path('app/public/' . $thumbPath));
 
