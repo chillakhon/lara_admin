@@ -364,7 +364,7 @@ class ProductController extends Controller
             'has_variants' => 'boolean',
             'allow_preorder' => 'boolean',
             'after_purchase_processing_time' => 'integer|min:0',
-            'categories' => 'required|array',
+            'categories' => 'array',
             'categories.*' => 'exists:categories,id',
         ]);
 
