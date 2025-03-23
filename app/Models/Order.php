@@ -17,12 +17,12 @@ class Order extends Model
 
     const STATUS_NEW = 'new';
     const STATUS_PROCESSING = 'processing';
-    const STATUS_APPROVED = 'approved'; // Согласован
-    const STATUS_SHIPPED = 'shipped';   // Отгружен
-    const STATUS_COMPLETED = 'completed'; // Доставлен
-    const STATUS_RETURN_IN_PROGRESS = 'return_in_progress'; // В процессе возврата
-    const STATUS_CANCELLED = 'cancelled'; // Отменен
-    const STATUS_RETURNED = 'returned'; // Возврат
+    const STATUS_APPROVED = 'approved';
+    const STATUS_SHIPPED = 'shipped';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_RETURN_IN_PROGRESS = 'return_in_progress';
+    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_RETURNED = 'returned';
 
     const STATUSES = [
         ['value' => self::STATUS_NEW, 'label' => 'Новый'],
