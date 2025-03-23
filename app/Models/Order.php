@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 
 class Order extends Model
@@ -171,5 +172,11 @@ class Order extends Model
             self::PAYMENT_STATUS_PENDING,
             self::PAYMENT_STATUS_FAILED
         ]);
+    }
+
+    public function updateTotalAmount()
+    {
+        $this->total_amount = $this->items()->sum(DB::raw('quantity * price'));
+        $this->save();
     }
 }

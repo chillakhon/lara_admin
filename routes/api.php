@@ -103,6 +103,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy']);
 });
 
+//Route::post('/ssss', [ProductController::class, 'store']);
 
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
@@ -139,7 +140,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         });
 
 //        // Products
-        Route::group(['prefix' => 'products', 'as' => 'products.', 'middleware' => ['permission:products.view,products.manage']], function () {
+        Route::group(['prefix' => 'products', 'as' => 'products.'/*, 'middleware' => ['permission:products.view,products.manage']*/], function () {
             Route::get('/', [ProductController::class, 'index']);
             Route::post('/', [ProductController::class, 'store']);
 
