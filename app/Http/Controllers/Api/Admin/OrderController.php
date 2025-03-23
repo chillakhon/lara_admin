@@ -249,7 +249,7 @@ class OrderController extends Controller
                 'payment_status' => $validated['payment_status'],
                 'notes' => $validated['notes'] ?? null,
                 'delivery_date' => $validated['delivery_date'] ?? null,
-                'delivery_method' => $validated['delivery_method'] ?? null,
+                'delivery_method_id' => $validated['delivery_method']['id'] ?? null,
                 'data' => $validated['data'] ?? null,
             ]);
 
