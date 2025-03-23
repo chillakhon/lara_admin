@@ -180,5 +180,7 @@ class Order extends Model
         $this->total_amount = $this->items()->sum(DB::raw('quantity * price'));
         $this->save();
     }
+
+
 }
 
