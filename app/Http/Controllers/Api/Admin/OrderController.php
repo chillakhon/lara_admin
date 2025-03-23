@@ -86,7 +86,7 @@ class OrderController extends Controller
             'items.productVariant',
             'deliveryMethod', // Метод доставки
             'deliveryDate',   // Дата доставки
-//            'deliveryTarget'  // Пункт выдачи или адрес доставки
+            'deliveryTarget'  // Пункт выдачи или адрес доставки
         ])->withCount('items');
 
         if ($request->has('status') && $request->status !== 'all') {
@@ -142,7 +142,7 @@ class OrderController extends Controller
                         'description' => $order->deliveryMethod->description,
                         'type' => $order->deliveryMethod->type, // Тип доставки (например, "Пункт самовывоза")
                     ] : null,
-//                    'delivery_target' => $order->deliveryTarget ? $order->deliveryTarget->name : null, // Пункт выдачи или адрес доставки
+                    'delivery_target' => $order->deliveryTarget ? $order->deliveryTarget->name : null, // Пункт выдачи или адрес доставки
                 ];
             });
 
