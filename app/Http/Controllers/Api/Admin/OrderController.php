@@ -86,7 +86,6 @@ class OrderController extends Controller
             'items.productVariant',
             'deliveryMethod', // Метод доставки
             'deliveryDate',   // Дата доставки
-            'deliveryTarget'  // Пункт выдачи или адрес доставки
         ])->withCount('items');
 
         if ($request->has('status') && $request->status !== 'all') {
