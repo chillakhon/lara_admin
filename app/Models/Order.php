@@ -82,7 +82,7 @@ class Order extends Model
 
     public function deliveryMethod(): BelongsTo
     {
-        return $this->belongsTo(DeliveryMethod::class);
+        return $this->belongsTo(DeliveryMethod::class, 'delivery_method_id');
     }
 
     public function deliveryDate(): HasOne
@@ -174,9 +174,11 @@ class Order extends Model
         ]);
     }
 
+
     public function updateTotalAmount()
     {
         $this->total_amount = $this->items()->sum(DB::raw('quantity * price'));
         $this->save();
     }
 }
+

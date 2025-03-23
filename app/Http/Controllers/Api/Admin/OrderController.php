@@ -235,7 +235,7 @@ class OrderController extends Controller
             'payment_status' => 'required|in:pending,paid,failed,refunded',
             'delivery_date' => 'nullable|date_format:Y-m-d H:i:s',
             'delivery_method' => 'nullable|array',
-            'delivery_method.name' => 'nullable|string',
+            'delivery_method.name' => 'nullable|string|exists:delivery_methods,name',  // Validate delivery method ID
             'delivery_method.description' => 'nullable|string',
             'data' => 'nullable|string',
         ]);
@@ -249,7 +249,7 @@ class OrderController extends Controller
                 'payment_status' => $validated['payment_status'],
                 'notes' => $validated['notes'] ?? null,
                 'delivery_date' => $validated['delivery_date'] ?? null,
-                'delivery_method_id' => $validated['delivery_method']['id'] ?? null,
+                'delivery_method_id' => $validated['delivery_method']['id'] ?? null,  // Save the delivery method ID
                 'data' => $validated['data'] ?? null,
             ]);
 
@@ -276,7 +276,7 @@ class OrderController extends Controller
                     'total_amount' => $order->total_amount,
                     'created_at' => $order->created_at,
                     'delivery_date' => $order->delivery_date,
-                    'delivery_method' => $order->delivery_method,
+                    'delivery_method' => $order->deliveryMethod ? $order->deliveryMethod : null,
                     'data' => $order->data,
                 ]
             ], 201);
@@ -284,6 +284,7 @@ class OrderController extends Controller
             return response()->json(['error' => 'Ошибка сервера: ' . $e->getMessage()], 500);
         }
     }
+
 
     /**
      * @OA\Get(
