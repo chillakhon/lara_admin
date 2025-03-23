@@ -196,9 +196,7 @@ class Product extends Model
 
     public function images()
     {
-        return $this->morphToMany(Image::class, 'imageable')
-            ->withPivot('product_variant_id')
-            ->withTimestamps();
+        return $this->morphToMany(Image::class, 'imageable')->withTimestamps();
     }
 
     public function getImagesForVariant($variantId)

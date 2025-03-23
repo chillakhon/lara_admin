@@ -186,7 +186,14 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-        $product->load(['categories', 'options.values', 'variants.optionValues.option', 'variants.images', 'variants.unit', 'defaultUnit']);
+        $product->load([
+            'images',
+            'options.values',
+            'variants.optionValues.option',
+            'variants.images',
+            'variants.unit',
+            'defaultUnit'
+        ]);
         return response()->json($product);
     }
 
@@ -364,7 +371,7 @@ class ProductController extends Controller
             'has_variants' => 'boolean',
             'allow_preorder' => 'boolean',
             'after_purchase_processing_time' => 'integer|min:0',
-            'categories' => 'required|array',
+            'categories' => 'array',
             'categories.*' => 'exists:categories,id',
         ]);
 

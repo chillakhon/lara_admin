@@ -13,6 +13,7 @@ use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 
 class ProductImageController extends Controller
 {
+
     public function store(Request $request, Product $product)
     {
         $request->validate([

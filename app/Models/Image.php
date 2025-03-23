@@ -44,10 +44,10 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  *     )
  * )
  */
-
 class Image extends Model
 {
     use HasFactory;
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -56,6 +56,7 @@ class Image extends Model
         'is_main',
         'order'
     ];
+
     public function imageable(): MorphTo
     {
         return $this->morphTo();
@@ -68,9 +69,7 @@ class Image extends Model
 
     public function products()
     {
-        return $this->morphedByMany(Product::class, 'imageable')
-            ->withPivot('product_variant_id')
-            ->withTimestamps();
+        return $this->morphedByMany(Product::class, 'imageable')->withTimestamps();
     }
 
 }

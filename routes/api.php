@@ -37,6 +37,14 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+
+//Route::get('products/{product}/images-path', [ProductImageController::class, 'index']);
+Route::get('/products/{product}/image', [ProductImageController::class, 'getProductImage']);
+Route::get('/products/{product}/main-image', [ProductImageController::class, 'getMainProductImage']);
+
+
+
+
 //client
 Route::get('/products', [ProductController::class, 'index'])->middleware('auth:sanctum');
 //Route::get('/products/{slug}', [ProductController::class, 'show']);
@@ -160,6 +168,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            //images
             Route::post('/{product}/images', [ProductImageController::class, 'store']);
             Route::delete('/{product}/images/{image}/{variant}', [ProductImageController::class, 'destroy']);
+            Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
+
+            Route::delete('/{product}/images/{image}', [ProductImageController::class, 'deleteImg']);
             Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
 
             Route::post('/{product}/variants/{variant}/images', [ProductVariantController::class, 'addImages']);
