@@ -186,7 +186,14 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-        $product->load(['categories', 'options.values', 'variants.optionValues.option', 'variants.images', 'variants.unit', 'defaultUnit']);
+        $product->load([
+            'images',
+            'options.values',
+            'variants.optionValues.option',
+            'variants.images',
+            'variants.unit',
+            'defaultUnit'
+        ]);
         return response()->json($product);
     }
 

@@ -8,11 +8,90 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
+use Intervention\Image\ImageManager;
 
 class ProductImageController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/products/{product}/images",
+     *     summary="Получает изображения продукта",
+     *     tags={"Product Images"},
+     *     @OA\Parameter(
+     *         name="product",
+     *         in="path",
+     *         description="ID продукта",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Список изображений",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="images",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Image")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function index(Product $product)
+    {
+        $images = $product->images()->get();
+
+        return response()->json([
+            'images' => $images,
+        ], 200);
+    }
+
+
+    public function getProductImage(Product $product, Request $request)
+    {
+        $path = $request->get('path');
+
+        if (!$path) {
+            return response()->json(['message' => 'Path is required'], 400);
+        }
+
+        $filePath = storage_path("app/public/{$path}");
+
+
+        if (!file_exists($filePath)) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        return response()->file($filePath);
+    }
+
+
+
+    public function getMainProductImage(Product $product)
+    {
+        $image = Image::whereHas('products', function ($query) use ($product) {
+            $query->where('products.id', $product->id);
+        })->where('is_main', true)->first();
+
+        if ($image) {
+            $filePath = storage_path("app/public/{$image->path}");
+        } else {
+            $filePath = public_path('images/default.png');
+        }
+
+        if (!file_exists($filePath)) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        return response()->file($filePath);
+    }
+
+
+
+
+
+
     /**
      * Загружает одно или несколько изображений для продукта и привязывает их к вариантам.
      *
@@ -78,7 +157,7 @@ class ProductImageController extends Controller
     {
         $validated = $request->validate([
             'images.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'variants' => 'required|array',
+            'variants' => 'array',
             'variants.*' => 'exists:product_variants,id',
         ]);
 
@@ -92,6 +171,7 @@ class ProductImageController extends Controller
 //                    ]);
 //                }
                 $createdImages[] = $image;
+                $product->images()->save($image);
             }
         }
 
@@ -133,7 +213,7 @@ class ProductImageController extends Controller
         // Создаем запись в таблице images
         return Image::create([
             'path' => $path,
-            'url'  => Storage::url($path),
+            'url' => Storage::url($path),
             'order' => $product->images()->count() + 1,
             'is_main' => $product->images()->count() === 0, // Первое изображение делаем основным
         ]);
@@ -190,6 +270,20 @@ class ProductImageController extends Controller
 
         // Если изображение больше не привязано к данному продукту, удаляем файлы и запись
         if (!$product->images()->where('images.id', $image->id)->exists()) {
+            Storage::disk('public')->delete($image->path);
+            $thumbPath = $this->getThumbPath($image->path);
+            Storage::disk('public')->delete($thumbPath);
+            $image->delete();
+        }
+
+        return response()->json([
+            'message' => 'Image deleted successfully.'
+        ], 200);
+    }
+
+    public function deleteImg(Product $product, Image $image,){
+        // Если изображение больше не привязано к данному продукту, удаляем файлы и запись
+        if ($product->images()->where('images.id', $image->id)->exists()) {
             Storage::disk('public')->delete($image->path);
             $thumbPath = $this->getThumbPath($image->path);
             Storage::disk('public')->delete($thumbPath);
