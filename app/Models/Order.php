@@ -175,12 +175,16 @@ class Order extends Model
     }
 
 
-    public function updateTotalAmount()
+    public function updateTotalAmount(): void
     {
         $this->total_amount = $this->items()->sum(DB::raw('quantity * price'));
         $this->save();
     }
 
+    public function deliveryTarget()
+    {
+        return $this->belongsTo(DeliveryTarget::class);
+    }
 
 
 }
