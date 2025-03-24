@@ -18,7 +18,8 @@
         "nextapps/laravel-swagger-ui": "^1.2",
         "spatie/laravel-medialibrary": "^11.12",
         "tightenco/ziggy": "^2.0",
-        "yoomoney/yookassa-sdk-php": "^3.0"
+        "yoomoney/yookassa-sdk-php": "^3.0",
+      "ext-iconv": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
