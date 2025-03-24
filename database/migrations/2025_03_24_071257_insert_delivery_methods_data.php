@@ -1,11 +1,23 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 
 class InsertDeliveryMethodsData extends Migration
 {
     public function up()
     {
+        // Добавляем значение по умолчанию для поля provider_class, если его нет
+        Schema::table('delivery_methods', function (Blueprint $table) {
+            // Если еще нет, установим значение по умолчанию для provider_class
+            if (!Schema::hasColumn('delivery_methods', 'provider_class')) {
+                $table->string('provider_class')->default('DefaultProvider')->after('is_active');
+            }
+        });
+
+        // Вставляем данные в таблицу
         DB::table('delivery_methods')->insert([
             ['name' => 'Пункт выдачи СДЭК', 'code' => 'cdek_pickup', 'description' => 'Самовывоз из пункта выдачи СДЭК', 'is_active' => 1, 'provider_class' => 'CdekProvider'],
             ['name' => 'Пункт самовывоза Boxberry', 'code' => 'boxberry_pickup', 'description' => 'Самовывоз из пункта выдачи Boxberry', 'is_active' => 1, 'provider_class' => 'BoxberryProvider'],
@@ -34,5 +46,3 @@ class InsertDeliveryMethodsData extends Migration
         ])->delete();
     }
 }
-
-
