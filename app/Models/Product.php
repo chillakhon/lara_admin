@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\HasMedia;  // Добавляем интерфейс HasMedia
 use Illuminate\Support\Str;
 
 /**
@@ -55,7 +56,7 @@ use Illuminate\Support\Str;
  * )
  */
 
-class Product extends Model
+class Product extends Model implements HasMedia
 {
     use HasFactory, SoftDeletes, InteractsWithMedia;
 
