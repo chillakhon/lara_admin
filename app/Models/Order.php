@@ -80,6 +80,11 @@ class Order extends Model
         'delivery_date' => 'datetime',
     ];
 
+    public function deliveryTarget()
+    {
+        return $this->belongsTo(DeliveryTarget::class, 'delivery_target_id');
+    }
+
     public function deliveryMethod(): BelongsTo
     {
         return $this->belongsTo(DeliveryMethod::class, 'delivery_method_id');
@@ -180,12 +185,6 @@ class Order extends Model
         $this->total_amount = $this->items()->sum(DB::raw('quantity * price'));
         $this->save();
     }
-
-    public function deliveryTarget()
-    {
-        return $this->belongsTo(DeliveryTarget::class);
-    }
-
 
 }
 
