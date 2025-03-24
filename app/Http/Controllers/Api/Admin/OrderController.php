@@ -119,9 +119,9 @@ class OrderController extends Controller
                     'created_at' => $order->created_at->format('d.m.Y H:i'), // Форматирование даты
                     'client' => $order->client ? [
                         'id' => $order->client->id,
-                        'full_name' => $order->client->user->profile->full_name,
-                        'email' => $order->client->user->email,
-                        'phone' => $order->client->phone,
+                        'full_name' => $order->client->user->profile->full_name ?? 'Не указано',
+                        'email' => $order->client->user->email ?? 'Не указано',
+                        'phone' => $order->client->phone ?? 'Не указано',
                     ] : null,
                     'items' => $order->items->map(function($item) {
                         return [
