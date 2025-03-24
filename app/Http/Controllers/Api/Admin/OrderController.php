@@ -167,9 +167,63 @@ class OrderController extends Controller
         ]);
     }
 
+
+
+    /**
+     * @OA\Post(
+     *     path="/api/orders",
+     *     summary="Создание нового заказа",
+     *     tags={"Orders"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             required={"client_id", "items", "status", "payment_status", "delivery_method_id"},
+     *             @OA\Property(property="client_id", type="integer", example=1),
+     *             @OA\Property(property="items", type="array", @OA\Items(
+     *                 type="object",
+     *                 required={"product_id", "quantity", "price"},
+     *                 @OA\Property(property="product_id", type="integer", example=10),
+     *                 @OA\Property(property="variant_id", type="integer", nullable=true, example=null),
+     *                 @OA\Property(property="quantity", type="number", example=2),
+     *                 @OA\Property(property="price", type="number", example=1999.99)
+     *             )),
+     *             @OA\Property(property="notes", type="string", nullable=true, example="Доставить до 18:00"),
+     *             @OA\Property(property="status", type="string", enum={"new", "processing", "completed", "cancelled"}, example="new"),
+     *             @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "failed", "refunded"}, example="pending"),
+     *             @OA\Property(property="delivery_date", type="string", format="date-time", nullable=true, example="2025-03-18T15:00:00Z", description="Ожидаемая дата доставки"),
+     *             @OA\Property(property="delivery_method_id", type="integer", example=3, description="ID метода доставки"),
+     *             @OA\Property(property="delivery_target_id", type="integer", nullable=true, example=1),
+     *             @OA\Property(property="data", type="string", nullable=true, example="Some additional data")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Заказ успешно создан",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="message", type="string", example="Заказ успешно создан"),
+     *             @OA\Property(property="order", type="object",
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="order_number", type="string"),
+     *                 @OA\Property(property="status", type="string"),
+     *                 @OA\Property(property="payment_status", type="string"),
+     *                 @OA\Property(property="total_amount", type="number"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="delivery_date", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(property="delivery_method_id", type="integer", example=3, description="ID метода доставки"),
+     *                 @OA\Property(property="delivery_target_id", type="integer", nullable=true),
+     *                 @OA\Property(property="data", type="string", nullable=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Ошибка валидации"),
+     *     @OA\Response(response=500, description="Ошибка сервера")
+     * )
+     */
+
     public function store(Request $request)
     {
-        // Валидация данных запроса
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
             'items' => 'required|array|min:1',
@@ -178,45 +232,34 @@ class OrderController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.price' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
-            'status' => 'required|in:new,processing,completed,cancelled',
+            'status' => 'required|in:' . implode(',', array_column(Order::STATUSES, 'value')),
             'payment_status' => 'required|in:pending,paid,failed,refunded',
             'delivery_date' => 'nullable|date_format:Y-m-d H:i:s',
-            'delivery_method_id' => 'required|exists:delivery_methods,id,is_active,1',  // Проверка существования метода доставки
+            'delivery_method_id' => 'required|exists:delivery_methods,id',
+            'delivery_target_id' => 'nullable|exists:delivery_targets,id',
             'data' => 'nullable|string',
         ]);
 
         try {
-            // Создание заказа
             $order = Order::create([
                 'client_id' => $validated['client_id'],
                 'order_number' => 'ORD-' . date('Ymd') . '-' . random_int(1000, 9999),
-                'total_amount' => 0,  // Эта сумма будет обновлена позже
+                'total_amount' => 0,
                 'status' => $validated['status'],
                 'payment_status' => $validated['payment_status'],
                 'notes' => $validated['notes'] ?? null,
                 'delivery_date' => $validated['delivery_date'] ?? null,
-                'delivery_method_id' => $validated['delivery_method_id'],  // Сохраняем ID метода доставки
+                'delivery_method_id' => $validated['delivery_method_id'] ?? null,
+                'delivery_target_id' => $validated['delivery_target_id'] ?? null,
                 'data' => $validated['data'] ?? null,
             ]);
 
-            // Создаем товары для заказа
             foreach ($validated['items'] as $item) {
                 $order->items()->create($item);
             }
 
-            // Обновляем общую сумму заказа
             $order->updateTotalAmount();
 
-            // Добавляем запись в историю
-            $order->history()->create([
-                'status' => $order->status,
-                'payment_status' => $order->payment_status,
-                'comment' => 'Заказ создан',
-                'user_id' => auth()->id(),
-                'delivery_method_id' => $validated['delivery_method_id'],
-            ]);
-
-            // Ответ с информацией о заказе
             return response()->json([
                 'message' => 'Заказ успешно создан',
                 'order' => [
@@ -227,7 +270,9 @@ class OrderController extends Controller
                     'total_amount' => $order->total_amount,
                     'created_at' => $order->created_at,
                     'delivery_date' => $order->delivery_date,
-                    'delivery_method' => $order->deliveryMethod,  // Возвращаем информацию о методе доставки
+                    'delivery_method_id' => $order->delivery_method_id,
+                    'delivery_method_name' => $order->deliveryMethod ? $order->deliveryMethod->name : null,
+                    'delivery_target_id' => $order->delivery_target_id, // Возвращаем delivery_target_id
                     'data' => $order->data,
                 ]
             ], 201);
@@ -235,8 +280,6 @@ class OrderController extends Controller
             return response()->json(['error' => 'Ошибка сервера: ' . $e->getMessage()], 500);
         }
     }
-
-
 
     /**
      * @OA\Get(
@@ -310,7 +353,8 @@ class OrderController extends Controller
                 'client.user.profile',
                 'items.product',
                 'items.productVariant',
-                'history.user'
+                'history.user',
+                'deliveryMethod'
             ]);
 
             return response()->json([
@@ -323,7 +367,7 @@ class OrderController extends Controller
                 'created_at' => $order->created_at,
                 'notes' => $order->notes,
                 'delivery_date' => $order->delivery_date, // Добавляем дату доставки
-                'delivery_method' => $order->delivery_method ? json_decode($order->delivery_method) : null, // Метод доставки
+                'delivery_method' => $order->deliveryMethod,
                 'client' => $order->client ? [
                     'id' => $order->client->id,
                     'full_name' => $order->client->user->profile->full_name,
@@ -380,7 +424,7 @@ class OrderController extends Controller
      *             @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "failed", "refunded"}, example="paid"),
      *             @OA\Property(property="notes", type="string", nullable=true, example="Обновлен менеджером"),
      *             @OA\Property(property="delivery_date", type="string", format="date-time", nullable=true, example="2025-03-15T12:00:00Z"),
-     *             @OA\Property(property="delivery_method", type="object", nullable=true, example={"method": "courier", "details": "Доставить до двери"})
+     *             @OA\Property(property="delivery_method_id", type="integer", nullable=true, example=3, description="ID метода доставки"),
      *         )
      *     ),
      *     @OA\Response(
@@ -395,7 +439,7 @@ class OrderController extends Controller
      *                 @OA\Property(property="payment_status", type="string", example="paid"),
      *                 @OA\Property(property="notes", type="string", example="Обновлен менеджером"),
      *                 @OA\Property(property="delivery_date", type="string", format="date-time", example="2025-03-15T12:00:00Z"),
-     *                 @OA\Property(property="delivery_method", type="object", example={"method": "courier", "details": "Доставить до двери"})
+     *                @OA\Property(property="delivery_method_id", type="integer", nullable=true, example=3, description="ID метода доставки"),
      *             )
      *         )
      *     ),
@@ -411,10 +455,16 @@ class OrderController extends Controller
                 'payment_status' => 'required|string|in:pending,paid,failed,refunded',
                 'notes' => 'nullable|string',
                 'delivery_date' => 'nullable|date_format:Y-m-d\TH:i:s\Z', // Валидация для даты доставки
-                'delivery_method' => 'nullable|json', // Валидация для метода доставки (должен быть JSON-объект)
-            ]);
+                'delivery_method_id' => 'nullable|exists:delivery_methods,id',
+                ]);
 
-            $order->update($validated);
+            $order->update([
+                'status' => $validated['status'],
+                'payment_status' => $validated['payment_status'],
+                'notes' => $validated['notes'],
+                'delivery_date' => $validated['delivery_date'], // Добавляем дату доставки,
+                'delivery_method_id' => $validated['delivery_method_id'] ?? null, // Обновляем delivery_method_id
+            ]);
 
             // Добавляем запись в историю
             $order->history()->create([
@@ -432,7 +482,7 @@ class OrderController extends Controller
                     'payment_status' => $order->payment_status,
                     'notes' => $order->notes,
                     'delivery_date' => $order->delivery_date, // Добавляем дату доставки
-                    'delivery_method' => $order->delivery_method, // Добавляем метод доставки
+                    'delivery_method_id' => $order->delivery_method_id, // Добавляем метод доставки
                 ]
             ], 200);
         } catch (\Exception $e) {
