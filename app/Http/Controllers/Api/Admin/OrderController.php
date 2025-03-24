@@ -81,18 +81,21 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $query = Order::with([
-            'client.user.profile',
-            'items.product',
+            'client.user.profile' => function($query) {
+            },
+            'items.product.media', // Жадная загрузка медиа
             'items.productVariant',
-            'deliveryMethod', // Метод доставки
-            'deliveryDate',   // Дата доставки
-            'deliveryTarget'  // Пункт выдачи или адрес доставки
+            'deliveryMethod',
+            'deliveryDate',
+            'deliveryTarget'
         ])->withCount('items');
 
+        // Фильтрация по статусу
         if ($request->has('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
+        // Поиск
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -104,59 +107,72 @@ class OrderController extends Controller
             });
         }
 
+        // Форматирование заказов с защитой от null
         $orders = $query->latest()
             ->paginate(15)
-            ->map(function($order) {
+            ->through(function($order) {
                 return [
                     'id' => $order->id,
                     'order_number' => $order->order_number,
                     'status' => $order->status,
                     'payment_status' => $order->payment_status,
-                    'is_paid' => $order->payment_status === 'paid', // Булево поле для оплаты
-                    'total_amount' => number_format($order->total_amount, 2, '.', ' ') . ' руб', // Форматирование суммы
-                    'discount_amount' => number_format($order->discount_amount, 2, '.', ' ') . ' руб', // Форматирование скидки
+                    'is_paid' => $order->payment_status === 'paid',
+                    'total_amount' => number_format($order->total_amount, 2, '.', ' ') . ' руб',
+                    'discount_amount' => number_format($order->discount_amount, 2, '.', ' ') . ' руб',
                     'items_count' => $order->items_count,
-                    'created_at' => $order->created_at->format('d.m.Y H:i'), // Форматирование даты
-                    'client' => $order->client ? [
-                        'id' => $order->client->id,
-                        'full_name' => $order->client->user->profile->full_name ?? 'Не указано',
-                        'email' => $order->client->user->email ?? 'Не указано',
-                        'phone' => $order->client->phone ?? 'Не указано',
-                    ] : null,
+                    'created_at' => optional($order->created_at)->format('d.m.Y H:i'),
+
+                    // Безопасное получение клиента
+                    'client' => optional($order->client, function($client) {
+                        return [
+                            'id' => $client->id,
+                            'full_name' => optional(optional($client->user)->profile)->full_name ?? 'Не указано',
+                            'email' => optional($client->user)->email ?? 'Не указано',
+                            'phone' => $client->phone ?? 'Не указано',
+                        ];
+                    }),
+
+                    // Безопасное получение товаров
                     'items' => $order->items->map(function($item) {
                         return [
                             'id' => $item->id,
-                            'product' => [
-                                'id' => $item->product->id,
-                                'name' => $item->product->name,
-                                'image' => $item->product->getFirstMediaUrl('images'),
-                            ],
+                            'product' => optional($item->product, function($product) {
+                                return [
+                                    'id' => $product->id,
+                                    'name' => $product->name,
+                                    'image' => $product->getFirstMediaUrl('images') ?: null,
+                                ];
+                            }),
                             'variant' => $item->productVariant,
                             'quantity' => $item->quantity,
                             'price' => $item->price,
                         ];
                     }),
-                    'delivery_date' => $order->deliveryDate ? $order->deliveryDate->date->format('d.m.Y H:i') : null, // Форматирование даты доставки
-                    'delivery_method' => $order->deliveryMethod ? [
-                        'name' => $order->deliveryMethod->name,
-                        'description' => $order->deliveryMethod->description,
-                        'type' => $order->deliveryMethod->type, // Тип доставки (например, "Пункт самовывоза")
-                    ] : null,
-                    'delivery_target' => $order->deliveryTarget ? $order->deliveryTarget->name : null, // Пункт выдачи или адрес доставки
+
+                    // Безопасное получение данных доставки
+                    'delivery_date' => optional(optional($order->deliveryDate)->date)->format('d.m.Y H:i'),
+                    'delivery_method' => optional($order->deliveryMethod, function($method) {
+                        return [
+                            'name' => $method->name,
+                            'description' => $method->description,
+                            'type' => $method->type,
+                        ];
+                    }),
+                    'delivery_target' => optional($order->deliveryTarget)->name,
                 ];
             });
 
-        return response()->json([
-            'orders' => $orders,
+        // Дополнительные данные для UI
+        $additionalData = [
             'filters' => $request->only(['status', 'search']),
             'clients' => Client::with('user.profile')
                 ->get()
                 ->map(function($client) {
                     return [
                         'id' => $client->id,
-                        'full_name' => $client->user->profile->full_name,
-                        'email' => $client->user->email,
-                        'phone' => $client->phone,
+                        'full_name' => optional(optional($client->user)->profile)->full_name ?? 'Клиент удален',
+                        'email' => optional($client->user)->email ?? 'Не указан',
+                        'phone' => $client->phone ?? 'Не указан',
                     ];
                 }),
             'products' => Product::with(['variants'])
@@ -164,9 +180,13 @@ class OrderController extends Controller
                 ->get(),
             'statuses' => Order::STATUSES,
             'paymentStatuses' => Order::PAYMENT_STATUSES,
-        ]);
-    }
+        ];
 
+        return response()->json(array_merge(
+            ['orders' => $orders],
+            $additionalData
+        ));
+    }
 
 
     /**
