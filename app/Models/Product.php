@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Support\Str;
+
 /**
  * @OA\Schema(
  *     schema="Product",
@@ -27,7 +30,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *     @OA\Property(property="has_variants", type="boolean"),
  *     @OA\Property(property="allow_preorder", type="boolean"),
  *     @OA\Property(property="after_purchase_processing_time", type="integer"),
- *
  *     @OA\Property(property="price", type="number", format="float", nullable=true),
  *     @OA\Property(property="cost_price", type="number", format="float", nullable=true),
  *     @OA\Property(property="stock_quantity", type="integer", example=0),
@@ -43,10 +45,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *     @OA\Property(property="length", type="number", format="float", nullable=true),
  *     @OA\Property(property="width", type="number", format="float", nullable=true),
  *     @OA\Property(property="height", type="number", format="float", nullable=true),
- *
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time"),
- *
  *     @OA\Property(
  *         property="categories",
  *         type="array",
@@ -57,7 +57,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, InteractsWithMedia;
 
     protected $fillable = [
         'name',
@@ -81,7 +81,7 @@ class Product extends Model
         'length',
         'width',
         'height',
-        'currency'
+        'currency',
     ];
 
     protected $casts = [
@@ -95,9 +95,8 @@ class Product extends Model
         'weight' => 'decimal:3',
         'length' => 'decimal:2',
         'width' => 'decimal:2',
-        'height' => 'decimal:2'
+        'height' => 'decimal:2',
     ];
-
 
     protected static function boot()
     {
@@ -178,7 +177,6 @@ class Product extends Model
     {
         return $this->belongsTo(Unit::class, 'default_unit_id');
     }
-
 
     public function categories()
     {
@@ -273,5 +271,4 @@ class Product extends Model
             ->where('is_published', true)
             ->count();
     }
-
 }
