@@ -3,11 +3,8 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
 use App\Models\Image;
 use App\Models\Product;
-use App\Models\ProductVariant;
-use App\Models\Unit;
 use App\Services\MaterialService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -77,7 +74,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $products = Product::with(['categories', 'options', 'variants'])
+        $products = Product::with(['categories', 'options', 'variants', 'images'])
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
@@ -92,6 +89,13 @@ class ProductController extends Controller
             })
             ->latest()
             ->paginate(10);
+
+
+        $products->getCollection()->transform(function ($product) {
+            $product->image_path = $product->images->isNotEmpty() ? $product->images->first()->path : null;
+            unset($product->images);
+            return $product;
+        });
 
         return response()->json($products);
     }
