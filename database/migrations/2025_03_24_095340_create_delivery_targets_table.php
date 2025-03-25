@@ -9,21 +9,20 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->foreignId('delivery_target_id')->constrained()->nullable();
+        Schema::create('delivery_targets', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
         });
     }
-
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('delivery_targets');
     }
 };
