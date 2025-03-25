@@ -16,27 +16,29 @@ class OrderController extends Controller
     /**
      * @OA\Get(
      *     path="/api/orders",
-     *     summary="Получение списка заказов",
+     *     summary="Получить список заказов",
+     *     description="Возвращает список заказов с фильтрами и пагинацией",
      *     tags={"Orders"},
      *     @OA\Parameter(
      *         name="status",
      *         in="query",
      *         required=false,
-     *         description="Статус заказа для фильтрации (open, closed, deleted)",
+     *         description="Статус заказа",
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
      *         required=false,
+     *         description="Поиск по номеру заказа или клиенту",
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Список заказов",
      *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="orders", type="array", @OA\Items(
+     *             type="array",
+     *             @OA\Items(
      *                 type="object",
      *                 @OA\Property(property="id", type="integer"),
      *                 @OA\Property(property="order_number", type="string"),
@@ -53,29 +55,34 @@ class OrderController extends Controller
      *                     @OA\Property(property="email", type="string"),
      *                     @OA\Property(property="phone", type="string")
      *                 ),
-     *                 @OA\Property(property="items", type="array", @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer"),
-     *                     @OA\Property(property="product", type="object",
+     *                 @OA\Property(property="items", type="array",
+     *                     @OA\Items(type="object",
      *                         @OA\Property(property="id", type="integer"),
-     *                         @OA\Property(property="name", type="string"),
-     *                         @OA\Property(property="image", type="string")
-     *                     ),
-     *                     @OA\Property(property="variant", type="object"),
-     *                     @OA\Property(property="quantity", type="integer"),
-     *                     @OA\Property(property="price", type="number")
-     *                 )),
+     *                         @OA\Property(property="product", type="object",
+     *                             @OA\Property(property="id", type="integer"),
+     *                             @OA\Property(property="name", type="string"),
+     *                             @OA\Property(property="image", type="string")
+     *                         ),
+     *                         @OA\Property(property="variant", type="object"),
+     *                         @OA\Property(property="quantity", type="integer"),
+     *                         @OA\Property(property="price", type="string")
+     *                     )
+     *                 ),
      *                 @OA\Property(property="delivery_date", type="string", format="date-time"),
      *                 @OA\Property(property="delivery_method", type="object",
      *                     @OA\Property(property="name", type="string"),
      *                     @OA\Property(property="description", type="string"),
      *                     @OA\Property(property="type", type="string")
      *                 ),
-     *                 @OA\Property(property="delivery_target", type="string", nullable=true)
-     *             ))
+     *                 @OA\Property(property="delivery_target", type="string"),
+     *                 @OA\Property(property="delivery_target_id", type="integer")
+     *             )
      *         )
      *     ),
-     *     @OA\Response(response=400, description="Ошибка запроса")
+     *     @OA\Response(
+     *         response=400,
+     *         description="Ошибка запроса"
+     *     ),
      * )
      */
     public function index(Request $request)
@@ -159,6 +166,7 @@ class OrderController extends Controller
                         ];
                     }),
                     'delivery_target' => optional($order->deliveryTarget)->name,
+                    'delivery_target_id' => optional($order->deliveryTarget)->id,  // Добавленное поле
                 ];
             });
 
@@ -187,7 +195,6 @@ class OrderController extends Controller
             $additionalData
         ));
     }
-
 
     /**
      * @OA\Post(
