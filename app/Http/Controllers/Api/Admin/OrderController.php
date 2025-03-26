@@ -159,7 +159,6 @@ class OrderController extends Controller
         ]);
     }
 
-
     /**
      * @OA\Post(
      *     path="/api/orders",
@@ -502,7 +501,7 @@ class OrderController extends Controller
      *                 @OA\Property(property="payment_status", type="string", example="paid"),
      *                 @OA\Property(property="notes", type="string", example="Обновлен менеджером"),
      *                 @OA\Property(property="delivery_date", type="string", format="date-time", example="2025-03-15T12:00:00Z"),
-     *                @OA\Property(property="delivery_method_id", type="integer", nullable=true, example=3, description="ID метода доставки"),
+     *                 @OA\Property(property="delivery_method_id", type="integer", nullable=true, example=3, description="ID метода доставки"),
      *             )
      *         )
      *     ),
