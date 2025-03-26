@@ -15,7 +15,7 @@ class OrderController extends Controller
 {
     /**
      * @OA\Get(
-     *     path="/orders",
+     *     path="/api/orders",
      *     summary="Получить список заказов",
      *     tags={"Orders"},
      *     @OA\Parameter(
