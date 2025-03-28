@@ -4,15 +4,26 @@ use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\ClientController;
 use App\Http\Controllers\Api\Admin\ClientLevelController;
 use App\Http\Controllers\Api\Admin\CostCategoryController;
+use App\Http\Controllers\Api\Admin\DeliveryMethodController;
+use App\Http\Controllers\Api\Admin\DeliveryRateController;
+use App\Http\Controllers\Api\Admin\DeliveryZoneController;
 use App\Http\Controllers\Api\Admin\InventoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\OptionController;
+use App\Http\Controllers\Api\Admin\OrderStatsController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\ProductImageController;
 use App\Http\Controllers\Api\Admin\ProductionBatchController;
 use App\Http\Controllers\Api\Admin\ProductionController;
 use App\Http\Controllers\Api\Admin\ProductVariantController;
 use App\Http\Controllers\Api\Admin\RecipeController;
+use App\Http\Controllers\Api\Admin\ShipmentController;
+use App\Http\Controllers\Api\Admin\TaskAttachmentController;
+use App\Http\Controllers\Api\Admin\TaskCommentController;
+use App\Http\Controllers\Api\Admin\TaskController;
+use App\Http\Controllers\Api\Admin\TaskLabelController;
+use App\Http\Controllers\Api\Admin\TaskPriorityController;
+use App\Http\Controllers\Api\Admin\TaskStatusController;
 use App\Http\Controllers\Api\Admin\UnitController;
 use App\Http\Controllers\Api\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\Auth\ConfirmablePasswordController;
@@ -25,7 +36,7 @@ use App\Http\Controllers\Api\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\LeadController;
-use App\Http\Controllers\Api\LeadTypeController;
+//use App\Http\Controllers\Api\Admin\LeadTypeController;
 use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\PromoCodeController;
 use App\Http\Controllers\Api\ReviewController;
@@ -280,9 +291,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::prefix('orders')->name('orders.')->middleware(['role:super-admin,admin,manager', 'permission:orders.view,orders.manage'])->group(function () {
             Route::get('/', [OrderController::class, 'index'])->name('orders.index');  // Путь будет /api/orders
             Route::post('/', [OrderController::class, 'store'])->name('orders.store');  // Путь будет /api/orders
+            Route::get('/stats', [OrderStatsController::class, 'stats'])->name('orders.stats');
             Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');  // Путь будет /api/orders/{order}
             Route::put('/{order}', [OrderController::class, 'update'])->name('orders.update');  // Путь будет /api/orders/{order}
             Route::delete('/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');  // Путь будет /api/orders/{order}
+
+
+
 
             // Дополнительные действия с заказами
             Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');  // Путь будет /api/orders/{order}/status
@@ -376,75 +391,75 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 //
 //        // Задачи
-//        Route::prefix('tasks')->name('tasks.')->group(function () {
-//            Route::get('/', [TaskController::class, 'index'])->name('index');
-//            Route::post('/', [TaskController::class, 'store'])->name('store');
-//            Route::put('/{task}', [TaskController::class, 'update'])->name('update');
-//            Route::delete('/{task}', [TaskController::class, 'destroy'])->name('destroy');
-//
-//            // Комментарии к задачам
-//            Route::post('/{task}/comments', [TaskCommentController::class, 'store'])->name('comments.store');
-//            Route::put('/{task}/comments/{comment}', [TaskCommentController::class, 'update'])->name('comments.update');
-//            Route::delete('/{task}/comments/{comment}', [TaskCommentController::class, 'destroy'])->name('comments.destroy');
-//
-//            // Вложения к задачам
-//            Route::post('/{task}/attachments', [TaskAttachmentController::class, 'store'])->name('attachments.store');
-//            Route::delete('/{task}/attachments/{attachment}', [TaskAttachmentController::class, 'destroy'])->name('attachments.destroy');
-//            Route::get('/{task}/attachments/{attachment}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
-//        });
-//
-//        // Статусы задач
-//        Route::prefix('task-statuses')->name('task-statuses.')->group(function () {
-//            Route::get('/', [TaskStatusController::class, 'index'])->name('index');
-//            Route::post('/', [TaskStatusController::class, 'store'])->name('store');
-//            Route::put('/{status}', [TaskStatusController::class, 'update'])->name('update');
-//            Route::delete('/{status}', [TaskStatusController::class, 'destroy'])->name('destroy');
-//            Route::post('/reorder', [TaskStatusController::class, 'reorder'])->name('reorder');
-//        });
-//
-//        // риоритеты задач
-//        Route::prefix('task-priorities')->name('task-priorities.')->group(function () {
-//            Route::get('/', [TaskPriorityController::class, 'index'])->name('index');
-//            Route::post('/', [TaskPriorityController::class, 'store'])->name('store');
-//            Route::put('/{priority}', [TaskPriorityController::class, 'update'])->name('update');
-//            Route::delete('/{priority}', [TaskPriorityController::class, 'destroy'])->name('destroy');
-//        });
-//
-//        // Метки задач
-//        Route::prefix('task-labels')->name('task-labels.')->group(function () {
-//            Route::get('/', [TaskLabelController::class, 'index'])->name('index');
-//            Route::post('/', [TaskLabelController::class, 'store'])->name('store');
-//            Route::put('/{label}', [TaskLabelController::class, 'update'])->name('update');
-//            Route::delete('/{label}', [TaskLabelController::class, 'destroy'])->name('destroy');
-//        });
-//
-//        // Маршруты для управления доставкой
-//        Route::prefix('delivery')->name('delivery.')->group(function () {
-//            // Методы доставки
-//            Route::get('/methods', [DeliveryMethodController::class, 'index'])->name('methods.index');
-//            Route::get('/methods/{method}', [DeliveryMethodController::class, 'show'])->name('methods.show');
-//            Route::post('/methods', [DeliveryMethodController::class, 'store'])->name('methods.store');
-//            Route::put('/methods/{method}', [DeliveryMethodController::class, 'update'])->name('methods.update');
-//            Route::delete('/methods/{method}', [DeliveryMethodController::class, 'destroy'])->name('methods.destroy');
+        Route::prefix('tasks')->name('tasks.')->group(function () {
+            Route::get('/', [TaskController::class, 'index'])->name('index');
+            Route::post('/', [TaskController::class, 'store'])->name('store');
+            Route::put('/{task}', [TaskController::class, 'update'])->name('update');
+            Route::delete('/{task}', [TaskController::class, 'destroy'])->name('destroy');
+
+            // Комментарии к задачам
+            Route::post('/{task}/comments', [TaskCommentController::class, 'store'])->name('comments.store');
+            Route::put('/{task}/comments/{comment}', [TaskCommentController::class, 'update'])->name('comments.update');
+            Route::delete('/{task}/comments/{comment}', [TaskCommentController::class, 'destroy'])->name('comments.destroy');
+
+            // Вложения к задачам
+            Route::post('/{task}/attachments', [TaskAttachmentController::class, 'store'])->name('attachments.store');
+            Route::delete('/{task}/attachments/{attachment}', [TaskAttachmentController::class, 'destroy'])->name('attachments.destroy');
+            Route::get('/{task}/attachments/{attachment}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
+        });
+
+        // Статусы задач
+        Route::prefix('task-statuses')->name('task-statuses.')->group(function () {
+            Route::get('/', [TaskStatusController::class, 'index'])->name('index');
+            Route::post('/', [TaskStatusController::class, 'store'])->name('store');
+            Route::put('/{status}', [TaskStatusController::class, 'update'])->name('update');
+            Route::delete('/{status}', [TaskStatusController::class, 'destroy'])->name('destroy');
+            Route::post('/reorder', [TaskStatusController::class, 'reorder'])->name('reorder');
+        });
+
+        // приоритеты задач
+        Route::prefix('task-priorities')->name('task-priorities.')->group(function () {
+            Route::get('/', [TaskPriorityController::class, 'index'])->name('index');
+            Route::post('/', [TaskPriorityController::class, 'store'])->name('store');
+            Route::put('/{priority}', [TaskPriorityController::class, 'update'])->name('update');
+            Route::delete('/{priority}', [TaskPriorityController::class, 'destroy'])->name('destroy');
+        });
+
+        // Метки задач
+        Route::prefix('task-labels')->name('task-labels.')->group(function () {
+            Route::get('/', [TaskLabelController::class, 'index'])->name('index');
+            Route::post('/', [TaskLabelController::class, 'store'])->name('store');
+            Route::put('/{label}', [TaskLabelController::class, 'update'])->name('update');
+            Route::delete('/{label}', [TaskLabelController::class, 'destroy'])->name('destroy');
+        });
+
+      // Маршруты для управления доставкой
+        Route::prefix('delivery')->name('delivery.')->group(function () {
+            // Методы доставки
+            Route::get('/methods', [DeliveryMethodController::class, 'index'])->name('methods.index');
+            Route::get('/methods/{method}', [DeliveryMethodController::class, 'show'])->name('methods.show');
+            Route::post('/methods', [DeliveryMethodController::class, 'store'])->name('methods.store');
+            Route::put('/methods/{method}', [DeliveryMethodController::class, 'update'])->name('methods.update');
+            Route::delete('/methods/{method}', [DeliveryMethodController::class, 'destroy'])->name('methods.destroy');
 //
 //            // Зоны доставки
-//            Route::get('/methods/{method}/zones', [DeliveryZoneController::class, 'index'])->name('zones.index');
-//            Route::post('/methods/{method}/zones', [DeliveryZoneController::class, 'store'])->name('zones.store');
-//            Route::put('/zones/{zone}', [DeliveryZoneController::class, 'update'])->name('zones.update');
-//            Route::delete('/zones/{zone}', [DeliveryZoneController::class, 'destroy'])->name('zones.destroy');
-//
-//            // Тарифы доставки
-//            Route::get('/zones/{zone}/rates', [DeliveryRateController::class, 'index'])->name('rates.index');
-//            Route::post('/zones/{zone}/rates', [DeliveryRateController::class, 'store'])->name('rates.store');
-//            Route::put('/rates/{rate}', [DeliveryRateController::class, 'update'])->name('rates.update');
-//            Route::delete('/rates/{rate}', [DeliveryRateController::class, 'destroy'])->name('rates.destroy');
-//
-//            // Отправления
-//            // Route::get('/shipments', [ShipmentController::class, 'index'])->name('shipments.index');
-//            // Route::put('/shipments/{shipment}', [ShipmentController::class, 'update'])->name('shipments.update');
-//            // Route::get('/shipments/{shipment}/print-label', [ShipmentController::class, 'printLabel'])->name('shipments.print-label');
-//            // Route::post('/shipments/{shipment}/cancel', [ShipmentController::class, 'cancel'])->name('shipments.cancel');
-//        });
+            Route::get('/methods/{method}/zones', [DeliveryZoneController::class, 'index'])->name('zones.index');
+            Route::post('/methods/{method}/zones', [DeliveryZoneController::class, 'store'])->name('zones.store');
+            Route::put('/zones/{zone}', [DeliveryZoneController::class, 'update'])->name('zones.update');
+            Route::delete('/zones/{zone}', [DeliveryZoneController::class, 'destroy'])->name('zones.destroy');
+
+            // Тарифы доставки
+            Route::get('/zones/{zone}/rates', [DeliveryRateController::class, 'index'])->name('rates.index');
+            Route::post('/zones/{zone}/rates', [DeliveryRateController::class, 'store'])->name('rates.store');
+            Route::put('/rates/{rate}', [DeliveryRateController::class, 'update'])->name('rates.update');
+            Route::delete('/rates/{rate}', [DeliveryRateController::class, 'destroy'])->name('rates.destroy');
+
+            // Отправления
+             Route::get('/shipments', [ShipmentController::class, 'index'])->name('shipments.index');
+             Route::put('/shipments/{shipment}', [ShipmentController::class, 'update'])->name('shipments.update');
+             Route::get('/shipments/{shipment}/print-label', [ShipmentController::class, 'printLabel'])->name('shipments.print-label');
+             Route::post('/shipments/{shipment}/cancel', [ShipmentController::class, 'cancel'])->name('shipments.cancel');
+        });
 //
 //        Route::group(['prefix' => 'settings', 'as' => 'settings.'], function () {
 //            Route::get('/general', [SettingsController::class, 'general'])->name('general');

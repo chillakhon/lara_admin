@@ -8,8 +8,12 @@ use App\Models\Client;
 use App\Models\Product;
 use App\Models\DeliveryDate;
 use App\Models\DeliveryMethod;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+
 
 class OrderController extends Controller
 {
@@ -371,7 +375,6 @@ class OrderController extends Controller
      *     )
      * )
      */
-
     public function show(Order $order)
     {
         try {
