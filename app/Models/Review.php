@@ -64,4 +64,6 @@ class Review extends Model
     {
         return $query->where('is_verified', true);
     }
-} 
+
+
+}

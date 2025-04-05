@@ -73,14 +73,11 @@ Route::prefix('leads')->group(function () {
     Route::post('/', [LeadController::class, 'store']);
 });
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('reviews', [ReviewController::class, 'index']);
-    Route::post('reviews', [ReviewController::class, 'store']);
-    Route::prefix('reviews')->group(function () {
-        Route::get('/', [ReviewController::class, 'index']);
-        Route::post('/', [ReviewController::class, 'store']);
-        Route::get('product/{product}', [ReviewController::class, 'productReviews']);
-    });
+Route::middleware('auth:sanctum')->prefix('reviews')->group(function () {
+    Route::get('/', [ReviewController::class, 'index']);
+    Route::post('/', [ReviewController::class, 'store']);
+    Route::get('product/{product}', [ReviewController::class, 'productReviews']);
+
     // Route::get('/shipments', [ShipmentController::class, 'userShipments'])
     //     ->name('shipments.index');
 });
