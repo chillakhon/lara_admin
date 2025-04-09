@@ -60,7 +60,7 @@ class ProductImageController extends Controller
 
 
         if (!file_exists($filePath)) {
-            return response()->json(['message' => 'File not found'], 404);
+            $filePath = public_path('images/default.png');
         }
 
         return response()->file($filePath);
