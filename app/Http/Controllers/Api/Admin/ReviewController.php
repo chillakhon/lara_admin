@@ -9,6 +9,7 @@ use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
+
 class ReviewController extends Controller
 {
     /**
@@ -39,28 +40,65 @@ class ReviewController extends Controller
      *                 type="array",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="text", type="string", example="Отличный продукт!"),
+     *                     @OA\Property(property="id", type="integer", example=14),
+     *                     @OA\Property(property="content", type="string", example="Отличный продукт!"),
      *                     @OA\Property(property="rating", type="integer", example=5),
-     *                     @OA\Property(property="client", type="object",
-     *                         @OA\Property(property="id", type="integer", example=3),
-     *                         @OA\Property(property="name", type="string", example="Иван Иванов")
+     *                     @OA\Property(property="is_verified", type="boolean", example=true),
+     *                     @OA\Property(property="is_published", type="boolean", example=true),
+     *                     @OA\Property(property="published_at", type="string", format="date-time", example="09.04.2025 12:00", nullable=true),
+     *                     @OA\Property(property="created_at", type="string", format="date-time", example="09.04.2025 11:22"),
+     *                     @OA\Property(
+     *                         property="status",
+     *                         type="string",
+     *                         enum={"new", "published"},
+     *                         example="published",
+     *                         description="Статус отзыва: 'new' (новый) или 'published' (опубликован)"
      *                     ),
-     *                     @OA\Property(property="attributes", type="array",
-     *                         @OA\Items(type="object",
-     *                             @OA\Property(property="name", type="string", example="Цвет"),
-     *                             @OA\Property(property="value", type="string", example="Красный")
+     *                     @OA\Property(
+     *                         property="client",
+     *                         type="object",
+     *                         nullable=true,
+     *                         @OA\Property(property="id", type="integer", example=11),
+     *                         @OA\Property(property="name", type="string", example="Super Admin"),
+     *                         @OA\Property(property="email", type="string", example="superadmin@example.com"),
+     *                         @OA\Property(property="avatar", type="string", example=null, nullable=true)
+     *                     ),
+     *                     @OA\Property(
+     *                         property="reviewable",
+     *                         type="object",
+     *                         nullable=true,
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="type", type="string", example="Product"),
+     *                         @OA\Property(property="name", type="string", example="Product Name")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="attributes",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=23),
+     *                             @OA\Property(property="name", type="string", example="Качество"),
+     *                             @OA\Property(property="rating", type="integer", example=5)
      *                         )
      *                     ),
-     *                     @OA\Property(property="responses", type="array",
-     *                         @OA\Items(type="object",
+     *                     @OA\Property(
+     *                         property="responses",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             type="object",
      *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="text", type="string", example="Спасибо за ваш отзыв!")
+     *                             @OA\Property(property="content", type="string", example="Спасибо за отзыв!"),
+     *                             @OA\Property(property="created_at", type="string", format="date-time", example="09.04.2025 12:30")
      *                         )
      *                     ),
-     *                     @OA\Property(property="images", type="array",
-     *                         @OA\Items(type="object",
-     *                             @OA\Property(property="url", type="string", example="https://example.com/image.jpg")
+     *                     @OA\Property(
+     *                         property="images",
+     *                         type="array",
+     *                         @OA\Items(
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="url", type="string", example="http://127.0.0.1:8000/storage/reviews/image1.jpg"),
+     *                             @OA\Property(property="thumbnail", type="string", example="http://127.0.0.1:8000/storage/reviews/thumb1.jpg")
      *                         )
      *                     )
      *                 )
@@ -69,8 +107,8 @@ class ReviewController extends Controller
      *             @OA\Property(property="per_page", type="integer", example=15),
      *             @OA\Property(property="total", type="integer", example=45),
      *             @OA\Property(property="last_page", type="integer", example=3),
-     *             @OA\Property(property="next_page_url", type="string", example="https://site.com/api/reviews?page=2"),
-     *             @OA\Property(property="prev_page_url", type="string", example="null")
+     *             @OA\Property(property="next_page_url", type="string", example="https://site.com/api/reviews?page=2", nullable=true),
+     *             @OA\Property(property="prev_page_url", type="string", example=null, nullable=true)
      *         )
      *     ),
      *     @OA\Response(
@@ -88,7 +126,8 @@ class ReviewController extends Controller
      *             @OA\Property(property="error", type="string", example="Internal Server Error"),
      *             @OA\Property(property="message", type="string", example="Ошибка при получении отзывов")
      *         )
-     *     )
+     *     ),
+     *     security={{"bearerAuth": {}}}
      * )
      */
     public function index(Request $request)
@@ -116,94 +155,76 @@ class ReviewController extends Controller
         ]);
     }
 
-
     /**
-     * Создать новый отзыв
-     *
      * @OA\Post(
      *     path="/api/reviews",
-     *     summary="Создать новый отзыв",
-     *     description="Создает новый отзыв для продукта или другого объекта. Требуется обязательная авторизация.",
+     *     summary="Создать отзыв",
+     *     description="Создает отзыв клиента на продукт или услугу",
+     *     operationId="storeReview",
      *     tags={"Reviews"},
+     *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         description="Данные для создания отзыва",
      *         @OA\JsonContent(
      *             required={"reviewable_id", "reviewable_type", "content", "rating"},
-     *             @OA\Property(property="reviewable_id", type="integer", example=1, description="ID объекта для отзыва (например, продукта)"),
-     *             @OA\Property(property="reviewable_type", type="string", example="Product", description="Тип объекта для отзыва (например, Product)"),
-     *             @OA\Property(property="content", type="string", example="Отличный продукт!", description="Текст отзыва"),
-     *             @OA\Property(property="rating", type="integer", example=5, description="Оценка от 1 до 5"),
-     *             @OA\Property(property="attributes", type="array", description="Дополнительные атрибуты отзыва",
+     *             @OA\Property(property="reviewable_id", type="integer", example=123),
+     *             @OA\Property(property="reviewable_type", type="string", example="App\\Models\\Product"),
+     *             @OA\Property(property="content", type="string", example="Очень хороший товар!"),
+     *             @OA\Property(property="rating", type="integer", example=5),
+     *             @OA\Property(
+     *                 property="attributes",
+     *                 type="array",
      *                 @OA\Items(
      *                     type="object",
-     *                     @OA\Property(property="name", type="string", example="Цвет", description="Название атрибута"),
-     *                     @OA\Property(property="rating", type="integer", example=4, description="Оценка атрибута")
+     *                     @OA\Property(property="name", type="string", example="Качество"),
+     *                     @OA\Property(property="rating", type="integer", example=4)
      *                 )
      *             ),
-     *             @OA\Property(property="images", type="array", description="Изображения отзыва",
-     *                 @OA\Items(
-     *                     type="string",
-     *                     format="binary",
-     *                     description="Изображение отзыва"
-     *                 )
+     *             @OA\Property(
+     *                 property="images",
+     *                 type="array",
+     *                 @OA\Items(type="string", format="binary")
      *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Отзыв успешно создан",
+     *         description="Успешно создано",
      *         @OA\JsonContent(
-     *             type="object",
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="content", type="string", example="Отличный продукт!"),
+     *                 @OA\Property(property="content", type="string", example="Отличное качество!"),
      *                 @OA\Property(property="rating", type="integer", example=5),
+     *                 @OA\Property(property="status", type="string", example="new"),
      *                 @OA\Property(property="client", type="object",
-     *                     @OA\Property(property="id", type="integer", example=3),
-     *                     @OA\Property(property="name", type="string", example="Иван Иванов")
+     *                     @OA\Property(property="id", type="integer", example=10),
+     *                     @OA\Property(property="name", type="string", example="Иван")
      *                 ),
-     *                 @OA\Property(property="attributes", type="array",
-     *                     @OA\Items(type="object",
-     *                         @OA\Property(property="name", type="string", example="Цвет"),
-     *                         @OA\Property(property="rating", type="integer", example="4")
+     *                 @OA\Property(
+     *                     property="attributes",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="name", type="string", example="Упаковка"),
+     *                         @OA\Property(property="rating", type="integer", example=4)
      *                     )
      *                 ),
-     *                 @OA\Property(property="images", type="array",
-     *                     @OA\Items(type="object",
-     *                         @OA\Property(property="path", type="string", example="/storage/reviews/image.jpg"),
+     *                 @OA\Property(
+     *                     property="images",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="path", type="string", example="reviews/image.jpg"),
      *                         @OA\Property(property="url", type="string", example="https://example.com/storage/reviews/image.jpg")
      *                     )
      *                 )
      *             )
      *         )
      *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Ошибка валидации данных",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Bad Request"),
-     *             @OA\Property(property="message", type="string", example="Некорректные данные запроса")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Неавторизованный доступ",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Unauthorized"),
-     *             @OA\Property(property="message", type="string", example="Необходима авторизация")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Ошибка сервера",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Internal Server Error"),
-     *             @OA\Property(property="message", type="string", example="Не удалось создать отзыв")
-     *         )
-     *     )
+     *     @OA\Response(response=422, description="Ошибка валидации"),
      * )
      */
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -252,6 +273,7 @@ class ReviewController extends Controller
                     'id' => $review->client->id,
                     'name' => $review->client->name,
                 ] : null, // Если клиента нет, возвращаем null
+                'status' => $review->status,
                 'attributes' => $review->attributes->map(function ($attribute) {
                     return [
                         'name' => $attribute->name,
@@ -350,5 +372,139 @@ class ReviewController extends Controller
         return response()->json($reviews);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/reviews/{review}/publish",
+     *     summary="Публикация отзыва",
+     *     description="Помечает отзыв как опубликованный, проверенный и устанавливает дату публикации",
+     *     operationId="publishReview",
+     *     tags={"Reviews"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="review",
+     *         in="path",
+     *         required=true,
+     *         description="ID отзыва",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Отзыв успешно опубликован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Review published successfully"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Review")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Отзыв не найден"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован"
+     *     )
+     * )
+     */
+    public function publish(Request $request, Review $review)
+    {
+        $review->update([
+            'is_published' => true,
+            'is_verified' => true,
+            'published_at' => $review->published_at ?? now(),
+            'status' => Review::STATUS_PUBLISHED,
+        ]);
+
+        return response()->json([
+            'message' => 'Review published successfully',
+            'data' => new ReviewResource($review),
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/reviews/{review}/unpublish",
+     *     summary="Снять публикацию отзыва",
+     *     description="Ставит is_published и is_verified в false, сбрасывает published_at, меняет статус на 'new'",
+     *     operationId="unpublishReview",
+     *     tags={"Reviews"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="review",
+     *         in="path",
+     *         required=true,
+     *         description="ID отзыва",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Отзыв успешно снят с публикации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Review unpublished successfully"),
+     *             @OA\Property(property="data", ref="#/components/schemas/Review")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Отзыв не найден"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован"
+     *     )
+     * )
+     */
+
+    public function unpublish(Request $request, Review $review)
+    {
+        $review->update([
+            'is_published' => false,
+            'is_verified' => false,
+            'published_at' => null,
+            'status' => Review::STATUS_NEW,
+        ]);
+
+        return response()->json([
+            'message' => 'Review unpublished successfully',
+            'data' => new ReviewResource($review),
+        ]);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/reviews/{review}",
+     *     summary="Удаление отзыва",
+     *     description="Удаляет отзыв по ID (мягкое удаление, если используется SoftDeletes)",
+     *     operationId="deleteReview",
+     *     tags={"Reviews"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="review",
+     *         in="path",
+     *         required=true,
+     *         description="ID отзыва",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *         description="Отзыв успешно удалён (без тела ответа)"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Отзыв не найден"
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован"
+     *     )
+     * )
+     */
+    public function destroy(Request $request, Review $review)
+    {
+        $review->delete();
+
+        return response()->json([
+            'message' => 'Review deleted successfully',
+        ], 204);
+    }
 
 }

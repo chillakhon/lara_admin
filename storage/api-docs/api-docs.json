@@ -7655,9 +7655,9 @@
                                                 "properties": {
                                                     "id": {
                                                         "type": "integer",
-                                                        "example": 1
+                                                        "example": 14
                                                     },
-                                                    "text": {
+                                                    "content": {
                                                         "type": "string",
                                                         "example": "Отличный продукт!"
                                                     },
@@ -7665,30 +7665,90 @@
                                                         "type": "integer",
                                                         "example": 5
                                                     },
+                                                    "is_verified": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_published": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "published_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "09.04.2025 12:00",
+                                                        "nullable": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "09.04.2025 11:22"
+                                                    },
+                                                    "status": {
+                                                        "description": "Статус отзыва: 'new' (новый) или 'published' (опубликован)",
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "new",
+                                                            "published"
+                                                        ],
+                                                        "example": "published"
+                                                    },
                                                     "client": {
                                                         "properties": {
                                                             "id": {
                                                                 "type": "integer",
-                                                                "example": 3
+                                                                "example": 11
                                                             },
                                                             "name": {
                                                                 "type": "string",
-                                                                "example": "Иван Иванов"
+                                                                "example": "Super Admin"
+                                                            },
+                                                            "email": {
+                                                                "type": "string",
+                                                                "example": "superadmin@example.com"
+                                                            },
+                                                            "avatar": {
+                                                                "type": "string",
+                                                                "example": null,
+                                                                "nullable": true
                                                             }
                                                         },
-                                                        "type": "object"
+                                                        "type": "object",
+                                                        "nullable": true
+                                                    },
+                                                    "reviewable": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "type": {
+                                                                "type": "string",
+                                                                "example": "Product"
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Product Name"
+                                                            }
+                                                        },
+                                                        "type": "object",
+                                                        "nullable": true
                                                     },
                                                     "attributes": {
                                                         "type": "array",
                                                         "items": {
                                                             "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 23
+                                                                },
                                                                 "name": {
                                                                     "type": "string",
-                                                                    "example": "Цвет"
+                                                                    "example": "Качество"
                                                                 },
-                                                                "value": {
-                                                                    "type": "string",
-                                                                    "example": "Красный"
+                                                                "rating": {
+                                                                    "type": "integer",
+                                                                    "example": 5
                                                                 }
                                                             },
                                                             "type": "object"
@@ -7702,9 +7762,14 @@
                                                                     "type": "integer",
                                                                     "example": 1
                                                                 },
-                                                                "text": {
+                                                                "content": {
                                                                     "type": "string",
-                                                                    "example": "Спасибо за ваш отзыв!"
+                                                                    "example": "Спасибо за отзыв!"
+                                                                },
+                                                                "created_at": {
+                                                                    "type": "string",
+                                                                    "format": "date-time",
+                                                                    "example": "09.04.2025 12:30"
                                                                 }
                                                             },
                                                             "type": "object"
@@ -7714,9 +7779,17 @@
                                                         "type": "array",
                                                         "items": {
                                                             "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
                                                                 "url": {
                                                                     "type": "string",
-                                                                    "example": "https://example.com/image.jpg"
+                                                                    "example": "http://127.0.0.1:8000/storage/reviews/image1.jpg"
+                                                                },
+                                                                "thumbnail": {
+                                                                    "type": "string",
+                                                                    "example": "http://127.0.0.1:8000/storage/reviews/thumb1.jpg"
                                                                 }
                                                             },
                                                             "type": "object"
@@ -7744,11 +7817,13 @@
                                         },
                                         "next_page_url": {
                                             "type": "string",
-                                            "example": "https://site.com/api/reviews?page=2"
+                                            "example": "https://site.com/api/reviews?page=2",
+                                            "nullable": true
                                         },
                                         "prev_page_url": {
                                             "type": "string",
-                                            "example": "null"
+                                            "example": null,
+                                            "nullable": true
                                         }
                                     },
                                     "type": "object"
@@ -7796,17 +7871,21 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             },
             "post": {
                 "tags": [
                     "Reviews"
                 ],
-                "summary": "Создать новый отзыв",
-                "description": "Создает новый отзыв для продукта или другого объекта. Требуется обязательная авторизация.",
-                "operationId": "3d3022e932f5ecc4b19319702070289e",
+                "summary": "Создать отзыв",
+                "description": "Создает отзыв клиента на продукт или услугу",
+                "operationId": "storeReview",
                 "requestBody": {
-                    "description": "Данные для создания отзыва",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -7819,37 +7898,30 @@
                                 ],
                                 "properties": {
                                     "reviewable_id": {
-                                        "description": "ID объекта для отзыва (например, продукта)",
                                         "type": "integer",
-                                        "example": 1
+                                        "example": 123
                                     },
                                     "reviewable_type": {
-                                        "description": "Тип объекта для отзыва (например, Product)",
                                         "type": "string",
-                                        "example": "Product"
+                                        "example": "App\\\\Models\\\\Product"
                                     },
                                     "content": {
-                                        "description": "Текст отзыва",
                                         "type": "string",
-                                        "example": "Отличный продукт!"
+                                        "example": "Очень хороший товар!"
                                     },
                                     "rating": {
-                                        "description": "Оценка от 1 до 5",
                                         "type": "integer",
                                         "example": 5
                                     },
                                     "attributes": {
-                                        "description": "Дополнительные атрибуты отзыва",
                                         "type": "array",
                                         "items": {
                                             "properties": {
                                                 "name": {
-                                                    "description": "Название атрибута",
                                                     "type": "string",
-                                                    "example": "Цвет"
+                                                    "example": "Качество"
                                                 },
                                                 "rating": {
-                                                    "description": "Оценка атрибута",
                                                     "type": "integer",
                                                     "example": 4
                                                 }
@@ -7858,10 +7930,8 @@
                                         }
                                     },
                                     "images": {
-                                        "description": "Изображения отзыва",
                                         "type": "array",
                                         "items": {
-                                            "description": "Изображение отзыва",
                                             "type": "string",
                                             "format": "binary"
                                         }
@@ -7874,7 +7944,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Отзыв успешно создан",
+                        "description": "Успешно создано",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -7887,21 +7957,25 @@
                                                 },
                                                 "content": {
                                                     "type": "string",
-                                                    "example": "Отличный продукт!"
+                                                    "example": "Отличное качество!"
                                                 },
                                                 "rating": {
                                                     "type": "integer",
                                                     "example": 5
                                                 },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "new"
+                                                },
                                                 "client": {
                                                     "properties": {
                                                         "id": {
                                                             "type": "integer",
-                                                            "example": 3
+                                                            "example": 10
                                                         },
                                                         "name": {
                                                             "type": "string",
-                                                            "example": "Иван Иванов"
+                                                            "example": "Иван"
                                                         }
                                                     },
                                                     "type": "object"
@@ -7912,11 +7986,11 @@
                                                         "properties": {
                                                             "name": {
                                                                 "type": "string",
-                                                                "example": "Цвет"
+                                                                "example": "Упаковка"
                                                             },
                                                             "rating": {
                                                                 "type": "integer",
-                                                                "example": "4"
+                                                                "example": 4
                                                             }
                                                         },
                                                         "type": "object"
@@ -7928,7 +8002,7 @@
                                                         "properties": {
                                                             "path": {
                                                                 "type": "string",
-                                                                "example": "/storage/reviews/image.jpg"
+                                                                "example": "reviews/image.jpg"
                                                             },
                                                             "url": {
                                                                 "type": "string",
@@ -7947,67 +8021,15 @@
                             }
                         }
                     },
-                    "400": {
-                        "description": "Ошибка валидации данных",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Bad Request"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Некорректные данные запроса"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Неавторизованный доступ",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Unauthorized"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Необходима авторизация"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Ошибка сервера",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Internal Server Error"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Не удалось создать отзыв"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                    "422": {
+                        "description": "Ошибка валидации"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/reviews/product/{product}": {
@@ -8160,6 +8182,152 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/reviews/{review}/publish": {
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Публикация отзыва",
+                "description": "Помечает отзыв как опубликованный, проверенный и устанавливает дату публикации",
+                "operationId": "publishReview",
+                "parameters": [
+                    {
+                        "name": "review",
+                        "in": "path",
+                        "description": "ID отзыва",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Отзыв успешно опубликован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Review published successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Review"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Отзыв не найден"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reviews/{review}/unpublish": {
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Снять публикацию отзыва",
+                "description": "Ставит is_published и is_verified в false, сбрасывает published_at, меняет статус на 'new'",
+                "operationId": "unpublishReview",
+                "parameters": [
+                    {
+                        "name": "review",
+                        "in": "path",
+                        "description": "ID отзыва",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Отзыв успешно снят с публикации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Review unpublished successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Review"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Отзыв не найден"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reviews/{review}": {
+            "delete": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Удаление отзыва",
+                "description": "Удаляет отзыв по ID (мягкое удаление, если используется SoftDeletes)",
+                "operationId": "deleteReview",
+                "parameters": [
+                    {
+                        "name": "review",
+                        "in": "path",
+                        "description": "ID отзыва",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Отзыв успешно удалён (без тела ответа)"
+                    },
+                    "404": {
+                        "description": "Отзыв не найден"
+                    },
+                    "401": {
+                        "description": "Не авторизован"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/delivery/shipments": {
@@ -12140,6 +12308,153 @@
                         "type": "string",
                         "format": "date-time",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Review": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 14
+                    },
+                    "content": {
+                        "type": "string",
+                        "example": "Отличный продукт!"
+                    },
+                    "rating": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "is_verified": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_published": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "09.04.2025 12:00",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "09.04.2025 11:22"
+                    },
+                    "status": {
+                        "description": "Статус отзыва: 'new' (новый) или 'published' (опубликован)",
+                        "type": "string",
+                        "enum": [
+                            "new",
+                            "published"
+                        ],
+                        "example": "published"
+                    },
+                    "client": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 11
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Super Admin"
+                            },
+                            "email": {
+                                "type": "string",
+                                "example": "superadmin@example.com"
+                            },
+                            "avatar": {
+                                "type": "string",
+                                "example": null,
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "reviewable": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "type": {
+                                "type": "string",
+                                "example": "Product"
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Product Name"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "attributes": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 23
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "Качество"
+                                },
+                                "rating": {
+                                    "type": "integer",
+                                    "example": 5
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "responses": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "content": {
+                                    "type": "string",
+                                    "example": "Спасибо за отзыв!"
+                                },
+                                "created_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "example": "09.04.2025 12:30"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "url": {
+                                    "type": "string",
+                                    "example": "http://127.0.0.1:8000/storage/reviews/image1.jpg"
+                                },
+                                "thumbnail": {
+                                    "type": "string",
+                                    "example": "http://127.0.0.1:8000/storage/reviews/thumb1.jpg"
+                                }
+                            },
+                            "type": "object"
+                        }
                     }
                 },
                 "type": "object"
