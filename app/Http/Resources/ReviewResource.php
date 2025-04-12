@@ -16,19 +16,25 @@ class ReviewResource extends JsonResource
             'is_published' => $this->is_published,
             'published_at' => $this->published_at?->format('d.m.Y H:i'),
             'created_at' => $this->created_at->format('d.m.Y H:i'),
-            'client' => [
-                'id' => $this->client->id,
-                'name' => $this->client->full_name,
-                'avatar' => $this->client->avatar_url,
-            ],
-            'reviewable' => [
-                'id' => $this->reviewable->id,
-                'type' => class_basename($this->reviewable_type),
-                'name' => $this->reviewable->name,
-            ],
+            'status' => $this->status, // Добавляем статус
+            'client' => $this->when($this->client, function () {
+                return [
+                    'id' => $this->client->id,
+                    'name' => $this->client->full_name,
+                    'email' => $this->client->email, // Добавляем email клиента
+                    'avatar' => $this->client->avatar_url,
+                ];
+            }, null),
+            'reviewable' => $this->when($this->reviewable, function () {
+                return [
+                    'id' => $this->reviewable->id,
+                    'type' => class_basename($this->reviewable_type),
+                    'name' => $this->reviewable->name,
+                ];
+            }, null),
             'attributes' => ReviewAttributeResource::collection($this->whenLoaded('attributes')),
             'responses' => ReviewResponseResource::collection($this->whenLoaded('responses')),
-            'images' => $this->whenLoaded('images', function() {
+            'images' => $this->whenLoaded('images', function () {
                 return $this->images->map(fn($image) => [
                     'id' => $image->id,
                     'url' => $image->url,
@@ -37,4 +43,4 @@ class ReviewResource extends JsonResource
             }),
         ];
     }
-} 
+}

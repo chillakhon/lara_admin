@@ -5,7 +5,46 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
+/**
+ * @OA\Schema(
+ *     schema="ShipmentStatus",
+ *     type="object",
+ *     required={"code", "name"},
+ *     @OA\Property(
+ *         property="id",
+ *         type="integer",
+ *         description="Уникальный идентификатор статуса доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="code",
+ *         type="string",
+ *         description="Код статуса доставки (например, 'new', 'processing')"
+ *     ),
+ *     @OA\Property(
+ *         property="name",
+ *         type="string",
+ *         description="Название статуса доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="description",
+ *         type="string",
+ *         description="Описание статуса доставки",
+ *         nullable=true
+ *     ),
+ *     @OA\Property(
+ *         property="created_at",
+ *         type="string",
+ *         format="date-time",
+ *         description="Дата и время создания статуса"
+ *     ),
+ *     @OA\Property(
+ *         property="updated_at",
+ *         type="string",
+ *         format="date-time",
+ *         description="Дата и время последнего обновления статуса"
+ *     )
+ * )
+ */
 class ShipmentStatus extends Model
 {
     use HasFactory;
@@ -28,4 +67,4 @@ class ShipmentStatus extends Model
     {
         return $this->hasMany(Shipment::class, 'status_id');
     }
-} 
+}

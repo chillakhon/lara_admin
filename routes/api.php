@@ -39,7 +39,7 @@ use App\Http\Controllers\Api\LeadController;
 //use App\Http\Controllers\Api\Admin\LeadTypeController;
 use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\PromoCodeController;
-use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\Admin\ReviewController;
 use App\Http\Controllers\Api\SearchController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -73,14 +73,14 @@ Route::prefix('leads')->group(function () {
     Route::post('/', [LeadController::class, 'store']);
 });
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('reviews', [ReviewController::class, 'index']);
-    Route::post('reviews', [ReviewController::class, 'store']);
-    Route::prefix('reviews')->group(function () {
-        Route::get('/', [ReviewController::class, 'index']);
-        Route::post('/', [ReviewController::class, 'store']);
-        Route::get('product/{product}', [ReviewController::class, 'productReviews']);
-    });
+Route::middleware('auth:sanctum')->prefix('reviews')->group(function () {
+    Route::get('/', [ReviewController::class, 'index']);
+    Route::post('/', [ReviewController::class, 'store']);
+    Route::get('product/{product}', [ReviewController::class, 'productReviews']);
+    Route::post('{review}/publish', [ReviewController::class, 'publish']);
+    Route::post('{review}/unpublish', [ReviewController::class, 'unpublish']);
+    Route::delete('{review}', [ReviewController::class, 'destroy'])->middleware('auth:api');
+
     // Route::get('/shipments', [ShipmentController::class, 'userShipments'])
     //     ->name('shipments.index');
 });

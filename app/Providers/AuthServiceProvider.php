@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Review;
+use App\Policies\ReviewPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use App\Models\TaskComment;
@@ -14,7 +16,9 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         TaskComment::class => TaskCommentPolicy::class,
         TaskAttachment::class => TaskAttachmentPolicy::class,
+        Review::class => ReviewPolicy::class,
     ];
+
 
     public function boot()
     {
@@ -26,8 +30,8 @@ class AuthServiceProvider extends ServiceProvider
                 'user_type' => $user->type,
                 'has_access' => in_array($user->type, ['admin', 'manager'])
             ]);
-            
+
             return in_array($user->type, ['admin', 'manager']);
         });
     }
-} 
+}
