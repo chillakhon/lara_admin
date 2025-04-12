@@ -60,32 +60,78 @@ class OrderStatsController extends Controller
     public function stats(): JsonResponse
     {
         try {
-            // Проверка существования таблицы и полей
             if (!Schema::hasTable('orders')) {
                 throw new \RuntimeException('Таблица orders не существует');
             }
 
-            $requiredColumns = ['status', 'total_amount'];
+            $requiredColumns = ['status', 'total_amount', 'created_at'];
             foreach ($requiredColumns as $column) {
                 if (!Schema::hasColumn('orders', $column)) {
                     throw new \RuntimeException("Отсутствует обязательное поле: $column");
                 }
             }
 
-            // Получение статистики
+            // Основная статистика по статусам
             $stats = Order::query()
                 ->select([
                     'status',
                     DB::raw('COUNT(*) as count'),
                     DB::raw('SUM(total_amount) as total_amount')
                 ])
-
                 ->groupBy('status')
                 ->get()
                 ->keyBy('status');
 
+            // Подготовка данных для графика за последние 6 месяцев
+            $startDate = now()->subMonths(5)->startOfMonth();
+            $endDate = now()->endOfMonth();
 
-            // Форматирование ответа с учетом возможных статусов
+            // Получаем данные по месяцам и статусам
+            $chartRawData = Order::query()
+                ->select([
+                    DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                    'status',
+                    DB::raw('COUNT(*) as count')
+                ])
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->groupBy('month', 'status')
+                ->orderBy('month')
+                ->get();
+
+            // Формируем массивы для графика
+            $months = collect();
+            $statuses = ['new', 'processing', 'approved'];
+            $chartData = [
+                'labels' => [],
+                'new' => [],
+                'processing' => [],
+                'approved' => [],
+            ];
+
+            // Собираем список месяцев
+            for ($date = clone $startDate; $date <= $endDate; $date->addMonth()) {
+                $months->push($date->format('Y-m'));
+            }
+
+            \Carbon\Carbon::setLocale('ru');
+
+            $monthLabels = $months->map(function ($month) {
+                return \Carbon\Carbon::createFromFormat('Y-m', $month)->translatedFormat('F');
+            })->toArray();
+
+            // Заполняем данные по статусам
+            foreach ($months as $month) {
+                foreach ($statuses as $status) {
+                    $count = $chartRawData
+                        ->firstWhere(fn ($item) => $item->month === $month && $item->status === $status)
+                        ->count ?? 0;
+
+                    $chartData[$status][] = (int) $count;
+                }
+            }
+
+            $chartData['labels'] = $monthLabels;
+
             return response()->json([
                 'new' => [
                     'count' => (int) ($stats['new']->count ?? 0),
@@ -98,8 +144,10 @@ class OrderStatsController extends Controller
                 'approved' => [
                     'count' => (int) ($stats['approved']->count ?? 0),
                     'total_amount' => (float) ($stats['approved']->total_amount ?? 0)
-                ]
+                ],
+                'chartData' => $chartData
             ]);
+
         } catch (\RuntimeException $e) {
             Log::error("Validation error in Order stats: " . $e->getMessage());
             return response()->json([
