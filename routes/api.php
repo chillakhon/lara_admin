@@ -11,12 +11,14 @@ use App\Http\Controllers\Api\Admin\InventoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\OptionController;
 use App\Http\Controllers\Api\Admin\OrderStatsController;
+use App\Http\Controllers\Api\Admin\PermissionController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\ProductImageController;
 use App\Http\Controllers\Api\Admin\ProductionBatchController;
 use App\Http\Controllers\Api\Admin\ProductionController;
 use App\Http\Controllers\Api\Admin\ProductVariantController;
 use App\Http\Controllers\Api\Admin\RecipeController;
+use App\Http\Controllers\Api\Admin\RoleController;
 use App\Http\Controllers\Api\Admin\ShipmentController;
 use App\Http\Controllers\Api\Admin\TaskAttachmentController;
 use App\Http\Controllers\Api\Admin\TaskCommentController;
@@ -25,6 +27,7 @@ use App\Http\Controllers\Api\Admin\TaskLabelController;
 use App\Http\Controllers\Api\Admin\TaskPriorityController;
 use App\Http\Controllers\Api\Admin\TaskStatusController;
 use App\Http\Controllers\Api\Admin\UnitController;
+use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Api\Auth\EmailVerificationNotificationController;
@@ -45,7 +48,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
-    return $request->user();
+    return $request->user()->load('roles');
 })->middleware('auth:sanctum');
 
 
@@ -304,34 +307,39 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');  // Путь будет /api/orders/{order}/items
             Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');  // Путь будет /api/orders/{order}/items/{item}
         });
-//
-//
-//        // Маршруты, доступные только администраторам
-//        Route::middleware(['role:super-admin,admin'])->group(function () {
-//            // Управление пользователями
-//            Route::prefix('users')->name('users.')->group(function () {
-//                Route::get('/', [UserController::class, 'index'])
-//                    ->middleware('permission:users.view')
-//                    ->name('index');
-//                Route::post('/', [UserController::class, 'store'])
-//                    ->middleware('permission:users.create')
-//                    ->name('store');
-//                Route::put('/{user}', [UserController::class, 'update'])
-//                    ->middleware('permission:users.edit')
-//                    ->name('update');
-//                Route::delete('/{user}', [UserController::class, 'destroy'])
-//                    ->middleware('permission:users.delete')
-//                    ->name('destroy');
-//            });
-//
-//            // Управление ролями и разрешениями (только для супер-админа)
-//            Route::middleware(['role:super-admin'])->group(function () {
-//                Route::resource('roles', RoleController::class);
-//                Route::resource('permissions', PermissionController::class);
-//                Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
-//                    ->name('roles.updatePermissions');
-//            });
-//        });
+
+
+        // Маршруты, доступные только администраторам
+        Route::middleware(['role:super-admin,admin'])->group(function () {
+            // Управление пользователями
+            Route::prefix('users')->name('users.')->group(function () {
+                Route::get('/', [UserController::class, 'index'])
+                    ->middleware('permission:users.view')
+                    ->name('index');
+                Route::post('/', [UserController::class, 'store'])
+                    ->middleware('permission:users.create')
+                    ->name('store');
+                Route::put('/{user}', [UserController::class, 'update'])
+                    ->middleware('permission:users.edit')
+                    ->name('update');
+                Route::delete('/{user}', [UserController::class, 'destroy'])
+                    ->middleware('permission:users.delete')
+                    ->name('destroy');
+                Route::put('/{user}/update-password', [UserController::class, 'updatePassword']);
+                Route::get('/deleted', [UserController::class, 'indexDeleted']);
+                Route::get('/{id}/restore', [UserController::class, 'restore']);
+                Route::delete('{id}/forceDestroy', [UserController::class, 'forceDestroy']);
+
+            });
+
+            // Управление ролями и разрешениями (только для супер-админа)
+            Route::middleware(['role:super-admin'])->group(function () {
+                Route::resource('roles', RoleController::class);
+                Route::resource('permissions', PermissionController::class);
+                Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
+                    ->name('roles.updatePermissions');
+            });
+        });
 //
 //        // Content Management Routes
 //        Route::prefix('content')->name('content.')->group(function () {
