@@ -13,6 +13,8 @@ class RolesAndPermissionsSeeder extends Seeder
     {
         // Создаем роли
         $roles = [
+            // uncomment here, in the future if you dont add 
+            // other seeders (especially UserSeeder which adds admin slug)
             [
                 'name' => 'Администратор',
                 'slug' => 'admin',
