@@ -14,6 +14,13 @@ class UpdateOrdersTable extends Migration
     public function up()
     {
         Schema::table('orders', function (Blueprint $table) {
+            // while running migration, it's not creating because of that it
+            // was not created in table before,
+            // that's why Im checking that once again
+            if (!Schema::hasColumn('orders', 'delivery_target_id')) {
+                $table->unsignedBigInteger('delivery_target_id');
+            }
+
             // Обновляем столбец, делаем его nullable
             $table->unsignedBigInteger('delivery_target_id')->nullable()->change();
 
