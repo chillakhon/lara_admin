@@ -10,13 +10,11 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        if (!Schema::hasTable('delivery_targets')) {
-            Schema::create('delivery_targets', function (Blueprint $table) {
-                $table->id();
-                $table->string('name');
-                $table->timestamps();
-            });
-        }
+        Schema::table('reviews', function (Blueprint $table) {
+            if (!Schema::hasColumn('reviews', "is_spam")) {
+                $table->boolean('is_spam')->default(0)->after('is_published');
+            }
+        });
     }
 
     /**
@@ -24,6 +22,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('delivery_targets');
+        if (Schema::hasColumn('reviews', "is_spam")) {
+            Schema::dropColumns('reviews', 'is_spam');
+        }
     }
 };

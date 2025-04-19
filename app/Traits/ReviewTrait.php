@@ -65,8 +65,8 @@ trait ReviewTrait
             }
         }
 
-        if ($request->boolean('spam')) {
-            $reviews->whereNotNull('deleted_at');
+        if ($request->has('spam')) {
+            $reviews->where('is_spam', $request->boolean('spam'));
         }
 
         if (count($ratings) >= 1) {
@@ -110,7 +110,10 @@ trait ReviewTrait
         if (!$admin_role) {
             $reviews->verified();
             $reviews->published();
+            $reviews->where('is_spam', false);
         }
+
+        $reviews->whereNull("deleted_at");
 
         return $reviews;
     }
