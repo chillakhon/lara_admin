@@ -75,7 +75,10 @@ trait ReviewTrait
 
         if ($includeUnrated) {
             if (count($ratings) >= 1) {
-                $reviews->orWhereNull('rating');
+                $reviews->orWhere(function ($q) {
+                    $q->orWhereNull('rating')
+                        ->orWhere('rating', 0);
+                });
             } else {
                 $reviews->where(function ($query) {
                     $query->whereNull('rating')
