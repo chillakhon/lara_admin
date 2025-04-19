@@ -15,6 +15,11 @@ class Role extends Model
         'description'
     ];
 
+    public static $admin_roles = [
+        "admin",
+        "super-admin"
+    ];
+
     public function users()
     {
         return $this->belongsToMany(User::class, 'user_roles')

@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ReviewResource;
 use App\Models\Product;
 use App\Models\Review;
+use App\Models\Role;
+use App\Traits\ReviewTrait;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 
 class ReviewController extends Controller
 {
+    use ReviewTrait;
     /**
      * Получить список отзывов
      *
@@ -132,16 +135,33 @@ class ReviewController extends Controller
      */
     public function index(Request $request)
     {
+        $reviewableMorphMap = $this->reviewable_morph_review_map($request);
+        $admin_role = $request->user()->hasAnyRole(Role::$admin_roles);
+
         $reviews = Review::query()
-            ->with(['client', 'attributes', 'responses', 'images'])
-            ->published()
-            ->verified()
-            ->when($request->product_id, function ($query, $productId) {
-                $query->where('reviewable_type', Product::class)
-                    ->where('reviewable_id', $productId);
-            })
-            ->latest()
-            ->paginate();
+            ->with([
+                // 'client',
+                'attributes',
+                'responses' => function ($query) use ($admin_role) {
+                    if (!$admin_role) {
+                        $query->whereNull('deleted_at');
+                    }
+                },
+                'reviewable' => function ($morphTo) use ($reviewableMorphMap) {
+                    $morphTo->morphWith($reviewableMorphMap);
+                },
+                'images',
+            ]);
+
+        $reviews = $this->filter_reviews($request, $reviews, $admin_role);
+
+        $reviews = $reviews->latest()->paginate();
+
+        $reviews->getCollection()->transform(function ($review) {
+            $review->client_name = optional($review->client?->user?->profile)->full_name;
+            $review->client_email = optional($review->client?->user)->email;
+            return $review;
+        });
 
         // Возвращаем JSON-ответ напрямую
         return response()->json([
@@ -240,7 +260,7 @@ class ReviewController extends Controller
         ]);
 
         $review = Review::create([
-           'client_id' => auth()->user()->client->id,
+            'client_id' => auth()->user()->client->id,
             'reviewable_id' => $validated['reviewable_id'],
             'reviewable_type' => $validated['reviewable_type'],
             'content' => $validated['content'],

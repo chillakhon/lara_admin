@@ -26,18 +26,18 @@ class DatabaseSeeder extends Seeder
             ColorOptionValueSeeder::class,
             ColorSeeder::class,
             ComponentReservationSeeder::class,
-            // ContentBlockSeeder::class,
+                // ContentBlockSeeder::class,
             CostCategorySeeder::class,
             FieldsSeeder::class,
             ImageableSeeder::class,
             ImageSeeder::class,
             UnitsTableSeeder::class,
-            // InventorySystemSeeder::class, should resolve
+                // InventorySystemSeeder::class, should resolve
             LeadTypeSeeder::class,
             OptionSeeder::class,
             OptionValueSeeder::class,
             OrderitemSeeder::class,
-            // OrderSeeder::class, // should resolve
+                // OrderSeeder::class, // should resolve
             PermissionSeeder::class,
             ProductComponentSeeder::class,
             ProductionBatchSeeder::class,
@@ -52,6 +52,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             ShipmentStatusSeeder::class,
             UsersSeeder::class,
+            ReviewAttributeSeeder::class,
+            ReviewResponseSeeder::class,
         ]);
     }
 }
