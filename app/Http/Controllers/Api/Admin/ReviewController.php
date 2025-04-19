@@ -155,7 +155,7 @@ class ReviewController extends Controller
 
         $reviews = $this->filter_reviews($request, $reviews, $admin_role);
 
-        $reviews = $reviews->latest()->paginate();
+        $reviews = $reviews->latest()->paginate($request->get('per_page', 10));
 
         $reviews->getCollection()->transform(function ($review) {
             $review->client_name = optional($review->client?->user?->profile)->full_name;
