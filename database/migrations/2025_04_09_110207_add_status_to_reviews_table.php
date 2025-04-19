@@ -9,7 +9,9 @@ class AddStatusToReviewsTable extends Migration
     public function up()
     {
         Schema::table('reviews', function (Blueprint $table) {
-            $table->string('status')->default('new')->after('rating');
+            if (!Schema::hasColumn('reviews', 'status')) {
+                $table->string('status')->default('new')->after('rating');
+            }
         });
 
         \DB::table('reviews')
@@ -24,7 +26,9 @@ class AddStatusToReviewsTable extends Migration
     public function down()
     {
         Schema::table('reviews', function (Blueprint $table) {
-            $table->dropColumn('status');
+            if (Schema::hasColumn('reviews', 'status')) {
+                $table->dropColumn('status');
+            }
         });
     }
 }

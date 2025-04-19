@@ -39,10 +39,19 @@ class UpdateOrdersTable extends Migration
     public function down()
     {
         Schema::table('orders', function (Blueprint $table) {
-            // Убираем связь с delivery_methods
-            $table->dropForeign(['delivery_method_id']);
-            // Восстанавливаем столбец без nullable
-            $table->unsignedBigInteger('delivery_target_id')->nullable(false)->change();
+            // Удаляем foreign key, если существует
+            if (Schema::hasColumn('orders', 'delivery_method_id')) {
+                try {
+                    $table->dropForeign(['delivery_method_id']);
+                } catch (\Throwable $e) {
+                    // foreign key might not exist, ignore if drop fails
+                }
+            }
+
+            // Делаем delivery_target_id обязательным, если существует
+            if (Schema::hasColumn('orders', 'delivery_target_id')) {
+                $table->unsignedBigInteger('delivery_target_id')->nullable(false)->change();
+            }
         });
     }
 }
