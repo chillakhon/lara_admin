@@ -21,16 +21,16 @@ class UsersSeeder extends Seeder
                 'slug' => 'super-admin',
                 'description' => 'Полный доступ к системе'
             ],
-            [
-                'name' => 'Администратор',
-                'slug' => 'admin',
-                'description' => 'Административный доступ'
-            ],
-            [
-                'name' => 'Менеджер',
-                'slug' => 'manager',
-                'description' => 'Доступ менеджера'
-            ],
+            // [
+            //     'name' => 'Администратор',
+            //     'slug' => 'admin',
+            //     'description' => 'Административный доступ'
+            // ],
+            // [
+            //     'name' => 'Менеджер',
+            //     'slug' => 'manager',
+            //     'description' => 'Доступ менеджера'
+            // ],
             [
                 'name' => 'Клиент',
                 'slug' => 'client',

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class InventoryBatch extends Model
 {
+    use HasFactory;
     protected $fillable = ['item_type', 'item_id', 'quantity', 'price_per_unit', 'unit_id', 'received_date'];
 
     public function item(): MorphTo

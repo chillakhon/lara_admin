@@ -201,6 +201,21 @@ class ProductController extends Controller
         return response()->json($product);
     }
 
+
+    // enhances-dev branch
+    public function price_history(Request $request, Product $product)
+    {
+        // TODO: logic for getting product's prices history
+    }
+
+
+
+    // enhances-dev branch
+    public function warehouse_history(Request $request, Product $product)
+    {
+        // TODO: logic for getting product's qty history from warehouse
+    }
+
     /**
      * @OA\Post(
      *     path="/api/products",
