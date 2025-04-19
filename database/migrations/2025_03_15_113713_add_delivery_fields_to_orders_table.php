@@ -14,8 +14,12 @@ class AddDeliveryFieldsToOrdersTable extends Migration
     public function up()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dateTime('delivery_date')->nullable();  // Добавляем поле для даты доставки
-            $table->json('delivery_method')->nullable();   // Добавляем поле для метода доставки
+            if (!Schema::hasColumn('orders', 'delivery_date')) {
+                $table->dateTime('delivery_date')->nullable();  // Добавляем поле для даты доставки
+            }
+            if (!Schema::hasColumn('orders', 'delivery_method')) {
+                $table->json('delivery_method')->nullable();    // Добавляем поле для метода доставки
+            }
         });
     }
 
@@ -27,7 +31,12 @@ class AddDeliveryFieldsToOrdersTable extends Migration
     public function down()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->dropColumn(['delivery_date', 'delivery_method']);  // Убираем эти поля при откате
+            if (Schema::hasColumn('orders', 'delivery_date')) {
+                $table->dropColumn('delivery_date');  // Убираем поле даты доставки
+            }
+            if (Schema::hasColumn('orders', 'delivery_method')) {
+                $table->dropColumn('delivery_method');  // Убираем поле метода доставки
+            }
         });
     }
 }

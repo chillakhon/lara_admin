@@ -9,16 +9,19 @@ class AddDefaultValueToProviderClassInDeliveryMethodsTable extends Migration
     public function up()
     {
         Schema::table('delivery_methods', function (Blueprint $table) {
-            // Устанавливаем значение по умолчанию для provider_class, если оно отсутствует
-            $table->string('provider_class')->default('DefaultProvider')->change();
+            if (Schema::hasColumn('delivery_methods', 'provider_class')) {
+                $table->string('provider_class')->default('DefaultProvider')->change();
+            }
         });
     }
 
     public function down()
     {
-        // Возвращаем все к первоначальному состоянию, удалив значение по умолчанию
         Schema::table('delivery_methods', function (Blueprint $table) {
-            $table->string('provider_class')->default(null)->change();
+            if (Schema::hasColumn('delivery_methods', 'provider_class')) {
+                // Remove default by setting it to null
+                $table->string('provider_class')->default(null)->change();
+            }
         });
     }
 }
