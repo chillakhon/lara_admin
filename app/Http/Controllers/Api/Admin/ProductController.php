@@ -80,6 +80,9 @@ class ProductController extends Controller
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhereHas('categories', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('variants', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
                     });
             })
             ->when($request->category, function ($query, $categoryId) {
@@ -319,7 +322,8 @@ class ProductController extends Controller
 
         return response()->json([
             'message' => 'Product created successfully',
-            'product' => $product], 201);
+            'product' => $product
+        ], 201);
     }
 
     /**
