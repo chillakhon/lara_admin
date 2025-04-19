@@ -82,7 +82,7 @@ Route::middleware('auth:sanctum')->prefix('reviews')->group(function () {
     Route::get('product/{product}', [ReviewController::class, 'productReviews']);
     Route::post('{review}/publish', [ReviewController::class, 'publish']);
     Route::post('{review}/unpublish', [ReviewController::class, 'unpublish']);
-    Route::delete('{review}', [ReviewController::class, 'destroy'])->middleware('auth:api');
+    Route::delete('{review}', [ReviewController::class, 'destroy']); // ->middleware('auth:api'); was removed because sending error
 
     // Route::get('/shipments', [ShipmentController::class, 'userShipments'])
     //     ->name('shipments.index');
@@ -134,7 +134,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/', [UnitController::class, 'index']);
         });
 
-//         Options
+        //         Options
         Route::group(['prefix' => 'options', 'as' => 'options.'], function () {
             Route::get('/', [OptionController::class, 'index']);
             Route::post('/', [OptionController::class, 'store']);
@@ -153,7 +153,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/{material}/remove-stock', [MaterialController::class, 'removeStock']);
         });
 
-//        // Products
+        //        // Products
         Route::group(['prefix' => 'products', 'as' => 'products.'/*, 'middleware' => ['permission:products.view,products.manage']*/], function () {
             Route::get('/', [ProductController::class, 'index']);
             Route::post('/', [ProductController::class, 'store']);
@@ -169,7 +169,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/{product}/components', [ProductController::class, 'addComponent']);
             Route::delete('/{product}/components/{component}', [ProductController::class, 'removeComponent']);
             Route::get('/{product}/calculate-cost', [ProductController::class, 'calculateCost']);
-//            Route::post('/{product}/options/attach', [ProductController::class, 'attachOptions']);
+            //            Route::post('/{product}/options/attach', [ProductController::class, 'attachOptions']);
 //            Route::post('/{product}/variants/bulk-update', [ProductVariantController::class, 'bulkUpdate'])
 //                ->name('variants.bulk-update');
 //            //Options
@@ -184,7 +184,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::put('/variants/{variant}', [ProductVariantController::class, 'update']);
             Route::delete('/{product}/variants/{variant}', [ProductVariantController::class, 'destroy']);
             Route::post('/{product}/variants/generate', [ProductController::class, 'generateVariants']);
-//
+            //
 //            //images
             Route::post('/{product}/images', [ProductImageController::class, 'store']);
             Route::delete('/{product}/images/{image}/{variant}', [ProductImageController::class, 'destroy']);
@@ -196,7 +196,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/{product}/variants/{variant}/images', [ProductVariantController::class, 'addImages']);
             Route::delete('/{product}/variants/{variant}/images/{image}', [ProductVariantController::class, 'destroyImage']);
         });
-//
+        //
 //        // Product Variants
 //        Route::prefix('product-variants')->name('product-variants.')->group(function () {
 //            Route::get('/{variant}/recipes', [ProductVariantController::class, 'recipes'])
@@ -221,7 +221,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::put('/{recipe}', [RecipeController::class, 'update']);
             Route::delete('/{recipe}', [RecipeController::class, 'destroy']);
 
-//            Route::post('/estimate-cost', [RecipeController::class, 'estimateCost'])
+            //            Route::post('/estimate-cost', [RecipeController::class, 'estimateCost'])
 //                ->name('estimate-cost');
 //            Route::post('/{recipe}/cost-rates', [RecipeController::class, 'storeCostRates'])
 //                ->name('cost-rates.store');
@@ -230,9 +230,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            Route::get('/{recipe}/compare/{otherRecipe}', [RecipeController::class, 'compare'])->name('compare');
         });
 
-//         Cost Categories
+        //         Cost Categories
         Route::get('/cost-categories', [CostCategoryController::class, 'index']);
-//
+        //
         Route::group(['prefix' => 'clients', 'as' => 'clients.', 'middleware' => 'auth:api'], function () {
             Route::get('/', [ClientController::class, 'index'])->name('index');
             Route::get('/{client}', [ClientController::class, 'show'])->name('show');
@@ -243,7 +243,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         });
 
 
-//
+        //
 //        Route::group(['prefix' => 'orders', 'as' => 'orders.'], function () {
 //            Route::get('/', [OrderController::class, 'index'])->name('index');
 //            Route::put('/{order}', [OrderController::class, 'update'])->name('update');
@@ -257,7 +257,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::delete('/{promoCode}', [PromoCodeController::class, 'destroy'])->name('destroy');
             Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('usage');
         });
-//
+        //
 //        // Инвентарь
         Route::prefix('inventory')->name('inventory.')->group(function () {
             Route::get('/', [InventoryController::class, 'index'])->name('index');
@@ -268,32 +268,32 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/transactions/history', [InventoryController::class, 'getTransactionHistory'])->name('transactions.history');
 
 
-//            Route::get('/component-usage', [InventoryController::class, 'componentUsage'])
+            //            Route::get('/component-usage', [InventoryController::class, 'componentUsage'])
 //                ->name('component-usage');
 //            Route::post('/reserve-components', [InventoryController::class, 'reserveComponents'])
 //                ->name('reserve-components');
 //            Route::post('/release-reservation/{reservation}', [InventoryController::class, 'releaseReservation'])
 //                ->name('release-reservation');
         });
-//
+        //
 //
 //        // Производство
         Route::prefix('production')->name('production.')->group(function () {
             Route::get('/', [ProductionController::class, 'index'])->name('index');
             Route::get('/create/{recipe}', [ProductionController::class, 'create'])->name('create');
-//            Route::post('/batches', [ProductionBatchController::class, 'store'])->name('store');
+            //            Route::post('/batches', [ProductionBatchController::class, 'store'])->name('store');
 //            Route::get('/batches/{batch}', [ProductionController::class, 'show'])->name('show');
             Route::post('/batches/{batch}/start', [ProductionController::class, 'start'])->name('start');
             Route::post('/batches/{batch}/complete', [ProductionController::class, 'complete'])->name('complete');
             Route::post('/batches/{batch}/cancel', [ProductionController::class, 'cancel'])->name('cancel');
-//            Route::post('/batches/{batch}/add-costs', [ProductionController::class, 'addCosts'])->name('addCosts');
+            //            Route::post('/batches/{batch}/add-costs', [ProductionController::class, 'addCosts'])->name('addCosts');
 
             // Статистика и отчеты
 //            Route::get('/statistics', [ProductionController::class, 'statistics'])->name('statistics');
 //            Route::get('/pending', [ProductionController::class, 'pending'])->name('pending');
 //            Route::get('/history', [ProductionController::class, 'history'])->name('history');
         });
-//
+        //
 //
 //        // Orders
         Route::prefix('orders')->name('orders.')->middleware(['role:super-admin,admin,manager', 'permission:orders.view,orders.manage'])->group(function () {
@@ -345,7 +345,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                     ->name('roles.updatePermissions');
             });
         });
-//
+        //
 //        // Content Management Routes
 //        Route::prefix('content')->name('content.')->group(function () {
 //
@@ -397,12 +397,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
 
-//        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
+        //        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
 //        Route::put('/leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
 //        Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
 //        Route::post('/leads/create-client', [LeadController::class, 'createClient'])->name('leads.create-client');
 
-//
+        //
 //        // Задачи
         Route::prefix('tasks')->name('tasks.')->group(function () {
             Route::get('/', [TaskController::class, 'index'])->name('index');
@@ -446,7 +446,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::delete('/{label}', [TaskLabelController::class, 'destroy'])->name('destroy');
         });
 
-      // Маршруты для управления доставкой
+        // Маршруты для управления доставкой
         Route::prefix('delivery')->name('delivery.')->group(function () {
             // Методы доставки
             Route::get('/methods', [DeliveryMethodController::class, 'index'])->name('methods.index');
@@ -454,7 +454,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/methods', [DeliveryMethodController::class, 'store'])->name('methods.store');
             Route::put('/methods/{method}', [DeliveryMethodController::class, 'update'])->name('methods.update');
             Route::delete('/methods/{method}', [DeliveryMethodController::class, 'destroy'])->name('methods.destroy');
-//
+            //
 //            // Зоны доставки
             Route::get('/methods/{method}/zones', [DeliveryZoneController::class, 'index'])->name('zones.index');
             Route::post('/methods/{method}/zones', [DeliveryZoneController::class, 'store'])->name('zones.store');
@@ -468,12 +468,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::delete('/rates/{rate}', [DeliveryRateController::class, 'destroy'])->name('rates.destroy');
 
             // Отправления
-             Route::get('/shipments', [ShipmentController::class, 'index'])->name('shipments.index');
-             Route::put('/shipments/{shipment}', [ShipmentController::class, 'update'])->name('shipments.update');
-             Route::get('/shipments/{shipment}/print-label', [ShipmentController::class, 'printLabel'])->name('shipments.print-label');
-             Route::post('/shipments/{shipment}/cancel', [ShipmentController::class, 'cancel'])->name('shipments.cancel');
+            Route::get('/shipments', [ShipmentController::class, 'index'])->name('shipments.index');
+            Route::put('/shipments/{shipment}', [ShipmentController::class, 'update'])->name('shipments.update');
+            Route::get('/shipments/{shipment}/print-label', [ShipmentController::class, 'printLabel'])->name('shipments.print-label');
+            Route::post('/shipments/{shipment}/cancel', [ShipmentController::class, 'cancel'])->name('shipments.cancel');
         });
-//
+        //
 //        Route::group(['prefix' => 'settings', 'as' => 'settings.'], function () {
 //            Route::get('/general', [SettingsController::class, 'general'])->name('general');
 //            Route::post('/general', [SettingsController::class, 'updateGeneral']);
