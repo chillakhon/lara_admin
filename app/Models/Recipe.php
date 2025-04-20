@@ -72,6 +72,11 @@ class Recipe extends Model
         );
     }
 
+    public function product_recipes()
+    {
+        return $this->hasMany(ProductRecipe::class);
+    }
+
     public function items()
     {
         return $this->hasMany(RecipeItem::class);

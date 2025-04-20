@@ -90,15 +90,29 @@ class ProductController extends Controller
                     $q->where('categories.id', $categoryId);
                 });
             })
-            ->latest()
-            ->paginate(10);
+            ->latest();
 
 
-        $products->getCollection()->transform(function ($product) {
-            $product->image_path = $product->images->isNotEmpty() ? $product->images->first()->path : null;
-            unset($product->images);
-            return $product;
-        });
+        if ($request->get('material')) {
+            $products->where('type', $request->get('material'));
+        }
+
+        if ($request->get('product_id')) {
+            $products->where('id', $request->get('product_id'));
+        }
+
+        if ($request->boolean('paginate', true)) {
+            $products = $products->paginate(10);
+
+            $products->getCollection()->transform(function ($product) {
+                $product->image_path = $product->images->isNotEmpty() ? $product->images->first()->path : null;
+                unset($product->images);
+                return $product;
+            });
+
+        } else {
+            $products = $products->get();
+        }
 
         return response()->json($products);
     }

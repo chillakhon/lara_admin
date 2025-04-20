@@ -7,6 +7,7 @@ use App\Http\Resources\CostCategoryResource;
 use App\Models\CostCategory;
 use App\Models\Material;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Recipe;
 use App\Models\Unit;
 use App\Services\ProductionCostService;
@@ -21,10 +22,9 @@ class RecipeController extends Controller
     protected $productionCostService;
 
     public function __construct(
-        RecipeService         $recipeService,
+        RecipeService $recipeService,
         ProductionCostService $productionCostService
-    )
-    {
+    ) {
         $this->recipeService = $recipeService;
         $this->productionCostService = $productionCostService;
     }
@@ -145,13 +145,13 @@ class RecipeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'output_quantity' => 'required|numeric|min:0.001',
+            // 'output_quantity' => 'required|numeric|min:0.001',
             'output_unit_id' => 'required|exists:units,id',
             'instructions' => 'nullable|string',
             'production_time' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
             'items' => 'required|array|min:1',
-            'items.*.component_type' => 'required|in:Material,Product',
+            'items.*.component_type' => 'required|in:Material,Product,ProductVariant',
             'items.*.component_id' => 'required|integer',
             'items.*.quantity' => 'required|numeric|min:0.001',
             'items.*.unit_id' => 'required|exists:units,id',
@@ -159,16 +159,17 @@ class RecipeController extends Controller
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.variant_id' => 'nullable|exists:product_variants,id',
             'products.*.is_default' => 'boolean',
+            'products.*.qty' => 'required|numeric|min:0.001',
             'cost_rates' => 'array',
             'cost_rates.*.cost_category_id' => 'required|exists:cost_categories,id',
-            'cost_rates.*.rate_per_unit' => 'required|numeric|min:0',
-            'cost_rates.*.fixed_rate' => 'required|numeric|min:0'
+            'cost_rates.*.rate_per_unit' => 'nullable|numeric|min:0',
+            'cost_rates.*.fixed_rate' => 'nullable|numeric|min:0'
         ]);
 
         $recipe = Recipe::create([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'output_quantity' => $validated['output_quantity'],
+            'output_quantity' => 0.0, // temporary value, then will be updated
             'output_unit_id' => $validated['output_unit_id'],
             'instructions' => $validated['instructions'] ?? null,
             'production_time' => $validated['production_time'] ?? null,
@@ -177,17 +178,26 @@ class RecipeController extends Controller
         ]);
 
         foreach ($validated['items'] as $item) {
+            $modelClass = match ($item['component_type']) {
+                'ProductVariant' => ProductVariant::class, // this should come here for now
+                'Product' => Product::class,
+                'Material' => Material::class,
+            };
+
             $recipe->items()->create([
-                'component_type' => $item['component_type'],
+                'component_type' => $modelClass,
                 'component_id' => $item['component_id'],
                 'quantity' => $item['quantity'],
                 'unit_id' => $item['unit_id']
             ]);
         }
 
+        $qty_total = 0.0;
         foreach ($validated['products'] as $productData) {
+            $qty_total += $productData['qty'] ?? 0.0;
             $recipe->products()->attach($productData['product_id'], [
                 'product_variant_id' => $productData['variant_id'] ?? null,
+                "qty" => $productData['qty'] ?? 0,
                 'is_default' => $productData['is_default'] ?? false
             ]);
         }
@@ -201,6 +211,10 @@ class RecipeController extends Controller
                 ]);
             }
         }
+
+        $recipe->update([
+            'output_quantity' => $qty_total,
+        ]);
 
         return response()->json($recipe, 201);
     }
@@ -236,7 +250,37 @@ class RecipeController extends Controller
      */
     public function show(Recipe $recipe)
     {
-        return response()->json($recipe->load(['items.component', 'items.unit']));
+        $recipe->load([
+            'items.component',
+            'items.unit',
+            'costRates.category',
+            'product_recipes.product',
+            'product_recipes.product_variant',
+        ]);
+
+        $cost_rates = $recipe->costRates;
+
+        if (count($cost_rates) >= 1) {
+            $modifies_cost_rates = [];
+
+            $output_qty = $recipe->output_quantity ?? 0;
+
+            foreach ($cost_rates as $key => $cost_rate) {
+                $rate_per_unit_total = $output_qty * ($cost_rate->rate_per_unit ?? 0);
+                $fixed_rate_total = $output_qty * ($cost_rate->fixed_rate ?? 0);
+                $modifies_cost_rates[] = [
+                    'category_name' => $cost_rate?->category?->name ?? '',
+                    'rate_per_unit_total' => $rate_per_unit_total,
+                    'fixed_rate_total' => $fixed_rate_total,
+                    'total' => $rate_per_unit_total + $fixed_rate_total,
+                ];
+            }
+
+            $recipe->unsetRelation('costRates');
+            $recipe->cost_rates = $modifies_cost_rates;
+        }
+
+        return response()->json($recipe);
     }
 
     /**
@@ -321,13 +365,13 @@ class RecipeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'output_quantity' => 'required|numeric|min:0.001',
+            // 'output_quantity' => 'required|numeric|min:0.001',
             'output_unit_id' => 'required|exists:units,id',
             'instructions' => 'nullable|string',
             'production_time' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
             'items' => 'required|array|min:1',
-            'items.*.component_type' => 'required|in:Material,Product',
+            'items.*.component_type' => 'required|in:Material,Product,ProductVariant',
             'items.*.component_id' => 'required|integer',
             'items.*.quantity' => 'required|numeric|min:0.001',
             'items.*.unit_id' => 'required|exists:units,id',
@@ -335,10 +379,11 @@ class RecipeController extends Controller
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.variant_id' => 'nullable|exists:product_variants,id',
             'products.*.is_default' => 'boolean',
+            'products.*.qty' => 'required|numeric|min:0.001',
             'cost_rates' => 'array',
             'cost_rates.*.cost_category_id' => 'required|exists:cost_categories,id',
-            'cost_rates.*.rate_per_unit' => 'required|numeric|min:0',
-            'cost_rates.*.fixed_rate' => 'required|numeric|min:0'
+            'cost_rates.*.rate_per_unit' => 'nullable|numeric|min:0',
+            'cost_rates.*.fixed_rate' => 'nullable|numeric|min:0'
         ]);
 
         DB::beginTransaction();
@@ -346,17 +391,23 @@ class RecipeController extends Controller
             $recipe->update([
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
-                'output_quantity' => $validated['output_quantity'],
+                'output_quantity' => 0.0, // temporary value, then will be updated
                 'output_unit_id' => $validated['output_unit_id'],
                 'instructions' => $validated['instructions'] ?? null,
                 'production_time' => $validated['production_time'] ?? null,
                 'is_active' => $validated['is_active'] ?? true
             ]);
 
-            $recipe->items()->delete();
+            $recipe->items()->delete(); // puts datetime in deleted_at field in table
             foreach ($validated['items'] as $item) {
+                $modelClass = match ($item['component_type']) {
+                    'ProductVariant' => ProductVariant::class, // this should come here for now
+                    'Product' => Product::class,
+                    'Material' => Material::class,
+                };
+
                 $recipe->items()->create([
-                    'component_type' => $item['component_type'],
+                    'component_type' => $modelClass,
                     'component_id' => $item['component_id'],
                     'quantity' => $item['quantity'],
                     'unit_id' => $item['unit_id']
@@ -364,9 +415,12 @@ class RecipeController extends Controller
             }
 
             $recipe->products()->detach();
+            $qty_total = 0.0;
             foreach ($validated['products'] as $productData) {
+                $qty_total += $productData['qty'] ?? 0.0;
                 $recipe->products()->attach($productData['product_id'], [
                     'product_variant_id' => $productData['variant_id'],
+                    "qty" => $productData['qty'] ?? 0,
                     'is_default' => $productData['is_default'],
                 ]);
             }
@@ -381,6 +435,10 @@ class RecipeController extends Controller
                     ]);
                 }
             }
+
+            $recipe->update([
+                'output_quantity' => $qty_total,
+            ]);
 
             DB::commit();
             return response()->json($recipe);
@@ -481,12 +539,12 @@ class RecipeController extends Controller
         $materialsCost = $this->recipeService->calculateEstimatedCost(
             $recipe,
             $validated['strategy'],
-            (float)$validated['quantity']
+            (float) $validated['quantity']
         );
 
         $productionCosts = $this->productionCostService->calculateEstimatedCosts(
             $recipe,
-            (float)$validated['quantity']
+            (float) $validated['quantity']
         );
 
         $totalCost = $materialsCost['materials_cost'] +
@@ -494,7 +552,7 @@ class RecipeController extends Controller
             $productionCosts['overhead'] +
             $productionCosts['management'];
 
-        $quantity = (float)$validated['quantity'];
+        $quantity = (float) $validated['quantity'];
         $costPerUnit = $quantity > 0 ? $totalCost / $quantity : 0;
 
         return response()->json([
