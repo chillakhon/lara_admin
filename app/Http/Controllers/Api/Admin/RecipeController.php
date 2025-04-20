@@ -62,8 +62,7 @@ class RecipeController extends Controller
             'costRates.category',
             'product_recipes.product',
             'product_recipes.product_variant',
-        ])
-            ->whereNull('deleted_at');
+        ])->whereNull('deleted_at');
 
         if ($request->get('recipe_id')) {
             $recipes = $recipes->where('id', $request->get('recipe_id'))->get();
