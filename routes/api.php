@@ -280,9 +280,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //        // Производство
         Route::prefix('production')->name('production.')->group(function () {
             Route::get('/', [ProductionController::class, 'index'])->name('index');
-            Route::get('/create/{recipe}', [ProductionController::class, 'create'])->name('create');
-            //            Route::post('/batches', [ProductionBatchController::class, 'store'])->name('store');
-//            Route::get('/batches/{batch}', [ProductionController::class, 'show'])->name('show');
+            // Route::get('/create/{recipe}', [ProductionController::class, 'create'])->name('create');
+            Route::post('/batches', [ProductionBatchController::class, 'store'])->name('store');
+            //            Route::get('/batches/{batch}', [ProductionController::class, 'show'])->name('show');
             Route::post('/batches/{batch}/start', [ProductionController::class, 'start'])->name('start');
             Route::post('/batches/{batch}/complete', [ProductionController::class, 'complete'])->name('complete');
             Route::post('/batches/{batch}/cancel', [ProductionController::class, 'cancel'])->name('cancel');

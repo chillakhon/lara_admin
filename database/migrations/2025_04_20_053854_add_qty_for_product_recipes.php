@@ -18,15 +18,15 @@ return new class extends Migration {
 
         Schema::table('recipe_cost_rates', function (Blueprint $table) {
             if (!Schema::hasColumn('recipe_cost_rates', 'rate_per_unit')) {
-                $table->double('rate_per_unit', 2)->after('cost_category_id');
+                $table->double('rate_per_unit')->after('cost_category_id');
             }
 
             if (!Schema::hasColumn('recipe_cost_rates', 'fixed_rate')) {
                 $table->double('fixed_rate')->after('rate_per_unit');
             }
 
-            $table->double('rate_per_unit', 2)->nullable()->change();
-            $table->double('fixed_rate', 2)->nullable()->change();
+            $table->double('rate_per_unit')->nullable()->change();
+            $table->double('fixed_rate')->nullable()->change();
         });
     }
 

@@ -12,12 +12,14 @@ use App\Models\Recipe;
 use App\Models\Unit;
 use App\Services\ProductionCostService;
 use App\Services\RecipeService;
+use App\Traits\RecipeTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class RecipeController extends Controller
 {
+    use RecipeTrait;
     protected $recipeService;
     protected $productionCostService;
 
@@ -53,16 +55,20 @@ class RecipeController extends Controller
     public function index()
     {
         $recipes = Recipe::with([
-            'products' => function ($query) {
-                $query->with(['variants']);
-            },
-            'selectedVariants',
             'items.component.inventoryBalance',
             'items.unit',
             'outputUnit',
             'createdBy',
-            'costRates.category'
-        ])->get();
+            'costRates.category',
+            'product_recipes.product',
+            'product_recipes.product_variant',
+        ])
+            ->whereNull('deleted_at')
+            ->get();
+
+        foreach ($recipes as &$recipe) {
+            $recipe = $this->solve_category_cost($recipe);
+        }
 
         return response()->json($recipes);
     }
@@ -258,27 +264,7 @@ class RecipeController extends Controller
             'product_recipes.product_variant',
         ]);
 
-        $cost_rates = $recipe->costRates;
-
-        if (count($cost_rates) >= 1) {
-            $modifies_cost_rates = [];
-
-            $output_qty = $recipe->output_quantity ?? 0;
-
-            foreach ($cost_rates as $key => $cost_rate) {
-                $rate_per_unit_total = $output_qty * ($cost_rate->rate_per_unit ?? 0);
-                $fixed_rate_total = $output_qty * ($cost_rate->fixed_rate ?? 0);
-                $modifies_cost_rates[] = [
-                    'category_name' => $cost_rate?->category?->name ?? '',
-                    'rate_per_unit_total' => $rate_per_unit_total,
-                    'fixed_rate_total' => $fixed_rate_total,
-                    'total' => $rate_per_unit_total + $fixed_rate_total,
-                ];
-            }
-
-            $recipe->unsetRelation('costRates');
-            $recipe->cost_rates = $modifies_cost_rates;
-        }
+        $recipe = $this->solve_category_cost($recipe);
 
         return response()->json($recipe);
     }
