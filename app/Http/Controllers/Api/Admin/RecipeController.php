@@ -52,7 +52,7 @@ class RecipeController extends Controller
      *     )
      * )
      */
-    public function index()
+    public function index(Request $request)
     {
         $recipes = Recipe::with([
             'items.component.inventoryBalance',
@@ -63,14 +63,28 @@ class RecipeController extends Controller
             'product_recipes.product',
             'product_recipes.product_variant',
         ])
-            ->whereNull('deleted_at')
-            ->get();
+            ->whereNull('deleted_at');
 
-        foreach ($recipes as &$recipe) {
-            $recipe = $this->solve_category_cost($recipe);
+        if ($request->get('recipe_id')) {
+            $recipes = $recipes->where('id', $request->get('recipe_id'))->get();
+            if (count($recipes) >= 1) {
+                $recipes = $this->solve_category_cost($recipes[0]);
+            }
+        } else if ($request->get('per_page')) {
+            $recipes = $recipes->paginate($request->get('per_page'));
+        } else {
+            $recipes = $recipes->get();
         }
 
-        return response()->json($recipes);
+        if (!$request->get('recipe_id')) {
+            foreach ($recipes as &$recipe) {
+                $recipe = $this->solve_category_cost($recipe);
+            }
+        }
+
+        return response()->json([
+            'recipes' => $recipes,
+        ]);
     }
 
     /**

@@ -217,7 +217,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::group(['prefix' => 'recipes', 'as' => 'recipes.'], function () {
             Route::get('/', [RecipeController::class, 'index']);
             Route::post('/', [RecipeController::class, 'store']);
-            Route::get('/{recipe}', [RecipeController::class, 'show']);
+            // Route::get('/{recipe}', [RecipeController::class, 'show']);
             Route::put('/{recipe}', [RecipeController::class, 'update']);
             Route::delete('/{recipe}', [RecipeController::class, 'destroy']);
 
