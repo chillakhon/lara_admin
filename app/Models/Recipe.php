@@ -72,7 +72,7 @@ class Recipe extends Model
         );
     }
 
-    public function product_recipes()
+    public function output_products()
     {
         return $this->hasMany(ProductRecipe::class);
     }

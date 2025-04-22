@@ -7,6 +7,7 @@ use App\Models\Material;
 use App\Models\Product;
 use App\Models\ProductionBatch;
 use App\Models\ProductionBatchMaterial;
+use App\Models\ProductionBatchOutputProduct;
 use App\Models\Recipe;
 use App\Models\ProductVariant;
 use App\Exceptions\ProductionException;
@@ -26,30 +27,23 @@ class ProductionService
     }
 
     public function createProductionBatch(
-        // $recipeId,
-        $quantity,
-        $material_items = [],
-        $output_products = [],
+        $recipes = [],
         ?Carbon $plannedStartDate = null,
         ?string $notes = null
     ) {
-        // $recipe = Recipe::where('id', $recipeId)->first();
-
         try {
-            return DB::transaction(function () use ($material_items, $output_products, $quantity, $plannedStartDate, $notes) {
+            return DB::transaction(function () use ($recipes, $plannedStartDate, $notes) {
                 // Получаем вариант продукта
 
                 $batch_number = $this->generateBatchNumber();
                 $created_batches = [];
 
                 // will be used in another place
-                foreach ($output_products as $index => $output_item) {
+                foreach ($recipes as $index => $recipe) {
                     $batchData = [
                         'batch_number' => $batch_number . '-' . $index + 1,
-                        'recipe_id' => $output_item['tech_card_id'],
-                        'product_id' => $output_item['product_id'],
-                        'product_variant_id' => $output_item['product_variant_id'],
-                        'planned_quantity' => $output_item['qty'],
+                        'recipe_id' => $recipe['recipe_id'],
+                        'planned_quantity' => $recipe['planned_qty'],
                         'status' => 'pending',
                         'planned_start_date' => $plannedStartDate ?? now(),
                         'planned_end_date' => null, // $this->calculatePlannedEndDate($plannedStartDate, $recipe->production_time),
@@ -59,6 +53,24 @@ class ProductionService
 
                     $batch = ProductionBatch::create($batchData);
                     $created_batches[] = $batch;
+
+                    foreach ($recipe['material_items'] as $material_item) {
+                        ProductionBatchMaterial::create([
+                            'production_batch_id' => $batch->id,
+                            'material_type' => $material_item['component_type'],
+                            'material_id' => $material_item['component_id'],
+                            'qty' => $material_item['quantity'],
+                        ]);
+                    }
+
+                    foreach ($recipe['output_products'] as $output_product) {
+                        ProductionBatchOutputProduct::create([
+                            'production_batch_id' => $batch->id,
+                            'output_type' => $output_product['component_type'],
+                            'output_id' => $output_product['component_id'],
+                            'qty' => $output_product['qty'],
+                        ]);
+                    }
 
                     // this will be added only after accepting the production
 
@@ -79,23 +91,6 @@ class ProductionService
                     //     $output_item['quantity']
                     // );
                 }
-
-                foreach ($material_items as $material_item) {
-
-                    // $modelClass = match ($material_item['component_type']) {
-                    //     'ProductVariant' => ProductVariant::class, // this should come here for now
-                    //     'Product' => Product::class,
-                    //     'Material' => Material::class,
-                    // };
-
-                    ProductionBatchMaterial::create([
-                        'production_batch_number' => $batch_number,
-                        'material_type' => $material_item['component_type'],
-                        'material_id' => $material_item['component_id'],
-                        'qty' => $material_item['quantity'],
-                    ]);
-                }
-
                 return [
                     'batches' => $created_batches,
                     'batch_number' => $batch_number,

@@ -61,8 +61,8 @@ class RecipeController extends Controller
             'outputUnit',
             'createdBy',
             'costRates.category',
-            'product_recipes.product',
-            'product_recipes.product_variant',
+            'output_products.product',
+            'output_products.product_variant',
         ])->whereNull('deleted_at');
 
         if ($request->get('recipe_id')) {
@@ -283,8 +283,8 @@ class RecipeController extends Controller
             'items.component',
             'items.unit',
             'costRates.category',
-            'product_recipes.product',
-            'product_recipes.product_variant',
+            'output_products.product',
+            'output_products.product_variant',
         ]);
 
         $recipe = $this->solve_category_cost($recipe);

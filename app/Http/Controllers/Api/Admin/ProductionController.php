@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ProductionBatch;
 use App\Models\ProductionBatchMaterial;
+use App\Models\ProductionBatchOutputProduct;
 use App\Models\Recipe;
 use App\Services\ProductionService;
 use Carbon\Carbon;
@@ -63,59 +64,71 @@ class ProductionController extends Controller
     {
         $batches = $this->get_batches($request);
 
-        return response()->json([
-            'data' => $batches
-        ]);
+        return response()->json($batches);
     }
 
 
     protected function get_batches(Request $request)
     {
-        $batches = ProductionBatch
-            ::selectRaw("SUBSTRING_INDEX(batch_number, '-', 2) as base_batch_number")
-            ->groupBy('base_batch_number')
-            ->get()
-            ->map(function ($group) {
-                $baseBatch = $group->base_batch_number;
+        $batches = ProductionBatch::selectRaw("SUBSTRING_INDEX(batch_number, '-', 2) as base_batch_number")
+            ->groupBy('base_batch_number');
 
-                $groupedBatches = ProductionBatch
-                    ::where('batch_number', 'like', "$baseBatch-%")
-                    ->orWhere('batch_number', '=', $baseBatch)
-                    ->select([
-                        'id',
-                        'batch_number',
-                        'recipe_id',
-                        'product_id',
-                        'product_variant_id',
-                        'planned_quantity',
-                        'status',
-                        'planned_start_date'
-                    ])
-                    ->with(['recipe', 'productVariant', 'product'])
-                    ->get();
+        if ($request->get('batch_number')) {
+            $batches->where('batch_number', 'like', "%{$request->get('batch_number')}%");
+        }
 
-                $totalQty = $groupedBatches->sum('planned_quantity');
+        $perPage = $request->get('per_page');
 
-                $materials = ProductionBatchMaterial
-                    ::where('production_batch_number', $baseBatch)
-                    ->with('material')
-                    ->select([
-                        'production_batch_number',
-                        'material_type',
-                        'material_id',
-                        'qty as quantity',
-                    ])
-                    ->get();
+        $transform = function ($group) {
+            $baseBatch = $group->base_batch_number;
 
-                return [
-                    'base_batch_number' => $baseBatch,
-                    'total_quantity' => $totalQty,
-                    'materials' => $materials,
-                    'output_products' => $groupedBatches,
-                ];
-            });
+            $groupedBatches = ProductionBatch::where('batch_number', 'like', "$baseBatch-%")
+                ->orWhere('batch_number', '=', $baseBatch)
+                ->get();
 
-        return $batches;
+            $min_id = $groupedBatches->min('id');
+            $planned_quantity = $groupedBatches->sum('planned_quantity');
+
+            $grouped_batches_ids = $groupedBatches->pluck('id');
+
+            $materials = ProductionBatchMaterial::whereIn('production_batch_id', $grouped_batches_ids)
+                ->with('material')
+                ->select([
+                    'production_batch_id',
+                    'material_type',
+                    'material_id',
+                    'qty as quantity',
+                ])
+                ->get();
+
+            $output_products = ProductionBatchOutputProduct::whereIn('production_batch_id', $grouped_batches_ids)
+                ->with('output')
+                ->select([
+                    'production_batch_id',
+                    'output_type',
+                    'output_id',
+                    'qty',
+                ])
+                ->get();
+
+            return [
+                'min_id' => $min_id,
+                'base_batch_number' => $baseBatch,
+                'planned_quantity' => $planned_quantity,
+                'materials' => $materials,
+                'output_products' => $output_products,
+            ];
+        };
+
+        if ($perPage) {
+            $paginated = $batches->paginate($perPage);
+            $transformed = $paginated->through($transform);
+
+            return $transformed;
+        } else {
+            $batches = $batches->get()->map($transform);
+            return $batches;
+        }
     }
 
     /**
@@ -223,11 +236,11 @@ class ProductionController extends Controller
             // 'output_products.*.product_variant_id' => 'nullable|integer',
         ]);
 
-        $material = $this->get_materials_for_production_batch($validated['recipes']);
+        $materials = $this->get_materials_for_production_batch($validated['recipes']);
 
-        [$canProduce, $quantity] = $this
+        [$canProduce, $material_qtyies] = $this
             ->productionService
-            ->validateProductionPossibility($material);
+            ->validateProductionPossibility($materials);
 
         // uncomment this if you want to check if there are enough materials (is primary)
         // if (!$canProduce) {
@@ -239,9 +252,7 @@ class ProductionController extends Controller
 
         $batch = $this->productionService->createProductionBatch(
             // $validated['tech_card_id'],
-            $quantity,
-            $validated['material_items'],
-            $validated['output_products'],
+            $validated['recipes'],
             $validated['planned_start_date'] ? Carbon::parse($validated['planned_start_date']) : null,
             $validated['notes']
         );

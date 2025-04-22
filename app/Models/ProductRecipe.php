@@ -8,12 +8,13 @@ class ProductRecipe extends Model
 {
     protected $table = 'product_recipes';
 
-    protected $fillable = [
-        'recipe_id',
-        'product_id',
-        'product_variant_id',
-        'is_default'
-    ];
+    protected $guarded = ['id'];
+    // protected $fillable = [
+    //     'recipe_id',
+    //     'product_id',
+    //     'product_variant_id',
+    //     'is_default'
+    // ];
 
     public function product()
     {

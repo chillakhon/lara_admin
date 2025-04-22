@@ -10,7 +10,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('products_batches_output_products', function (Blueprint $table) {
+        Schema::create('production_batches_output_products', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('production_batch_id');
             // $table->string('production_batch_number')->nullable();
@@ -29,6 +29,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('products_batches_output_products');
+        Schema::dropIfExists('production_batches_output_products');
     }
 };
