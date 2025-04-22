@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProductionBatch;
+use App\Models\ProductionBatchMaterial;
 use App\Models\Recipe;
 use App\Services\ProductionService;
 use Carbon\Carbon;
@@ -58,19 +59,63 @@ class ProductionController extends Controller
      *     )
      * )
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $batches = ProductionBatch::with([
-            'recipe.productVariant.product',
-            'recipe.outputUnit',
-            'createdBy'
-        ])
-            ->latest()
-            ->paginate(20);
+        $batches = $this->get_batches($request);
 
         return response()->json([
             'data' => $batches
         ]);
+    }
+
+
+    protected function get_batches(Request $request)
+    {
+        $batches = ProductionBatch
+            ::selectRaw("SUBSTRING_INDEX(batch_number, '-', 2) as base_batch_number")
+            ->groupBy('base_batch_number')
+            ->get()
+            ->map(function ($group) {
+                $baseBatch = $group->base_batch_number;
+
+                $groupedBatches = ProductionBatch
+                    ::where('batch_number', 'like', "$baseBatch-%")
+                    ->orWhere('batch_number', '=', $baseBatch)
+                    ->select([
+                        'id',
+                        'batch_number',
+                        'recipe_id',
+                        'product_id',
+                        'product_variant_id',
+                        'planned_quantity',
+                        'status',
+                        'planned_start_date'
+                    ])
+                    ->with(['recipe', 'productVariant', 'product'])
+                    ->get();
+
+                $totalQty = $groupedBatches->sum('planned_quantity');
+
+                $materials = ProductionBatchMaterial
+                    ::where('production_batch_number', $baseBatch)
+                    ->with('material')
+                    ->select([
+                        'production_batch_number',
+                        'material_type',
+                        'material_id',
+                        'qty as quantity',
+                    ])
+                    ->get();
+
+                return [
+                    'base_batch_number' => $baseBatch,
+                    'total_quantity' => $totalQty,
+                    'materials' => $materials,
+                    'output_products' => $groupedBatches,
+                ];
+            });
+
+        return $batches;
     }
 
     /**
@@ -160,30 +205,77 @@ class ProductionController extends Controller
      *     )
      * )
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
-            'quantity' => 'required|numeric|min:0.001',
+            // 'quantity' => 'required|numeric|min:0.001',
             'planned_start_date' => 'nullable|date',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+            // 'tech_card_id' => 'required|integer|exists:recipes,id', // should exist in recipes table
+            'recipes' => 'required|array|min:1', // Products to be decremented
+            // 'material_items.*.component_type' => 'nullable|string',
+            // 'material_items.*.component_id' => 'nullable|integer', // should exist in products table
+            // 'material_items.*.quantity' => 'required|numeric|min:0.001',
+            // 'output_products' => 'required|array|min:1', // Products to be incremented
+            // 'output_products.*.tech_card_id' => 'required|integer|exists:recipes,id', // should exist in recipes table
+            // 'output_products.*.qty' => 'required|numeric|min:0.001',
+            // 'output_products.*.product_id' => 'nullable|integer',
+            // 'output_products.*.product_variant_id' => 'nullable|integer',
         ]);
 
-        try {
-            $batch = $this->productionService->createProductionBatch(
-                $validated['quantity'],
-                $validated['planned_start_date'] ? Carbon::parse($validated['planned_start_date']) : null,
-                $validated['notes']
-            );
+        $material = $this->get_materials_for_production_batch($validated['recipes']);
 
-            return response()->json([
-                'data' => $batch,
-                'message' => 'Производственная партия создана'
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage()
-            ], 400);
+        [$canProduce, $quantity] = $this
+            ->productionService
+            ->validateProductionPossibility($material);
+
+        // uncomment this if you want to check if there are enough materials (is primary)
+        // if (!$canProduce) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Недостаточно материалов для производства',
+        //     ]);
+        // }
+
+        $batch = $this->productionService->createProductionBatch(
+            // $validated['tech_card_id'],
+            $quantity,
+            $validated['material_items'],
+            $validated['output_products'],
+            $validated['planned_start_date'] ? Carbon::parse($validated['planned_start_date']) : null,
+            $validated['notes']
+        );
+
+        return response()->json([
+            'data' => $batch,
+            'message' => 'Производственная партия создана'
+        ], 201);
+
+    }
+
+    private function get_materials_for_production_batch($recipes)
+    {
+        $materials = [];
+
+        foreach ($recipes as $recipe) {
+            foreach ($recipe['material_items'] as $item) {
+                $key = $item['component_type'] . '_' . $item['component_id'];
+
+                if (!isset($materials[$key])) {
+                    $materials[$key] = [
+                        'component_type' => $item['component_type'],
+                        'component_id' => $item['component_id'],
+                        'quantity' => $item['quantity'],
+                    ];
+                } else {
+                    $materials[$key]['quantity'] += $item['quantity'];
+                }
+            }
         }
+
+        $materials = array_values($materials);
+
+        return $materials;
     }
 
 

@@ -37,24 +37,26 @@ class ProductionBatch extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = [
-        'batch_number',
-        'recipe_id',
-        'product_variant_id',
-        'planned_quantity',
-        'actual_quantity',
-        'status',
-        'unit_cost',
-        'total_material_cost',
-        'additional_costs',
-        'planned_start_date',
-        'planned_end_date',
-        'started_at',
-        'completed_at',
-        'created_by',
-        'completed_by',
-        'notes'
-    ];
+    // protected $fillable = [
+    //     'batch_number',
+    //     'recipe_id',
+    //     'product_variant_id',
+    //     'planned_quantity',
+    //     'actual_quantity',
+    //     'status',
+    //     'unit_cost',
+    //     'total_material_cost',
+    //     'additional_costs',
+    //     'planned_start_date',
+    //     'planned_end_date',
+    //     'started_at',
+    //     'completed_at',
+    //     'created_by',
+    //     'completed_by',
+    //     'notes'
+    // ];
+
+    protected $guarded = ['id'];
 
     protected $casts = [
         'planned_quantity' => 'decimal:3',
@@ -75,7 +77,12 @@ class ProductionBatch extends Model
 
     public function productVariant()
     {
-        return $this->belongsTo(ProductVariant::class);
+        return $this->hasOne(ProductVariant::class, 'id', 'product_variant_id');
+    }
+
+    public function product()
+    {
+        return $this->hasOne(Product::class, 'id', 'product_id');
     }
 
     public function componentConsumptions()

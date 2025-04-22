@@ -2,7 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\InventoryBalance;
+use App\Models\Material;
+use App\Models\Product;
 use App\Models\ProductionBatch;
+use App\Models\ProductionBatchMaterial;
 use App\Models\Recipe;
 use App\Models\ProductVariant;
 use App\Exceptions\ProductionException;
@@ -22,59 +26,80 @@ class ProductionService
     }
 
     public function createProductionBatch(
-        Recipe $recipe,
-        float $quantity,
+        // $recipeId,
+        $quantity,
+        $material_items = [],
+        $output_products = [],
         ?Carbon $plannedStartDate = null,
         ?string $notes = null
-    ): ProductionBatch {
-        Log::info('Starting createProductionBatch in service', [
-            'recipe_id' => $recipe->id,
-            'quantity' => $quantity,
-            'planned_start_date' => $plannedStartDate,
-            'notes' => $notes
-        ]);
+    ) {
+        // $recipe = Recipe::where('id', $recipeId)->first();
 
         try {
-            // Проверяем возможность производства
-            $this->validateProductionPossibility($recipe, $quantity);
-
-            Log::info('Production possibility validated');
-
-            return DB::transaction(function () use ($recipe, $quantity, $plannedStartDate, $notes) {
+            return DB::transaction(function () use ($material_items, $output_products, $quantity, $plannedStartDate, $notes) {
                 // Получаем вариант продукта
-                $productVariant = $this->getProductVariant($recipe);
 
-                Log::info('Product variant determined', [
-                    'product_variant' => $productVariant ? $productVariant->toArray() : null
-                ]);
+                $batch_number = $this->generateBatchNumber();
+                $created_batches = [];
 
-                if (!$productVariant) {
-                    throw new \Exception('Не найден вариант продукта для данного рецепта. Проверьте настройки рецепта и продукта.');
+                // will be used in another place
+                foreach ($output_products as $index => $output_item) {
+                    $batchData = [
+                        'batch_number' => $batch_number . '-' . $index + 1,
+                        'recipe_id' => $output_item['tech_card_id'],
+                        'product_id' => $output_item['product_id'],
+                        'product_variant_id' => $output_item['product_variant_id'],
+                        'planned_quantity' => $output_item['qty'],
+                        'status' => 'pending',
+                        'planned_start_date' => $plannedStartDate ?? now(),
+                        'planned_end_date' => null, // $this->calculatePlannedEndDate($plannedStartDate, $recipe->production_time),
+                        'created_by' => auth()->id(),
+                        'notes' => $notes
+                    ];
+
+                    $batch = ProductionBatch::create($batchData);
+                    $created_batches[] = $batch;
+
+                    // this will be added only after accepting the production
+
+                    // $inventory_balance_item = InventoryBalance
+                    //     ::where('item_type', $output_item['component_type'])
+                    //     ->where('item_id', $output_item['component_id'])
+                    //     ->first();
+
+                    // if (!$inventory_balance_item) {
+                    //     $inventory_balance_item = InventoryBalance::create([
+                    //         'item_type' => $output_item['component_type'],
+                    //         'item_id' => $output_item['component_id'],
+                    //     ]);
+                    // }
+
+                    // $inventory_balance_item->increment(
+                    //     'total_quantity',
+                    //     $output_item['quantity']
+                    // );
                 }
 
-                $batchData = [
-                    'batch_number' => $this->generateBatchNumber(),
-                    'recipe_id' => $recipe->id,
-                    'product_variant_id' => $productVariant->id,
-                    'planned_quantity' => $quantity,
-                    'status' => 'planned',
-                    'planned_start_date' => $plannedStartDate ?? now(),
-                    'planned_end_date' => $this->calculatePlannedEndDate($plannedStartDate, $recipe->production_time),
-                    'created_by' => auth()->id(),
-                    'notes' => $notes
+                foreach ($material_items as $material_item) {
+
+                    // $modelClass = match ($material_item['component_type']) {
+                    //     'ProductVariant' => ProductVariant::class, // this should come here for now
+                    //     'Product' => Product::class,
+                    //     'Material' => Material::class,
+                    // };
+
+                    ProductionBatchMaterial::create([
+                        'production_batch_number' => $batch_number,
+                        'material_type' => $material_item['component_type'],
+                        'material_id' => $material_item['component_id'],
+                        'qty' => $material_item['quantity'],
+                    ]);
+                }
+
+                return [
+                    'batches' => $created_batches,
+                    'batch_number' => $batch_number,
                 ];
-
-                Log::info('Creating production batch with data', [
-                    'batch_data' => $batchData
-                ]);
-
-                $batch = ProductionBatch::create($batchData);
-
-                Log::info('Production batch created', [
-                    'batch_id' => $batch->id
-                ]);
-
-                return $batch;
             });
         } catch (\Exception $e) {
             Log::error('Error in createProductionBatch service method', [
@@ -86,49 +111,49 @@ class ProductionService
     }
 
     public function startProduction(ProductionBatch $batch): void
-{
-    if ($batch->status !== 'planned') {
-        throw new ProductionException("Невозможно начать производство. Неверный статус партии.");
-    }
+    {
+        if ($batch->status !== 'planned') {
+            throw new ProductionException("Невозможно начать производство. Неверный статус партии.");
+        }
 
-    try {
-        DB::transaction(function () use ($batch) {
-            // Проверяем наличие материалов
-            $availability = $this->checkComponentsAvailability(
-                $batch->recipe, 
-                $batch->planned_quantity
-            );
+        try {
+            DB::transaction(function () use ($batch) {
+                // Проверяем наличие материалов
+                $availability = $this->checkComponentsAvailability(
+                    $batch->recipe,
+                    $batch->planned_quantity
+                );
 
-            if (!$availability['can_produce']) {
-                $shortages = collect($availability['components'])
-                    ->filter(fn($item) => !$item['is_sufficient'])
-                    ->map(fn($item) => "{$item['component']['name']}: нехватка {$item['shortage']}")
-                    ->join(', ');
-                    
-                throw new ProductionException("Недостаточно материалов для производства: $shortages");
-            }
+                if (!$availability['can_produce']) {
+                    $shortages = collect($availability['components'])
+                        ->filter(fn($item) => !$item['is_sufficient'])
+                        ->map(fn($item) => "{$item['component']['name']}: нехватка {$item['shortage']}")
+                        ->join(', ');
 
-            // Резервируем и списываем материалы
-            $this->consumeMaterials($batch);
+                    throw new ProductionException("Недостаточно материалов для производства: $shortages");
+                }
 
-            $batch->update([
-                'status' => 'in_progress',
-                'started_at' => now()
-            ]);
+                // Резервируем и списываем материалы
+                $this->consumeMaterials($batch);
 
-            Log::info('Production batch started', [
+                $batch->update([
+                    'status' => 'in_progress',
+                    'started_at' => now()
+                ]);
+
+                Log::info('Production batch started', [
+                    'batch_id' => $batch->id,
+                    'batch_number' => $batch->batch_number
+                ]);
+            });
+        } catch (\Exception $e) {
+            Log::error('Error starting production batch', [
                 'batch_id' => $batch->id,
-                'batch_number' => $batch->batch_number
+                'error' => $e->getMessage()
             ]);
-        });
-    } catch (\Exception $e) {
-        Log::error('Error starting production batch', [
-            'batch_id' => $batch->id,
-            'error' => $e->getMessage()
-        ]);
-        throw $e;
+            throw $e;
+        }
     }
-}
 
     public function completeProduction(
         ProductionBatch $batch,
@@ -187,22 +212,28 @@ class ProductionService
         });
     }
 
-    protected function validateProductionPossibility(Recipe $recipe, float $quantity): void
+    public function validateProductionPossibility($items): array
     {
-        foreach ($recipe->items as $item) {
-            $requiredQuantity = $this->calculateRequiredQuantity($item, $quantity);
-            $availableQuantity = $this->inventoryService->getAvailableQuantity(
-                $item->component_type,
-                $item->component_id
-            );
+        $total_qty = 0.0;
+        foreach ($items as $item) {
+            $find_product = InventoryBalance
+                ::where('item_type', $item['component_type'])
+                ->where('item_id', $item['component_id'])
+                ->first();
 
-            if ($availableQuantity < $requiredQuantity) {
-                throw new \Exception(
-                    "Недостаточно материала {$item->component->name}. " .
-                    "Требуется: {$requiredQuantity}, Доступно: {$availableQuantity}"
-                );
-            }
+            // it should not allow us to produce to this product
+            // so we should return false
+            // if we are not able to find product in inventory
+            if (!$find_product)
+                return [false, 0.0];
+
+            if ($find_product->total_quantity < $item['quantity'])
+                return [false, 0.0];
+
+            $total_qty += $item['quantity'] ?? 0.0;
         }
+
+        return [true, $total_qty];
     }
 
     protected function consumeMaterials(ProductionBatch $batch): void
@@ -276,11 +307,22 @@ class ProductionService
         });
     }
 
-    protected function generateBatchNumber(): string
+    protected function generateBatchNumber(int $randomLength = 5, string $dateFormat = 'Ymd'): string
     {
-        $prefix = Carbon::now()->format('Ymd');
-        $random = strtoupper(Str::random(4));
-        return "{$prefix}-{$random}";
+        do {
+            $prefix = now()->format($dateFormat);
+            $random = strtoupper(Str::random($randomLength));
+            $batchNumber = "{$prefix}-{$random}";
+        } while ($this->batchNumberExists($batchNumber));
+
+        return $batchNumber;
+    }
+
+    protected function batchNumberExists(string $batchNumber): bool
+    {
+        return ProductionBatch
+            ::where('batch_number', $batchNumber)
+            ->exists();
     }
 
     protected function calculatePlannedEndDate(?Carbon $startDate, ?int $productionTime): ?Carbon
@@ -449,40 +491,40 @@ class ProductionService
 
     protected function getProductVariant(Recipe $recipe): ?\App\Models\ProductVariant
     {
-        Log::info('Getting product variant for recipe', [
-            'recipe_id' => $recipe->id
-        ]);
+        // Log::info('Getting product variant for recipe', [
+        //     'recipe_id' => $recipe->id
+        // ]);
 
         // Загружаем связь из таблицы product_recipes
         $productRecipe = DB::table('product_recipes')
             ->where('recipe_id', $recipe->id)
             ->first();
 
-        Log::info('Product recipe relation found', [
-            'product_recipe' => $productRecipe
-        ]);
+        // Log::info('Product recipe relation found', [
+        //     'product_recipe' => $productRecipe
+        // ]);
 
         if (!$productRecipe) {
-            Log::warning('No product recipe relation found', [
-                'recipe_id' => $recipe->id
-            ]);
+            // Log::warning('No product recipe relation found', [
+            //     'recipe_id' => $recipe->id
+            // ]);
             return null;
         }
 
         // Если указан конкретный вариант
         if ($productRecipe->product_variant_id) {
             $variant = ProductVariant::find($productRecipe->product_variant_id);
-            Log::info('Found specific variant', [
-                'variant' => $variant ? $variant->toArray() : null
-            ]);
+            // Log::info('Found specific variant', [
+            //     'variant' => $variant ? $variant->toArray() : null
+            // ]);
             return $variant;
         }
 
 
-        Log::warning('No suitable variant found for recipe', [
-            'recipe_id' => $recipe->id,
-            'product_id' => $productRecipe->product_id
-        ]);
+        // Log::warning('No suitable variant found for recipe', [
+        //     'recipe_id' => $recipe->id,
+        //     'product_id' => $productRecipe->product_id
+        // ]);
 
         return null;
     }
