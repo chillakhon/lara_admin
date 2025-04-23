@@ -7,6 +7,8 @@ use App\Http\Resources\CostCategoryResource;
 use App\Models\CostCategory;
 use App\Models\Material;
 use App\Models\Product;
+use App\Models\ProductionBatch;
+use App\Models\ProductRecipe;
 use App\Models\ProductVariant;
 use App\Models\Recipe;
 use App\Models\Unit;
@@ -60,8 +62,8 @@ class RecipeController extends Controller
             'outputUnit',
             'createdBy',
             'costRates.category',
-            'product_recipes.product',
-            'product_recipes.product_variant',
+            'output_products.product',
+            'output_products.product_variant',
         ])->whereNull('deleted_at');
 
         if ($request->get('recipe_id')) {
@@ -175,8 +177,8 @@ class RecipeController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.001',
             'items.*.unit_id' => 'required|exists:units,id',
             'products' => 'required|array|min:1',
-            'products.*.product_id' => 'required|exists:products,id',
-            'products.*.variant_id' => 'nullable|exists:product_variants,id',
+            'products.*.component_type' => 'required|in:Material,Product,ProductVariant',
+            'products.*.component_id' => 'required|integer',
             'products.*.is_default' => 'boolean',
             'products.*.qty' => 'required|numeric|min:0.001',
             'cost_rates' => 'array',
@@ -214,10 +216,19 @@ class RecipeController extends Controller
         $qty_total = 0.0;
         foreach ($validated['products'] as $productData) {
             $qty_total += $productData['qty'] ?? 0.0;
-            $recipe->products()->attach($productData['product_id'], [
-                'product_variant_id' => $productData['variant_id'] ?? null,
+
+            $modelClass = match ($productData['component_type']) {
+                'ProductVariant' => ProductVariant::class, // this should come here for now
+                'Product' => Product::class,
+                'Material' => Material::class,
+            };
+
+            ProductRecipe::create([
+                "recipe_id" => $recipe->id,
+                'component_type' => $modelClass,
+                'component_id' => $productData['component_id'],
                 "qty" => $productData['qty'] ?? 0,
-                'is_default' => $productData['is_default'] ?? false
+                'is_default' => $productData['is_default'],
             ]);
         }
 
@@ -273,8 +284,8 @@ class RecipeController extends Controller
             'items.component',
             'items.unit',
             'costRates.category',
-            'product_recipes.product',
-            'product_recipes.product_variant',
+            'output_products.product',
+            'output_products.product_variant',
         ]);
 
         $recipe = $this->solve_category_cost($recipe);
@@ -499,22 +510,31 @@ class RecipeController extends Controller
     {
         DB::beginTransaction();
         try {
-            if ($recipe->productionBatches()->exists()) {
+
+            // Check if the recipe is used in any production batches
+            $production_batches_that_use_this_recipe = ProductionBatch
+                ::where('recipe_id', $recipe->id)
+                ->get()
+                ->count();
+
+            if ($production_batches_that_use_this_recipe >= 1) {
                 throw new \Exception('Невозможно удалить рецепт, который используется в производственных партиях');
             }
 
-            $productsWithSingleRecipe = $recipe->products()
-                ->whereDoesntHave('recipes', function ($query) use ($recipe) {
-                    $query->where('recipes.id', '!=', $recipe->id);
-                })
-                ->exists();
+            // I didn't understand what this part is doing
 
-            if ($productsWithSingleRecipe) {
-                throw new \Exception('Невозможно удалить единственный рецепт для продукта');
-            }
+            // $productsWithSingleRecipe = $recipe->products()
+            //     ->whereDoesntHave('recipes', function ($query) use ($recipe) {
+            //         $query->where('recipes.id', '!=', $recipe->id);
+            //     })
+            //     ->exists();
 
-            $recipe->products()->detach();
-            $recipe->items()->delete();
+            // if ($productsWithSingleRecipe) {
+            //     throw new \Exception('Невозможно удалить единственный рецепт для продукта');
+            // }
+
+            // $recipe->output_products()->delete();
+            // $recipe->items()->delete();
             $recipe->delete();
 
             DB::commit();

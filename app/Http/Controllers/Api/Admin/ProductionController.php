@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProductionBatch;
+use App\Models\ProductionBatchMaterial;
+use App\Models\ProductionBatchOutputProduct;
 use App\Models\Recipe;
+use App\Models\User;
 use App\Services\ProductionService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -58,19 +61,156 @@ class ProductionController extends Controller
      *     )
      * )
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $batches = ProductionBatch::with([
-            'recipe.productVariant.product',
-            'recipe.outputUnit',
-            'createdBy'
-        ])
-            ->latest()
-            ->paginate(20);
+        $batches = $this->get_batches($request);
 
-        return response()->json([
-            'data' => $batches
-        ]);
+        return response()->json($batches);
+    }
+
+
+    protected function get_batches(Request $request)
+    {
+        $batches = ProductionBatch
+            ::selectRaw("SUBSTRING_INDEX(batch_number, '-', 2) as base_batch_number")
+            ->groupBy('base_batch_number');
+
+        if ($request->get('batch_number')) {
+            $batches->where('batch_number', 'like', "%{$request->get('batch_number')}%");
+        }
+
+        $perPage = $request->get('per_page');
+        $with_batches = $request->boolean('with_batches', false);
+
+        $transform = function ($group) use ($with_batches) {
+            $baseBatch = $group->base_batch_number;
+
+            $groupedBatches = ProductionBatch
+                ::where('batch_number', 'like', "$baseBatch-%")
+                ->orWhere('batch_number', '=', $baseBatch)
+                ->select([
+                    'id',
+                    'batch_number',
+                    'recipe_id',
+                    'planned_quantity',
+                    'status',
+                    'planned_start_date',
+                    'planned_end_date',
+                    'started_at',
+                    'completed_at',
+                    'performer_id',
+                    'created_by',
+                    'completed_by',
+                    'notes'
+                ])->with([
+                        'materials' => function ($query) {
+                            $query->select([
+                                'production_batch_id',
+                                'material_type',
+                                'material_id',
+                                'qty as quantity',
+                            ])->with('material');
+                        },
+                        'output_products' => function ($query) {
+                            $query->select([
+                                'production_batch_id',
+                                'output_type',
+                                'output_id',
+                                'qty',
+                            ])->with('output');
+                        },
+                        'recipe'
+                    ]);
+
+            $groupedBatches = $groupedBatches->get();
+
+            [
+                $min_id,
+                $planned_quantity,
+                $grouped_batches_ids,
+                $groupStatus,
+                $notes,
+                $planned_start_datetime,
+                $planned_end_datetime,
+                $started_datetime,
+                $completed_datetime,
+                $performers,
+            ] = $this->get_information_from_groupe_batches($groupedBatches);
+
+            $result_of_batch = [
+                'base_batch_number' => $baseBatch,
+                'planned_quantity' => $planned_quantity,
+                'status' => $groupStatus,
+                "notes" => $notes,
+                "planned_start_datetime" => $planned_start_datetime,
+                "planned_end_datetime" => $planned_end_datetime,
+                "started_datetime" => $started_datetime,
+                "completed_datetime" => $completed_datetime,
+                "performers" => $performers,
+                // 'materials' => $materials,
+                // 'output_products' => $output_products,
+            ];
+
+            if ($with_batches) {
+                $result_of_batch["batches"] = $groupedBatches;
+            }
+
+            return $result_of_batch;
+        };
+
+        if ($perPage) {
+            $paginated = $batches->paginate($perPage);
+            $transformed = $paginated->through($transform);
+
+            return $transformed;
+        } else {
+            $batches = $batches->get()->map($transform);
+            return $batches;
+        }
+    }
+
+    protected function get_information_from_groupe_batches($groupedBatche): array
+    {
+        $min_id = $groupedBatche->min('id');
+        $planned_quantity = $groupedBatche->sum('planned_quantity');
+        $planned_start_datetime = $groupedBatche->min('planned_start_date');
+        $planned_end_datetime = $groupedBatche->max('planned_end_date');
+        $started_datetime = $groupedBatche->min('started_at');
+        $completed_datetime = $groupedBatche->min('completed_at');
+        $performer_id = $groupedBatche->pluck('performer_id');
+        $performers = [];
+        if (count($performer_id) >= 1) {
+            $performers = User::whereIn('id', $performer_id)->get();
+        }
+
+
+        $grouped_batches_ids = $groupedBatche->pluck('id');
+        $statuses = $groupedBatche->pluck('status')->unique();
+        $groupStatus = '';
+        $notes = $groupedBatche->pluck('notes')->first();
+
+        if ($statuses->contains('in_progress')) {
+            $groupStatus = 'in_progress';
+        } elseif ($statuses->contains('pending')) {
+            $groupStatus = 'pending';
+        } elseif ($statuses->count() === 1 && $statuses->first() === 'completed') {
+            $groupStatus = 'completed';
+        } else {
+            $groupStatus = 'mixed'; // fallback if statuses are inconsistent
+        }
+
+        return [
+            $min_id,
+            $planned_quantity,
+            $grouped_batches_ids,
+            $groupStatus,
+            $notes,
+            $planned_start_datetime,
+            $planned_end_datetime,
+            $started_datetime,
+            $completed_datetime,
+            $performers,
+        ];
     }
 
     /**
@@ -160,30 +300,78 @@ class ProductionController extends Controller
      *     )
      * )
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $validated = $request->validate([
-            'quantity' => 'required|numeric|min:0.001',
+            'organization' => 'nullable|string',
+            // 'quantity' => 'required|numeric|min:0.001',
             'planned_start_date' => 'nullable|date',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+            "performer_id" => 'nullable|integer|exists:users,id',
+            // 'tech_card_id' => 'required|integer|exists:recipes,id', // should exist in recipes table
+            'recipes' => 'required|array|min:1', // Products to be decremented
+            // 'material_items.*.component_type' => 'nullable|string',
+            // 'material_items.*.component_id' => 'nullable|integer', // should exist in products table
+            // 'material_items.*.quantity' => 'required|numeric|min:0.001',
+            // 'output_products' => 'required|array|min:1', // Products to be incremented
+            // 'output_products.*.tech_card_id' => 'required|integer|exists:recipes,id', // should exist in recipes table
+            // 'output_products.*.qty' => 'required|numeric|min:0.001',
+            // 'output_products.*.product_id' => 'nullable|integer',
+            // 'output_products.*.product_variant_id' => 'nullable|integer',
         ]);
 
-        try {
-            $batch = $this->productionService->createProductionBatch(
-                $validated['quantity'],
-                $validated['planned_start_date'] ? Carbon::parse($validated['planned_start_date']) : null,
-                $validated['notes']
-            );
+        $materials = $this->get_materials_for_production_batch($validated['recipes']);
 
-            return response()->json([
-                'data' => $batch,
-                'message' => 'Производственная партия создана'
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage()
-            ], 400);
+        [$canProduce, $material_qtyies] = $this
+            ->productionService
+            ->validateProductionPossibility($materials);
+
+        // uncomment this if you want to check if there are enough materials (is primary)
+        // if (!$canProduce) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Недостаточно материалов для производства',
+        //     ]);
+        // }
+
+        $batch = $this->productionService->createProductionBatch(
+            // $validated['tech_card_id'],
+            $validated['performer_id'],
+            $validated['recipes'],
+            $validated['planned_start_date'] ? Carbon::parse($validated['planned_start_date']) : null,
+            $validated['notes']
+        );
+
+        return response()->json([
+            'data' => $batch,
+            'message' => 'Производственная партия создана'
+        ], 201);
+
+    }
+
+    private function get_materials_for_production_batch($recipes)
+    {
+        $materials = [];
+
+        foreach ($recipes as $recipe) {
+            foreach ($recipe['material_items'] as $item) {
+                $key = $item['component_type'] . '_' . $item['component_id'];
+
+                if (!isset($materials[$key])) {
+                    $materials[$key] = [
+                        'component_type' => $item['component_type'],
+                        'component_id' => $item['component_id'],
+                        'quantity' => $item['quantity'],
+                    ];
+                } else {
+                    $materials[$key]['quantity'] += $item['quantity'];
+                }
+            }
         }
+
+        $materials = array_values($materials);
+
+        return $materials;
     }
 
 
