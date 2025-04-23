@@ -104,4 +104,14 @@ class ProductionBatch extends Model
     {
         return $this->hasMany(ComponentConsumption::class, 'production_batch_id');
     }
+
+    public function materials(): HasMany
+    {
+        return $this->hasMany(ProductionBatchMaterial::class, 'production_batch_id');
+    }
+
+    public function output_products()
+    {
+        return $this->hasMany(ProductionBatchOutputProduct::class, 'production_batch_id');
+    }
 }

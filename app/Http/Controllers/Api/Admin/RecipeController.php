@@ -7,6 +7,7 @@ use App\Http\Resources\CostCategoryResource;
 use App\Models\CostCategory;
 use App\Models\Material;
 use App\Models\Product;
+use App\Models\ProductionBatch;
 use App\Models\ProductRecipe;
 use App\Models\ProductVariant;
 use App\Models\Recipe;
@@ -221,7 +222,7 @@ class RecipeController extends Controller
                 'Product' => Product::class,
                 'Material' => Material::class,
             };
-            
+
             ProductRecipe::create([
                 "recipe_id" => $recipe->id,
                 'component_type' => $modelClass,
@@ -509,22 +510,31 @@ class RecipeController extends Controller
     {
         DB::beginTransaction();
         try {
-            if ($recipe->productionBatches()->exists()) {
+
+            // Check if the recipe is used in any production batches
+            $production_batches_that_use_this_recipe = ProductionBatch
+                ::where('recipe_id', $recipe->id)
+                ->get()
+                ->count();
+
+            if ($production_batches_that_use_this_recipe >= 1) {
                 throw new \Exception('Невозможно удалить рецепт, который используется в производственных партиях');
             }
 
-            $productsWithSingleRecipe = $recipe->products()
-                ->whereDoesntHave('recipes', function ($query) use ($recipe) {
-                    $query->where('recipes.id', '!=', $recipe->id);
-                })
-                ->exists();
+            // I didn't understand what this part is doing
 
-            if ($productsWithSingleRecipe) {
-                throw new \Exception('Невозможно удалить единственный рецепт для продукта');
-            }
+            // $productsWithSingleRecipe = $recipe->products()
+            //     ->whereDoesntHave('recipes', function ($query) use ($recipe) {
+            //         $query->where('recipes.id', '!=', $recipe->id);
+            //     })
+            //     ->exists();
 
-            $recipe->products()->detach();
-            $recipe->items()->delete();
+            // if ($productsWithSingleRecipe) {
+            //     throw new \Exception('Невозможно удалить единственный рецепт для продукта');
+            // }
+
+            // $recipe->output_products()->delete();
+            // $recipe->items()->delete();
             $recipe->delete();
 
             DB::commit();

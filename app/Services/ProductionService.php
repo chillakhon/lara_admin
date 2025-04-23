@@ -27,12 +27,13 @@ class ProductionService
     }
 
     public function createProductionBatch(
+        $performer_id = null,
         $recipes = [],
         ?Carbon $plannedStartDate = null,
         ?string $notes = null
     ) {
         try {
-            return DB::transaction(function () use ($recipes, $plannedStartDate, $notes) {
+            return DB::transaction(function () use ($performer_id, $recipes, $plannedStartDate, $notes) {
                 // Получаем вариант продукта
 
                 $batch_number = $this->generateBatchNumber();
@@ -45,6 +46,7 @@ class ProductionService
                         'recipe_id' => $recipe['recipe_id'],
                         'planned_quantity' => $recipe['planned_qty'],
                         'status' => 'pending',
+                        'performer_id' => $performer_id,
                         'planned_start_date' => $plannedStartDate ?? now(),
                         'planned_end_date' => null, // $this->calculatePlannedEndDate($plannedStartDate, $recipe->production_time),
                         'created_by' => auth()->id(),

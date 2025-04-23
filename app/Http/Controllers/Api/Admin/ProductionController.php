@@ -7,6 +7,7 @@ use App\Models\ProductionBatch;
 use App\Models\ProductionBatchMaterial;
 use App\Models\ProductionBatchOutputProduct;
 use App\Models\Recipe;
+use App\Models\User;
 use App\Services\ProductionService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -70,7 +71,8 @@ class ProductionController extends Controller
 
     protected function get_batches(Request $request)
     {
-        $batches = ProductionBatch::selectRaw("SUBSTRING_INDEX(batch_number, '-', 2) as base_batch_number")
+        $batches = ProductionBatch
+            ::selectRaw("SUBSTRING_INDEX(batch_number, '-', 2) as base_batch_number")
             ->groupBy('base_batch_number');
 
         if ($request->get('batch_number')) {
@@ -78,46 +80,82 @@ class ProductionController extends Controller
         }
 
         $perPage = $request->get('per_page');
+        $with_batches = $request->boolean('with_batches', false);
 
-        $transform = function ($group) {
+        $transform = function ($group) use ($with_batches) {
             $baseBatch = $group->base_batch_number;
 
-            $groupedBatches = ProductionBatch::where('batch_number', 'like', "$baseBatch-%")
+            $groupedBatches = ProductionBatch
+                ::where('batch_number', 'like', "$baseBatch-%")
                 ->orWhere('batch_number', '=', $baseBatch)
-                ->get();
-
-            $min_id = $groupedBatches->min('id');
-            $planned_quantity = $groupedBatches->sum('planned_quantity');
-
-            $grouped_batches_ids = $groupedBatches->pluck('id');
-
-            $materials = ProductionBatchMaterial::whereIn('production_batch_id', $grouped_batches_ids)
-                ->with('material')
                 ->select([
-                    'production_batch_id',
-                    'material_type',
-                    'material_id',
-                    'qty as quantity',
-                ])
-                ->get();
+                    'id',
+                    'batch_number',
+                    'recipe_id',
+                    'planned_quantity',
+                    'status',
+                    'planned_start_date',
+                    'planned_end_date',
+                    'started_at',
+                    'completed_at',
+                    'performer_id',
+                    'created_by',
+                    'completed_by',
+                    'notes'
+                ])->with([
+                        'materials' => function ($query) {
+                            $query->select([
+                                'production_batch_id',
+                                'material_type',
+                                'material_id',
+                                'qty as quantity',
+                            ])->with('material');
+                        },
+                        'output_products' => function ($query) {
+                            $query->select([
+                                'production_batch_id',
+                                'output_type',
+                                'output_id',
+                                'qty',
+                            ])->with('output');
+                        },
+                        'recipe'
+                    ]);
 
-            $output_products = ProductionBatchOutputProduct::whereIn('production_batch_id', $grouped_batches_ids)
-                ->with('output')
-                ->select([
-                    'production_batch_id',
-                    'output_type',
-                    'output_id',
-                    'qty',
-                ])
-                ->get();
+            $groupedBatches = $groupedBatches->get();
 
-            return [
-                'min_id' => $min_id,
+            [
+                $min_id,
+                $planned_quantity,
+                $grouped_batches_ids,
+                $groupStatus,
+                $notes,
+                $planned_start_datetime,
+                $planned_end_datetime,
+                $started_datetime,
+                $completed_datetime,
+                $performers,
+            ] = $this->get_information_from_groupe_batches($groupedBatches);
+
+            $result_of_batch = [
                 'base_batch_number' => $baseBatch,
                 'planned_quantity' => $planned_quantity,
-                'materials' => $materials,
-                'output_products' => $output_products,
+                'status' => $groupStatus,
+                "notes" => $notes,
+                "planned_start_datetime" => $planned_start_datetime,
+                "planned_end_datetime" => $planned_end_datetime,
+                "started_datetime" => $started_datetime,
+                "completed_datetime" => $completed_datetime,
+                "performers" => $performers,
+                // 'materials' => $materials,
+                // 'output_products' => $output_products,
             ];
+
+            if ($with_batches) {
+                $result_of_batch["batches"] = $groupedBatches;
+            }
+
+            return $result_of_batch;
         };
 
         if ($perPage) {
@@ -129,6 +167,50 @@ class ProductionController extends Controller
             $batches = $batches->get()->map($transform);
             return $batches;
         }
+    }
+
+    protected function get_information_from_groupe_batches($groupedBatche): array
+    {
+        $min_id = $groupedBatche->min('id');
+        $planned_quantity = $groupedBatche->sum('planned_quantity');
+        $planned_start_datetime = $groupedBatche->min('planned_start_date');
+        $planned_end_datetime = $groupedBatche->max('planned_end_date');
+        $started_datetime = $groupedBatche->min('started_at');
+        $completed_datetime = $groupedBatche->min('completed_at');
+        $performer_id = $groupedBatche->pluck('performer_id');
+        $performers = [];
+        if (count($performer_id) >= 1) {
+            $performers = User::whereIn('id', $performer_id)->get();
+        }
+
+
+        $grouped_batches_ids = $groupedBatche->pluck('id');
+        $statuses = $groupedBatche->pluck('status')->unique();
+        $groupStatus = '';
+        $notes = $groupedBatche->pluck('notes')->first();
+
+        if ($statuses->contains('in_progress')) {
+            $groupStatus = 'in_progress';
+        } elseif ($statuses->contains('pending')) {
+            $groupStatus = 'pending';
+        } elseif ($statuses->count() === 1 && $statuses->first() === 'completed') {
+            $groupStatus = 'completed';
+        } else {
+            $groupStatus = 'mixed'; // fallback if statuses are inconsistent
+        }
+
+        return [
+            $min_id,
+            $planned_quantity,
+            $grouped_batches_ids,
+            $groupStatus,
+            $notes,
+            $planned_start_datetime,
+            $planned_end_datetime,
+            $started_datetime,
+            $completed_datetime,
+            $performers,
+        ];
     }
 
     /**
@@ -221,9 +303,11 @@ class ProductionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'organization' => 'nullable|string',
             // 'quantity' => 'required|numeric|min:0.001',
             'planned_start_date' => 'nullable|date',
             'notes' => 'nullable|string',
+            "performer_id" => 'nullable|integer|exists:users,id',
             // 'tech_card_id' => 'required|integer|exists:recipes,id', // should exist in recipes table
             'recipes' => 'required|array|min:1', // Products to be decremented
             // 'material_items.*.component_type' => 'nullable|string',
@@ -252,6 +336,7 @@ class ProductionController extends Controller
 
         $batch = $this->productionService->createProductionBatch(
             // $validated['tech_card_id'],
+            $validated['performer_id'],
             $validated['recipes'],
             $validated['planned_start_date'] ? Carbon::parse($validated['planned_start_date']) : null,
             $validated['notes']
