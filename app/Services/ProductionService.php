@@ -238,7 +238,7 @@ class ProductionService
         $recipe = $batch->recipe;
         $quantity = $batch->planned_quantity;
 
-        foreach ($recipe->items as $item) {
+        foreach ($recipe->material_items as $item) {
             $requiredQuantity = $this->calculateRequiredQuantity($item, $quantity);
 
             // Получаем информацию о доступных партиях материала
@@ -352,7 +352,7 @@ class ProductionService
         $availability = [];
         $isAvailable = true;
 
-        foreach ($recipe->items as $item) {
+        foreach ($recipe->material_items as $item) {
             $required = $this->calculateRequiredQuantity($item, $quantity);
             $available = $item->component->getCurrentStock();
 

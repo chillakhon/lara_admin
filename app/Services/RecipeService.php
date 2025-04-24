@@ -17,7 +17,7 @@ class RecipeService
         $total = 0;
         $components = [];
 
-        foreach ($recipe->items as $item) {
+        foreach ($recipe->material_items as $item) {
             $requiredQuantity = $this->calculateRequiredQuantity($item, $quantity);
             $pricePerUnit = $this->getComponentPrice($item->component, $requiredQuantity, $costStrategy);
             $itemCost = $pricePerUnit * $requiredQuantity;

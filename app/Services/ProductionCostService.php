@@ -22,7 +22,7 @@ class ProductionCostService
         ];
 
         // Расчет затрат на материалы
-        foreach ($recipe->items as $item) {
+        foreach ($recipe->material_items as $item) {
             $itemCost = $this->calculateMaterialCost($item, $quantity);
             $costs['materials'] += $itemCost['total']; // Используем значение total из массива
             $costs['details'][] = [

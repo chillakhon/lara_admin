@@ -77,7 +77,7 @@ class Recipe extends Model
         return $this->hasMany(ProductRecipe::class);
     }
 
-    public function items()
+    public function material_items()
     {
         return $this->hasMany(RecipeItem::class);
     }
