@@ -103,7 +103,7 @@ class ProductionController extends Controller
                     'completed_by',
                     'notes'
                 ])->with([
-                        'materials' => function ($query) {
+                        'material_items' => function ($query) {
                             $query->select([
                                 'production_batch_id',
                                 'material_type',
@@ -307,9 +307,8 @@ class ProductionController extends Controller
             // 'quantity' => 'required|numeric|min:0.001',
             'planned_start_date' => 'nullable|date',
             'notes' => 'nullable|string',
-            "performer_id" => 'nullable|integer|exists:users,id',
             // 'tech_card_id' => 'required|integer|exists:recipes,id', // should exist in recipes table
-            'recipes' => 'required|array|min:1', // Products to be decremented
+            'batches' => 'required|array|min:1', // Products to be decremented
             // 'material_items.*.component_type' => 'nullable|string',
             // 'material_items.*.component_id' => 'nullable|integer', // should exist in products table
             // 'material_items.*.quantity' => 'required|numeric|min:0.001',
@@ -320,7 +319,7 @@ class ProductionController extends Controller
             // 'output_products.*.product_variant_id' => 'nullable|integer',
         ]);
 
-        $materials = $this->get_materials_for_production_batch($validated['recipes']);
+        $materials = $this->get_materials_for_production_batch($validated['batches']);
 
         [$canProduce, $material_qtyies] = $this
             ->productionService
@@ -336,8 +335,7 @@ class ProductionController extends Controller
 
         $batch = $this->productionService->createProductionBatch(
             // $validated['tech_card_id'],
-            $validated['performer_id'],
-            $validated['recipes'],
+            $validated['batches'],
             $validated['planned_start_date'] ? Carbon::parse($validated['planned_start_date']) : null,
             $validated['notes']
         );
@@ -372,6 +370,57 @@ class ProductionController extends Controller
         $materials = array_values($materials);
 
         return $materials;
+    }
+
+
+
+    public function update(Request $request)
+    {
+        $validated = $request->validate([
+            "base_batch_number" => 'required|string',
+            'organization' => 'nullable|string',
+            'planned_start_date' => 'nullable|date',
+            'notes' => 'nullable|string',
+            'batches' => 'required|array|min:1', // Products to be decremented
+        ]);
+
+
+        ProductionBatch
+            ::where('batch_number', 'like', "%{$validated['base_batch_number']}%")
+            ->update([
+                'planned_start_date' => $validated['planned_start_date'],
+                'notes' => $validated['notes'],
+            ]);
+
+        // ids that are already in the database
+        // will delete all other batches which are not inside this array
+        $batch_ids = [];
+
+        foreach ($validated['batches'] as $key => $batch) {
+            $find_batch = ProductionBatch::where('id', $batch['id'])
+                ->where('batch_number', $batch['batch_number'])
+                ->first();
+
+            $batchData = [
+                // 'batch_number' => $batch_number . '-' . $index + 1,
+                // 'recipe_id' => $batchItem['recipe_id'],
+                'planned_quantity' => $batch['planned_qty'],
+                // 'status' => 'pending',
+                'performer_id' => $batch['performer_id'],
+                'planned_start_date' => $validated['planned_start_date'] ?? now(),
+                // 'planned_end_date' => null, // $this->calculatePlannedEndDate($plannedStartDate, $recipe->production_time),
+                // 'created_by' => auth()->id(),
+                'notes' => $validated['notes']
+            ];
+
+            if ($find_batch) {
+                $batch_ids[] = $find_batch->id;
+                $find_batch->update($batchData);
+                
+            } else {
+
+            }
+        }
     }
 
 

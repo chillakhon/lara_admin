@@ -105,7 +105,7 @@ class ProductionBatch extends Model
         return $this->hasMany(ComponentConsumption::class, 'production_batch_id');
     }
 
-    public function materials(): HasMany
+    public function material_items(): HasMany
     {
         return $this->hasMany(ProductionBatchMaterial::class, 'production_batch_id');
     }

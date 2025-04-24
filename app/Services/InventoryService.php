@@ -142,7 +142,7 @@ class InventoryService
     public function reserveComponents(ProductionBatch $batch): void
     {
         DB::transaction(function () use ($batch) {
-            foreach ($batch->recipe->items as $item) {
+            foreach ($batch->recipe->material_items as $item) {
                 $requiredQuantity = $this->calculateRequiredQuantity($item, $batch->planned_quantity);
 
                 $reservation = ComponentReservation::create([

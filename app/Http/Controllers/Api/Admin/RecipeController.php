@@ -14,6 +14,7 @@ use App\Models\Recipe;
 use App\Models\Unit;
 use App\Services\ProductionCostService;
 use App\Services\RecipeService;
+use App\Traits\HelperTrait;
 use App\Traits\RecipeTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,7 @@ use Illuminate\Support\Facades\Log;
 
 class RecipeController extends Controller
 {
-    use RecipeTrait;
+    use RecipeTrait, HelperTrait;
     protected $recipeService;
     protected $productionCostService;
 
@@ -57,8 +58,8 @@ class RecipeController extends Controller
     public function index(Request $request)
     {
         $recipes = Recipe::with([
-            'items.component.inventoryBalance',
-            'items.unit',
+            'material_items.component.inventoryBalance',
+            'material_items.unit',
             'outputUnit',
             'createdBy',
             'costRates.category',
@@ -83,10 +84,31 @@ class RecipeController extends Controller
             }
         }
 
+        $this->change_items_model_type($recipes);
+
         return response()->json([
             'recipes' => $recipes,
         ]);
     }
+
+
+    private function change_items_model_type(&$recipes)
+    {
+        foreach ($recipes as $key => &$recipe) {
+            if (isset($recipe['material_items'])) {
+                foreach ($recipe['material_items'] as &$item) {
+                    $item['component_type'] = $this->get_type_by_model($item['component_type']);
+                }
+            }
+
+            if (isset($recipe['output_products'])) {
+                foreach ($recipe['output_products'] as &$item) {
+                    $item['component_type'] = $this->get_type_by_model($item['component_type']);
+                }
+            }
+        }
+    }
+
 
     /**
      * @OA\Post(
@@ -171,16 +193,16 @@ class RecipeController extends Controller
             'instructions' => 'nullable|string',
             'production_time' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
-            'items' => 'required|array|min:1',
-            'items.*.component_type' => 'required|in:Material,Product,ProductVariant',
-            'items.*.component_id' => 'required|integer',
-            'items.*.quantity' => 'required|numeric|min:0.001',
-            'items.*.unit_id' => 'required|exists:units,id',
-            'products' => 'required|array|min:1',
-            'products.*.component_type' => 'required|in:Material,Product,ProductVariant',
-            'products.*.component_id' => 'required|integer',
-            'products.*.is_default' => 'boolean',
-            'products.*.qty' => 'required|numeric|min:0.001',
+            'material_items' => 'required|array|min:1',
+            'material_items.*.component_type' => 'required|in:Material,Product,ProductVariant',
+            'material_items.*.component_id' => 'required|integer',
+            'material_items.*.quantity' => 'required|numeric|min:0.001',
+            'material_items.*.unit_id' => 'required|exists:units,id',
+            'output_products' => 'required|array|min:1',
+            'output_products.*.component_type' => 'required|in:Material,Product,ProductVariant',
+            'output_products.*.component_id' => 'required|integer',
+            'output_products.*.is_default' => 'boolean',
+            'output_products.*.qty' => 'required|numeric|min:0.001',
             'cost_rates' => 'array',
             'cost_rates.*.cost_category_id' => 'required|exists:cost_categories,id',
             'cost_rates.*.rate_per_unit' => 'nullable|numeric|min:0',
@@ -198,15 +220,9 @@ class RecipeController extends Controller
             'is_active' => $validated['is_active'] ?? true
         ]);
 
-        foreach ($validated['items'] as $item) {
-            $modelClass = match ($item['component_type']) {
-                'ProductVariant' => ProductVariant::class, // this should come here for now
-                'Product' => Product::class,
-                'Material' => Material::class,
-            };
-
-            $recipe->items()->create([
-                'component_type' => $modelClass,
+        foreach ($validated['material_items'] as $item) {
+            $recipe->material_items()->create([
+                'component_type' => $this->get_model_by_type($item['component_type']),
                 'component_id' => $item['component_id'],
                 'quantity' => $item['quantity'],
                 'unit_id' => $item['unit_id']
@@ -214,18 +230,12 @@ class RecipeController extends Controller
         }
 
         $qty_total = 0.0;
-        foreach ($validated['products'] as $productData) {
+        foreach ($validated['output_products'] as $productData) {
             $qty_total += $productData['qty'] ?? 0.0;
-
-            $modelClass = match ($productData['component_type']) {
-                'ProductVariant' => ProductVariant::class, // this should come here for now
-                'Product' => Product::class,
-                'Material' => Material::class,
-            };
 
             ProductRecipe::create([
                 "recipe_id" => $recipe->id,
-                'component_type' => $modelClass,
+                'component_type' => $this->get_model_by_type($productData['component_type']),
                 'component_id' => $productData['component_id'],
                 "qty" => $productData['qty'] ?? 0,
                 'is_default' => $productData['is_default'],
@@ -380,16 +390,16 @@ class RecipeController extends Controller
             'instructions' => 'nullable|string',
             'production_time' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
-            'items' => 'required|array|min:1',
-            'items.*.component_type' => 'required|in:Material,Product,ProductVariant',
-            'items.*.component_id' => 'required|integer',
-            'items.*.quantity' => 'required|numeric|min:0.001',
-            'items.*.unit_id' => 'required|exists:units,id',
-            'products' => 'required|array|min:1',
-            'products.*.component_type' => 'required|in:Material,Product,ProductVariant',
-            'products.*.component_id' => 'required|integer',
-            'products.*.is_default' => 'boolean',
-            'products.*.qty' => 'required|numeric|min:0.001',
+            'material_items' => 'required|array|min:1',
+            'material_items.*.component_type' => 'required|in:Material,Product,ProductVariant',
+            'material_items.*.component_id' => 'required|integer',
+            'material_items.*.quantity' => 'required|numeric|min:0.001',
+            'material_items.*.unit_id' => 'required|exists:units,id',
+            'output_products' => 'required|array|min:1',
+            'output_products.*.component_type' => 'required|in:Material,Product,ProductVariant',
+            'output_products.*.component_id' => 'required|integer',
+            'output_products.*.is_default' => 'boolean',
+            'output_products.*.qty' => 'required|numeric|min:0.001',
             'cost_rates' => 'array',
             'cost_rates.*.cost_category_id' => 'required|exists:cost_categories,id',
             'cost_rates.*.rate_per_unit' => 'nullable|numeric|min:0',
@@ -408,16 +418,10 @@ class RecipeController extends Controller
                 'is_active' => $validated['is_active'] ?? true
             ]);
 
-            $recipe->items()->delete(); // puts datetime in deleted_at field in table
-            foreach ($validated['items'] as $item) {
-                $modelClass = match ($item['component_type']) {
-                    'ProductVariant' => ProductVariant::class, // this should come here for now
-                    'Product' => Product::class,
-                    'Material' => Material::class,
-                };
-
-                $recipe->items()->create([
-                    'component_type' => $modelClass,
+            $recipe->material_items()->delete(); // puts datetime in deleted_at field in table
+            foreach ($validated['material_items'] as $item) {
+                $recipe->material_items()->create([
+                    'component_type' => $this->get_model_by_type($item['component_type']),
                     'component_id' => $item['component_id'],
                     'quantity' => $item['quantity'],
                     'unit_id' => $item['unit_id']
@@ -426,17 +430,11 @@ class RecipeController extends Controller
 
             $recipe->products()->detach();
             $qty_total = 0.0;
-            foreach ($validated['products'] as $productData) {
-                $modelClass = match ($item['component_type']) {
-                    'ProductVariant' => ProductVariant::class, // this should come here for now
-                    'Product' => Product::class,
-                    'Material' => Material::class,
-                };
-
+            foreach ($validated['output_products'] as $productData) {
                 $qty_total += $productData['qty'] ?? 0.0;
                 ProductRecipe::create([
                     "recipe_id" => $recipe->id,
-                    'component_type' => $modelClass,
+                    'component_type' => $this->get_model_by_type($item['component_type']),
                     'component_id' => $productData['component_id'],
                     "qty" => $productData['qty'] ?? 0,
                     'is_default' => $productData['is_default'],
@@ -542,7 +540,7 @@ class RecipeController extends Controller
             // }
 
             // $recipe->output_products()->delete();
-            // $recipe->items()->delete();
+            // $recipe->material_items()->delete();
             $recipe->delete();
 
             DB::commit();

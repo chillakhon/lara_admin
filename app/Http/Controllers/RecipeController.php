@@ -110,7 +110,7 @@ class RecipeController extends Controller
 
         // Добавляем компоненты рецепта
         foreach ($validated['items'] as $item) {
-            $recipe->items()->create([
+            $recipe->material_items()->create([
                 'component_type' => $item['component_type'],
                 'component_id' => $item['component_id'],
                 'quantity' => $item['quantity'],
@@ -182,9 +182,9 @@ class RecipeController extends Controller
             ]);
 
             // Обновляем компоненты
-            $recipe->items()->delete();
+            $recipe->material_items()->delete();
             foreach ($validated['items'] as $item) {
-                $recipe->items()->create([
+                $recipe->material_items()->create([
                     'component_type' => $item['component_type'],
                     'component_id' => $item['component_id'],
                     'quantity' => $item['quantity'],
@@ -360,7 +360,7 @@ class RecipeController extends Controller
             $recipe->products()->detach();
 
             // Удаляем компоненты рецепта
-            $recipe->items()->delete();
+            $recipe->material_items()->delete();
 
             // Удаляем сам рецепт
             $recipe->delete();
