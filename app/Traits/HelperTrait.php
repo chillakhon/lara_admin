@@ -18,7 +18,7 @@ trait HelperTrait
         return $modelClass;
     }
 
-    private function get_type_by_model($model_type)
+    public function get_type_by_model($model_type)
     {
         $modelClass = match ($model_type) {
             ProductVariant::class => 'ProductVariant',
