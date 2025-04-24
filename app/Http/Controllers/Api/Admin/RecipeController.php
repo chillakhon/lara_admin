@@ -14,6 +14,7 @@ use App\Models\Recipe;
 use App\Models\Unit;
 use App\Services\ProductionCostService;
 use App\Services\RecipeService;
+use App\Traits\HelperTrait;
 use App\Traits\RecipeTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,7 @@ use Illuminate\Support\Facades\Log;
 
 class RecipeController extends Controller
 {
-    use RecipeTrait;
+    use RecipeTrait, HelperTrait;
     protected $recipeService;
     protected $productionCostService;
 
@@ -108,16 +109,7 @@ class RecipeController extends Controller
         }
     }
 
-    private function get_type_by_model($model_type)
-    {
-        $modelClass = match ($model_type) {
-            ProductVariant::class => 'ProductVariant',
-            Product::class => 'Product',
-            Material::class => 'Material',
-        };
 
-        return $modelClass;
-    }
     /**
      * @OA\Post(
      *     path="/recipes",
@@ -229,14 +221,8 @@ class RecipeController extends Controller
         ]);
 
         foreach ($validated['material_items'] as $item) {
-            $modelClass = match ($item['component_type']) {
-                'ProductVariant' => ProductVariant::class, // this should come here for now
-                'Product' => Product::class,
-                'Material' => Material::class,
-            };
-
             $recipe->material_items()->create([
-                'component_type' => $modelClass,
+                'component_type' => $this->get_model_by_type($item['component_type']),
                 'component_id' => $item['component_id'],
                 'quantity' => $item['quantity'],
                 'unit_id' => $item['unit_id']
@@ -247,15 +233,9 @@ class RecipeController extends Controller
         foreach ($validated['output_products'] as $productData) {
             $qty_total += $productData['qty'] ?? 0.0;
 
-            $modelClass = match ($productData['component_type']) {
-                'ProductVariant' => ProductVariant::class, // this should come here for now
-                'Product' => Product::class,
-                'Material' => Material::class,
-            };
-
             ProductRecipe::create([
                 "recipe_id" => $recipe->id,
-                'component_type' => $modelClass,
+                'component_type' => $this->get_model_by_type($productData['component_type']),
                 'component_id' => $productData['component_id'],
                 "qty" => $productData['qty'] ?? 0,
                 'is_default' => $productData['is_default'],
@@ -440,14 +420,8 @@ class RecipeController extends Controller
 
             $recipe->material_items()->delete(); // puts datetime in deleted_at field in table
             foreach ($validated['material_items'] as $item) {
-                $modelClass = match ($item['component_type']) {
-                    'ProductVariant' => ProductVariant::class, // this should come here for now
-                    'Product' => Product::class,
-                    'Material' => Material::class,
-                };
-
                 $recipe->material_items()->create([
-                    'component_type' => $modelClass,
+                    'component_type' => $this->get_model_by_type($item['component_type']),
                     'component_id' => $item['component_id'],
                     'quantity' => $item['quantity'],
                     'unit_id' => $item['unit_id']
@@ -457,16 +431,10 @@ class RecipeController extends Controller
             $recipe->products()->detach();
             $qty_total = 0.0;
             foreach ($validated['output_products'] as $productData) {
-                $modelClass = match ($item['component_type']) {
-                    'ProductVariant' => ProductVariant::class, // this should come here for now
-                    'Product' => Product::class,
-                    'Material' => Material::class,
-                };
-
                 $qty_total += $productData['qty'] ?? 0.0;
                 ProductRecipe::create([
                     "recipe_id" => $recipe->id,
-                    'component_type' => $modelClass,
+                    'component_type' => $this->get_model_by_type($item['component_type']),
                     'component_id' => $productData['component_id'],
                     "qty" => $productData['qty'] ?? 0,
                     'is_default' => $productData['is_default'],

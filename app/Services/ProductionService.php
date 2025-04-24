@@ -11,6 +11,7 @@ use App\Models\ProductionBatchOutputProduct;
 use App\Models\Recipe;
 use App\Models\ProductVariant;
 use App\Exceptions\ProductionException;
+use App\Traits\HelperTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,7 @@ use Illuminate\Support\Str;
 
 class ProductionService
 {
+    use HelperTrait;
     protected $inventoryService;
 
     public function __construct(InventoryService $inventoryService)
@@ -27,26 +29,25 @@ class ProductionService
     }
 
     public function createProductionBatch(
-        $performer_id = null,
-        $recipes = [],
+        $batches = [],
         ?Carbon $plannedStartDate = null,
         ?string $notes = null
     ) {
         try {
-            return DB::transaction(function () use ($performer_id, $recipes, $plannedStartDate, $notes) {
+            return DB::transaction(function () use ( $batches, $plannedStartDate, $notes) {
                 // Получаем вариант продукта
 
                 $batch_number = $this->generateBatchNumber();
                 $created_batches = [];
 
                 // will be used in another place
-                foreach ($recipes as $index => $recipe) {
+                foreach ($batches as $index => $batchItem) {
                     $batchData = [
                         'batch_number' => $batch_number . '-' . $index + 1,
-                        'recipe_id' => $recipe['recipe_id'],
-                        'planned_quantity' => $recipe['planned_qty'],
+                        'recipe_id' => $batchItem['recipe_id'],
+                        'planned_quantity' => $batchItem['planned_qty'],
                         'status' => 'pending',
-                        'performer_id' => $performer_id,
+                        'performer_id' => $batchItem['performer_id'],
                         'planned_start_date' => $plannedStartDate ?? now(),
                         'planned_end_date' => null, // $this->calculatePlannedEndDate($plannedStartDate, $recipe->production_time),
                         'created_by' => auth()->id(),
@@ -56,19 +57,19 @@ class ProductionService
                     $batch = ProductionBatch::create($batchData);
                     $created_batches[] = $batch;
 
-                    foreach ($recipe['material_items'] as $material_item) {
+                    foreach ($batchItem['material_items'] as $material_item) {
                         ProductionBatchMaterial::create([
                             'production_batch_id' => $batch->id,
-                            'material_type' => $material_item['component_type'],
+                            'material_type' => $this->get_model_by_type($material_item['component_type']),
                             'material_id' => $material_item['component_id'],
                             'qty' => $material_item['quantity'],
                         ]);
                     }
 
-                    foreach ($recipe['output_products'] as $output_product) {
+                    foreach ($batchItem['output_products'] as $output_product) {
                         ProductionBatchOutputProduct::create([
                             'production_batch_id' => $batch->id,
-                            'output_type' => $output_product['component_type'],
+                            'output_type' => $this->get_model_by_type($output_product['component_type']),
                             'output_id' => $output_product['component_id'],
                             'qty' => $output_product['qty'],
                         ]);
@@ -94,8 +95,8 @@ class ProductionService
                     // );
                 }
                 return [
-                    'batches' => $created_batches,
                     'batch_number' => $batch_number,
+                    'batches' => $created_batches,
                 ];
             });
         } catch (\Exception $e) {

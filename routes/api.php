@@ -281,6 +281,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::prefix('production')->name('production.')->group(function () {
             Route::get('/', [ProductionController::class, 'index']);
             Route::post('/create-batch', [ProductionController::class, 'store']);
+            Route::put('/update-batch', [ProductionController::class, 'update']);
             // Route::get('/create/{recipe}', [ProductionController::class, 'create'])->name('create');
             //            Route::get('/batches/{batch}', [ProductionController::class, 'show'])->name('show');
             Route::post('/batches/{batch}/start', [ProductionController::class, 'start'])->name('start');
