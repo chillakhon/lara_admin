@@ -140,6 +140,12 @@ class ProductionController extends Controller
                 $performers,
             ] = $this->get_information_from_groupe_batches($groupedBatches);
 
+            $this->change_items_model_type(
+                $groupedBatches,
+                'material_type',
+                'output_type'
+            );
+
             $result_of_batch = [
                 'base_batch_number' => $baseBatch,
                 'planned_quantity' => $planned_quantity,
