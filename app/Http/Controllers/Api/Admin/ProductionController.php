@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\ProductionService;
 use App\Traits\HelperTrait;
 use Carbon\Carbon;
+use DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -378,131 +379,116 @@ class ProductionController extends Controller
 
     public function update(Request $request)
     {
-        $validated = $request->validate([
-            "base_batch_number" => 'required|string',
-            'organization' => 'nullable|string',
-            'planned_start_date' => 'nullable|date',
-            'notes' => 'nullable|string',
-            'batches' => 'required|array|min:1', // Products to be decremented
-        ]);
+        DB::beginTransaction();
 
+        try {
+            $validated = $request->validate([
+                "base_batch_number" => 'required|string',
+                'organization' => 'nullable|string',
+                'planned_start_date' => 'nullable|date',
+                'notes' => 'nullable|string',
+                'batches' => 'required|array|min:1',
+            ]);
 
-        ProductionBatch
-            ::where('batch_number', 'like', "%{$validated['base_batch_number']}%")
-            ->update([
+            $base = $validated['base_batch_number'];
+
+            // Update shared fields on all batches matching base
+            ProductionBatch::where('batch_number', 'like', "{$base}-%")->update([
                 'planned_start_date' => $validated['planned_start_date'],
                 'notes' => $validated['notes'],
             ]);
 
-        // ids that are already in the database
-        // will delete all other batches which are not inside this array
-        $batch_ids = [];
+            // Collect all existing batch numbers to track used indices
+            $existing = ProductionBatch::where('batch_number', 'like', "{$base}-%")
+                ->pluck('batch_number', 'id')
+                ->mapWithKeys(function ($number, $id) use ($base) {
+                    $index = (int) str_replace("{$base}-", '', $number);
+                    return [$id => $index];
+                });
 
-        foreach ($validated['batches'] as $index => $batch) {
-            $find_batch = ProductionBatch::where('id', $batch['id'])
-                ->where('batch_number', $batch['batch_number'])
-                ->first();
+            $batch_ids = [];
+            $nextIndex = $existing->max() ?? 0;
 
-            $batchData = [
-                'batch_number' => $validated['base_batch_number'] . '-' . $index + 1,
-                'planned_quantity' => $batch['planned_qty'],
-                'performer_id' => $batch['performer_id'],
-                'planned_start_date' => $validated['planned_start_date'] ?? now(),
-                // 'planned_end_date' => null, // $this->calculatePlannedEndDate($plannedStartDate, $recipe->production_time),
-                // ,
-                'notes' => $validated['notes']
-            ];
+            foreach ($validated['batches'] as $batch) {
+                $batchModel = isset($batch['id']) ? ProductionBatch::find($batch['id']) : null;
 
-            if ($find_batch) {
-                $batch_ids[] = $find_batch->id;
-                $material_items_ids = [];
-                $output_products_ids = [];
-                $find_batch->update($batchData);
-                foreach ($batch['material_items'] as $material_item) {
-                    $find_material_item = ProductionBatchMaterial
-                        ::where('production_batch_id', $find_batch->id)
-                        ->where('material_type', $this->get_model_by_type($material_item['component_type']))
-                        ->where('material_id', $material_item['component_id'])
-                        ->first();
-
-                    if ($find_material_item) {
-                        $find_material_item->update([
-                            'qty' => $material_item['quantity'],
-                        ]);
-                    } else {
-                        $find_material_item = ProductionBatchMaterial::create([
-                            'production_batch_id' => $find_batch->id,
-                            'material_type' => $this->get_model_by_type($material_item['component_type']),
-                            'material_id' => $material_item['component_id'],
-                            'qty' => $material_item['quantity'],
-                        ]);
-                    }
-                    $material_items_ids[] = $find_material_item->id;
-                }
-                foreach ($batch['output_products'] as $output_product) {
-                    $find_output_product = ProductionBatchOutputProduct
-                        ::where('production_batch_id', $find_batch->id)
-                        ->where('output_type', $this->get_model_by_type($output_product['component_type']))
-                        ->where('output_id', $output_product['component_id'])
-                        ->first();
-
-                    if ($find_output_product) {
-                        $find_output_product->update([
-                            'qty' => $output_product['qty'],
-                        ]);
-                    } else {
-                        $find_output_product = ProductionBatchOutputProduct::create([
-                            'production_batch_id' => $find_batch->id,
-                            'output_type' => $this->get_model_by_type($output_product['component_type']),
-                            'output_id' => $output_product['component_id'],
-                            'qty' => $output_product['qty'],
-                        ]);
-                    }
-                    $output_products_ids[] = $find_output_product->id;
-                }
-                ProductionBatchMaterial
-                    ::where('production_batch_id', $find_batch->id)
-                    ->whereNotIn('id', $material_items_ids)
-                    ->delete();
-
-                ProductionBatchOutputProduct
-                    ::where('production_batch_id', $find_batch->id)
-                    ->whereNotIn('id', $output_products_ids)
-                    ->delete();
-            } else {
-                $batchData['recipe_id'] = $batch['recipe_id'];
-                $batchData['status'] = 'pending';
-                $batchData['created_by'] = auth()->user()->id;
-                $find_batch = ProductionBatch::create($batchData);
-                $batch_ids[] = $find_batch->id;
-                foreach ($batch['material_items'] as $material_item) {
-                    ProductionBatchMaterial::create([
-                        'production_batch_id' => $find_batch->id,
-                        'material_type' => $this->get_model_by_type($material_item['component_type']),
-                        'material_id' => $material_item['component_id'],
-                        'qty' => $material_item['quantity'],
+                if ($batchModel) {
+                    $batchModel->update([
+                        'planned_quantity' => $batch['planned_qty'],
+                        'performer_id' => $batch['performer_id'],
+                        'planned_start_date' => $validated['planned_start_date'] ?? now(),
+                        'notes' => $validated['notes'],
+                    ]);
+                } else {
+                    $batch_number = "{$base}-" . ++$nextIndex;
+                    $batchModel = ProductionBatch::create([
+                        'batch_number' => $batch_number,
+                        'recipe_id' => $batch['recipe_id'],
+                        'status' => 'pending',
+                        'created_by' => auth()->id(),
+                        'planned_quantity' => $batch['planned_qty'],
+                        'performer_id' => $batch['performer_id'],
+                        'planned_start_date' => $validated['planned_start_date'] ?? now(),
+                        'notes' => $validated['notes'],
                     ]);
                 }
-                foreach ($batch['output_products'] as $output_product) {
-                    $find_output_product = ProductionBatchOutputProduct::create([
-                        'production_batch_id' => $find_batch->id,
-                        'output_type' => $this->get_model_by_type($output_product['component_type']),
-                        'output_id' => $output_product['component_id'],
-                        'qty' => $output_product['qty'],
-                    ]);
+
+                $batch_ids[] = $batchModel->id;
+
+                // Sync materials
+                $material_ids = [];
+                foreach ($batch['material_items'] as $item) {
+                    $model = $this->get_model_by_type($item['component_type']);
+                    $material = ProductionBatchMaterial::updateOrCreate(
+                        [
+                            'production_batch_id' => $batchModel->id,
+                            'material_type' => $model,
+                            'material_id' => $item['component_id'],
+                        ],
+                        ['qty' => $item['quantity']]
+                    );
+                    $material_ids[] = $material->id;
                 }
+                ProductionBatchMaterial::where('production_batch_id', $batchModel->id)
+                    ->whereNotIn('id', $material_ids)->delete();
+
+                // Sync output products
+                $output_ids = [];
+                foreach ($batch['output_products'] as $item) {
+                    $model = $this->get_model_by_type($item['component_type']);
+                    $output = ProductionBatchOutputProduct::updateOrCreate(
+                        [
+                            'production_batch_id' => $batchModel->id,
+                            'output_type' => $model,
+                            'output_id' => $item['component_id'],
+                        ],
+                        ['qty' => $item['qty']]
+                    );
+                    $output_ids[] = $output->id;
+                }
+                ProductionBatchOutputProduct::where('production_batch_id', $batchModel->id)
+                    ->whereNotIn('id', $output_ids)->delete();
             }
+
+            // Delete orphaned batches
+            ProductionBatch::where('batch_number', 'like', "{$base}-%")
+                ->whereNotIn('id', $batch_ids)
+                ->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Производственная партия обновлена',
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при обновлении партии: ' . $e->getMessage(),
+            ], 500);
         }
-
-        ProductionBatch
-            ::where('batch_number', 'like', "%{$validated['base_batch_number']}%")
-            ->whereNotIn('id', $batch_ids)
-            ->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Производственная партия обновлена',
-        ]);
     }
 
 
