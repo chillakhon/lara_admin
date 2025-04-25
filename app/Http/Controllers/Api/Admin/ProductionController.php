@@ -170,7 +170,6 @@ class ProductionController extends Controller
         if ($perPage) {
             $paginated = $batches->paginate($perPage);
             $transformed = $paginated->through($transform);
-
             return $transformed;
         } else {
             $batches = $batches->get()->map($transform);
