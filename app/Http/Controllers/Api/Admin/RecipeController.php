@@ -62,7 +62,7 @@ class RecipeController extends Controller
             'material_items.unit',
             'outputUnit',
             'createdBy',
-            'costRates.category',
+            // 'costRates.category',
             'output_products.product',
             'output_products.product_variant',
         ])->whereNull('deleted_at');
@@ -79,9 +79,9 @@ class RecipeController extends Controller
         }
 
         if (!$request->get('recipe_id')) {
-            foreach ($recipes as &$recipe) {
-                $recipe = $this->solve_category_cost($recipe);
-            }
+            // foreach ($recipes as &$recipe) {
+            //     $recipe = $this->solve_category_cost($recipe);
+            // }
         }
 
         $this->change_items_model_type($recipes);
@@ -92,22 +92,7 @@ class RecipeController extends Controller
     }
 
 
-    private function change_items_model_type(&$recipes)
-    {
-        foreach ($recipes as $key => &$recipe) {
-            if (isset($recipe['material_items'])) {
-                foreach ($recipe['material_items'] as &$item) {
-                    $item['component_type'] = $this->get_type_by_model($item['component_type']);
-                }
-            }
-
-            if (isset($recipe['output_products'])) {
-                foreach ($recipe['output_products'] as &$item) {
-                    $item['component_type'] = $this->get_type_by_model($item['component_type']);
-                }
-            }
-        }
-    }
+    
 
 
     /**
