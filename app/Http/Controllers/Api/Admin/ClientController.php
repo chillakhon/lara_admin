@@ -57,15 +57,15 @@ class ClientController extends Controller
                 return [
                     'id' => $client->id,
                     'user' => [
-                        'id' => $client->user?->id,
-                        'email' => $client->user?->email,
-                        'email_verified_at' => $client->user?->email_verified_at,
+                        'id' => $client?->user?->id,
+                        'email' => $client?->user?->email,
+                        'email_verified_at' => $client?->user?->email_verified_at,
                     ],
                     'profile' => [
-                        'first_name' => $client->user->profile?->first_name,
-                        'last_name' => $client->user->profile?->last_name,
-                        'full_name' => $client->user->profile?->full_name,
-                        'phone' => $client->user->profile?->phone,
+                        'first_name' => $client?->user?->profile?->first_name,
+                        'last_name' => $client?->user?->profile?->last_name,
+                        'full_name' => $client?->user?->profile?->full_name,
+                        'phone' => $client?->user?->profile?->phone,
                     ],
                     'phone' => $client->phone,
                     'address' => $client->address,
