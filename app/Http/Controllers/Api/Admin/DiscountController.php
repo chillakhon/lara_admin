@@ -12,47 +12,33 @@ class DiscountController extends Controller
 {
 
 
+    public function index(Request $request)
+    {
+        $perPage = $request->get('per_page', 10);
+        $discounts = Discount::with(['products', 'productVariants'])
+            ->orderBy('priority')
+            ->paginate($perPage);
+
+        return response()->json([
+            'data' => DiscountResource::collection($discounts),
+            'meta' => [
+                'current_page' => $discounts->currentPage(),
+                'per_page' => $discounts->perPage(),
+                'total' => $discounts->total(),
+                'last_page' => $discounts->lastPage(),
+            ],
+        ]);
+    }
+
 //    public function index(Request $request)
 //    {
 //        $perPage = $request->get('per_page', 10);
-//
-//        // получаем простой пейджинатор
 //        $discounts = Discount::with(['products', 'productVariants'])
 //            ->orderBy('priority')
-//            ->paginate($perPage);
+//            ->simplePaginate($perPage);
 //
-//        // вручную возвращаем data + meta
-//        return response()->json([
-//            'data' => DiscountResource::collection($discounts),
-//            'meta' => [
-//                'current_page' => $discounts->currentPage(),
-//                'per_page'     => $discounts->perPage(),
-//            ],
-//        ]);
+//        return response()->json($discounts);
 //    }
-
-
-
-
-    public function index()
-    {
-        $discounts = Discount::with(['products', 'productVariants'])
-            ->orderBy('priority')
-            ->paginate();
-
-        return response()->json([
-            'discounts' => DiscountResource::collection($discounts),
-//            'products' => Product::select('id', 'name')->get(),
-//            'productVariants' => ProductVariant::select('id', 'name')->get(),
-//            'categories' => Category::select('id', 'name')->get(),
-//            'pagination' => [
-//                'current_page' => $discounts->currentPage(),
-//                'last_page' => $discounts->lastPage(),
-//                'per_page' => $discounts->perPage(),
-//                'total' => $discounts->total(),
-//            ],
-        ]);
-    }
 
     public function store(DiscountRequest $request)
     {
