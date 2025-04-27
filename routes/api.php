@@ -281,13 +281,14 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //        // Производство
         Route::prefix('production')->name('production.')->group(function () {
             Route::get('/', [ProductionController::class, 'index']);
+            // Start production
             Route::post('/create-batch', [ProductionController::class, 'store']);
             Route::put('/update-batch', [ProductionController::class, 'update']);
             // Route::get('/create/{recipe}', [ProductionController::class, 'create'])->name('create');
             //            Route::get('/batches/{batch}', [ProductionController::class, 'show'])->name('show');
-            Route::post('/batches/{batch}/start', [ProductionController::class, 'start'])->name('start');
-            Route::post('/batches/{batch}/complete', [ProductionController::class, 'complete'])->name('complete');
-            Route::post('/batches/{batch}/cancel', [ProductionController::class, 'cancel'])->name('cancel');
+            // Route::post('/batches/{batch}/start', [ProductionController::class, 'start'])->name('start');
+            Route::put('/batches/complete', [ProductionController::class, 'complete'])->name('complete');
+            Route::put('/batches/cancel', [ProductionController::class, 'cancel'])->name('cancel');
             //            Route::post('/batches/{batch}/add-costs', [ProductionController::class, 'addCosts'])->name('addCosts');
 
             // Статистика и отчеты

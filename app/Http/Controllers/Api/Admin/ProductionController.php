@@ -8,8 +8,10 @@ use App\Models\ProductionBatchMaterial;
 use App\Models\ProductionBatchOutputProduct;
 use App\Models\Recipe;
 use App\Models\User;
+use App\Services\InventoryService;
 use App\Services\ProductionService;
 use App\Traits\HelperTrait;
+use App\Traits\InventoryTrait;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +21,7 @@ use Inertia\Inertia;
 
 class ProductionController extends Controller
 {
-    use HelperTrait;
+    use HelperTrait, InventoryTrait;
     protected $productionService;
 
     public function __construct(ProductionService $productionService)
@@ -91,6 +93,7 @@ class ProductionController extends Controller
             $groupedBatches = ProductionBatch
                 ::where('batch_number', 'like', "$baseBatch-%")
                 ->orWhere('batch_number', '=', $baseBatch)
+                ->whereNull('deleted_at')
                 ->select([
                     'id',
                     'batch_number',
@@ -329,17 +332,17 @@ class ProductionController extends Controller
 
         $materials = $this->get_materials_for_production_batch($validated['batches']);
 
-        [$canProduce, $material_qtyies] = $this
-            ->productionService
+        $material_for_production = $this
             ->validateProductionPossibility($materials);
 
         // uncomment this if you want to check if there are enough materials (is primary)
-        // if (!$canProduce) {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Недостаточно материалов для производства',
-        //     ]);
-        // }
+        if (count($material_for_production) >= 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Недостаточно материалов для производства',
+                'materials' => $material_for_production
+            ]);
+        }
 
         $batch = $this->productionService->createProductionBatch(
             // $validated['tech_card_id'],
@@ -361,11 +364,17 @@ class ProductionController extends Controller
 
         foreach ($recipes as $recipe) {
             foreach ($recipe['material_items'] as $item) {
-                $key = $item['component_type'] . '_' . $item['component_id'];
+                $temp_type = $item['component_type'];
+
+                if (str_contains($temp_type, "App\\Models\\")) {
+                    $temp_type = $this->get_type_by_model($temp_type);
+                }
+
+                $key = $temp_type . '_' . $item['component_id'];
 
                 if (!isset($materials[$key])) {
                     $materials[$key] = [
-                        'component_type' => $item['component_type'],
+                        'component_type' => $temp_type,
                         'component_id' => $item['component_id'],
                         'quantity' => $item['quantity'],
                     ];
@@ -381,21 +390,57 @@ class ProductionController extends Controller
     }
 
 
-
     public function update(Request $request)
     {
+        $validated = $request->validate([
+            "base_batch_number" => 'required|string',
+            'organization' => 'nullable|string',
+            'planned_start_date' => 'nullable|date',
+            'notes' => 'nullable|string',
+            'batches' => 'required|array|min:1',
+        ]);
+
+        $base = $validated['base_batch_number'];
+
+        $check_batch_for_non_existence = $this->check_batch_for_non_existence($base);
+
+        if ($check_batch_for_non_existence) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Производственная партия не найдена',
+            ]);
+        }
+
+        $is_any_batch_changes = $this->is_any_batch_changes($base);
+
+        if ($is_any_batch_changes) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Невозможно обновить партию, так как одна из партий изменена',
+            ]);
+        }
+
+        $check_diff = $this->check_materials_before_update($base, $validated);
+
+        if (!$check_diff['success']) {
+            $message_for_user = [
+                'success' => false,
+                'message' => 'Недостаточно материалов для производства',
+            ];
+            return response()->json($message_for_user);
+        }
+
         DB::beginTransaction();
 
         try {
-            $validated = $request->validate([
-                "base_batch_number" => 'required|string',
-                'organization' => 'nullable|string',
-                'planned_start_date' => 'nullable|date',
-                'notes' => 'nullable|string',
-                'batches' => 'required|array|min:1',
-            ]);
 
-            $base = $validated['base_batch_number'];
+            foreach ($check_diff['for_minus_inventory'] as $key => $minus_inv) {
+                $this->remove_component_from_inventory($minus_inv);
+            }
+
+            foreach ($check_diff['for_plus_inventory'] as $key => $plus_inv) {
+                $this->add_component_to_inventory($plus_inv);
+            }
 
             // Update shared fields on all batches matching base
             ProductionBatch::where('batch_number', 'like', "{$base}-%")->update([
@@ -404,7 +449,9 @@ class ProductionController extends Controller
             ]);
 
             // Collect all existing batch numbers to track used indices
-            $existing = ProductionBatch::where('batch_number', 'like', "{$base}-%")
+            $existing = ProductionBatch
+                ::withTrashed()
+                ->where('batch_number', 'like', "{$base}-%")
                 ->pluck('batch_number', 'id')
                 ->mapWithKeys(function ($number, $id) use ($base) {
                     $index = (int) str_replace("{$base}-", '', $number);
@@ -429,7 +476,7 @@ class ProductionController extends Controller
                     $batchModel = ProductionBatch::create([
                         'batch_number' => $batch_number,
                         'recipe_id' => $batch['recipe_id'],
-                        'status' => 'pending',
+                        'status' => 'in_progress',
                         'created_by' => auth()->id(),
                         'planned_quantity' => $batch['planned_qty'],
                         'performer_id' => $batch['performer_id'],
@@ -454,7 +501,8 @@ class ProductionController extends Controller
                     );
                     $material_ids[] = $material->id;
                 }
-                ProductionBatchMaterial::where('production_batch_id', $batchModel->id)
+                ProductionBatchMaterial
+                    ::where('production_batch_id', $batchModel->id)
                     ->whereNotIn('id', $material_ids)->delete();
 
                 // Sync output products
@@ -471,7 +519,8 @@ class ProductionController extends Controller
                     );
                     $output_ids[] = $output->id;
                 }
-                ProductionBatchOutputProduct::where('production_batch_id', $batchModel->id)
+                ProductionBatchOutputProduct
+                    ::where('production_batch_id', $batchModel->id)
                     ->whereNotIn('id', $output_ids)->delete();
             }
 
@@ -494,6 +543,54 @@ class ProductionController extends Controller
                 'message' => 'Ошибка при обновлении партии: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+
+    private function check_materials_before_update($base, $validated): array
+    {
+        $previous_batches = ProductionBatch
+            ::where('batch_number', 'like', "{$base}-%")
+            ->with([
+                'material_items' => function ($query) {
+                    $query->select([
+                        'id',
+                        'production_batch_id',
+                        'material_type as component_type',
+                        'material_id as component_id',
+                        'qty as quantity',
+                    ]);
+                }
+            ])
+            ->get();
+
+        $new_materials_for_update = $this->get_materials_for_production_batch($validated['batches']);
+
+        $previous_materials_of_batch = $this->get_materials_for_production_batch($previous_batches);
+
+        return $this->checkDiff(
+            $new_materials_for_update,
+            $previous_materials_of_batch
+        );
+    }
+
+    private function check_batch_for_non_existence($base)
+    {
+
+        $previous_batches = ProductionBatch
+            ::where('batch_number', 'like', "{$base}-%")
+            ->get();
+
+        return count($previous_batches) <= 0;
+    }
+
+    private function is_any_batch_changes($base)
+    {
+        $is_any_changes = ProductionBatch
+            ::where('batch_number', 'like', "{$base}-%")
+            ->whereIn('status', ['completed', 'cancelled'])
+            ->exists();
+
+        return $is_any_changes;
     }
 
 
@@ -584,22 +681,59 @@ class ProductionController extends Controller
     {
         try {
             $validated = $request->validate([
-                'actual_quantity' => 'required|numeric|min:0',
-                'notes' => 'nullable|string'
+                'id' => 'required|numeric',
+                'batch_number' => 'required|string'
             ]);
 
-            $this->productionService->completeProduction(
+            $batch = ProductionBatch
+                ::where('id', $validated['id'])
+                ->where('batch_number', $validated['batch_number'])
+                ->with(['output_products', 'material_items'])
+                ->first();
+
+            if (!$batch) {
+                return response()->json([
+                    'error' => 'Производственная партия не найдена'
+                ], 404);
+            }
+
+            if ($batch->status === 'completed') {
+                throw new \Exception("Невозможно завершить производство. Неверный статус партии.");
+            }
+
+            if ($batch->status === 'cancelled') {
+                $modified_materials = [];
+                foreach ($batch->material_items as $material_temp_item) {
+                    $modified_materials[] = [
+                        'component_type' => $this->get_type_by_model($material_temp_item->material_type),
+                        'component_id' => $material_temp_item->material_id,
+                        'quantity' => $material_temp_item->qty
+                    ];
+                }
+                $material_for_production = $this
+                    ->validateProductionPossibility($modified_materials);
+
+                // uncomment this if you want to check if there are enough materials (is primary)
+                if (count($material_for_production) >= 1) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Недостаточно материалов для производства',
+                        'materials' => $material_for_production
+                    ]);
+                }
+            }
+
+            $complete = $this->productionService->completeProduction(
                 $batch,
-                $validated['actual_quantity'],
-                $validated['notes'] ?? null
             );
 
             return response()->json([
+                'success' => true,
                 'message' => 'Производственная партия успешно завершена',
+                'completed' => $complete,
                 'batch' => [
                     'id' => $batch->id,
                     'status' => 'completed',
-                    'actual_quantity' => $validated['actual_quantity']
                 ]
             ], 200);
         } catch (\Exception $e) {
@@ -652,17 +786,45 @@ class ProductionController extends Controller
     {
         try {
             $validated = $request->validate([
-                'reason' => 'required|string|max:1000'
+                'id' => 'required|numeric',
+                'batch_number' => 'required|string'
             ]);
 
-            $this->productionService->cancelProduction($batch, $validated['reason']);
+            $batch = ProductionBatch
+                ::where('id', $validated['id'])
+                ->where('batch_number', $validated['batch_number'])
+                ->with(['output_products', 'material_items'])
+                ->first();
+
+            if (!$batch) {
+                return response()->json([
+                    'error' => 'Производственная партия не найдена'
+                ], 404);
+            }
+
+            if (in_array($batch->status, ['cancelled'])) {
+                throw new \Exception("Невозможно отменить производство. Неверный статус партии.");
+            }
+
+            $output_products_for_remove = $this
+                ->validateRemoveProductionPossibility($batch->output_products);
+
+            if (count($output_products_for_remove) >= 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Недостаточно готовой продукции для отмены партии',
+                    'output_products' => $output_products_for_remove
+                ]);
+            }
+
+
+            $this->productionService->cancelProduction($batch);
 
             return response()->json([
                 'message' => 'Производственная партия отменена',
                 'batch' => [
                     'id' => $batch->id,
                     'status' => 'cancelled',
-                    'reason' => $validated['reason']
                 ]
             ], 200);
         } catch (\Exception $e) {

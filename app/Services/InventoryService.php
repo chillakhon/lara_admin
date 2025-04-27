@@ -7,42 +7,92 @@ use App\Models\InventoryBatch;
 use App\Models\InventoryBalance;
 use App\Models\InventoryTransaction;
 use App\Models\ProductionBatch;
+use App\Traits\HelperTrait;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
 class InventoryService
 {
-    public function addStock($itemType, $itemId, $quantity, $pricePerUnit, $unitId, $receivedDate, $userId, $description = null)
-    {
-        return DB::transaction(function () use ($itemType, $itemId, $quantity, $pricePerUnit, $unitId, $receivedDate, $userId, $description) {
+    use HelperTrait;
+    public function addStock(
+        $itemType,
+        $itemId,
+        $price,
+        $cost_price,
+        $old_price,
+        $quantity,
+        $barcode,
+    ) {
+        return DB::transaction(function () use ($itemType, $itemId, $quantity, $price, $cost_price, $old_price, $barcode) {
+
+            $model = $this->get_true_model_by_type($itemType);
+
+            $model = $model->where('id', $itemId)->first();
+
+            if ($model) {
+
+                $data = [
+                    'price' => $price,
+                    'cost_price' => $cost_price,
+                    'old_price' => $old_price,
+                    'barcode' => $barcode,
+                    'stock' => $quantity, // temporary
+                ];
+
+                $data = array_filter($data, function ($value) {
+                    return $value !== null;
+                });
+
+                if (!empty($data)) {
+                    $model->update($data);
+                }
+            }
+
+            $balance = InventoryBalance
+                ::where('item_type', $this->get_model_by_type($itemType))
+                ->where('item_id', $itemId)
+                ->first();
+
+            if (!$balance) {
+                $balance = InventoryBalance::create([
+                    'item_type' => $this->get_model_by_type($itemType),
+                    'item_id' => $itemId,
+                    'total_quantity' => $quantity,
+                ]);
+            } else {
+                $balance->update([
+                    'total_quantity' => $quantity,
+                ]);
+            }
+
             // Создаем новую партию
-            $batch = InventoryBatch::create([
-                'item_type' => $itemType,
-                'item_id' => $itemId,
-                'quantity' => $quantity,
-                'price_per_unit' => $pricePerUnit,
-                'unit_id' => $unitId,
-                'received_date' => $receivedDate,
-            ]);
+            // $batch = InventoryBatch::create([
+            //     'item_type' => $itemType,
+            //     'item_id' => $itemId,
+            //     'quantity' => $quantity,
+            //     'price_per_unit' => $pricePerUnit,
+            //     'unit_id' => $unitId,
+            //     'received_date' => $receivedDate,
+            // ]);
 
             // Создаем транзакцию
-            InventoryTransaction::create([
-                'item_type' => $itemType,
-                'item_id' => $itemId,
-                'type' => 'incoming',
-                'quantity' => $quantity,
-                'price_per_unit' => $pricePerUnit,
-                'unit_id' => $unitId,
-                'batch_id' => $batch->id,
-                'description' => $description,
-                'user_id' => $userId,
-            ]);
+            // InventoryTransaction::create([
+            //     'item_type' => $itemType,
+            //     'item_id' => $itemId,
+            //     'type' => 'incoming',
+            //     'quantity' => $quantity,
+            //     'price_per_unit' => $pricePerUnit,
+            //     'unit_id' => $unitId,
+            //     'batch_id' => $batch->id,
+            //     'description' => $description,
+            //     'user_id' => $userId,
+            // ]);
 
             // Обновляем баланс
-            $this->updateBalance($itemType, $itemId, $quantity, $pricePerUnit, $unitId);
+            // $this->updateBalance($itemType, $itemId, $quantity, $pricePerUnit, $unitId);
 
-            return $batch;
+            return $model;
         });
     }
 
@@ -65,7 +115,8 @@ class InventoryService
                 ->get();
 
             foreach ($batches as $batch) {
-                if ($remainingQuantity <= 0) break;
+                if ($remainingQuantity <= 0)
+                    break;
 
                 $usedQuantity = min($batch->quantity, $remainingQuantity);
                 $batch->quantity -= $usedQuantity;

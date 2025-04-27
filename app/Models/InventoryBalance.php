@@ -10,11 +10,19 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class InventoryBalance extends Model
 {
-    protected $fillable = ['item_type', 'item_id', 'total_quantity', 'average_price', 'unit_id'];
+    // protected $fillable = [
+    //     'item_type',
+    //     'item_id',
+    //     'total_quantity',
+    //     'average_price',
+    //     'unit_id'
+    // ];
+
+    protected $guarded = ['id'];
 
     public function item(): MorphTo
     {
-        return $this->morphTo();
+        return $this->morphTo('item', 'item_type', 'item_id');
     }
 
     public function unit(): BelongsTo
@@ -24,6 +32,6 @@ class InventoryBalance extends Model
 
     public function transactions(): HasMany
     {
-        return $this->hasMany(InventoryTransaction::class,  'item_id', 'item_id');
+        return $this->hasMany(InventoryTransaction::class, 'item_id', 'item_id');
     }
 }

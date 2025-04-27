@@ -17,16 +17,18 @@ class ProductVariant extends Model
 {
     use HasFactory, SoftDeletes, HasRelationships;
 
-    protected $fillable = [
-        'product_id',
-        'name',
-        'sku',
-        'price',
-        'additional_cost',
-        'type',
-        'unit_id',
-        'is_active'
-    ];
+    // protected $fillable = [
+    //     'product_id',
+    //     'name',
+    //     'sku',
+    //     'price',
+    //     'additional_cost',
+    //     'type',
+    //     'unit_id',
+    //     'is_active'
+    // ];
+
+    protected $guarded = ['id'];
 
     protected $casts = [
         'price' => 'decimal:2',
@@ -108,9 +110,9 @@ class ProductVariant extends Model
             ->where('item_type', 'variant');
     }
 
-    public function inventoryBalance()
+    public function inventoryBalance(): MorphOne
     {
-        return $this->morphOne(InventoryBalance::class, 'item');
+        return $this->morphOne(InventoryBalance::class, 'item', 'item_type', 'item_id');
     }
 
     public function getCurrentStock(): float
