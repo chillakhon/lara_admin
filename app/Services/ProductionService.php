@@ -12,6 +12,7 @@ use App\Models\Recipe;
 use App\Models\ProductVariant;
 use App\Exceptions\ProductionException;
 use App\Traits\HelperTrait;
+use App\Traits\InventoryTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ use Illuminate\Support\Str;
 
 class ProductionService
 {
-    use HelperTrait;
+    use HelperTrait, InventoryTrait;
     protected $inventoryService;
 
     public function __construct(InventoryService $inventoryService)
@@ -34,7 +35,7 @@ class ProductionService
         ?string $notes = null
     ) {
         try {
-            return DB::transaction(function () use ( $batches, $plannedStartDate, $notes) {
+            return DB::transaction(function () use ($batches, $plannedStartDate, $notes) {
                 // Получаем вариант продукта
 
                 $batch_number = $this->generateBatchNumber();
@@ -46,7 +47,7 @@ class ProductionService
                         'batch_number' => $batch_number . '-' . $index + 1,
                         'recipe_id' => $batchItem['recipe_id'],
                         'planned_quantity' => $batchItem['planned_qty'],
-                        'status' => 'pending',
+                        'status' => 'in_progress',
                         'performer_id' => $batchItem['performer_id'],
                         'planned_start_date' => $plannedStartDate ?? now(),
                         'planned_end_date' => null, // $this->calculatePlannedEndDate($plannedStartDate, $recipe->production_time),
@@ -64,6 +65,11 @@ class ProductionService
                             'material_id' => $material_item['component_id'],
                             'qty' => $material_item['quantity'],
                         ]);
+
+                        // decrementing item from inventory
+                        // because of that existence of materials will be checked before the code come here
+                        // so we can remove it from inventory
+                        $this->remove_component_from_inventory($material_item);
                     }
 
                     foreach ($batchItem['output_products'] as $output_product) {
@@ -107,6 +113,9 @@ class ProductionService
             throw $e;
         }
     }
+
+    // you can remove item from inventory without any hesitation
+    // because before removing I check item existence in inventory
 
     public function startProduction(ProductionBatch $batch): void
     {
@@ -155,83 +164,70 @@ class ProductionService
 
     public function completeProduction(
         ProductionBatch $batch,
-        float $actualQuantity,
-        ?string $notes = null
-    ): void {
-        if ($batch->status !== 'in_progress') {
-            throw new \Exception("Невозможно завершить производство. Неверный статус партии.");
-        }
+    ) {
+        return DB::transaction(function () use ($batch) {
 
-        DB::transaction(function () use ($batch, $actualQuantity, $notes) {
+            if ($batch->status === 'cancelled') {
+                foreach ($batch->material_items as $key => $material_item) {
+                    $output_item_modified = [
+                        'component_type' => $this->get_type_by_model($material_item['material_type']),
+                        'component_id' => $material_item['material_id'],
+                        'quantity' => $material_item['qty'],
+                    ];
+                    $this->remove_component_from_inventory($output_item_modified);
+                }
+            }
+
+            $updated_outputs = [];
             // Рассчитываем себестоимость
-            $totalCost = $this->calculateProductionCost($batch);
-            $unitCost = $actualQuantity > 0 ? $totalCost / $actualQuantity : 0;
-
             // Создаем приход готовой продукции
-            $this->inventoryService->addStock(
-                'product',
-                $batch->productVariant->id,
-                $actualQuantity,
-                $unitCost,
-                $batch->recipe->output_unit_id,
-                now(),
-                auth()->id(),
-                "Произведено в партии #{$batch->batch_number}"
-            );
+            foreach ($batch->output_products as $key => $output_item) {
+                $output_item_modified = [
+                    'component_type' => $this->get_type_by_model($output_item['output_type']),
+                    'component_id' => $output_item['output_id'],
+                    'quantity' => $output_item['qty'],
+                ];
+                $this->add_component_to_inventory($output_item_modified);
+                $updated_outputs[] = $output_item_modified;
+            }
 
-            $batch->update([
-                'status' => 'completed',
-                'actual_quantity' => $actualQuantity,
-                'unit_cost' => $unitCost,
-                'total_material_cost' => $totalCost,
-                'completed_at' => now(),
-                'completed_by' => auth()->id(),
-                'notes' => $notes ? $batch->notes . "\n" . $notes : $batch->notes
-            ]);
+            $batch->update(['status' => 'completed']);
+
+            return $updated_outputs;
         });
     }
 
-    public function cancelProduction(ProductionBatch $batch, string $reason): void
+    public function cancelProduction(ProductionBatch $batch): void
     {
-        if (!in_array($batch->status, ['planned', 'in_progress'])) {
-            throw new \Exception("Невозможно отменить производство. Неверный статус партии.");
-        }
-
-        DB::transaction(function () use ($batch, $reason) {
+        DB::transaction(function () use ($batch) {
             // Если производство уже началось, возвращаем материалы
-            if ($batch->status === 'in_progress') {
-                $this->returnMaterials($batch);
+            // if ($batch->status === 'in_progress') {
+            //     $this->returnMaterials($batch);
+            // }
+
+            foreach ($batch->material_items as $material_item) {
+                $modified_item = [
+                    'component_type' => $this->get_type_by_model($material_item['material_type']),
+                    'component_id' => $material_item['material_id'],
+                    'quantity' => $material_item['qty'],
+                ];
+                $this->add_component_to_inventory($modified_item);
+            }
+
+            foreach ($batch->output_products as $output_item) {
+                $modified_item = [
+                    'component_type' => $this->get_type_by_model($output_item['output_type']),
+                    'component_id' => $output_item['output_id'],
+                    'quantity' => $output_item['qty'],
+                ];
+                $this->remove_component_from_inventory($modified_item);
             }
 
             $batch->update([
                 'status' => 'cancelled',
-                'notes' => $batch->notes . "\nОтменено: " . $reason
+                'notes' => $batch->notes . "\nОтменено: "
             ]);
         });
-    }
-
-    public function validateProductionPossibility($items): array
-    {
-        $total_qty = 0.0;
-        foreach ($items as $item) {
-            $find_product = InventoryBalance
-                ::where('item_type', $item['component_type'])
-                ->where('item_id', $item['component_id'])
-                ->first();
-
-            // it should not allow us to produce to this product
-            // so we should return false
-            // if we are not able to find product in inventory
-            if (!$find_product)
-                return [false, 0.0];
-
-            if ($find_product->total_quantity < $item['quantity'])
-                return [false, 0.0];
-
-            $total_qty += $item['quantity'] ?? 0.0;
-        }
-
-        return [true, $total_qty];
     }
 
     protected function consumeMaterials(ProductionBatch $batch): void

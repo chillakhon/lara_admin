@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Image;
+use App\Models\InventoryBalance;
 use App\Models\Product;
 use App\Services\MaterialService;
+use App\Traits\HelperTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -13,6 +15,7 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
+    use HelperTrait;
     protected $materialService;
 
     public function __construct(MaterialService $materialService)
@@ -74,7 +77,20 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $products = Product::with(['categories', 'options', 'variants', 'images'])
+        $inventory_balances = InventoryBalance::get()
+            ->keyBy(function ($item) {
+                return $this->get_type_by_model($item->item_type) . '_' . $item->item_id;
+            });
+
+        // could not solve the problem with .inventoryBalance relation
+        $products = Product
+            ::with([
+                'categories',
+                'options',
+                'variants', // .inventoryBalance
+                'images',
+                // 'inventoryBalance'
+            ])
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
@@ -93,8 +109,8 @@ class ProductController extends Controller
             ->latest();
 
 
-        if ($request->get('material')) {
-            $products->where('type', $request->get('material'));
+        if ($request->get('type')) {
+            $products->where('type', $request->get('type'));
         }
 
         if ($request->get('product_id')) {
@@ -112,6 +128,16 @@ class ProductController extends Controller
 
         } else {
             $products = $products->get();
+        }
+
+        foreach ($products as &$product) {
+            $productKey = "Product_{$product->id}";
+            $product->inventory_balance = $inventory_balances[$productKey]['total_quantity'] ?? 0.0;
+
+            foreach ($product['variants'] as &$variant) {
+                $variantKey = "ProductVariant_{$variant->id}";
+                $variant->inventory_balance = $inventory_balances[$variantKey]['total_quantity'] ?? 0.0;
+            }
         }
 
         return response()->json($products);

@@ -4,9 +4,19 @@ namespace App\Traits;
 use App\Models\Material;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use Exception;
+use Illuminate\Database\Eloquent\Model;
 
 trait HelperTrait
 {
+
+    protected array $modelMap = [
+        'ProductVariant' => ProductVariant::class,
+        'Product' => Product::class,
+        'Material' => Material::class,
+    ];
+
+
     public function get_model_by_type($type)
     {
         $modelClass = match ($type) {
@@ -48,5 +58,15 @@ trait HelperTrait
                 }
             }
         }
+    }
+
+    public function get_true_model_by_type($component_type)
+    {
+        return match ($component_type) {
+            'Product' => Product::query(),
+            'ProductVariant' => ProductVariant::query(),
+            'Material' => Material::query(),
+            default => throw new Exception("Unknown item type: {$component_type}"),
+        };
     }
 }

@@ -10,12 +10,14 @@ use App\Models\Material;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Services\InventoryService;
+use App\Traits\HelperTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class InventoryController extends Controller
 {
+    use HelperTrait;
     protected $inventoryService;
 
     public function __construct(InventoryService $inventoryService)
@@ -102,34 +104,54 @@ class InventoryController extends Controller
      */
     public function index()
     {
-        return response()->json([
-            'materials' => Material::select('id', 'title')->get(),
-            'products' => Product::select('id', 'name', 'has_variants')
-                ->with(['variants' => function ($query) {
-                    $query->select('id', 'product_id', 'name', 'sku', 'unit_id')
-                        ->with(['inventoryBalance' => function ($q) {
-                            $q->select('id', 'item_id', 'item_type', 'total_quantity', 'average_price', 'unit_id')
-                                ->with('unit:id,name');
-                        }]);
-                }])
-                ->get(),
-            'units' => Unit::select('id', 'name')->get(),
-            'materialsInventory' => InventoryBalance::where('item_type', 'material')
-                ->with(['item:id,title as name', 'unit:id,name'])
-                ->paginate(10),
-            'productsInventory' => InventoryBalance::where('item_type', 'product')
-                ->with(['item' => function ($query) {
-                    $query->select('id', 'name', 'has_variants')
-                        ->with(['variants' => function ($q) {
-                            $q->select('id', 'product_id', 'name', 'sku', 'unit_id')
-                                ->with(['inventoryBalance' => function ($bal) {
-                                    $bal->select('id', 'item_id', 'item_type', 'total_quantity', 'average_price', 'unit_id')
-                                        ->with('unit:id,name');
-                                }]);
-                        }]);
-                }, 'unit:id,name'])
-                ->paginate(10)
-        ]);
+        $inventoryBalances = InventoryBalance::with('item')->paginate(10);
+
+
+        foreach ($inventoryBalances as $key => &$inventory_item) {
+            $inventory_item->item_type = $this->get_type_by_model($inventory_item->item_type);
+        }
+
+        return response()->json($inventoryBalances);
+
+        // return response()->json([
+        //     'materials' => Material::select('id', 'title')->get(),
+        //     'products' => Product::select('id', 'name', 'has_variants')
+        //         ->with([
+        //             'variants' => function ($query) {
+        //                 $query->select('id', 'product_id', 'name', 'sku', 'unit_id')
+        //                     ->with([
+        //                         'inventoryBalance' => function ($q) {
+        //                             $q->select('id', 'item_id', 'item_type', 'total_quantity', 'average_price', 'unit_id')
+        //                                 ->with('unit:id,name');
+        //                         }
+        //                     ]);
+        //             }
+        //         ])
+        //         ->get(),
+        //     'units' => Unit::select('id', 'name')->get(),
+        //     'materialsInventory' => InventoryBalance::where('item_type', 'material')
+        //         ->with(['item:id,title as name', 'unit:id,name'])
+        //         ->paginate(10),
+        //     'productsInventory' => InventoryBalance::where('item_type', 'product')
+        //         ->with([
+        //             'item' => function ($query) {
+        //                 $query->select('id', 'name', 'has_variants')
+        //                     ->with([
+        //                         'variants' => function ($q) {
+        //                             $q->select('id', 'product_id', 'name', 'sku', 'unit_id')
+        //                                 ->with([
+        //                                     'inventoryBalance' => function ($bal) {
+        //                                         $bal->select('id', 'item_id', 'item_type', 'total_quantity', 'average_price', 'unit_id')
+        //                                             ->with('unit:id,name');
+        //                                     }
+        //                                 ]);
+        //                         }
+        //                     ]);
+        //             },
+        //             'unit:id,name'
+        //         ])
+        //         ->paginate(10)
+        // ]);
     }
 
     /**
@@ -168,30 +190,34 @@ class InventoryController extends Controller
     public function addStock(Request $request)
     {
         $validated = $request->validate([
-            'item_type' => 'required|in:material,product,variant',
-            'item_id' => 'required|integer',
-            'quantity' => 'required|numeric|min:0',
-            'price_per_unit' => 'required|numeric|min:0',
-            'unit_id' => 'required|exists:units,id',
-            'received_date' => 'required|date',
-            'description' => 'nullable|string',
+            'items.*.item_type' => 'required|in:Material,Product,ProductVariant',
+            'items.*.item_id' => 'required|integer',
+            'items.*.price' => 'nullable|numeric|min:0',
+            'items.*.cost_price' => 'nullable|numeric|min:0',
+            'items.*.old_price' => 'nullable|numeric|min:0',
+            'items.*.quantity' => 'nullable|numeric|min:0',
+            'items.*.barcode' => 'nullable|string',
         ]);
 
         try {
-            $batch = $this->inventoryService->addStock(
-                $validated['item_type'],
-                $validated['item_id'],
-                $validated['quantity'],
-                $validated['price_per_unit'],
-                $validated['unit_id'],
-                $validated['received_date'],
-                Auth::id(),
-                $validated['description'] ?? null
-            );
+            $updates = [];
+
+            foreach ($validated['items'] as $item) {
+                $updates[] = $this->inventoryService->addStock(
+                    $item['item_type'],
+                    $item['item_id'],
+                    $item['price'],
+                    $item['cost_price'],
+                    $item['old_price'],
+                    $item['quantity'],
+                    $item['barcode'],
+                );
+            }
+
 
             return response()->json([
                 'message' => 'Запас успешно добавлен',
-                'batch' => $batch
+                'batch' => $updates
             ], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
