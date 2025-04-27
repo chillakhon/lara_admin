@@ -201,9 +201,9 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'phone' => 'string|max:255',
+            'phone' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'roles' => 'required|array',
+            'roles' => 'nullable|array',
             'roles.*' => 'exists:roles,id',
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,id',
@@ -223,7 +223,8 @@ class UserController extends Controller
             $user->profile()->update([
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
-                'phone' => $request->phone
+                'phone' => $request->phone,
+                'address' => $request->address,
             ]);
 
             $user->roles()->sync($request->roles);

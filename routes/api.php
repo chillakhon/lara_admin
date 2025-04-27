@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Admin\CostCategoryController;
 use App\Http\Controllers\Api\Admin\DeliveryMethodController;
 use App\Http\Controllers\Api\Admin\DeliveryRateController;
 use App\Http\Controllers\Api\Admin\DeliveryZoneController;
+use App\Http\Controllers\Api\Admin\DiscountController;
 use App\Http\Controllers\Api\Admin\InventoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\OptionController;
@@ -48,7 +49,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
-    return $request->user()->load('roles');
+    return $request->user()->load('roles', 'profile' );
 })->middleware('auth:sanctum');
 
 
@@ -208,7 +209,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //        });
 //
 //
-//        Route::resource('discounts', DiscountController::class);
+        Route::apiResource('discounts', DiscountController::class);
 //        Route::post('discounts/{discount}/attach-products', [DiscountController::class, 'attachProducts'])
 //            ->name('discounts.attach-products');
 //        Route::post('discounts/{discount}/attach-variants', [DiscountController::class, 'attachVariants'])
@@ -233,11 +234,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         //         Cost Categories
         Route::get('/cost-categories', [CostCategoryController::class, 'index']);
         //
-        Route::group(['prefix' => 'clients', 'as' => 'clients.', 'middleware' => 'auth:api'], function () {
+        Route::group(['prefix' => 'clients',], function () {
             Route::get('/', [ClientController::class, 'index'])->name('index');
             Route::get('/{client}', [ClientController::class, 'show'])->name('show');
             Route::post('/', [ClientController::class, 'store'])->name('store');
-            Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
+//            Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
             Route::put('/{client}', [ClientController::class, 'update'])->name('update');
             Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
         });
