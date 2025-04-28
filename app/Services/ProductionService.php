@@ -191,7 +191,9 @@ class ProductionService
                 $updated_outputs[] = $output_item_modified;
             }
 
-            $batch->update(['status' => 'completed']);
+            $batch->update([
+                'status' => 'completed',
+            ]);
 
             return $updated_outputs;
         });

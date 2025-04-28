@@ -697,6 +697,12 @@ class ProductionController extends Controller
                 ], 404);
             }
 
+            if ($batch->performer_id && $batch->performer_id !== auth()->id()) {
+                return response()->json([
+                    'error' => 'Вы не можете завершить партию, так как вы не являетесь исполнителем'
+                ], 403);
+            }
+
             if ($batch->status === 'completed') {
                 throw new \Exception("Невозможно завершить производство. Неверный статус партии.");
             }
