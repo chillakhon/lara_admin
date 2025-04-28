@@ -187,7 +187,7 @@ class ProductionController extends Controller
         $planned_start_datetime = $groupedBatche->min('planned_start_date');
         $planned_end_datetime = $groupedBatche->max('planned_end_date');
         $started_datetime = $groupedBatche->min('started_at');
-        $completed_datetime = $groupedBatche->min('completed_at');
+        // $completed_datetime = $groupedBatche->min('completed_at');
         $performer_id = $groupedBatche->pluck('performer_id');
         $performers = [];
         if (count($performer_id) >= 1) {
@@ -199,6 +199,7 @@ class ProductionController extends Controller
         $statuses = $groupedBatche->pluck('status')->unique();
         $groupStatus = '';
         $notes = $groupedBatche->pluck('notes')->first();
+        $completed_at = $groupedBatche->whereNotNull('completed_at')->pluck('completed_at')->toArray();
 
         if ($statuses->contains('in_progress')) {
             $groupStatus = 'in_progress';
@@ -208,6 +209,11 @@ class ProductionController extends Controller
             $groupStatus = 'completed';
         } else {
             $groupStatus = 'mixed'; // fallback if statuses are inconsistent
+        }
+
+        $completed_datetime = null;
+        if (count($completed_at) >= count($grouped_batches_ids)) {
+            $completed_datetime = max($completed_at);
         }
 
         return [
@@ -697,14 +703,14 @@ class ProductionController extends Controller
                 ], 404);
             }
 
+            if ($batch->status === 'completed') {
+                throw new \Exception("Невозможно завершить производство. Неверный статус партии.");
+            }
+
             if ($batch->performer_id && $batch->performer_id !== auth()->id()) {
                 return response()->json([
                     'error' => 'Вы не можете завершить партию, так как вы не являетесь исполнителем'
                 ], 403);
-            }
-
-            if ($batch->status === 'completed') {
-                throw new \Exception("Невозможно завершить производство. Неверный статус партии.");
             }
 
             if ($batch->status === 'cancelled') {
@@ -810,6 +816,12 @@ class ProductionController extends Controller
 
             if (in_array($batch->status, ['cancelled'])) {
                 throw new \Exception("Невозможно отменить производство. Неверный статус партии.");
+            }
+
+            if ($batch->performer_id && $batch->performer_id !== auth()->id()) {
+                return response()->json([
+                    'error' => 'Вы не можете отменить партию, так как вы не являетесь исполнителем'
+                ], 403);
             }
 
             $output_products_for_remove = $this
