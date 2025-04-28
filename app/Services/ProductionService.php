@@ -191,7 +191,11 @@ class ProductionService
                 $updated_outputs[] = $output_item_modified;
             }
 
-            $batch->update(['status' => 'completed']);
+            $batch->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+                'completed_by' => auth()->id(),
+            ]);
 
             return $updated_outputs;
         });
@@ -225,7 +229,10 @@ class ProductionService
 
             $batch->update([
                 'status' => 'cancelled',
-                'notes' => $batch->notes . "\nОтменено: "
+                'notes' => str_contains($batch->notes, "Отменено")
+                    ? $batch->notes : $batch->notes . "Отменено: ",
+                'completed_at' => null,
+                'completed_by' => null,
             ]);
         });
     }
