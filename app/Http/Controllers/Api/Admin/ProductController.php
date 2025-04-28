@@ -132,12 +132,18 @@ class ProductController extends Controller
 
         foreach ($products as &$product) {
             $productKey = "Product_{$product->id}";
-            $product->inventory_balance = $inventory_balances[$productKey]['total_quantity'] ?? 0.0;
 
-            foreach ($product['variants'] as &$variant) {
-                $variantKey = "ProductVariant_{$variant->id}";
-                $variant->inventory_balance = $inventory_balances[$variantKey]['total_quantity'] ?? 0.0;
+            if (isset($product['variants']) && !empty($product['variants'])) {
+                foreach ($product['variants'] as &$variant) {
+                    $variantKey = "ProductVariant_{$variant->id}";
+                    $variant_total_qty = $inventory_balances[$variantKey]['total_quantity'] ?? 0.0;
+                    $variant->inventory_balance = $variant_total_qty;
+                    $product->inventory_balance += $variant_total_qty;
+                }
+                continue;
             }
+
+            $product->inventory_balance = $inventory_balances[$productKey]['total_quantity'] ?? 0.0;
         }
 
         return response()->json($products);
