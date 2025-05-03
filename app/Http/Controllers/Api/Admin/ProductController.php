@@ -253,8 +253,10 @@ class ProductController extends Controller
             'images',
             // 'options.values',
             // 'variants.optionValues.option',
-            'variants.images',
-            'variants.unit',
+            'variants' => function ($sql) {
+                $sql->whereNull("deleted_at")
+                    ->with(['images', 'unit']);
+            },
             'defaultUnit'
         ]);
         return response()->json($product);
