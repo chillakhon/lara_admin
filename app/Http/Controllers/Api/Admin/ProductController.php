@@ -247,7 +247,7 @@ class ProductController extends Controller
      * )
      */
 
-    public function show(Product $product)
+    public function show(Product &$product)
     {
         $product->load([
             'images',
@@ -259,6 +259,17 @@ class ProductController extends Controller
             },
             'defaultUnit'
         ]);
+
+        foreach ($product->images as &$image) {
+            $image->item_type = $this->get_type_by_model($image->item_type);
+        }
+
+        foreach ($product->variants as &$variant) {
+            foreach ($variant['images'] as $key => &$image) {
+                $image->item_type = $this->get_type_by_model($image->item_type);
+            }
+        }
+
         return response()->json($product);
     }
 
