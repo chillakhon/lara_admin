@@ -265,7 +265,7 @@ class ProductController extends Controller
         }
 
         foreach ($product->variants as &$variant) {
-            foreach ($variant['images'] as $key => &$image) {
+            foreach ($variant['images'] as &$image) {
                 $image->item_type = $this->get_type_by_model($image->item_type);
             }
         }
@@ -602,6 +602,7 @@ class ProductController extends Controller
                     $cleanVariantData = Arr::except($cleanVariantData, ['sku']);
                     $variant->update($cleanVariantData);
                 } else {
+                    $cleanVariantData['sku'] = Str::slug($variantData['name']);
                     $variant = ProductVariant::create($cleanVariantData);
                 }
 
