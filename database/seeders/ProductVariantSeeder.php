@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ProductVariant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -135,7 +136,7 @@ class ProductVariantSeeder extends Seeder
         // Добавляем остатки на складе для каждого варианта
         $inventory = [
             [
-                'item_type' => 'product_variant',
+                'item_type' => ProductVariant::class,
                 'item_id' => $variantIds[0], // XS / Черный
                 'total_quantity' => 9,
                 'average_price' => 2490.00,
@@ -144,7 +145,7 @@ class ProductVariantSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'item_type' => 'product_variant',
+                'item_type' => ProductVariant::class,
                 'item_id' => $variantIds[1], // XS / Фиолет
                 'total_quantity' => 20,
                 'average_price' => 2490.00,
@@ -153,7 +154,7 @@ class ProductVariantSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'item_type' => 'product_variant',
+                'item_type' => ProductVariant::class,
                 'item_id' => $variantIds[2], // S / Черный
                 'total_quantity' => 0,
                 'average_price' => 2490.00,
@@ -162,7 +163,7 @@ class ProductVariantSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'item_type' => 'product_variant',
+                'item_type' => ProductVariant::class,
                 'item_id' => $variantIds[3], // S / Фиолет
                 'total_quantity' => 18,
                 'average_price' => 2490.00,
@@ -171,7 +172,7 @@ class ProductVariantSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'item_type' => 'product_variant',
+                'item_type' => ProductVariant::class,
                 'item_id' => $variantIds[4], // M / Черный
                 'total_quantity' => 0,
                 'average_price' => 2490.00,
@@ -180,7 +181,7 @@ class ProductVariantSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'item_type' => 'product_variant',
+                'item_type' => ProductVariant::class,
                 'item_id' => $variantIds[5], // M / Фиолет
                 'total_quantity' => 20,
                 'average_price' => 2490.00,
@@ -189,7 +190,7 @@ class ProductVariantSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'item_type' => 'product_variant',
+                'item_type' => ProductVariant::class,
                 'item_id' => $variantIds[6], // L / Черный
                 'total_quantity' => 0,
                 'average_price' => 2490.00,

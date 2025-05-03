@@ -23,6 +23,9 @@ trait HelperTrait
             'ProductVariant' => ProductVariant::class, // this should come here for now
             'Product' => Product::class,
             'Material' => Material::class,
+            'material' => Material::class,
+            "product" => Product::class,
+            "variant" => ProductVariant::class,
         };
 
         return $modelClass;
@@ -34,6 +37,9 @@ trait HelperTrait
             ProductVariant::class => 'ProductVariant',
             Product::class => 'Product',
             Material::class => 'Material',
+            'material' => "Material",
+            "product" => 'Product',
+            "variant" => 'ProductVariant',
         };
 
         return $modelClass;

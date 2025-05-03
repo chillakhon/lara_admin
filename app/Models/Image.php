@@ -50,26 +50,33 @@ class Image extends Model
 
     public $timestamps = false;
 
-    protected $fillable = [
-        'path',
-        'url',
-        'is_main',
-        'order'
-    ];
+    // protected $fillable = [
+    //     'path',
+    //     'url',
+    //     'is_main',
+    //     'order'
+    // ];
 
-    public function imageable(): MorphTo
+    protected $guarded = ['id'];
+
+    // public function imageable(): MorphTo
+    // {
+    //     return $this->morphTo();
+    // }
+
+    public function item()
     {
-        return $this->morphTo();
+        return $this->morphTo('item', 'item_type', 'item_id');
     }
 
-    public function optionValues()
-    {
-        return $this->morphedByMany(OptionValue::class, 'imageable')->withTimestamps();
-    }
+    // public function optionValues()
+    // {
+    //     return $this->morphedByMany(OptionValue::class, 'imageable')->withTimestamps();
+    // }
 
-    public function products()
-    {
-        return $this->morphedByMany(Product::class, 'imageable')->withTimestamps();
-    }
+    // public function products()
+    // {
+    //     return $this->morphedByMany(Product::class, 'imageable')->withTimestamps();
+    // }
 
 }
