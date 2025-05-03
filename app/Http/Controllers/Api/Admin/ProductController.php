@@ -288,6 +288,11 @@ class ProductController extends Controller
         // TODO: logic for getting product's qty history from warehouse
     }
 
+    // enhances-dev branch
+    public function price_history_create()
+    {
+    }
+
     /**
      * @OA\Post(
      *     path="/api/products",
@@ -380,7 +385,7 @@ class ProductController extends Controller
             }
 
             // $product->categories()->sync($validated['categories']);
-            if (count($validated['variants']) >= 1) {
+            if (count($validated['variants'] ?? []) >= 1) {
                 foreach ($validated['variants'] as $variantData) {
                     $uuid = $variantData['uuid'] ?? null;
 
@@ -562,12 +567,15 @@ class ProductController extends Controller
             }
 
             // Handle variants
-            $incomingVariantIds = collect($validated['variants'])->pluck('id')->filter()->toArray();
+            $incomingVariantIds = collect($validated['variants'] ?? [])->pluck('id')->filter()->toArray();
 
             // Delete removed variants
-            ProductVariant::where('product_id', $product->id)
-                ->whereNotIn('id', $incomingVariantIds)
-                ->get()
+            $prod_variant_check = ProductVariant::where('product_id', $product->id);
+            if (!empty($incomingVariantIds)) {
+                $prod_variant_check->whereNotIn('id', $incomingVariantIds);
+            }
+
+            $prod_variant_check = $prod_variant_check->get()
                 ->each(function ($variant) {
                     $variantImages = ImageModel::where('item_type', ProductVariant::class)
                         ->where('item_id', $variant->id)
@@ -587,7 +595,7 @@ class ProductController extends Controller
                 });
 
             // Add or update variants
-            foreach ($validated['variants'] as $variantData) {
+            foreach (($validated['variants'] ?? []) as $variantData) {
                 $uuid = $variantData['uuid'] ?? null;
 
                 if (!$uuid) {
