@@ -4,8 +4,79 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d8902927b54808c165640cc92d7057fa",
+    "content-hash": "d968f8159217f63a52d81156e427aaeb",
     "packages": [
+        {
+            "name": "bepsvpt/blurhash",
+            "version": "4.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/bepsvpt/blurhash.git",
+                "reference": "8b47934784395afee879980cdac65134864c33f7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bepsvpt/blurhash/zipball/8b47934784395afee879980cdac65134864c33f7",
+                "reference": "8b47934784395afee879980cdac65134864c33f7",
+                "shasum": ""
+            },
+            "require": {
+                "ext-exif": "*",
+                "illuminate/support": "^8.0 || ^9.0 || ^10.0 || ^11.0 || ^12.0",
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "ergebnis/composer-normalize": "^2.45",
+                "jcupitt/vips": "^2.4",
+                "larastan/larastan": "^3.2",
+                "laravel/pint": "^1.21",
+                "orchestra/testbench": "^6.47 || ^7.53 || ^8.34 || ^9.12 || ^10.1",
+                "phpunit/phpunit": "^9.6 || ^10.5 || ^11.5 || ^12.0"
+            },
+            "suggest": {
+                "ext-ffi": "Required to use php-vips driver.",
+                "ext-gd": "Required to use GD driver.",
+                "ext-imagick": "Required to use Imagick driver.",
+                "jcupitt/vips": "Required to use php-vips driver."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "BlurHash": "Bepsvpt\\Blurhash\\Facades\\BlurHash"
+                    },
+                    "providers": [
+                        "Bepsvpt\\Blurhash\\BlurHashServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Bepsvpt\\Blurhash\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "bepsvpt",
+                    "email": "6ibrl@cpp.tw"
+                }
+            ],
+            "description": "A PHP implementation of BlurHash with Laravel integration.",
+            "homepage": "https://github.com/bepsvpt/blurhash",
+            "keywords": [
+                "blurhash",
+                "laravel"
+            ],
+            "support": {
+                "issues": "https://github.com/bepsvpt/blurhash/issues",
+                "source": "https://github.com/bepsvpt/blurhash/tree/4.0.0"
+            },
+            "time": "2025-03-16T03:22:19+00:00"
+        },
         {
             "name": "brick/math",
             "version": "0.12.3",

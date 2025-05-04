@@ -197,7 +197,7 @@ class Product extends Model implements HasMedia
 
     public function images()
     {
-        return $this->morphToMany(Image::class, 'imageable')->withTimestamps();
+        return $this->morphMany(Image::class, 'item');
     }
 
     public function getImagesForVariant($variantId)

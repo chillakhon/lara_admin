@@ -56,7 +56,23 @@ class ProductImageController extends Controller
             return response()->json(['message' => 'Path is required'], 400);
         }
 
-        $filePath = storage_path("app/public/{$path}");
+        $filePath = storage_path("app/public/products/{$path}");
+
+
+        if (!file_exists($filePath)) {
+            $filePath = public_path('images/default.png');
+        }
+
+        return response()->file($filePath);
+    }
+
+    public function getProductImageByName($name)
+    {
+        if (!$name) {
+            return response()->json(['message' => 'Path is required'], 400);
+        }
+
+        $filePath = storage_path("app/public/products/{$name}");
 
 
         if (!file_exists($filePath)) {
@@ -165,7 +181,7 @@ class ProductImageController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $imageFile) {
                 $image = $this->saveProductImage($imageFile, $product);
-//                foreach ($validated['variants'] as $variantId) {
+                //                foreach ($validated['variants'] as $variantId) {
 //                    $product->images()->attach($image->id, [
 //                        'product_variant_id' => $variantId,
 //                    ]);
@@ -281,7 +297,8 @@ class ProductImageController extends Controller
         ], 200);
     }
 
-    public function deleteImg(Product $product, Image $image,){
+    public function deleteImg(Product $product, Image $image, )
+    {
         // Если изображение больше не привязано к данному продукту, удаляем файлы и запись
         if ($product->images()->where('images.id', $image->id)->exists()) {
             Storage::disk('public')->delete($image->path);

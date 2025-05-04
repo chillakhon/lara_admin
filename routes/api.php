@@ -49,12 +49,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
-    return $request->user()->load('roles', 'profile' );
+    return $request->user()->load('roles', 'profile');
 })->middleware('auth:sanctum');
 
 
 //Route::get('products/{product}/images-path', [ProductImageController::class, 'index']);
 Route::get('/products/{product}/image', [ProductImageController::class, 'getProductImage']);
+Route::get('/product/image/{name}', [ProductImageController::class, 'getProductImageByName']);
 Route::get('/products/{product}/main-image', [ProductImageController::class, 'getMainProductImage']);
 
 
@@ -160,16 +161,36 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/', [ProductController::class, 'store']);
 
             Route::get('/{product}', [ProductController::class, 'show']);
-            Route::put('/{product}', [ProductController::class, 'update']);
+            Route::post('/update/{product}', [ProductController::class, 'update']);
 
             // enhances-dev branch
             Route::get('/{product}/price/history', [ProductController::class, 'price_history']);
             Route::get('/{product}/warehouse/history', [ProductController::class, 'warehouse_history']);
 
+            //
             Route::delete('/{product}', [ProductController::class, 'destroy']);
+            Route::put('/restore/product', [ProductController::class, 'restoreProduct']);
             Route::post('/{product}/components', [ProductController::class, 'addComponent']);
             Route::delete('/{product}/components/{component}', [ProductController::class, 'removeComponent']);
             Route::get('/{product}/calculate-cost', [ProductController::class, 'calculateCost']);
+
+            // variants
+            Route::post('/{product}/variants', [ProductVariantController::class, 'store']);
+            Route::put('/variants/{variant}', [ProductVariantController::class, 'update']);
+            Route::delete('/{product}/variants/{variant}', [ProductVariantController::class, 'destroy']);
+            Route::post('/{product}/variants/generate', [ProductController::class, 'generateVariants']);
+
+
+            // images
+            Route::post('/{product}/images', [ProductImageController::class, 'store']);
+            Route::delete('/{product}/images/{image}/{variant}', [ProductImageController::class, 'destroy']);
+            Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
+
+            Route::delete('/{product}/images/{image}', [ProductImageController::class, 'deleteImg']);
+            // Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
+
+            Route::post('/{product}/variants/{variant}/images', [ProductVariantController::class, 'addImages']);
+            Route::delete('/{product}/variants/{variant}/images/{image}', [ProductVariantController::class, 'destroyImage']);
             //            Route::post('/{product}/options/attach', [ProductController::class, 'attachOptions']);
 //            Route::post('/{product}/variants/bulk-update', [ProductVariantController::class, 'bulkUpdate'])
 //                ->name('variants.bulk-update');
@@ -180,22 +201,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //                ->name('options.update');
 //            Route::delete('/{product}/options/{option}', [ProductController::class, 'destroyOption'])
 //                ->name('options.destroy');
-//            //variants
-            Route::post('/{product}/variants', [ProductVariantController::class, 'store']);
-            Route::put('/variants/{variant}', [ProductVariantController::class, 'update']);
-            Route::delete('/{product}/variants/{variant}', [ProductVariantController::class, 'destroy']);
-            Route::post('/{product}/variants/generate', [ProductController::class, 'generateVariants']);
+
             //
-//            //images
-            Route::post('/{product}/images', [ProductImageController::class, 'store']);
-            Route::delete('/{product}/images/{image}/{variant}', [ProductImageController::class, 'destroy']);
-            Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
-
-            Route::delete('/{product}/images/{image}', [ProductImageController::class, 'deleteImg']);
-            Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
-
-            Route::post('/{product}/variants/{variant}/images', [ProductVariantController::class, 'addImages']);
-            Route::delete('/{product}/variants/{variant}/images/{image}', [ProductVariantController::class, 'destroyImage']);
         });
         //
 //        // Product Variants
@@ -210,7 +217,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //
 //
         Route::apiResource('discounts', DiscountController::class);
-//        Route::post('discounts/{discount}/attach-products', [DiscountController::class, 'attachProducts'])
+        //        Route::post('discounts/{discount}/attach-products', [DiscountController::class, 'attachProducts'])
 //            ->name('discounts.attach-products');
 //        Route::post('discounts/{discount}/attach-variants', [DiscountController::class, 'attachVariants'])
 //            ->name('discounts.attach-variants');
@@ -238,7 +245,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/', [ClientController::class, 'index'])->name('index');
             Route::get('/{client}', [ClientController::class, 'show'])->name('show');
             Route::post('/', [ClientController::class, 'store'])->name('store');
-//            Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
+            //            Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
             Route::put('/{client}', [ClientController::class, 'update'])->name('update');
             Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
         });

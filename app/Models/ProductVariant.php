@@ -58,12 +58,9 @@ class ProductVariant extends Model
             ->first();
     }
 
-    public function images(): MorphToMany
+    public function images()
     {
-        return $this->morphToMany(Image::class, 'imageable')
-            ->withPivot(['id'])
-            ->orderBy('order')
-            ->orderBy('is_main', 'desc'); // is_main теперь берется из таблицы images
+        return $this->morphMany(Image::class, 'item');
     }
 
     public function getMainImageAttribute()
