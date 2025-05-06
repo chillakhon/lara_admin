@@ -92,13 +92,21 @@ class ProductController extends Controller
         // could not solve the problem with .inventoryBalance relation
         $products = Product
             ::with([
-                'categories',
-                'options',
-                'variants' => function ($query) {
-                    $query->whereNull("deleted_at");
-                }, // .inventoryBalance
-                'images',
-                // 'inventoryBalance'
+                'images' => function ($sql) {
+                    $sql->orderBy("order", 'asc');
+                },
+                // 'options.values',
+                // 'variants.optionValues.option',
+                'variants' => function ($sql) {
+                    $sql->whereNull("deleted_at")
+                        ->with('unit')
+                        ->with([
+                            'images' => function ($sql) {
+                                $sql->orderBy("order", 'asc');
+                            }
+                        ]);
+                },
+                'defaultUnit',
             ])
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
@@ -250,14 +258,21 @@ class ProductController extends Controller
     public function show(Product &$product)
     {
         $product->load([
-            'images',
+            'images' => function ($sql) {
+                $sql->orderBy("order", 'asc');
+            },
             // 'options.values',
             // 'variants.optionValues.option',
             'variants' => function ($sql) {
                 $sql->whereNull("deleted_at")
-                    ->with(['images', 'unit']);
+                    ->with('unit')
+                    ->with([
+                        'images' => function ($sql) {
+                            $sql->orderBy("order", 'asc');
+                        }
+                    ]);
             },
-            'defaultUnit'
+            'defaultUnit',
         ]);
 
         foreach ($product->images as &$image) {
@@ -379,8 +394,8 @@ class ProductController extends Controller
             ));
 
             if ($request->hasFile('product_images')) {
-                foreach ($request->file('product_images') as $productImage) {
-                    $this->save_images($productImage, Product::class, $product->id);
+                foreach ($request->file('product_images') as $key => $productImage) {
+                    $this->save_images($productImage, Product::class, $product->id, $key);
                 }
             }
 
@@ -399,8 +414,8 @@ class ProductController extends Controller
                     $cleanVariantData['created_at'] = now();
                     $created_variant = ProductVariant::create($cleanVariantData);
                     if ($request->hasFile("variant_images_" . $uuid)) {
-                        foreach ($request->file("variant_images_" . $uuid) as $variantImage) {
-                            $this->save_images($variantImage, ProductVariant::class, $created_variant->id);
+                        foreach ($request->file("variant_images_" . $uuid) as $key => $variantImage) {
+                            $this->save_images($variantImage, ProductVariant::class, $created_variant->id, $key);
                         }
                     }
                 }
@@ -409,6 +424,7 @@ class ProductController extends Controller
             DB::commit();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Product created successfully',
                 'product' => $product
             ], 201);
@@ -541,30 +557,9 @@ class ProductController extends Controller
                 ]
             ));
 
-            // previois saved images of the products
-            $existingImages = $request->get('images', []); // e.g., ["image_12_123456.jpg"]
-            $currentImages = ImageModel::where('item_id', $product->id)
-                ->where('item_type', Product::class)
-                ->get();
 
-            foreach ($currentImages as $image) {
-                if (!in_array($image->path, $existingImages)) {
-                    // Delete image files
-                    foreach (['original', 'lg', 'md', 'sm'] as $size) {
-                        $path = storage_path("app/public/products/{$size}_{$image->path}");
-                        if (File::exists($path)) {
-                            File::delete($path);
-                        }
-                    }
-                    $image->delete(); // delete from DB
-                }
-            }
 
-            if ($request->hasFile('product_images')) {
-                foreach ($request->file('product_images') as $productImage) {
-                    $this->save_images($productImage, Product::class, $product->id);
-                }
-            }
+            $this->update_product_images($request, $product);
 
             // Handle variants
             $incomingVariantIds = collect($validated['variants'] ?? [])->pluck('id')->filter()->toArray();
@@ -614,34 +609,13 @@ class ProductController extends Controller
                     $variant = ProductVariant::create($cleanVariantData);
                 }
 
-                $existingVariantImages = ImageModel::where('item_type', ProductVariant::class)
-                    ->where('item_id', $variant->id)
-                    ->get();
-
-                $keptImages = $request->get("variant_name_images_" . $uuid, []); // incoming retained image names
-
-                foreach ($existingVariantImages as $image) {
-                    if (!in_array($image->path, $keptImages)) {
-                        foreach (['original', 'lg', 'md', 'sm'] as $size) {
-                            $path = storage_path("app/public/products/{$size}_{$image->path}");
-                            if (File::exists($path)) {
-                                File::delete($path);
-                            }
-                        }
-                        $image->delete();
-                    }
-                }
-
-                if ($request->hasFile("variant_images_" . $uuid)) {
-                    foreach ($request->file("variant_images_" . $uuid) as $variantImage) {
-                        $this->save_images($variantImage, ProductVariant::class, $variant->id);
-                    }
-                }
+                $this->update_variant_images($request, $variant, $uuid);
             }
 
             DB::commit();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Product updated successfully',
                 'product' => $product
             ], 200);
@@ -654,6 +628,93 @@ class ProductController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+
+    private function update_product_images(
+        Request $request,
+        $product
+    ) {
+
+        // previois saved images of the products
+        $existingImages = $request->get('images', []); // e.g., ["image_12_123456.jpg"]
+        $currentImages = ImageModel::where('item_id', $product->id)
+            ->where('item_type', Product::class)
+            ->get();
+
+        foreach ($currentImages as $image) {
+            if (!in_array($image->path, $existingImages)) {
+                // Delete image files
+                foreach (['original', 'lg', 'md', 'sm'] as $size) {
+                    $path = storage_path("app/public/products/{$size}_{$image->path}");
+                    if (File::exists($path)) {
+                        File::delete($path);
+                    }
+                }
+                $image->delete();
+                continue;
+            }
+            $normalizedPath = str_replace('.', '_', $image->path);
+            $key = "product_image_path_" . $normalizedPath;
+            $position = (int) $request->get($key);
+
+            $image->update([
+                'order' => $position,
+                'is_main' => (!is_null($position) && $position == 0) ? true : false,
+            ]);
+        }
+
+        if ($request->hasFile('product_images')) {
+            foreach ($request->file('product_images') as $key => $productImage) {
+                $key = "product_image_file_" . $key;
+                $position = (int) $request->get($key);
+                $this->save_images($productImage, Product::class, $product->id, $position);
+            }
+        }
+    }
+
+    private function update_variant_images(Request $request, $variant, $uuid)
+    {
+        $existingVariantImages = ImageModel::where('item_type', ProductVariant::class)
+            ->where('item_id', $variant->id)
+            ->get();
+
+        $keptImages = $request->get("variant_name_images_" . $uuid, []); // incoming retained image names
+
+        foreach ($existingVariantImages as $image) {
+            if (!in_array($image->path, $keptImages)) {
+                foreach (['original', 'lg', 'md', 'sm'] as $size) {
+                    $path = storage_path("app/public/products/{$size}_{$image->path}");
+                    if (File::exists($path)) {
+                        File::delete($path);
+                    }
+                }
+                $image->delete();
+                continue;
+            }
+            $normalizedPath = str_replace('.', '_', $image->path);
+            $key = "variant_" . $uuid . "_image_path_" . $normalizedPath;
+            $position = (int) $request->get($key);
+
+            $image->update([
+                'order' => $position,
+                'is_main' => (!is_null($position) && $position == 0) ? true : false,
+            ]);
+        }
+
+        if ($request->hasFile("variant_images_" . $uuid)) {
+            foreach ($request->file("variant_images_" . $uuid) as $key => $variantImage) {
+                $key = "variant_" . $uuid . "_image_file_" . $key;
+                $position = (int) $request->get($key);
+                $this->save_images(
+                    $variantImage,
+                    ProductVariant::class,
+                    $variant->id,
+                    $position
+                );
+            }
+        }
+
     }
 
     /**
