@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Image;
 use App\Models\InventoryBalance;
+use App\Models\PriceHistory;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\MaterialService;
@@ -288,25 +289,103 @@ class ProductController extends Controller
         return response()->json($product);
     }
 
-
-    // enhances-dev branch
+    // enhanced-dev branch
     public function price_history(Request $request, Product $product)
     {
         // TODO: logic for getting product's prices history
+        if ($request->boolean('is_variant', false)) {
+            $variant_price_history = PriceHistory
+                ::where('item_type', ProductVariant::class, )
+                ->where('item_id', $request->get('id'))
+                ->whereNull("deleted_at")
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+
+            foreach ($variant_price_history as &$price_history) {
+                $price_history->item_type = $this->get_type_by_model($price_history->item_type);
+            }
+
+            return response()->json([
+                'success' => false,
+                'price_history' => $variant_price_history
+            ]);
+        } else {
+            $product = Product::where('id', $request->get('id'))->first();
+
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Продукт не найден!",
+                ]);
+            }
+
+            $product_variant_ids = ProductVariant::where('product_id', $product->id)->pluck('id')->toArray();
+
+            $product_price_history = PriceHistory
+                ::where(function ($sql) use ($product_variant_ids, $product, $request) {
+                    $sql->where(function ($sql2) use ($product) {
+                        $sql2->where('item_type', Product::class)
+                            ->where('item_id', $product->id);
+                    });
+
+                    if ($request->boolean('get_with_variants', false)) {
+                        $sql->orWhere(function ($sql2) use ($product_variant_ids) {
+                            $sql2->where('item_type', ProductVariant::class)
+                                ->whereIn('item_id', $product_variant_ids);
+                        });
+                    }
+                })
+                ->whereNull("deleted_at")
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+
+            foreach ($product_price_history as &$price_history) {
+                $price_history->item_type = $this->get_type_by_model($price_history->item_type);
+            }
+
+            return response()->json([
+                'success' => false,
+                'price_history' => $product_price_history
+            ]);
+        }
     }
 
 
 
-    // enhances-dev branch
+    // enhanced-dev branch
     public function warehouse_history(Request $request, Product $product)
     {
         // TODO: logic for getting product's qty history from warehouse
     }
 
-    // enhances-dev branch
-    public function price_history_create()
+    // enhanced-dev branch
+    public function price_history_create(Request $request, $previous_price, $product = null, $variant = null)
     {
+
+        if (!is_null($previous_price)) {
+            if ($product && $product->price != $previous_price) {
+                PriceHistory::create([
+                    'user_id' => $request->user()->id,
+                    'item_type' => Product::class,
+                    'item_id' => $product->id,
+                    'price' => $product->price,
+                    "created_at" => now(),
+                ]);
+            }
+
+            if ($variant && $variant->price != $previous_price) {
+                PriceHistory::create([
+                    'user_id' => $request->user()->id,
+                    'item_type' => ProductVariant::class,
+                    'item_id' => $variant->id,
+                    'price' => $variant->price,
+                    "created_at" => now(),
+                ]);
+            }
+
+        }
     }
+
 
     /**
      * @OA\Post(
@@ -393,6 +472,8 @@ class ProductController extends Controller
                 ]
             ));
 
+            $this->price_history_create($request, 0, $product);
+
             if ($request->hasFile('product_images')) {
                 foreach ($request->file('product_images') as $key => $productImage) {
                     $this->save_images($productImage, Product::class, $product->id, $key);
@@ -413,6 +494,7 @@ class ProductController extends Controller
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
                     $cleanVariantData['created_at'] = now();
                     $created_variant = ProductVariant::create($cleanVariantData);
+                    $this->price_history_create($request, 0, null, $created_variant);
                     if ($request->hasFile("variant_images_" . $uuid)) {
                         foreach ($request->file("variant_images_" . $uuid) as $key => $variantImage) {
                             $this->save_images($variantImage, ProductVariant::class, $created_variant->id, $key);
@@ -548,6 +630,8 @@ class ProductController extends Controller
         try {
             $product = Product::findOrFail($id);
 
+            $prev_price = $product->price;
+
             $product->update(array_merge(
                 $validated,
                 [
@@ -557,7 +641,7 @@ class ProductController extends Controller
                 ]
             ));
 
-
+            $this->price_history_create($request, $prev_price, $product);
 
             $this->update_product_images($request, $product);
 
@@ -602,11 +686,14 @@ class ProductController extends Controller
 
                 if (!empty($variantData['id'])) {
                     $variant = ProductVariant::findOrFail($variantData['id']);
+                    $previous_price = $variant->price;
                     $cleanVariantData = Arr::except($cleanVariantData, ['sku']);
                     $variant->update($cleanVariantData);
+                    $this->price_history_create($request, $previous_price, null, $variant);
                 } else {
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
                     $variant = ProductVariant::create($cleanVariantData);
+                    $this->price_history_create($request, 0, null, $variant);
                 }
 
                 $this->update_variant_images($request, $variant, $uuid);

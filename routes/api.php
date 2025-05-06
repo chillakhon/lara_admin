@@ -164,7 +164,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/update/{product}', [ProductController::class, 'update']);
 
             // enhances-dev branch
-            Route::get('/{product}/price/history', [ProductController::class, 'price_history']);
+            Route::get('/price/history', [ProductController::class, 'price_history']);
             Route::get('/{product}/warehouse/history', [ProductController::class, 'warehouse_history']);
 
             //
