@@ -13,7 +13,8 @@ trait ImageTrait
     public function save_images(
         $image = null,
         $item_type = null,
-        $item_id = null
+        $item_id = null,
+        $position = null,
     ) {
         $img_names = ['original', 'lg', 'md', 'sm']; // remove names then
         $img_sizes = [1024, 512, 256, 128]; // remove sizes then
@@ -55,6 +56,8 @@ trait ImageTrait
             "item_type" => $item_type,
             "blur_hash" => $blur_hash_image,
             "path" => $image_name_table,
+            'order' => $position,
+            'is_main' => (!is_null($position) && $position == 0) ? true : false,
         ]);
     }
 }
