@@ -9,17 +9,19 @@ class Discount extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = [
-        'name',
-        'type',
-        'value',
-        'is_active',
-        'starts_at',
-        'ends_at',
-        'priority',
-        'conditions',
-        'discount_type'
-    ];
+    // protected $fillable = [
+    //     'name',
+    //     'type',
+    //     'value',
+    //     'is_active',
+    //     'starts_at',
+    //     'ends_at',
+    //     'priority',
+    //     'conditions',
+    //     'discount_type'
+    // ];
+
+    protected $guarded = ['id'];
 
     protected $casts = [
         'conditions' => 'json',
@@ -41,7 +43,7 @@ class Discount extends Model
 
     public function isValid(): bool
     {
-        return $this->is_active 
+        return $this->is_active
             && (!$this->starts_at || $this->starts_at->isPast())
             && (!$this->ends_at || $this->ends_at->isFuture());
     }
@@ -50,4 +52,4 @@ class Discount extends Model
     {
         return $this->morphedByMany(Category::class, 'discountable');
     }
-} 
+}

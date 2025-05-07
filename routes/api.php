@@ -216,7 +216,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //        });
 //
 //
-        Route::apiResource('discounts', DiscountController::class);
+        // Route::apiResource('discounts', DiscountController::class);
+        Route::group(['prefix' => 'discounts', 'as' => 'discounts.'], function () {
+            Route::post('/', [DiscountController::class, 'store']);
+            Route::put('/{discount}', [DiscountController::class, 'update']);
+            Route::delete('/{discount}', [DiscountController::class, 'destroy']);
+        });
         //        Route::post('discounts/{discount}/attach-products', [DiscountController::class, 'attachProducts'])
 //            ->name('discounts.attach-products');
 //        Route::post('discounts/{discount}/attach-variants', [DiscountController::class, 'attachVariants'])
