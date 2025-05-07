@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DiscountRequest;
 use App\Http\Resources\DiscountResource;
 use App\Models\Discount;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 
 class DiscountController extends Controller
@@ -30,7 +32,7 @@ class DiscountController extends Controller
         ]);
     }
 
-//    public function index(Request $request)
+    //    public function index(Request $request)
 //    {
 //        $perPage = $request->get('per_page', 10);
 //        $discounts = Discount::with(['products', 'productVariants'])
@@ -46,15 +48,24 @@ class DiscountController extends Controller
 
         if ($request->discount_type === 'specific') {
             if ($request->has('products')) {
-                $discount->products()->attach($request->products);
+                $this->reassignProductsToDiscount($request->products, $discount);
             }
+
             if ($request->has('product_variants')) {
-                $discount->productVariants()->attach($request->product_variants);
+                $this->reassignVariantsToDiscount($request->product_variants, $discount);
             }
+
         } elseif ($request->discount_type === 'category') {
             if ($request->has('categories')) {
                 $discount->categories()->attach($request->categories);
             }
+
+        } elseif ($request->discount_type === 'all') {
+            $allProductIds = Product::pluck('id')->toArray();
+            $allVariantIds = ProductVariant::pluck('id')->toArray();
+
+            $this->reassignProductsToDiscount($allProductIds, $discount);
+            $this->reassignVariantsToDiscount($allVariantIds, $discount);
         }
 
         return response()->json([
@@ -72,16 +83,53 @@ class DiscountController extends Controller
         $discount->productVariants()->sync([]);
 
         if ($request->discount_type === 'specific') {
-            $discount->products()->sync($request->products ?? []);
-            $discount->productVariants()->sync($request->product_variants ?? []);
+            if ($request->has('products')) {
+                $this->reassignProductsToDiscount($request->products, $discount);
+            }
+
+            if ($request->has('product_variants')) {
+                $this->reassignVariantsToDiscount($request->product_variants, $discount);
+            }
+
         } elseif ($request->discount_type === 'category') {
-            $discount->categories()->sync($request->categories ?? []);
+            if ($request->has('categories')) {
+                $discount->categories()->attach($request->categories);
+            }
+
+        } elseif ($request->discount_type === 'all') {
+            $allProductIds = Product::pluck('id')->toArray();
+            $allVariantIds = ProductVariant::pluck('id')->toArray();
+
+            $this->reassignProductsToDiscount($allProductIds, $discount);
+            $this->reassignVariantsToDiscount($allVariantIds, $discount);
         }
 
         return response()->json([
             'message' => 'Скидка успешно обновлена',
             'discount' => new DiscountResource($discount),
         ]);
+    }
+
+    private function reassignProductsToDiscount(array $productIds, Discount $discount): void
+    {
+        Discount::whereHas('products', function ($query) use ($productIds) {
+            $query->whereIn('products.id', $productIds);
+        })->get()->each(function ($oldDiscount) use ($productIds) {
+            $oldDiscount->products()->detach($productIds);
+        });
+
+        $discount->products()->attach($productIds);
+    }
+
+    private function reassignVariantsToDiscount(array $variantIds, Discount $discount): void
+    {
+        Discount::whereHas('productVariants', function ($query) use ($variantIds) {
+            $query->whereIn('product_variants.id', $variantIds);
+        })->get()->each(function ($oldDiscount) use ($variantIds) {
+            $oldDiscount->productVariants()->detach($variantIds);
+        });
+
+        $discount->productVariants()->attach($variantIds);
     }
 
     public function destroy(Discount $discount)
