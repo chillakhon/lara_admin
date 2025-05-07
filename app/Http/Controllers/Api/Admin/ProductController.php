@@ -525,7 +525,7 @@ class ProductController extends Controller
         return [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'type' => 'required|in:simple,manufactured,composite',
+            'type' => 'required|in:simple,material',
             'default_unit_id' => 'nullable|exists:units,id',
             'is_active' => 'boolean',
             'has_variants' => 'boolean',
