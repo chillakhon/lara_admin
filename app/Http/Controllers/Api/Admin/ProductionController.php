@@ -495,18 +495,34 @@ class ProductionController extends Controller
 
                 // Sync materials
                 $material_ids = [];
+                $total_material_cost = 0.0;
                 foreach ($batch['material_items'] as $item) {
                     $model = $this->get_model_by_type($item['component_type']);
-                    $material = ProductionBatchMaterial::updateOrCreate(
-                        [
+                    $trueModel = $this->get_true_model_by_type($item['component_type'])
+                        ->where('id', $item['component_id'])
+                        ->first();
+                    $material = ProductionBatchMaterial::where([
+                        'production_batch_id' => $batchModel->id,
+                        'material_type' => $model,
+                        'material_id' => $item['component_id'],
+                    ])->first();
+
+                    if (!$material) {
+                        $material = ProductionBatchMaterial::create([
                             'production_batch_id' => $batchModel->id,
                             'material_type' => $model,
                             'material_id' => $item['component_id'],
-                        ],
-                        ['qty' => $item['quantity']]
-                    );
+                            'qty' => $item['quantity'],
+                            'price' => $trueModel->price,
+                        ]);
+                    } else {
+                        $material->update(['qty' => $item['quantity']]);
+                    }
+
                     $material_ids[] = $material->id;
+                    $total_material_cost += $item['quantity'] * $material->price;
                 }
+                $batchModel->update(['total_material_cost' => $total_material_cost]);
                 ProductionBatchMaterial
                     ::where('production_batch_id', $batchModel->id)
                     ->whereNotIn('id', $material_ids)->delete();
@@ -547,6 +563,7 @@ class ProductionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при обновлении партии: ' . $e->getMessage(),
+                'line' => $e->getLine(),
             ], 500);
         }
     }

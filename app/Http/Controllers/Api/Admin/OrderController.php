@@ -17,6 +17,37 @@ use Illuminate\Support\Facades\Schema;
 
 class OrderController extends Controller
 {
+
+    public function getUserOrders(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Пользователь не авторизован'], 401);
+        }
+
+        $client = Client::where('user_id', $user->id)->first();
+
+        if (!$client) {
+            return response()->json(['error' => 'Клиент не найден!'], 404);
+        }
+
+        $orders = Order::with([
+            'items.product',
+            'items.productVariant',
+            'payments',
+            'deliveryMethod',
+            'deliveryTarget',
+        ])
+            ->where('client_id', $client->id)
+            ->orderByDesc('created_at')
+            ->paginate(10);
+
+        return response()->json([
+            'orders' => $orders
+        ]);
+    }
+
     /**
      * @OA\Get(
      *     path="/api/orders",
@@ -91,9 +122,9 @@ class OrderController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
-                    ->orWhereHas('client.user.profile', function($q) use ($search) {
+                    ->orWhereHas('client.user.profile', function ($q) use ($search) {
                         $q->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%");
                     });
@@ -102,7 +133,7 @@ class OrderController extends Controller
 
         $orders = $query->latest()
             ->paginate(15)
-            ->map(function($order) {
+            ->map(function ($order) {
                 return [
                     'id' => $order->id,
                     'order_number' => $order->order_number,
@@ -147,7 +178,7 @@ class OrderController extends Controller
             'filters' => $request->only(['status', 'search']),
             'clients' => Client::with('user.profile')
                 ->get()
-                ->map(function($client) {
+                ->map(function ($client) {
                     return [
                         // 'id' => $client->id,
                         'full_name' => $client->user->profile->full_name,
@@ -234,6 +265,8 @@ class OrderController extends Controller
             'data' => 'nullable|string',
         ]);
 
+        DB::beginTransaction();
+
         try {
             $order = Order::create([
                 'client_id' => $validated['client_id'],
@@ -254,6 +287,8 @@ class OrderController extends Controller
 
             $order->updateTotalAmount();
 
+            DB::commit();
+
             return response()->json([
                 'message' => 'Заказ успешно создан',
                 'order' => [
@@ -271,9 +306,13 @@ class OrderController extends Controller
                 ]
             ], 201);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json(['error' => 'Ошибка сервера: ' . $e->getMessage()], 500);
         }
     }
+
+
+   
 
     /**
      * @OA\Get(
@@ -416,15 +455,15 @@ class OrderController extends Controller
                 ] : null,
 
                 // Товары в заказе
-                'items' => $order->items->map(function($item) {
+                'items' => $order->items->map(function ($item) {
                     return [
                         'id' => $item->id,
-                        'product' => $item->product ?[
+                        'product' => $item->product ? [
                             'id' => $item->product->id,
                             'name' => $item->product->name,
                             'image' => $item->product->getFirstMediaUrl('images'),
                             'article' => $item->product->article // добавлено
-                        ]: null,
+                        ] : null,
                         'variant' => $item->productVariant,
                         'quantity' => $item->quantity,
                         'price' => $item->price,
@@ -433,7 +472,7 @@ class OrderController extends Controller
                 }),
 
                 // История изменений
-                'history' => $order->history->map(function($record) {
+                'history' => $order->history->map(function ($record) {
                     return [
                         'id' => $record->id,
                         'status' => $record->status,
@@ -521,7 +560,7 @@ class OrderController extends Controller
                 'notes' => 'nullable|string',
                 'delivery_date' => 'nullable|date_format:Y-m-d\TH:i:s\Z', // Валидация для даты доставки
                 'delivery_method_id' => 'nullable|exists:delivery_methods,id',
-                ]);
+            ]);
 
             $order->update([
                 'status' => $validated['status'],
@@ -579,6 +618,16 @@ class OrderController extends Controller
      *     @OA\Response(response=500, description="Ошибка сервера")
      * )
      */
+
+    public function updateStatus(Order $order, Request $request)
+    {
+        $order->update(['status' => $request->get('changing_status')]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Заказ обновлен!'
+        ]);
+    }
 
     public function destroy(Order $order)
     {

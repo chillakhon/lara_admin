@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Admin\DeliveryMethodController;
 use App\Http\Controllers\Api\Admin\DeliveryRateController;
 use App\Http\Controllers\Api\Admin\DeliveryZoneController;
 use App\Http\Controllers\Api\Admin\DiscountController;
+use App\Http\Controllers\Api\Admin\FinancialAnalyticsController;
 use App\Http\Controllers\Api\Admin\InventoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\OptionController;
@@ -70,10 +71,7 @@ Route::get('/products', [ProductController::class, 'index'])->middleware('auth:s
 Route::get('search', [SearchController::class, 'search'])->name('api.search');
 Route::post('/promo-codes/validate', [PromoCodeController::class, 'validate'])->name('api.promo-codes.validate');
 
-Route::prefix('orders')->group(function () {
-    Route::get('/user', [OrderController::class, 'getUserOrders']);
-    Route::post('/', [OrderController::class, 'store']);
-});
+
 Route::prefix('leads')->group(function () {
     Route::post('/', [LeadController::class, 'store']);
 });
@@ -123,7 +121,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
+    Route::prefix('orders')->group(function () {
+        Route::post('/', [OrderController::class, 'store']);
+        Route::get('/user', [OrderController::class, 'getUserOrders']);
+        Route::post('/payment/{order}', [OrderController::class, 'pay']);
+    });
+
     Route::middleware(['role:super-admin,admin,manager'])->group(function () {
+        // Financial info api
+        Route::prefix('/analytics')->group(function () {
+            Route::get('/financial-summary', [FinancialAnalyticsController::class, 'financialSummary']);
+        });
+
         // Categories
         Route::group(['prefix' => 'categories', 'as' => 'categories.'], function () {
             Route::get('/', [CategoryController::class, 'index']);
@@ -314,7 +323,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //        // Orders
         Route::prefix('orders')->name('orders.')->middleware(['role:super-admin,admin,manager', 'permission:orders.view,orders.manage'])->group(function () {
             Route::get('/', [OrderController::class, 'index'])->name('orders.index');  // Путь будет /api/orders
-            Route::post('/', [OrderController::class, 'store'])->name('orders.store');  // Путь будет /api/orders
+            // Route::post('/', [OrderController::class, 'store'])->name('orders.store');  // Путь будет /api/orders
             Route::get('/stats', [OrderStatsController::class, 'stats'])->name('orders.stats');
             Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');  // Путь будет /api/orders/{order}
             Route::put('/{order}', [OrderController::class, 'update'])->name('orders.update');  // Путь будет /api/orders/{order}
@@ -324,7 +333,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
 
             // Дополнительные действия с заказами
-            Route::post('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');  // Путь будет /api/orders/{order}/status
+            Route::put('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');  // Путь будет /api/orders/{order}/status
             Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');  // Путь будет /api/orders/{order}/items
             Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');  // Путь будет /api/orders/{order}/items/{item}
         });
