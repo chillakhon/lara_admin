@@ -47,31 +47,33 @@ class Order extends Model
         ['value' => 'refunded', 'label' => 'Возврат'],
     ];
 
-    protected $fillable = [
-        'order_number',
-        'client_id',
-        'lead_id',
-        'status',
-        'payment_status',
-        'total_amount',
-        'discount_amount',
-        'promo_code_id',
-        'payment_method',
-        'payment_provider',
-        'payment_id',
-        'paid_at',
-        'source',
-        'utm_source',
-        'utm_medium',
-        'utm_campaign',
-        'utm_content',
-        'utm_term',
-        'ip_address',
-        'user_agent',
-        'notes',
-        'delivery_method_id',
-        'delivery_date',
-    ];
+    // protected $fillable = [
+    //     'order_number',
+    //     'client_id',
+    //     'lead_id',
+    //     'status',
+    //     'payment_status',
+    //     'total_amount',
+    //     'discount_amount',
+    //     'promo_code_id',
+    //     'payment_method',
+    //     'payment_provider',
+    //     'payment_id',
+    //     'paid_at',
+    //     'source',
+    //     'utm_source',
+    //     'utm_medium',
+    //     'utm_campaign',
+    //     'utm_content',
+    //     'utm_term',
+    //     'ip_address',
+    //     'user_agent',
+    //     'notes',
+    //     'delivery_method_id',
+    //     'delivery_date',
+    // ];
+
+    protected $guarded = ['id'];
 
     protected $casts = [
         'total_amount' => 'decimal:2',

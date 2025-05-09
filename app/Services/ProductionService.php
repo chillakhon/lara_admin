@@ -58,19 +58,31 @@ class ProductionService
                     $batch = ProductionBatch::create($batchData);
                     $created_batches[] = $batch;
 
+                    $total_material_const = 0.0;
+
                     foreach ($batchItem['material_items'] as $material_item) {
+                        $trueModel = $this
+                            ->get_true_model_by_type($material_item['component_type'])
+                            ->where('id', $material_item['component_id'])
+                            ->first();
+
                         ProductionBatchMaterial::create([
                             'production_batch_id' => $batch->id,
                             'material_type' => $this->get_model_by_type($material_item['component_type']),
                             'material_id' => $material_item['component_id'],
                             'qty' => $material_item['quantity'],
+                            'price' => $trueModel->price,
                         ]);
+
+                        $total_material_const += $material_item['quantity'] * $trueModel->price;
 
                         // decrementing item from inventory
                         // because of that existence of materials will be checked before the code come here
                         // so we can remove it from inventory
                         $this->remove_component_from_inventory($material_item);
                     }
+
+                    $batch->update(['total_material_cost' => $total_material_const]);
 
                     foreach ($batchItem['output_products'] as $output_product) {
                         ProductionBatchOutputProduct::create([

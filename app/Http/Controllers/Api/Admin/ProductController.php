@@ -306,7 +306,7 @@ class ProductController extends Controller
             }
 
             return response()->json([
-                'success' => false,
+                'success' => true,
                 'price_history' => $variant_price_history
             ]);
         } else {
@@ -344,7 +344,7 @@ class ProductController extends Controller
             }
 
             return response()->json([
-                'success' => false,
+                'success' => true,
                 'price_history' => $product_price_history
             ]);
         }
