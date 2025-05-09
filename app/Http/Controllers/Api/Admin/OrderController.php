@@ -312,7 +312,50 @@ class OrderController extends Controller
     }
 
 
-   
+    public function pay(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'payment_method' => 'required|in:cash,card,online',
+            'payment_provider' => 'required_if:payment_method,online|nullable|string',
+            'payment_id' => 'nullable|string',
+            'amount' => 'required|numeric|min:0.01',
+            'payment_data' => 'nullable|array',
+        ]);
+
+        if ($order->payment_status === 'paid') {
+            return response()->json(['error' => 'Заказ уже оплачен'], 400);
+        }
+
+        if (floatval($validated['amount']) != floatval($order->total_amount)) {
+            return response()->json(['error' => 'Сумма оплаты не совпадает с суммой заказа'], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $order->payments()->create([
+                'payment_method' => $validated['payment_method'],
+                'payment_provider' => $validated['payment_provider'],
+                'payment_id' => $validated['payment_id'] ?? null,
+                'amount' => $validated['amount'],
+                'status' => 'success',
+                'payment_data' => json_encode($validated['payment_data'] ?? []),
+                'processed_at' => now(),
+            ]);
+
+            $order->update([
+                'payment_status' => 'paid',
+                'paid_at' => now(),
+            ]);
+
+            DB::commit();
+
+            return response()->json(['message' => 'Оплата успешно проведена']);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Ошибка оплаты: ' . $e->getMessage()], 500);
+        }
+    }
 
     /**
      * @OA\Get(
