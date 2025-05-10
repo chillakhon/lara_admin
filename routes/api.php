@@ -131,6 +131,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         // Financial info api
         Route::prefix('/analytics')->group(function () {
             Route::get('/financial-summary', [FinancialAnalyticsController::class, 'financialSummary']);
+            Route::get('/chart', [FinancialAnalyticsController::class, 'weeklyAmount']);
         });
 
         // Categories
