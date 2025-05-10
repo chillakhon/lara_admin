@@ -200,7 +200,7 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'roles' => 'nullable|array',
@@ -237,6 +237,48 @@ class UserController extends Controller
                 'user' => $user->load(['profile', 'roles', 'permissions'])
             ]);
 
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Ошибка при обновлении пользователя',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function update_profile(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => "Пользователь не найден"]);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $user->profile()->updateOrCreate([
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'phone' => $request->phone,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Информация о пользователе обновлена',
+                'user' => $user->load('profile'),
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([

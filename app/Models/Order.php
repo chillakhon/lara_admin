@@ -121,6 +121,11 @@ class Order extends Model
         return $this->hasMany(OrderPayment::class);
     }
 
+    public function payment()
+    {
+        return $this->hasOne(OrderPayment::class);
+    }
+
 
 
     public function promoCode()

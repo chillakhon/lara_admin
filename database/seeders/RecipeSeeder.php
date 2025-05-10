@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ProductVariant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -81,7 +82,7 @@ class RecipeSeeder extends Seeder
             // Компоненты для SET 1
             [
                 'recipe_id' => DB::table('recipes')->where('name', 'SET 1')->first()->id,
-                'component_type' => 'material',
+                'component_type' => ProductVariant::class,
                 'component_id' => 1, // ID материала
                 'quantity' => 1.0,
                 'unit_id' => 1,
@@ -93,7 +94,7 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'recipe_id' => DB::table('recipes')->where('name', 'SET 1')->first()->id,
-                'component_type' => 'material',
+                'component_type' => ProductVariant::class,
                 'component_id' => 2, // ID материала
                 'quantity' => 1.0,
                 'unit_id' => 1,
@@ -106,7 +107,7 @@ class RecipeSeeder extends Seeder
             // Компоненты для BOX 1
             [
                 'recipe_id' => DB::table('recipes')->where('name', 'BOX 1')->first()->id,
-                'component_type' => 'material',
+                'component_type' =>  ProductVariant::class,
                 'component_id' => 3, // ID материала
                 'quantity' => 1.0,
                 'unit_id' => 1,
@@ -118,7 +119,7 @@ class RecipeSeeder extends Seeder
             ],
             [
                 'recipe_id' => DB::table('recipes')->where('name', 'BOX 1')->first()->id,
-                'component_type' => 'material',
+                'component_type' =>  ProductVariant::class,
                 'component_id' => 4, // ID материала
                 'quantity' => 1.0,
                 'unit_id' => 1,
