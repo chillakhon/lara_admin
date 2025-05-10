@@ -70,5 +70,31 @@ class WhatsappService
         ]);
     }
 
-    
+    public function payment_notification($to, $paymentId, $date, $amount)
+    {
+
+        $url = "https://graph.facebook.com/v22.0/{$this->phoneNumberId}/messages";
+
+        return Http::withToken($this->token)->post($url, [
+            'messaging_product' => 'whatsapp',
+            'to' => $to,
+            'type' => 'template',
+            'template' => [
+                'name' => 'card_transaction_alert_1',
+                'language' => [
+                    'code' => 'en_US',
+                ],
+                'components' => [
+                    [
+                        'type' => 'body',
+                        'parameters' => [
+                            ['type' => 'text', 'text' => $paymentId],
+                            ['type' => 'text', 'text' => $date],
+                            ['type' => 'text', 'text' => $amount],
+                        ],
+                    ]
+                ]
+            ],
+        ]);
+    }
 }

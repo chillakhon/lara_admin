@@ -141,7 +141,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
         Route::prefix('/whatsapp')->group(function () {
             Route::get('/send-message', function (WhatsappService $whatsapp) {
-                $to = '992900737901'; // Например: 79876543210
+                $to = '992915172589'; // Например: 79876543210
                 // $message = "Вы оформили заказ *№{{1}}* от *{{2}}* на сумму *{{3}}*.\n Мы уже начали обработку. Ожидайте, пожалуйста, подтверждение.\n С уважением, команда *Again*!";
                 return $whatsapp->payment_notification($to, 1, "10-10-25 10:00", 99.99)->json();
                 // return $whatsapp->sendTextMessage($to, $message)->json();

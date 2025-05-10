@@ -349,7 +349,7 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            $order->payments()->create([
+            $payment = $order->payment()->create([
                 'payment_method' => $validated['payment_method'],
                 'payment_provider' => $validated['payment_provider'],
                 'payment_id' => $validated['payment_id'] ?? null,
@@ -363,6 +363,18 @@ class OrderController extends Controller
                 'payment_status' => 'paid',
                 'paid_at' => now(),
             ]);
+
+            $client_profile = UserProfile::where('user_id', $order->client_id)->first();
+
+            if ($client_profile && $client_profile->phone) {
+                $whatsapp_service = new WhatsappService();
+                $whatsapp_service->payment_notification(
+                    $client_profile->phone,
+                    $payment->id,
+                    $validated['amount'],
+                    $payment->processed_at
+                );
+            }
 
             DB::commit();
 
