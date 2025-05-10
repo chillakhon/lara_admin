@@ -299,6 +299,7 @@ class ProductController extends Controller
                 ->where('item_id', $request->get('id'))
                 ->whereNull("deleted_at")
                 ->orderBy('created_at', 'desc')
+                ->with('item')
                 ->paginate(10);
 
             foreach ($variant_price_history as &$price_history) {
@@ -337,6 +338,7 @@ class ProductController extends Controller
                 })
                 ->whereNull("deleted_at")
                 ->orderBy('created_at', 'desc')
+                ->with('item')
                 ->paginate(10);
 
             foreach ($product_price_history as &$price_history) {
