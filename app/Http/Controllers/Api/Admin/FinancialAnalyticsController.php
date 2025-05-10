@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\ProductionBatch;
 use App\Models\ProductionBatchMaterial;
 use App\Models\ProductVariant;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class FinancialAnalyticsController extends Controller
@@ -73,6 +74,69 @@ class FinancialAnalyticsController extends Controller
             // 'additional_costs' => round($additionalProductionCosts + $additionalVariantCosts, 2),
             // 'total_costs' => round($totalCosts, 2),
             'profit' => round($profit, 2),
+        ]);
+    }
+
+
+    public function weeklyAmount(Request $request)
+    {
+        $from = $request->get('from')
+            ? Carbon::parse($request->get('from'))->startOfDay()
+            : Carbon::now()->subDays(30)->startOfDay();
+
+        $to = $request->get('to')
+            ? Carbon::parse($request->get('to'))->endOfDay()
+            : Carbon::now()->endOfDay();
+
+        $clientId = $request->get('client_id');
+
+        // null represents total orders
+        $statuses = [null, 'completed', 'cancelled'];
+        $weeks = collect();
+
+        $currentStart = $from->copy();
+        while ($currentStart < $to) {
+            $currentEnd = $currentStart->copy()->addDays(6)->endOfDay();
+            if ($currentEnd > $to) {
+                $currentEnd = $to->copy();
+            }
+
+            $weekData = [
+                'start_date' => $currentStart->toDateString(),
+                'end_date' => $currentEnd->toDateString(),
+                'total_by_status' => [],
+            ];
+
+            foreach ($statuses as $status) {
+                $query = Order
+                    ::whereBetween('created_at', [$currentStart, $currentEnd]);
+
+                if ($status) {
+                    $query->where('status', $status);
+                }
+
+                if ($clientId) {
+                    $query->where('client_id', $clientId);
+                }
+
+                $sum = $query->sum('total_amount');
+
+                $weekData['total_by_status'][$status ?? "orders"] = round($sum, 2);
+            }
+
+            $weeks->push($weekData);
+
+            $currentStart = $currentEnd->copy()->addDay()->startOfDay();
+        }
+
+        return response()->json([
+            'success' => true,
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+            'filters' => [
+                'client_id' => $clientId,
+            ],
+            'weeks' => $weeks
         ]);
     }
 }

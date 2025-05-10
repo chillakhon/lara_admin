@@ -299,6 +299,7 @@ class ProductController extends Controller
                 ->where('item_id', $request->get('id'))
                 ->whereNull("deleted_at")
                 ->orderBy('created_at', 'desc')
+                ->with('item')
                 ->paginate(10);
 
             foreach ($variant_price_history as &$price_history) {
@@ -337,6 +338,7 @@ class ProductController extends Controller
                 })
                 ->whereNull("deleted_at")
                 ->orderBy('created_at', 'desc')
+                ->with('item')
                 ->paginate(10);
 
             foreach ($product_price_history as &$price_history) {
@@ -363,12 +365,14 @@ class ProductController extends Controller
     {
 
         if (!is_null($previous_price)) {
+            $previous_price = $previous_price === -1 ? null : $previous_price;
             if ($product && $product->price != $previous_price) {
                 PriceHistory::create([
                     'user_id' => $request->user()->id,
                     'item_type' => Product::class,
                     'item_id' => $product->id,
-                    'price' => $product->price,
+                    'price_from' => $previous_price,
+                    'price_to' => $product->price,
                     "created_at" => now(),
                 ]);
             }
@@ -378,7 +382,8 @@ class ProductController extends Controller
                     'user_id' => $request->user()->id,
                     'item_type' => ProductVariant::class,
                     'item_id' => $variant->id,
-                    'price' => $variant->price,
+                    'price_from' => $previous_price,
+                    'price_to' => $variant->price,
                     "created_at" => now(),
                 ]);
             }
@@ -472,7 +477,8 @@ class ProductController extends Controller
                 ]
             ));
 
-            $this->price_history_create($request, 0, $product);
+            // -1 means that its creating for the first time and you have to put null instead
+            $this->price_history_create($request, -1, $product);
 
             if ($request->hasFile('product_images')) {
                 foreach ($request->file('product_images') as $key => $productImage) {
@@ -494,7 +500,8 @@ class ProductController extends Controller
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
                     $cleanVariantData['created_at'] = now();
                     $created_variant = ProductVariant::create($cleanVariantData);
-                    $this->price_history_create($request, 0, null, $created_variant);
+                    // -1 means that its creating for the first time and you have to put null instead
+                    $this->price_history_create($request, -1, null, $created_variant);
                     if ($request->hasFile("variant_images_" . $uuid)) {
                         foreach ($request->file("variant_images_" . $uuid) as $key => $variantImage) {
                             $this->save_images($variantImage, ProductVariant::class, $created_variant->id, $key);
@@ -693,7 +700,8 @@ class ProductController extends Controller
                 } else {
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
                     $variant = ProductVariant::create($cleanVariantData);
-                    $this->price_history_create($request, 0, null, $variant);
+                    // -1 means that its creating for the first time and you have to put null instead
+                    $this->price_history_create($request, -1, null, $variant);
                 }
 
                 $this->update_variant_images($request, $variant, $uuid);
