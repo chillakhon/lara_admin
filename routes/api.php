@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\Admin\TaskController;
 use App\Http\Controllers\Api\Admin\TaskLabelController;
 use App\Http\Controllers\Api\Admin\TaskPriorityController;
 use App\Http\Controllers\Api\Admin\TaskStatusController;
+use App\Http\Controllers\Api\Admin\TelegramWebhookController;
 use App\Http\Controllers\Api\Admin\UnitController;
 use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Auth\AuthenticatedSessionController;
@@ -76,6 +77,8 @@ Route::post('/promo-codes/validate', [PromoCodeController::class, 'validate'])->
 Route::prefix('leads')->group(function () {
     Route::post('/', [LeadController::class, 'store']);
 });
+
+Route::post('/telegram/webhook', [TelegramWebhookController::class, 'webhook']);
 
 Route::middleware('auth:sanctum')->prefix('reviews')->group(function () {
     Route::get('/', [ReviewController::class, 'index']);
