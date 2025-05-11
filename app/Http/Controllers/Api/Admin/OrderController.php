@@ -371,8 +371,8 @@ class OrderController extends Controller
                 $whatsapp_service->payment_notification(
                     $client_profile->phone,
                     $payment->id,
-                    $validated['amount'],
-                    $payment->processed_at
+                    $payment->processed_at,
+                    $validated['amount']
                 );
             }
 
