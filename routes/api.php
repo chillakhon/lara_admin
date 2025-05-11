@@ -46,6 +46,7 @@ use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\PromoCodeController;
 use App\Http\Controllers\Api\Admin\ReviewController;
 use App\Http\Controllers\Api\SearchController;
+use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -121,10 +122,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
-    Route::prefix('orders')->group(function () {
+    Route::prefix('/orders')->group(function () {
         Route::post('/', [OrderController::class, 'store']);
         Route::get('/user', [OrderController::class, 'getUserOrders']);
         Route::post('/payment/{order}', [OrderController::class, 'pay']);
+    });
+
+    Route::prefix('/clients')->group(function () {
+        Route::put('/update-profile', [UserController::class, 'update_profile']);
     });
 
     Route::middleware(['role:super-admin,admin,manager'])->group(function () {
@@ -132,6 +137,15 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::prefix('/analytics')->group(function () {
             Route::get('/financial-summary', [FinancialAnalyticsController::class, 'financialSummary']);
             Route::get('/chart', [FinancialAnalyticsController::class, 'weeklyAmount']);
+        });
+
+        Route::prefix('/whatsapp')->group(function () {
+            Route::get('/send-message', function (WhatsappService $whatsapp) {
+                $to = '992915172589'; // Например: 79876543210
+                // $message = "Вы оформили заказ *№{{1}}* от *{{2}}* на сумму *{{3}}*.\n Мы уже начали обработку. Ожидайте, пожалуйста, подтверждение.\n С уважением, команда *Again*!";
+                return $whatsapp->payment_notification($to, 1, "10-10-25 10:00", 99.99)->json();
+                // return $whatsapp->sendTextMessage($to, $message)->json();
+            });
         });
 
         // Categories

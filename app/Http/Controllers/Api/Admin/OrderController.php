@@ -8,6 +8,9 @@ use App\Models\Client;
 use App\Models\Product;
 use App\Models\DeliveryDate;
 use App\Models\DeliveryMethod;
+use App\Models\UserProfile;
+use App\Services\WhatsappService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -287,6 +290,18 @@ class OrderController extends Controller
 
             $order->updateTotalAmount();
 
+            $find_user_profile = UserProfile::where('user_id', $validated['client_id'])->first();
+
+            if ($find_user_profile && $find_user_profile->phone) {
+                $whatsapp_notification = new WhatsappService();
+                $whatsapp_notification->order_notification(
+                    $find_user_profile->phone,
+                    $order->id,
+                    Carbon::parse($order->created_at)->format('d.m.Y в H:i'),
+                    $order->total_amount,
+                );
+            }
+
             DB::commit();
 
             return response()->json([
@@ -303,6 +318,7 @@ class OrderController extends Controller
                     'delivery_method_name' => $order->deliveryMethod ? $order->deliveryMethod->name : null,
                     'delivery_target_id' => $order->delivery_target_id, // Возвращаем delivery_target_id
                     'data' => $order->data,
+                    // 'user_profile' => $find_user_profile,
                 ]
             ], 201);
         } catch (\Exception $e) {
@@ -333,7 +349,7 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            $order->payments()->create([
+            $payment = $order->payment()->create([
                 'payment_method' => $validated['payment_method'],
                 'payment_provider' => $validated['payment_provider'],
                 'payment_id' => $validated['payment_id'] ?? null,
@@ -347,6 +363,18 @@ class OrderController extends Controller
                 'payment_status' => 'paid',
                 'paid_at' => now(),
             ]);
+
+            $client_profile = UserProfile::where('user_id', $order->client_id)->first();
+
+            if ($client_profile && $client_profile->phone) {
+                $whatsapp_service = new WhatsappService();
+                $whatsapp_service->payment_notification(
+                    $client_profile->phone,
+                    $payment->id,
+                    $payment->processed_at,
+                    $validated['amount']
+                );
+            }
 
             DB::commit();
 
