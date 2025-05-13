@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\Admin\ProductionController;
 use App\Http\Controllers\Api\Admin\ProductVariantController;
 use App\Http\Controllers\Api\Admin\RecipeController;
 use App\Http\Controllers\Api\Admin\RoleController;
+use App\Http\Controllers\Api\Admin\SettingsController;
 use App\Http\Controllers\Api\Admin\ShipmentController;
 use App\Http\Controllers\Api\Admin\TaskAttachmentController;
 use App\Http\Controllers\Api\Admin\TaskCommentController;
@@ -514,35 +515,35 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/shipments/{shipment}/cancel', [ShipmentController::class, 'cancel'])->name('shipments.cancel');
         });
         //
-//        Route::group(['prefix' => 'settings', 'as' => 'settings.'], function () {
-//            Route::get('/general', [SettingsController::class, 'general'])->name('general');
-//            Route::post('/general', [SettingsController::class, 'updateGeneral']);
-//
-//            Route::get('/integrations', [SettingsController::class, 'integrations'])->name('integrations');
-//            Route::post('/integrations', [SettingsController::class, 'updateIntegrations']);
-//
-//            Route::get('/api-keys', [SettingsController::class, 'apiKeys'])->name('api-keys');
-//            Route::post('/api-keys', [SettingsController::class, 'updateApiKeys']);
-//            Route::delete('/api-keys/{key}', [SettingsController::class, 'deleteApiKey']);
-//
-//            Route::get('/notifications', [SettingsController::class, 'notifications'])->name('notifications');
-//            Route::post('/notifications', [SettingsController::class, 'updateNotifications']);
-//
-//            Route::get('/payment', [SettingsController::class, 'payment'])->name('payment');
-//            Route::post('/payment', [SettingsController::class, 'updatePayment'])->name('payment.update');
-//
-//            Route::get('/delivery', [SettingsController::class, 'delivery'])->name('delivery');
-//            Route::post('/delivery', [SettingsController::class, 'updateDelivery'])->name('delivery.update');
-//
-//            Route::get('/{type}', [SettingsController::class, 'show'])
-//                ->middleware('permission:settings.manage')
-//                ->name('show');
-//            Route::post('/{type}', [SettingsController::class, 'update'])
-//                ->middleware('permission:settings.manage')
-//                ->name('update');
-//        });
-//
-//        // Conversations routes
+        Route::group(['prefix' => 'settings', 'as' => 'settings.'], function () {
+            Route::get('/general', [SettingsController::class, 'general'])->name('general');
+            Route::post('/general', [SettingsController::class, 'updateGeneral']);
+
+            Route::get('/integrations', [SettingsController::class, 'integrations'])->name('integrations');
+            Route::post('/integrations', [SettingsController::class, 'updateIntegrations']);
+
+            Route::get('/api-keys', [SettingsController::class, 'apiKeys'])->name('api-keys');
+            Route::post('/api-keys', [SettingsController::class, 'updateApiKeys']);
+            Route::delete('/api-keys/{key}', [SettingsController::class, 'deleteApiKey']);
+
+            Route::get('/notifications', [SettingsController::class, 'notifications'])->name('notifications');
+            Route::post('/notifications', [SettingsController::class, 'updateNotifications']);
+
+            Route::get('/payment', [SettingsController::class, 'payment'])->name('payment');
+            Route::post('/payment', [SettingsController::class, 'updatePayment'])->name('payment.update');
+
+            Route::get('/delivery', [SettingsController::class, 'delivery'])->name('delivery');
+            Route::post('/delivery', [SettingsController::class, 'updateDelivery'])->name('delivery.update');
+
+            Route::get('/{type}', [SettingsController::class, 'show'])
+                ->middleware('permission:settings.manage')
+                ->name('show');
+            Route::post('/{type}', [SettingsController::class, 'update'])
+                ->middleware('permission:settings.manage')
+                ->name('update');
+        });
+
+        // Conversations routes
 //        Route::group(['prefix' => 'conversations', 'as' => 'conversations.'], function () {
 //            Route::get('/', [ConversationController::class, 'index'])->name('index');
 //            Route::get('/{conversation}', [ConversationController::class, 'show'])->name('show');
