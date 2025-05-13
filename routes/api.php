@@ -78,7 +78,6 @@ Route::prefix('leads')->group(function () {
     Route::post('/', [LeadController::class, 'store']);
 });
 
-Route::post('/telegram/webhook', [TelegramWebhookController::class, 'webhook']);
 
 Route::middleware('auth:sanctum')->prefix('reviews')->group(function () {
     Route::get('/', [ReviewController::class, 'index']);
