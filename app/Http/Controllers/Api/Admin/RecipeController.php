@@ -88,7 +88,7 @@ class RecipeController extends Controller
                     $product = \App\Models\Product::find($outputProduct->component_id);
                     if ($product) {
                         $outputProduct->product_id = $product->id;
-                        $outputProduct->product_name = $product->name; // или $product->title, если так называется поле
+                        $outputProduct->product_name = $product->name;
                     }
                 }
             }
@@ -97,7 +97,7 @@ class RecipeController extends Controller
                     $product = \App\Models\Product::find($materialItem->component_id);
                     if ($product) {
                         $materialItem->product_id = $product->id;
-                        $materialItem->product_name = $product->name; // или $product->title, если так называется поле
+                        $materialItem->product_name = $product->name;
                     }
                 }
             }
