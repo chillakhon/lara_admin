@@ -3,6 +3,8 @@
 namespace App\Telegraph\Handlers;
 
 use App\Models\Conversation;
+use App\Models\Order;
+use App\Models\OrderPayment;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Services\Messaging\ConversationService;
@@ -19,35 +21,50 @@ class TelegramWebhookHandler extends WebhookHandler
 
     public function start()
     {
-        Telegraph::chatAction(ChatActions::TYPING)->send();
+        $chat = Telegraph::chat($this->message->chat()->id());
 
+        $chat->chatAction(ChatActions::TYPING)->send();
+
+        $user_profile = $this->user_profile(true);
+
+        if (!$user_profile)
+            return;
+
+        $user_name = '';
+        if ($user_profile->first_name) {
+            $user_name .= $user_profile->first_name . " ";
+        }
+        if ($user_profile->last_name) {
+            $user_name .= $user_profile->last_name;
+        }
+        if (empty($user_name)) {
+            $user = User::where('id', $user_profile->user_id)->first();
+            $user_name = $user->email;
+        }
+        $this->reply("Привет, {$user_name}! Мы успешно нашли ваш аккаунт. Напиши команду */orders*, чтобы посмотреть свои ожидающие заказы.");
+
+    }
+
+
+    private function user_profile($await_email = false): UserProfile|null
+    {
         $telegramId = $this->message->from()->id();
 
-        $user = UserProfile::where('telegram_user_id', $telegramId)->first();
+        $user_profile = UserProfile::where('telegram_user_id', $telegramId)->first();
 
-        if (!$user) {
+        if (!$user_profile) {
             $this->reply("Привет! Пожалуйста, отправь свой email, чтобы мы могли найти твой аккаунт.");
             // save state and wait email
-            cache()->put("awaiting_email_$telegramId", true, now()->addMinutes(10));
-            return;
+            if ($await_email)
+                cache()->put("awaiting_email_$telegramId", true, now()->addMinutes(10));
+            return null;
         }
-
-        $this->reply("Ты уже зарегистрирован.");
+        return $user_profile;
     }
-
-    public function hello()
-    {
-        $this->reply("Hello world, how is it going? Hama saday?");
-    }
-
 
     public function handleUnknownCommand(Stringable $text): void
     {
-        if ($text->value() === '/start') {
-            $this->reply("I'm very glad to see you. Let's start out job");
-        } else {
-            $this->reply("Unknown command bro");
-        }
+        $this->reply("Извините, я не распознал эту команду. Пожалуйста, используйте одну из доступных команд или напишите /help для получения списка команд.");
     }
 
     public function handleChatMessage(Stringable $text): void
@@ -59,7 +76,7 @@ class TelegramWebhookHandler extends WebhookHandler
             $email = $this->message->text();
 
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $this->reply("Пожалуйста, введи корректный email.");
+                $this->reply("Пожалуйста, введите корректный email.");
                 return;
             }
             // Поиск пользователя по email
@@ -80,9 +97,10 @@ class TelegramWebhookHandler extends WebhookHandler
 
                 cache()->forget("awaiting_email_$telegramId");
 
-                $this->reply("Спасибо! Твой аккаунт привязан к Telegram.");
+                $this->reply("Спасибо! Твой аккаунт успешно привязан к Telegram. Напиши команду */orders*, чтобы посмотреть свои ожидающие заказы.");
             } else {
-                $this->reply("Мы не нашли пользователя с таким email. Попробуй ещё раз.");
+                cache()->forget("awaiting_email_$telegramId");
+                $this->reply("Пользователь с таким email не найден. Пожалуйста, сначала зарегистрируйтесь на нашем сайте.");
             }
 
             return;
@@ -94,19 +112,85 @@ class TelegramWebhookHandler extends WebhookHandler
         Log::info(json_encode($this->message->toArray(), JSON_UNESCAPED_UNICODE));
     }
 
-    public function help()
+    public function orders()
     {
-        $this->reply("*Hello*! I can only reply for now");
+        $chat = Telegraph::chat($this->message->chat()->id());
+
+        $chat->chatAction(ChatActions::TYPING)->send();
+
+        $user_profile = $this->user_profile();
+
+        if (!$user_profile)
+            return;
+
+        $find_pending_orders_ids = Order
+            ::where('status', Order::STATUS_COMPLETED)
+            ->whereNull("deleted_at")
+            ->pluck('id')->toArray();
+
+        if (count($find_pending_orders_ids) <= 0) {
+            $this->reply("На данный момент нет ожидающих заказов.");
+            return;
+        }
+
+        $find_pending_orders = Order
+            ::whereIn('id', $find_pending_orders_ids)
+            ->where('client_id', $user_profile->user_id)
+            ->with('payments')
+            ->get();
+
+
+        foreach ($find_pending_orders as $order) {
+            $message = "Спасибо за ваш заказ! 🎉\n";
+            $message .= "Вы оформили заказ №{$order->id} от {$order->created_at->format('d.m.Y в H:i')} на сумму {$order->total_amount}.\n";
+            $message .= "Мы уже начали обработку. Ожидайте, пожалуйста, подтверждение.\n";
+            $message .= "С уважением, команда again!\n\n";
+
+            $chat->message($message)->send();
+
+            // Сообщение по каждому платежу
+            foreach ($order->payments() as $payment) {
+                $payment_message = "Спасибо за ваш платёж! 🎉\n";
+                $payment_message .= "Мы успешно получили ваш платёж №{$payment->id} от {$payment->datetime->format('d.m.Y в H:i')} на сумму {$payment->amount}.\n";
+                $payment_message .= "Если у вас есть вопросы, пожалуйста, свяжитесь с нашей поддержкой.\n";
+                $payment_message .= "С уважением, ваша команда!\n\n";
+                $chat->message($payment_message)->send();
+            }
+        }
+
+
+        // $chat->content($message)
+        //     ->line("Если у вас есть вопросы, пожалуйста, свяжитесь с нашей поддержкой.")
+        //     ->line("С уважением, команда Again!")
+        //     ->button('Связаться с поддержкой', 'https://t.me/your_support_bot')
+        //     ->send();
+
+
     }
 
-    public function actions()
+    public function help()
     {
-        Telegraph::message("Выбери какое-то действие")
-            ->keyboard(Keyboard::make()->buttons([
-                Button::make("Find my account with my email")->action('find_email'),
-                Button::make("Url of this dev")->url("https://youtube.com/@flutterguides?si=VddZYChbwFHGP0AB"),
-            ]))->send();
+        $chat = Telegraph::chat($this->message->chat()->id());
+
+        $chat->message("Привет! Вот что я умею делать:")
+            ->keyboard(
+                Keyboard::make()->buttons([
+                    Button::make("Начать работу с ботом")->action('start'),
+                    Button::make("Посмотреть мои заказы")->action('orders'),
+                    Button::make("Перейти на сайт")->url(env("APP_URL")),
+                ])
+            )
+            ->send();
     }
+
+    // public function actions()
+    // {
+    //     Telegraph::message("Выбери какое-то действие")
+    //         ->keyboard(Keyboard::make()->buttons([
+    //             Button::make("Find my account with my email")->action('find_email'),
+    //             Button::make("Url of this dev")->url("https://youtube.com/@flutterguides?si=VddZYChbwFHGP0AB"),
+    //         ]))->send();
+    // }
 
 
     public function find_email()

@@ -14,9 +14,8 @@ Artisan::command('bot_settings', function () {
     $bot = TelegraphBot::find(1);
 
     dd($bot->registerCommands([
-        'hello' => "Говорит привет",
         "help" => "Что умеет этот бот",
-        "actions" => "Различные действия",
-        "start" => "Начать использовать наши сервисы"
+        "start" => "Начать использовать наш бот",
+        "orders" => "Ожидающие заказы"
     ])->send());
 });
