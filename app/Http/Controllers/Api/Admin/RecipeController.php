@@ -5,31 +5,28 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CostCategoryResource;
 use App\Models\CostCategory;
-use App\Models\Material;
-use App\Models\Product;
 use App\Models\ProductionBatch;
 use App\Models\ProductRecipe;
-use App\Models\ProductVariant;
 use App\Models\Recipe;
-use App\Models\Unit;
 use App\Services\ProductionCostService;
 use App\Services\RecipeService;
 use App\Traits\HelperTrait;
 use App\Traits\RecipeTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class RecipeController extends Controller
 {
     use RecipeTrait, HelperTrait;
+
     protected $recipeService;
     protected $productionCostService;
 
     public function __construct(
-        RecipeService $recipeService,
+        RecipeService         $recipeService,
         ProductionCostService $productionCostService
-    ) {
+    )
+    {
         $this->recipeService = $recipeService;
         $this->productionCostService = $productionCostService;
     }
@@ -59,11 +56,12 @@ class RecipeController extends Controller
     {
         $recipes = Recipe::with([
             'material_items.component.inventoryBalance',
-            'material_items.unit',
+//            'material_items.unit',
             'outputUnit',
             'createdBy',
             // 'costRates.category',
             'output_products.product',
+//            'output_products.product',
             'output_products.product_variant',
         ])->whereNull('deleted_at');
 
@@ -84,15 +82,34 @@ class RecipeController extends Controller
             // }
         }
 
+        foreach ($recipes as $recipe) {
+            foreach ($recipe->output_products as $outputProduct) {
+                if (is_null($outputProduct->product_id) && $outputProduct->component_id) {
+                    $product = \App\Models\Product::find($outputProduct->component_id);
+                    if ($product) {
+                        $outputProduct->product_id = $product->id;
+                        $outputProduct->product_name = $product->name; // или $product->title, если так называется поле
+                    }
+                }
+            }
+            foreach ($recipe->material_items as $materialItem) {
+                if (is_null($materialItem->product_id) && $materialItem->component_id) {
+                    $product = \App\Models\Product::find($materialItem->component_id);
+                    if ($product) {
+                        $materialItem->product_id = $product->id;
+                        $materialItem->product_name = $product->name; // или $product->title, если так называется поле
+                    }
+                }
+            }
+        }
+
+
         $this->change_items_model_type($recipes);
 
         return response()->json([
             'recipes' => $recipes,
         ]);
     }
-
-
-    
 
 
     /**
@@ -549,12 +566,12 @@ class RecipeController extends Controller
         $materialsCost = $this->recipeService->calculateEstimatedCost(
             $recipe,
             $validated['strategy'],
-            (float) $validated['quantity']
+            (float)$validated['quantity']
         );
 
         $productionCosts = $this->productionCostService->calculateEstimatedCosts(
             $recipe,
-            (float) $validated['quantity']
+            (float)$validated['quantity']
         );
 
         $totalCost = $materialsCost['materials_cost'] +
@@ -562,7 +579,7 @@ class RecipeController extends Controller
             $productionCosts['overhead'] +
             $productionCosts['management'];
 
-        $quantity = (float) $validated['quantity'];
+        $quantity = (float)$validated['quantity'];
         $costPerUnit = $quantity > 0 ? $totalCost / $quantity : 0;
 
         return response()->json([

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Image;
+use App\Models\Image as ImageModel;
 use App\Models\InventoryBalance;
 use App\Models\PriceHistory;
 use App\Models\Product;
@@ -13,13 +13,11 @@ use App\Traits\HelperTrait;
 use App\Traits\ImageTrait;
 use App\Traits\ProductsTrait;
 use Arr;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Models\Image as ImageModel;
 use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
@@ -107,93 +105,6 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/products/{product}",
-     *     summary="Получить информацию о продукте",
-     *     description="Возвращает детальную информацию о продукте с категориями, вариантами и опциями.",
-     *     operationId="getProduct",
-     *     tags={"Products"},
-     *     @OA\Parameter(
-     *         name="product",
-     *         in="path",
-     *         description="ID продукта",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Детальная информация о продукте",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="id", type="integer", example=1),
-     *             @OA\Property(property="name", type="string", example="Product Name"),
-     *             @OA\Property(property="description", type="string", example="Product Description"),
-     *             @OA\Property(property="defaultUnit", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="Unit Name")
-     *             ),
-     *             @OA\Property(property="categories", type="array",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Category Name")
-     *                 )
-     *             ),
-     *             @OA\Property(property="options", type="array",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Option Name"),
-     *                     @OA\Property(property="values", type="array",
-     *                         @OA\Items(
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="value", type="string", example="Red")
-     *                         )
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="variants", type="array",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=10),
-     *                     @OA\Property(property="optionValues", type="array",
-     *                         @OA\Items(
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="value", type="string", example="Large"),
-     *                             @OA\Property(property="option", type="object",
-     *                                 @OA\Property(property="id", type="integer", example=1),
-     *                                 @OA\Property(property="name", type="string", example="Size")
-     *                             )
-     *                         )
-     *                     ),
-     *                     @OA\Property(property="images", type="array",
-     *                         @OA\Items(
-     *                             type="object",
-     *                             @OA\Property(property="url", type="string", example="https://example.com/image.jpg")
-     *                         )
-     *                     ),
-     *                     @OA\Property(property="unit", type="object",
-     *                         @OA\Property(property="id", type="integer", example=2),
-     *                         @OA\Property(property="name", type="string", example="Kilogram")
-     *                     )
-     *                 )
-     *             ),
-     *             @OA\Property(property="created_at", type="string", format="date-time"),
-     *             @OA\Property(property="updated_at", type="string", format="date-time")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Продукт не найден",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Product not found")
-     *         )
-     *     )
-     * )
-     */
 
     public function show(Product &$product)
     {
@@ -234,7 +145,7 @@ class ProductController extends Controller
         // TODO: logic for getting product's prices history
         if ($request->boolean('is_variant', false)) {
             $variant_price_history = PriceHistory
-                ::where('item_type', ProductVariant::class, )
+                ::where('item_type', ProductVariant::class,)
                 ->where('item_id', $request->get('id'))
                 ->whereNull("deleted_at")
                 ->orderBy('created_at', 'desc')
@@ -290,7 +201,6 @@ class ProductController extends Controller
             ]);
         }
     }
-
 
 
     // enhanced-dev branch
@@ -667,8 +577,9 @@ class ProductController extends Controller
 
     private function update_product_images(
         Request $request,
-        $product
-    ) {
+                $product
+    )
+    {
 
         // previois saved images of the products
         $existingImages = $request->get('images', []); // e.g., ["image_12_123456.jpg"]
@@ -690,7 +601,7 @@ class ProductController extends Controller
             }
             $normalizedPath = str_replace('.', '_', $image->path);
             $key = "product_image_path_" . $normalizedPath;
-            $position = (int) $request->get($key);
+            $position = (int)$request->get($key);
 
             $image->update([
                 'order' => $position,
@@ -701,7 +612,7 @@ class ProductController extends Controller
         if ($request->hasFile('product_images')) {
             foreach ($request->file('product_images') as $key => $productImage) {
                 $key = "product_image_file_" . $key;
-                $position = (int) $request->get($key);
+                $position = (int)$request->get($key);
                 $this->save_images($productImage, Product::class, $product->id, $position);
             }
         }
@@ -728,7 +639,7 @@ class ProductController extends Controller
             }
             $normalizedPath = str_replace('.', '_', $image->path);
             $key = "variant_" . $uuid . "_image_path_" . $normalizedPath;
-            $position = (int) $request->get($key);
+            $position = (int)$request->get($key);
 
             $image->update([
                 'order' => $position,
@@ -739,7 +650,7 @@ class ProductController extends Controller
         if ($request->hasFile("variant_images_" . $uuid)) {
             foreach ($request->file("variant_images_" . $uuid) as $key => $variantImage) {
                 $key = "variant_" . $uuid . "_image_file_" . $key;
-                $position = (int) $request->get($key);
+                $position = (int)$request->get($key);
                 $this->save_images(
                     $variantImage,
                     ProductVariant::class,
