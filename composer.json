@@ -9,7 +9,7 @@
         "ext-iconv": "*",
         "bepsvpt/blurhash": "^4.0",
         "darkaonline/l5-swagger": "^9.0",
-        "defstudio/telegraph": "^1.54",
+        "defstudio/telegraph": "^1.59",
         "inertiajs/inertia-laravel": "2.x-dev",
         "intervention/image": "^3.11",
         "intervention/image-laravel": "^1.3",

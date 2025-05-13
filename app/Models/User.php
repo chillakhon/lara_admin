@@ -107,4 +107,9 @@ class User extends Authenticatable
 
         return false;
     }
+
+    public function routeNotificationForTelegram()
+    {
+        return $this->profile()->telegram_user_id;
+    }
 }
