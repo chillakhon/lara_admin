@@ -16,6 +16,7 @@ Artisan::command('bot_settings', function () {
     dd($bot->registerCommands([
         'hello' => "Говорит привет",
         "help" => "Что умеет этот бот",
-        "actions" => "Различные действия"
+        "actions" => "Различные действия",
+        "start" => "Начать использовать наши сервисы"
     ])->send());
 });
