@@ -43,7 +43,7 @@ class TelegramWebhookHandler extends WebhookHandler
             $user_name = $user->email;
         }
 
-        $chat->message("Привет, {$user_name}! Мы успешно нашли ваш аккаунт. Напиши команду */orders*, чтобы посмотреть свои ожидающие заказы.")->send();
+        $chat->message("Привет, {$user_name}! Мы успешно нашли ваш аккаунт. Напишите команду */orders*, чтобы посмотреть свои ожидающие заказы.")->send();
     }
 
 
@@ -57,7 +57,7 @@ class TelegramWebhookHandler extends WebhookHandler
         if (!$user_profile) {
             // save state and wait email
             if ($await_email) {
-                $chat->message("Привет! Пожалуйста, отправь свой email, чтобы мы могли найти твой аккаунт.")->send();
+                $chat->message("Привет! Пожалуйста, отправьте свой email, чтобы мы могли найти ваш аккаунт.")->send();
                 cache()->put("awaiting_email_$telegramId", true, now()->addMinutes(10));
             }
             return null;
@@ -100,7 +100,7 @@ class TelegramWebhookHandler extends WebhookHandler
 
                 cache()->forget("awaiting_email_$telegramId");
 
-                $this->reply("Спасибо! Твой аккаунт успешно привязан к Telegram. Напиши команду */orders*, чтобы посмотреть свои ожидающие заказы.");
+                $this->reply("Спасибо! Ваш аккаунт успешно привязан к Telegram. Напишите команду */orders*, чтобы посмотреть свои ожидающие заказы.");
             } else {
                 cache()->forget("awaiting_email_$telegramId");
                 $this->reply("Пользователь с таким email не найден. Пожалуйста, сначала зарегистрируйтесь на нашем сайте.");
@@ -110,7 +110,7 @@ class TelegramWebhookHandler extends WebhookHandler
         }
 
         // если не ожидается email
-        $this->reply("Я тебя не понял. Напиши */start* чтобы начать.");
+        $this->reply("Я вас не понял. Напишите */start* чтобы начать.");
 
         Log::info(json_encode($this->message->toArray(), JSON_UNESCAPED_UNICODE));
     }
