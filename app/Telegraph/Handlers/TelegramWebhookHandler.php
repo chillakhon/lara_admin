@@ -146,13 +146,25 @@ class TelegramWebhookHandler extends WebhookHandler
         $find_pending_orders = Order
             ::whereIn('id', $find_pending_orders_ids)
             ->where('client_id', $user_profile->user_id)
-            ->with('payments')
+            ->with(['payments', 'items'])
             ->get();
 
 
         foreach ($find_pending_orders as $order) {
             $message = "*Спасибо за ваш заказ!*🎉\n";
-            $message .= "Вы оформили заказ №{$order->id} от {$order->created_at->format('d.m.Y в H:i')} на сумму {$order->total_amount}.\n";
+            $message .= "Вы оформили заказ №{$order->id} от {$order->created_at->format('d.m.Y в H:i')} на сумму {$order->total_amount}.\n\n";
+
+            $message .= "Состав заказа:\n";
+            foreach ($order->items as $item) {
+                if ($item->productVariant) {
+                    $message .= "- {$item->productVariant->name} x {$item->quantity}\n";
+                } else {
+                    $message .= "- {$item->product->name} x {$item->quantity}\n";
+                }
+            }
+
+            $message .= "\n";
+
             $message .= "Мы уже начали обработку. Ожидайте, пожалуйста, подтверждение.\n";
             $message .= "С уважением, команда *Again*!\n\n";
 

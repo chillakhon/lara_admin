@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\DeliveryDate;
 use App\Models\DeliveryMethod;
 use App\Models\UserProfile;
+use App\Services\TelegramNotificationService;
 use App\Services\WhatsappService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -256,7 +257,7 @@ class OrderController extends Controller
             'client_id' => 'required|exists:clients,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.variant_id' => 'nullable|exists:product_variants,id',
+            'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.price' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
@@ -293,13 +294,15 @@ class OrderController extends Controller
             $find_user_profile = UserProfile::where('user_id', $validated['client_id'])->first();
 
             if ($find_user_profile && $find_user_profile->phone) {
-                $whatsapp_notification = new WhatsappService();
-                $whatsapp_notification->order_notification(
-                    $find_user_profile->phone,
-                    $order->id,
-                    Carbon::parse($order->created_at)->format('d.m.Y в H:i'),
-                    $order->total_amount,
-                );
+                // $whatsapp_notification = new WhatsappService();
+                // $whatsapp_notification->order_notification(
+                //     $find_user_profile->phone,
+                //     $order->id,
+                //     Carbon::parse($order->created_at)->format('d.m.Y в H:i'),
+                //     $order->total_amount,
+                // );
+                $telegram_notification = new TelegramNotificationService();
+                $telegram_notification->sendOrderNotificationToClient($order, $find_user_profile);
             }
 
             DB::commit();
@@ -367,13 +370,14 @@ class OrderController extends Controller
             $client_profile = UserProfile::where('user_id', $order->client_id)->first();
 
             if ($client_profile && $client_profile->phone) {
-                $whatsapp_service = new WhatsappService();
-                $whatsapp_service->payment_notification(
-                    $client_profile->phone,
-                    $payment->id,
-                    $payment->processed_at,
-                    $validated['amount']
-                );
+                // $whatsapp_service = new WhatsappService();
+                // $whatsapp_service->payment_notification(
+                //     $client_profile->phone,
+                //     $payment->id,
+                //     $payment->processed_at,
+                //     $validated['amount']
+                // );
+                
             }
 
             DB::commit();
