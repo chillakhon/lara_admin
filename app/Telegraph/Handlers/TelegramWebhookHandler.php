@@ -13,6 +13,7 @@ use DefStudio\Telegraph\Facades\Telegraph;
 use DefStudio\Telegraph\Handlers\WebhookHandler;
 use DefStudio\Telegraph\Keyboard\Button;
 use DefStudio\Telegraph\Keyboard\Keyboard;
+use DefStudio\Telegraph\Models\TelegraphChat;
 use Illuminate\Support\Stringable;
 use Illuminate\Support\Facades\Log;
 use App\Models\Message;
@@ -21,7 +22,7 @@ class TelegramWebhookHandler extends WebhookHandler
 
     public function start()
     {
-        $chat = Telegraph::chat($this->message->chat()->id());
+        $chat = $this->getChat();
 
         $chat->chatAction(ChatActions::TYPING)->send();
 
@@ -41,22 +42,24 @@ class TelegramWebhookHandler extends WebhookHandler
             $user = User::where('id', $user_profile->user_id)->first();
             $user_name = $user->email;
         }
-        $this->reply("Привет, {$user_name}! Мы успешно нашли ваш аккаунт. Напиши команду */orders*, чтобы посмотреть свои ожидающие заказы.");
 
+        $chat->message("Привет, {$user_name}! Мы успешно нашли ваш аккаунт. Напиши команду */orders*, чтобы посмотреть свои ожидающие заказы.")->send();
     }
 
 
     private function user_profile($await_email = false): UserProfile|null
     {
-        $telegramId = $this->message->from()->id();
+        $telegramId = $this->getUserId();
+        $chat = $this->getChat();
 
         $user_profile = UserProfile::where('telegram_user_id', $telegramId)->first();
 
         if (!$user_profile) {
-            $this->reply("Привет! Пожалуйста, отправь свой email, чтобы мы могли найти твой аккаунт.");
             // save state and wait email
-            if ($await_email)
+            if ($await_email) {
+                $chat->message("Привет! Пожалуйста, отправь свой email, чтобы мы могли найти твой аккаунт.")->send();
                 cache()->put("awaiting_email_$telegramId", true, now()->addMinutes(10));
+            }
             return null;
         }
         return $user_profile;
@@ -114,7 +117,7 @@ class TelegramWebhookHandler extends WebhookHandler
 
     public function orders()
     {
-        $chat = Telegraph::chat($this->message->chat()->id());
+        $chat = $this->getChat();
 
         $chat->chatAction(ChatActions::TYPING)->send();
 
@@ -123,8 +126,15 @@ class TelegramWebhookHandler extends WebhookHandler
         if (!$user_profile)
             return;
 
+        $this->send_order_data($user_profile, $chat);
+    }
+
+    public function send_order_data(
+        UserProfile $user_profile,
+        \DefStudio\Telegraph\Telegraph $chat
+    ) {
         $find_pending_orders_ids = Order
-            ::where('status', Order::STATUS_COMPLETED)
+            ::whereIn('status', [Order::STATUS_PROCESSING, Order::STATUS_NEW])
             ->whereNull("deleted_at")
             ->pluck('id')->toArray();
 
@@ -141,36 +151,26 @@ class TelegramWebhookHandler extends WebhookHandler
 
 
         foreach ($find_pending_orders as $order) {
-            $message = "Спасибо за ваш заказ! 🎉\n";
+            $message = "*Спасибо за ваш заказ!*🎉\n";
             $message .= "Вы оформили заказ №{$order->id} от {$order->created_at->format('d.m.Y в H:i')} на сумму {$order->total_amount}.\n";
             $message .= "Мы уже начали обработку. Ожидайте, пожалуйста, подтверждение.\n";
-            $message .= "С уважением, команда again!\n\n";
+            $message .= "С уважением, команда *Again*!\n\n";
 
             $chat->message($message)->send();
 
-            // Сообщение по каждому платежу
-            foreach ($order->payments() as $payment) {
-                $payment_message = "Спасибо за ваш платёж! 🎉\n";
-                $payment_message .= "Мы успешно получили ваш платёж №{$payment->id} от {$payment->datetime->format('d.m.Y в H:i')} на сумму {$payment->amount}.\n";
+            foreach ($order->payments as $payment) {
+                $payment_message = "*Спасибо за ваш платёж!*🎉\n";
+                $payment_message .= "Мы успешно получили ваш платёж №{$payment->id} от {$payment->created_at->format('d.m.Y в H:i')} на сумму {$payment->amount}.\n";
                 $payment_message .= "Если у вас есть вопросы, пожалуйста, свяжитесь с нашей поддержкой.\n";
-                $payment_message .= "С уважением, ваша команда!\n\n";
+                $payment_message .= "С уважением, команда *Again*!\n\n";
                 $chat->message($payment_message)->send();
             }
         }
-
-
-        // $chat->content($message)
-        //     ->line("Если у вас есть вопросы, пожалуйста, свяжитесь с нашей поддержкой.")
-        //     ->line("С уважением, команда Again!")
-        //     ->button('Связаться с поддержкой', 'https://t.me/your_support_bot')
-        //     ->send();
-
-
     }
 
     public function help()
     {
-        $chat = Telegraph::chat($this->message->chat()->id());
+        $chat = Telegraph::chat($this->message->from()->id());
 
         $chat->message("Привет! Вот что я умею делать:")
             ->keyboard(
@@ -183,6 +183,32 @@ class TelegramWebhookHandler extends WebhookHandler
             ->send();
     }
 
+    protected function getChat(): \DefStudio\Telegraph\Telegraph
+    {
+        if ($this->message?->chat()?->id()) {
+            return Telegraph::chat($this->message->chat()->id());
+        }
+
+        if ($this->callbackQuery?->message()?->chat()?->id()) {
+            return Telegraph::chat($this->callbackQuery->message()?->chat()->id());
+        }
+
+        throw new \RuntimeException("Не удалось определить chat ID для ответа.");
+    }
+
+    protected function getUserId(): int
+    {
+        if ($this->message?->from()?->id()) {
+            return $this->message->from()->id();
+        }
+
+        if ($this->callbackQuery?->from()?->id()) {
+            return $this->callbackQuery->from()->id();
+        }
+
+        throw new \RuntimeException("Не удалось определить user ID.");
+    }
+
     // public function actions()
     // {
     //     Telegraph::message("Выбери какое-то действие")
@@ -191,12 +217,6 @@ class TelegramWebhookHandler extends WebhookHandler
     //             Button::make("Url of this dev")->url("https://youtube.com/@flutterguides?si=VddZYChbwFHGP0AB"),
     //         ]))->send();
     // }
-
-
-    public function find_email()
-    {
-        Telegraph::message("Yahay bl")->send();
-    }
 
     // protected function handleChatMessage(Stringable $text): void
     // {
