@@ -27,7 +27,20 @@ class TelegramNotificationService
         }
     }
 
-  
+    public function sendPaymentNotificationToClient(OrderPayment $payment, UserProfile $profile): void
+    {
+        if (!$profile->telegram_user_id) {
+            Log::error("Client {$profile->user_id} does not have an associated TelegraphChat.");
+            return;
+        }
+
+        $message = $this->build_payment_client_message($payment);
+        try {
+            Telegraph::chat($profile->telegram_user_id)->message($message)->send();
+        } catch (\Exception $e) {
+            Log::error("Failed to send notification to client {$profile->user_id}: " . $e->getMessage());
+        }
+    }
 
     public function sendOrderNotificationToManager(Order $order, Manager $manager): void
     {
@@ -76,7 +89,14 @@ class TelegramNotificationService
         return $message;
     }
 
-    
+    private function build_payment_client_message(OrderPayment $payment)
+    {
+        $payment_message = "*Спасибо за ваш платёж!*🎉\n";
+        $payment_message .= "Мы успешно получили ваш платёж №{$payment->id} от {$payment->created_at->format('d.m.Y в H:i')} на сумму {$payment->amount}.\n";
+        $payment_message .= "Если у вас есть вопросы, пожалуйста, свяжитесь с нашей поддержкой.\n";
+        $payment_message .= "С уважением, команда *Again*!\n\n";
+        return $payment_message;
+    }
 
     private function buildManagerMessage(Order $order): string
     {

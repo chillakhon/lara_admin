@@ -377,7 +377,8 @@ class OrderController extends Controller
                 //     $payment->processed_at,
                 //     $validated['amount']
                 // );
-                
+                $telegram_notification = new TelegramNotificationService();
+                $telegram_notification->sendPaymentNotificationToClient($payment, $client_profile);
             }
 
             DB::commit();
