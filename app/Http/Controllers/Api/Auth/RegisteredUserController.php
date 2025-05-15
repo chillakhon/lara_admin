@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Notifications\MailNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Notification;
 
 class RegisteredUserController extends Controller
 {
@@ -28,11 +30,11 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function admin_registration(Request $request): RedirectResponse
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -48,5 +50,39 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         return redirect(route('dashboard', absolute: false));
+    }
+
+    // users
+    public function register(Request $request)
+    {
+        $validation = $request->validate([
+            'email' => 'required|string',
+            'password' => 'required|string'
+        ]);
+
+        $user = User::where('email', $validation['email'])->first();
+
+        if ($user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Такой пользователь уже сущесвтует',
+            ], 401);
+        }
+
+        $user = User::create([
+            'email' => $validation['email'],
+            'password' => Hash::make($validation['password']),
+            'verification_code' => rand(1000, 9999),
+            'verification_sent' => now(),
+        ]);
+
+        Notification::route('mail', $user->email)->notify(new MailNotification("Hello bro"));
+
+        // send email notification password
+
+        return response()->json([
+            'success' => true,
+            'message' => 'На ваш email был отправлен код',
+        ]);
     }
 }

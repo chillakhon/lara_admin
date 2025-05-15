@@ -4,7 +4,11 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
+use App\Notifications\MailNotification;
+use Hash;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Annotations as OA;
@@ -45,7 +49,10 @@ class AuthenticatedSessionController extends Controller
      *     )
      * )
      */
-    public function login(LoginRequest $request): JsonResponse
+
+
+    // for admin login
+    public function admin_login(LoginRequest $request): JsonResponse
     {
         $credentials = $request->only('email', 'password');
 
@@ -63,6 +70,74 @@ class AuthenticatedSessionController extends Controller
         return response()->json([
             'message' => 'The provided credentials are incorrect.',
         ], 401);
+    }
+
+
+    // for users register
+
+
+    // for users login
+    public function login(Request $request)
+    {
+        $validation = $request->validate(['email' => 'required|string']);
+
+        $user = User::where('email', $validation['email'])->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Пользователь не найден',
+            ], 401);
+        }
+
+        $user->verification_code = rand(1000, 9999);
+        $user->verification_sent = now();
+        $user->save();
+
+        Notification::route('mail', $user->email)->notify(new MailNotification(
+            $user->email,
+            $user->verification_code
+        ));
+
+        // send email notification password
+
+        return response()->json([
+            'success' => true,
+            'message' => 'На ваш email был отправлен код',
+        ]);
+    }
+
+    public function check_verification(Request $request)
+    {
+
+        $validation = $request->validate([
+            'email' => "required|string",
+            'verification_code' => 'required|string',
+        ]);
+
+        $user = User::where('email', $validation['email'])->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Пользователь не найден',
+            ], 401);
+        }
+
+        if ($user->verification_code !== $validation['verification_code']) {
+            return response()->json([
+                'success' => false,
+                'message' => "Пароль не совпадает"
+            ], 401);
+        }
+
+        $token = $user->createToken('authToken')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Успешная регистрация',
+            'user' => $user,
+            'token' => $token,
+        ]);
     }
 
     /**
