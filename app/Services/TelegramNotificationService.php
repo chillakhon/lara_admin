@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\OrderPayment;
+use App\Models\UserProfile;
 use DefStudio\Telegraph\Facades\Telegraph;
 use App\Models\Order;
 use App\Models\Client;
@@ -10,18 +12,33 @@ use Illuminate\Support\Facades\Log;
 
 class TelegramNotificationService
 {
-    public function sendOrderNotificationToClient(Order $order, Client $client): void
+    public function sendOrderNotificationToClient(Order $order, UserProfile $profile): void
     {
-        if (!$client->chat) {
-            Log::error("Client {$client->id} does not have an associated TelegraphChat.");
+        if (!$profile->telegram_user_id) {
+            Log::error("Client {$profile->user_id} does not have an associated TelegraphChat.");
             return;
         }
 
-        $message = $this->buildClientMessage($order);
+        $message = $this->build_client_message_2($order);
         try {
-            Telegraph::chat($client->chat->chat_id)->markdown($message)->send();
+            Telegraph::chat($profile->telegram_user_id)->message($message)->send();
         } catch (\Exception $e) {
-            Log::error("Failed to send notification to client {$client->id}: " . $e->getMessage());
+            Log::error("Failed to send notification to client {$profile->user_id}: " . $e->getMessage());
+        }
+    }
+
+    public function sendPaymentNotificationToClient(OrderPayment $payment, UserProfile $profile): void
+    {
+        if (!$profile->telegram_user_id) {
+            Log::error("Client {$profile->user_id} does not have an associated TelegraphChat.");
+            return;
+        }
+
+        $message = $this->build_payment_client_message($payment);
+        try {
+            Telegraph::chat($profile->telegram_user_id)->message($message)->send();
+        } catch (\Exception $e) {
+            Log::error("Failed to send notification to client {$profile->user_id}: " . $e->getMessage());
         }
     }
 
@@ -48,6 +65,37 @@ class TelegramNotificationService
 
 
         return $message;
+    }
+
+    private function build_client_message_2(Order $order)
+    {
+        $message = "*Спасибо за ваш заказ!*🎉\n";
+        $message .= "Вы оформили заказ №{$order->id} от {$order->created_at->format('d.m.Y в H:i')} на сумму {$order->total_amount}.\n\n";
+
+        $message .= "Состав заказа:\n";
+        foreach ($order->items as $item) {
+            if ($item->productVariant) {
+                $message .= "- {$item->productVariant->name} x {$item->quantity}\n";
+            } else {
+                $message .= "- {$item->product->name} x {$item->quantity}\n";
+            }
+        }
+
+        $message .= "\n";
+
+        $message .= "Мы уже начали обработку. Ожидайте, пожалуйста, подтверждение.\n";
+        $message .= "С уважением, команда *Again*!\n\n";
+
+        return $message;
+    }
+
+    private function build_payment_client_message(OrderPayment $payment)
+    {
+        $payment_message = "*Спасибо за ваш платёж!*🎉\n";
+        $payment_message .= "Мы успешно получили ваш платёж №{$payment->id} от {$payment->created_at->format('d.m.Y в H:i')} на сумму {$payment->amount}.\n";
+        $payment_message .= "Если у вас есть вопросы, пожалуйста, свяжитесь с нашей поддержкой.\n";
+        $payment_message .= "С уважением, команда *Again*!\n\n";
+        return $payment_message;
     }
 
     private function buildManagerMessage(Order $order): string
