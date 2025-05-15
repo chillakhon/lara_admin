@@ -102,10 +102,12 @@ Route::prefix('delivery')->name('delivery.')->group(function () {
 });
 
 //admin panel api dashboard
+Route::post('/admin-login', [AuthenticatedSessionController::class, 'admin_login']);
+Route::post('/admin-register', [RegisteredUserController::class, 'admin_registration']);
 
 //auth user
 Route::middleware('guest')->group(function () {
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::post('register', [RegisteredUserController::class, 'register']);
     Route::post('login', [AuthenticatedSessionController::class, 'login']);
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
     Route::post('reset-password', [NewPasswordController::class, 'store']);
