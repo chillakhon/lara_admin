@@ -144,6 +144,16 @@ class AuthenticatedSessionController extends Controller
         ]);
     }
 
+    public function get_user(Request $request)
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'success' => true,
+            'user' => $user->load(['profile'])
+        ]);
+    }
+
     /**
      * Destroy an authenticated session.
      *

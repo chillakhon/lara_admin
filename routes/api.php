@@ -52,7 +52,7 @@ use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
+Route::get('/admin-user', function (Request $request) {
     return $request->user()->load('roles', 'profile');
 })->middleware('auth:sanctum');
 
@@ -104,12 +104,15 @@ Route::prefix('delivery')->name('delivery.')->group(function () {
 //admin panel api dashboard
 Route::post('/admin-login', [AuthenticatedSessionController::class, 'admin_login']);
 Route::post('/admin-register', [RegisteredUserController::class, 'admin_registration']);
+Route::get('/client-user', [AuthenticatedSessionController::class, 'get_user'])->middleware('auth:sanctum');
+
 
 //auth user
 Route::middleware('guest')->group(function () {
     Route::post('register', [RegisteredUserController::class, 'register']);
     Route::post('login', [AuthenticatedSessionController::class, 'login']);
     Route::post('check-verification', [AuthenticatedSessionController::class, 'check_verification']);
+
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
     Route::post('reset-password', [NewPasswordController::class, 'store']);
 });

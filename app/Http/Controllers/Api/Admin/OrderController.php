@@ -39,7 +39,7 @@ class OrderController extends Controller
         $orders = Order::with([
             'items.product',
             'items.productVariant',
-            'payments',
+            // 'payments',
             'deliveryMethod',
             'deliveryTarget',
         ])
@@ -254,7 +254,6 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
@@ -272,8 +271,11 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
+            $user = $request->user();
+            $client = Client::where('user_id', $user->id)->first();
+
             $order = Order::create([
-                'client_id' => $validated['client_id'],
+                'client_id' => $client->id,
                 'order_number' => 'ORD-' . date('Ymd') . '-' . random_int(1000, 9999),
                 'total_amount' => 0,
                 'status' => $validated['status'],
@@ -291,7 +293,7 @@ class OrderController extends Controller
 
             $order->updateTotalAmount();
 
-            $find_user_profile = UserProfile::where('user_id', $validated['client_id'])->first();
+            $find_user_profile = UserProfile::where('user_id', $client->id)->first();
 
             if ($find_user_profile && $find_user_profile->phone) {
                 // $whatsapp_notification = new WhatsappService();
