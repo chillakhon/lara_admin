@@ -186,7 +186,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
         //        // Products
         Route::group(['prefix' => 'products', 'as' => 'products.'/*, 'middleware' => ['permission:products.view,products.manage']*/], function () {
-            Route::get('/', [ProductController::class, 'index']);
+            // Route::get('/', [ProductController::class, 'index']);
             Route::post('/', [ProductController::class, 'store']);
 
             Route::get('/{product}', [ProductController::class, 'show']);
