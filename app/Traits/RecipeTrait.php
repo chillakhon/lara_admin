@@ -5,6 +5,8 @@ use App\Models\Recipe;
 
 trait RecipeTrait
 {
+
+    use HelperTrait;
     public function solve_category_cost(Recipe $recipe): Recipe
     {
         $cost_rates = $recipe->costRates;
@@ -27,6 +29,36 @@ trait RecipeTrait
 
             $recipe->unsetRelation('costRates');
             $recipe->cost_rates = $modifies_cost_rates;
+        }
+
+        return $recipe;
+    }
+
+
+    public function get_parent_product_of_component(Recipe $recipe): Recipe
+    {
+        foreach ($recipe->material_items as $materialItem) {
+            $get_component_type = $this->get_type_by_model($materialItem->component_type);
+
+            if ($get_component_type == PRODUCT_VARIANT) {
+                $product = \App\Models\Product::find($materialItem->component->product_id);
+                if ($product) {
+                    $materialItem->parent_product_id = $product->id;
+                    $materialItem->parent_product_name = $product->name;
+                }
+            }
+        }
+
+        foreach ($recipe->output_products as $outputProduct) {
+            $get_component_type = $this->get_type_by_model($outputProduct->component_type);
+
+            if ($get_component_type == PRODUCT_VARIANT) {
+                $product = \App\Models\Product::find($outputProduct->component->product_id);
+                if ($product) {
+                    $outputProduct->parent_product_id = $product->id;
+                    $outputProduct->parent_product_name = $product->name;
+                }
+            }
         }
 
         return $recipe;
