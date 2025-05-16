@@ -23,10 +23,12 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     const TYPE_CLIENT = 'user';
-    protected $fillable = [
-        'email',
-        'password',
-    ];
+    // protected $fillable = [
+    //     'email',
+    //     'password',
+    // ];
+
+    protected $guarded = ['id'];
 
     protected $hidden = [
         'password',

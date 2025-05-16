@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::table('users', function (Blueprint $table) {
             $table->string('verification_code')->nullable()->after('remember_token');
             $table->datetime('verification_sent')->nullable()->after('verification_code');
-            $table->dateTime('verificated_at')->nullable()->after('verification_sent');
+            $table->dateTime('verified_at')->nullable()->after('verification_sent');
         });
     }
 
@@ -22,6 +22,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropColumns('users', ['verification_code', 'verification_sent', 'verificated_at']);
+        Schema::dropColumns('users', ['verification_code', 'verification_sent', 'verified_at']);
     }
 };
