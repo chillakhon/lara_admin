@@ -267,11 +267,14 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
-            $user->profile()->updateOrCreate([
-                'first_name' => $request->first_name,
-                'last_name' => $request->last_name,
-                'phone' => $request->phone,
-            ]);
+            $user->profile()->updateOrCreate(
+                ['user_id' => $user->id], // condition
+                [                          // values to update
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'phone' => $request->phone,
+                ]
+            );
 
             DB::commit();
 

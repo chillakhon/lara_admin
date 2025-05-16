@@ -109,6 +109,7 @@ Route::post('/admin-register', [RegisteredUserController::class, 'admin_registra
 Route::middleware('guest')->group(function () {
     Route::post('register', [RegisteredUserController::class, 'register']);
     Route::post('login', [AuthenticatedSessionController::class, 'login']);
+    Route::post('check-verification', [AuthenticatedSessionController::class, 'check_verification']);
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
     Route::post('reset-password', [NewPasswordController::class, 'store']);
 });
@@ -363,6 +364,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::middleware(['role:super-admin,admin'])->group(function () {
             // Управление пользователями
             Route::prefix('users')->name('users.')->group(function () {
+                Route::put('/update-profile/{user}', [UserController::class, 'update_profile']);
+
+
                 Route::get('/', [UserController::class, 'index'])
                     ->middleware('permission:users.view')
                     ->name('index');
@@ -379,7 +383,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 Route::get('/deleted', [UserController::class, 'indexDeleted']);
                 Route::get('/{id}/restore', [UserController::class, 'restore']);
                 Route::delete('{id}/forceDestroy', [UserController::class, 'forceDestroy']);
-
             });
 
             // Управление ролями и разрешениями (только для супер-админа)

@@ -79,7 +79,10 @@ class AuthenticatedSessionController extends Controller
     // for users login
     public function login(Request $request)
     {
-        $validation = $request->validate(['email' => 'required|string']);
+        $validation = $request->validate([
+            'email' => 'required|string',
+            'password' => 'required|string',
+        ]);
 
         $user = User::where('email', $validation['email'])->first();
 
@@ -87,6 +90,13 @@ class AuthenticatedSessionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Пользователь не найден',
+            ], 401);
+        }
+
+        if (!Hash::check($validation['password'], $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Неправильный пароль"
             ], 401);
         }
 
@@ -98,8 +108,6 @@ class AuthenticatedSessionController extends Controller
             $user->email,
             $user->verification_code
         ));
-
-        // send email notification password
 
         return response()->json([
             'success' => true,
@@ -120,21 +128,25 @@ class AuthenticatedSessionController extends Controller
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Пользователь не найден',
+                'message' => 'Пользователь с таким email не найден.',
             ], 401);
         }
 
         if ($user->verification_code !== $validation['verification_code']) {
             return response()->json([
                 'success' => false,
-                'message' => "Пароль не совпадает"
+                'message' => "Неверный код подтверждения."
             ], 401);
         }
+
+        $user->email_verified_at = now();
+        $user->verified_at = now();
+        $user->save();
 
         $token = $user->createToken('authToken')->plainTextToken;
 
         return response()->json([
-            'message' => 'Успешная регистрация',
+            'message' => 'Вход успешно выполнен.',
             'user' => $user,
             'token' => $token,
         ]);

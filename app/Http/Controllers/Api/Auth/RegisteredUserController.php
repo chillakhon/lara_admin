@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Client;
 use App\Models\User;
 use App\Notifications\MailNotification;
 use Illuminate\Auth\Events\Registered;
@@ -65,7 +66,7 @@ class RegisteredUserController extends Controller
         if ($user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Такой пользователь уже сущесвтует',
+                'message' => 'Пользователь с таким email уже зарегистрирован.',
             ], 401);
         }
 
@@ -76,13 +77,18 @@ class RegisteredUserController extends Controller
             'verification_sent' => now(),
         ]);
 
-        Notification::route('mail', $user->email)->notify(new MailNotification("Hello bro"));
+        Client::create(['user_id' => $user->id, 'bonus_balance' => 0.0]);
+
+        Notification::route('mail', $user->email)->notify(new MailNotification(
+            $user->email,
+            $user->verification_code
+        ));
 
         // send email notification password
 
         return response()->json([
             'success' => true,
-            'message' => 'На ваш email был отправлен код',
+            'message' => 'Код подтверждения был отправлен на ваш email.',
         ]);
     }
 }
