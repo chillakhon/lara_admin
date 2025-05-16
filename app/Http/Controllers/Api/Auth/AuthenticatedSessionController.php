@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Client;
 use App\Models\User;
 use App\Notifications\MailNotification;
 use Hash;
@@ -81,23 +82,14 @@ class AuthenticatedSessionController extends Controller
     {
         $validation = $request->validate([
             'email' => 'required|string',
-            'password' => 'required|string',
         ]);
 
         $user = User::where('email', $validation['email'])->first();
 
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Пользователь не найден',
-            ], 401);
-        }
+            $user = User::create(['email' => $validation['email']]);
 
-        if (!Hash::check($validation['password'], $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => "Неправильный пароль"
-            ], 401);
+            Client::create(['user_id' => $user->id, 'bonus_balance' => 0.0]);
         }
 
         $user->verification_code = rand(1000, 9999);
