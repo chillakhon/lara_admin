@@ -19,6 +19,7 @@ class RecipeController extends Controller
 {
     use RecipeTrait, HelperTrait;
 
+
     protected $recipeService;
     protected $productionCostService;
 
@@ -56,11 +57,13 @@ class RecipeController extends Controller
     {
         $recipes = Recipe::with([
             'material_items.component.inventoryBalance',
+            //            'material_items.unit',
 //            'material_items.unit',
             'outputUnit',
             'createdBy',
             // 'costRates.category',
             'output_products.product',
+            //            'output_products.product',
 //            'output_products.product',
             'output_products.product_variant',
         ])->whereNull('deleted_at');
@@ -88,7 +91,7 @@ class RecipeController extends Controller
                     $product = \App\Models\Product::find($outputProduct->component_id);
                     if ($product) {
                         $outputProduct->product_id = $product->id;
-                        $outputProduct->product_name = $product->name;
+                        $outputProduct->product_name = $product->name; // или $product->title, если так называется поле
                     }
                 }
             }
@@ -97,7 +100,7 @@ class RecipeController extends Controller
                     $product = \App\Models\Product::find($materialItem->component_id);
                     if ($product) {
                         $materialItem->product_id = $product->id;
-                        $materialItem->product_name = $product->name;
+                        $materialItem->product_name = $product->name; // или $product->title, если так называется поле
                     }
                 }
             }
@@ -566,12 +569,14 @@ class RecipeController extends Controller
         $materialsCost = $this->recipeService->calculateEstimatedCost(
             $recipe,
             $validated['strategy'],
-            (float)$validated['quantity']
+            (float) $validated['quantity'],
+            (float) $validated['quantity']
         );
 
         $productionCosts = $this->productionCostService->calculateEstimatedCosts(
             $recipe,
-            (float)$validated['quantity']
+            (float) $validated['quantity'],
+            (float) $validated['quantity']
         );
 
         $totalCost = $materialsCost['materials_cost'] +
@@ -579,7 +584,8 @@ class RecipeController extends Controller
             $productionCosts['overhead'] +
             $productionCosts['management'];
 
-        $quantity = (float)$validated['quantity'];
+        $quantity = (float) $validated['quantity'];
+        $quantity = (float) $validated['quantity'];
         $costPerUnit = $quantity > 0 ? $totalCost / $quantity : 0;
 
         return response()->json([
