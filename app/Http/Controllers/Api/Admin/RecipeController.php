@@ -24,10 +24,9 @@ class RecipeController extends Controller
     protected $productionCostService;
 
     public function __construct(
-        RecipeService         $recipeService,
+        RecipeService $recipeService,
         ProductionCostService $productionCostService
-    )
-    {
+    ) {
         $this->recipeService = $recipeService;
         $this->productionCostService = $productionCostService;
     }
@@ -62,16 +61,14 @@ class RecipeController extends Controller
             'outputUnit',
             'createdBy',
             // 'costRates.category',
-            'output_products.product',
-            //            'output_products.product',
-//            'output_products.product',
-            'output_products.product_variant',
+            'output_products.component.inventoryBalance',
         ])->whereNull('deleted_at');
 
         if ($request->get('recipe_id')) {
             $recipes = $recipes->where('id', $request->get('recipe_id'))->get();
             if (count($recipes) >= 1) {
                 $recipes = $this->solve_category_cost($recipes[0]);
+                $recipes = $this->get_parent_product_of_component($recipes);
             }
         } else if ($request->get('per_page')) {
             $recipes = $recipes->paginate($request->get('per_page'));
@@ -85,24 +82,9 @@ class RecipeController extends Controller
             // }
         }
 
-        foreach ($recipes as $recipe) {
-            foreach ($recipe->output_products as $outputProduct) {
-                if (is_null($outputProduct->product_id) && $outputProduct->component_id) {
-                    $product = \App\Models\Product::find($outputProduct->component_id);
-                    if ($product) {
-                        $outputProduct->product_id = $product->id;
-                        $outputProduct->product_name = $product->name; // или $product->title, если так называется поле
-                    }
-                }
-            }
-            foreach ($recipe->material_items as $materialItem) {
-                if (is_null($materialItem->product_id) && $materialItem->component_id) {
-                    $product = \App\Models\Product::find($materialItem->component_id);
-                    if ($product) {
-                        $materialItem->product_id = $product->id;
-                        $materialItem->product_name = $product->name; // или $product->title, если так называется поле
-                    }
-                }
+        if (!$request->get('recipe_id') || $request->get('per_page')) {
+            foreach ($recipes as &$recipe) {
+                $recipe = $this->get_parent_product_of_component($recipe);
             }
         }
 
@@ -113,7 +95,6 @@ class RecipeController extends Controller
             'recipes' => $recipes,
         ]);
     }
-
 
     /**
      * @OA\Post(

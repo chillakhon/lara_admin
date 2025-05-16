@@ -25,4 +25,9 @@ class ProductRecipe extends Model
     {
         return $this->hasOne(ProductVariant::class, 'id', 'product_variant_id');
     }
+
+    public function component()
+    {
+        return $this->morphTo('component', 'component_type', 'component_id');
+    }
 }
