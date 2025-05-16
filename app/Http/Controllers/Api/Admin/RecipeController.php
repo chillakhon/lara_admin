@@ -24,13 +24,9 @@ class RecipeController extends Controller
     protected $productionCostService;
 
     public function __construct(
-        RecipeService         $recipeService,
-        RecipeService         $recipeService,
+        RecipeService $recipeService,
         ProductionCostService $productionCostService
-    )
-    {
-    )
-    {
+    ) {
         $this->recipeService = $recipeService;
         $this->productionCostService = $productionCostService;
     }
@@ -60,13 +56,13 @@ class RecipeController extends Controller
     {
         $recipes = Recipe::with([
             'material_items.component.inventoryBalance',
-//            'material_items.unit',
+            //            'material_items.unit',
 //            'material_items.unit',
             'outputUnit',
             'createdBy',
             // 'costRates.category',
             'output_products.product',
-//            'output_products.product',
+            //            'output_products.product',
 //            'output_products.product',
             'output_products.product_variant',
         ])->whereNull('deleted_at');
@@ -572,14 +568,14 @@ class RecipeController extends Controller
         $materialsCost = $this->recipeService->calculateEstimatedCost(
             $recipe,
             $validated['strategy'],
-            (float)$validated['quantity']
-            (float)$validated['quantity']
+            (float) $validated['quantity'],
+            (float) $validated['quantity']
         );
 
         $productionCosts = $this->productionCostService->calculateEstimatedCosts(
             $recipe,
-            (float)$validated['quantity']
-            (float)$validated['quantity']
+            (float) $validated['quantity'],
+            (float) $validated['quantity']
         );
 
         $totalCost = $materialsCost['materials_cost'] +
@@ -587,8 +583,8 @@ class RecipeController extends Controller
             $productionCosts['overhead'] +
             $productionCosts['management'];
 
-        $quantity = (float)$validated['quantity'];
-        $quantity = (float)$validated['quantity'];
+        $quantity = (float) $validated['quantity'];
+        $quantity = (float) $validated['quantity'];
         $costPerUnit = $quantity > 0 ? $totalCost / $quantity : 0;
 
         return response()->json([
