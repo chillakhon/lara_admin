@@ -58,7 +58,7 @@ trait ProductsTrait
 
 
         if ($request->get('type', 'simple')) {
-            $products->where('type', $request->get('type'));
+            $products->where('type', $request->get('type', 'simple'));
         }
 
         if ($request->get('product_id')) {
@@ -68,7 +68,7 @@ trait ProductsTrait
         return $products;
     }
 
-    public function solve_products_inventory(&$products = [])
+    public function solve_products_inventory($products = [])
     {
         $inventory_balances = InventoryBalance::get()
             ->keyBy(function ($item) {

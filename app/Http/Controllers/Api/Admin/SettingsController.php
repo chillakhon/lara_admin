@@ -229,7 +229,11 @@ class SettingsController extends Controller
     {
         return response()->json([
             'success' => true,
-            'colors' => Color::get(),
+            'colors' => Color::select([
+                'id',
+                'name',
+                'code'
+            ])->get(),
         ]);
     }
 }
