@@ -58,10 +58,14 @@ class UserController extends Controller
                         break;
                 }
             })
+            ->when($request->boolean('only_admin_users', false), function ($query) {
+                $query->whereDoesntHave('client');
+            })
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
         $roles = Role::orderBy('name')->get();
+        
         $permissions = Permission::orderBy('name')->get();
 
         return response()->json([

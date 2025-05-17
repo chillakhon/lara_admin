@@ -74,12 +74,25 @@ class Recipe extends Model
 
     public function output_products()
     {
-        return $this->hasMany(ProductRecipe::class);
+        return $this->hasMany(ProductRecipe::class)->select([
+            'id',
+            'recipe_id',
+            'component_type',
+            'component_id',
+            'qty',
+        ]);
     }
 
     public function material_items()
     {
-        return $this->hasMany(RecipeItem::class);
+        return $this->hasMany(RecipeItem::class)->select([
+            'id',
+            'recipe_id',
+            'component_type',
+            'component_id',
+            'quantity',
+            'unit_id'
+        ]);
     }
 
     public function outputUnit()
