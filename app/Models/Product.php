@@ -337,4 +337,14 @@ class Product extends Model implements HasMedia
     {
         return $this->morphToMany(Color::class, 'colorable');
     }
+
+    public function discountable()
+    {
+        return $this->morphOne(Discountable::class, 'discountable');
+    }
+
+    public function discount()
+    {
+        return $this->discountable?->discount;
+    }
 }

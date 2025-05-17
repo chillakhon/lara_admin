@@ -96,6 +96,7 @@ class ProductController extends Controller
                 ]);
             }
             $this->solve_products_inventory([$products]);
+            $this->applyDiscountToProduct($products);
         } else if ($request->boolean('paginate', true)) {
             $products = $products->paginate(10);
 
@@ -105,9 +106,11 @@ class ProductController extends Controller
                 return $product;
             });
             $this->solve_products_inventory($products);
+            $this->applyDiscountsToCollection($products->getCollection());
         } else {
             $products = $products->get();
             $this->solve_products_inventory($products);
+            $this->applyDiscountsToCollection($products);
         }
 
 
