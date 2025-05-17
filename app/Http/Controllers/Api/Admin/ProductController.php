@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProductNumberTwoResouce;
 use App\Models\Image as ImageModel;
 use App\Models\InventoryBalance;
 use App\Models\PriceHistory;
@@ -97,6 +98,8 @@ class ProductController extends Controller
             }
             $this->solve_products_inventory([$products]);
             $this->applyDiscountToProduct($products);
+
+            return new ProductNumberTwoResouce($products);
         } else if ($request->boolean('paginate', true)) {
             $products = $products->paginate(10);
 
@@ -114,7 +117,8 @@ class ProductController extends Controller
         }
 
 
-        return response()->json($products);
+        // return response()->json($products);
+        return ProductNumberTwoResouce::collection($products);
     }
 
 
@@ -124,12 +128,14 @@ class ProductController extends Controller
             'images' => function ($sql) {
                 $sql->orderBy("order", 'asc');
             },
+            'colors:id,name,code',
             // 'options.values',
             // 'variants.optionValues.option',
             'variants' => function ($sql) {
                 $sql->whereNull("deleted_at")
-                    ->with('unit')
                     ->with([
+                        'unit',
+                        'colors:id,name,code',
                         'images' => function ($sql) {
                             $sql->orderBy("order", 'asc');
                         }
@@ -148,7 +154,7 @@ class ProductController extends Controller
             }
         }
 
-        return response()->json($product);
+        return new ProductNumberTwoResouce($product);
     }
 
     // enhanced-dev branch
