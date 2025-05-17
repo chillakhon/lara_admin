@@ -15,12 +15,14 @@ trait ProductsTrait
                 'images' => function ($sql) {
                     $sql->orderBy("order", 'asc');
                 },
+                'colors:id,name,code',
                 // 'options.values',
                 // 'variants.optionValues.option',
                 'variants' => function ($sql) {
                     $sql->whereNull("deleted_at")
-                        ->with('unit')
                         ->with([
+                            'unit',
+                            'colors:id,name,code',
                             'images' => function ($sql) {
                                 $sql->orderBy("order", 'asc');
                             }
@@ -43,10 +45,19 @@ trait ProductsTrait
                     $q->where('categories.id', $categoryId);
                 });
             })
+            ->when($request->get('color_name'), function ($query, $color_name) {
+                $query->whereHas('colors', function ($sql) use ($color_name) {
+                    $sql->where('colors.name', $color_name);
+                })->orWhereHas('variants', function ($sql) use ($color_name) {
+                    $sql->whereHas('colors', function ($sql2) use ($color_name) {
+                        $sql2->where('colors.name', $color_name);
+                    });
+                });
+            })
             ->latest();
 
 
-        if ($request->get('type')) {
+        if ($request->get('type', 'simple')) {
             $products->where('type', $request->get('type'));
         }
 

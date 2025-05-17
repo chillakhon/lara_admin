@@ -133,4 +133,8 @@ class ProductVariant extends Model
     }
 
 
+    public function colors(): MorphToMany
+    {
+        return $this->morphToMany(Color::class, 'colorable');
+    }
 }

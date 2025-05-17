@@ -54,6 +54,7 @@ class DatabaseSeeder extends Seeder
             UsersSeeder::class,
             ReviewAttributeSeeder::class,
             ReviewResponseSeeder::class,
+            ProductsColorSeeder::class,
         ]);
     }
 }
