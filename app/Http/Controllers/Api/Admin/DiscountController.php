@@ -49,12 +49,19 @@ class DiscountController extends Controller
         if ($request->discount_type === 'specific') {
             if ($request->has('products')) {
                 $this->reassignProductsToDiscount($request->products, $discount);
-            }
 
-            if ($request->has('product_variants')) {
-                $this->reassignVariantsToDiscount($request->product_variants, $discount);
-            }
+                if ($request->has('product_variants') && count($request->get('product_variants')) >= 1) {
+                    $this->reassignVariantsToDiscount($request->product_variants, $discount);
+                } else {
+                    $productVariantIds = ProductVariant
+                        ::whereNull('deleted_at')
+                        ->whereIn('product_id', $request->products)
+                        ->pluck('id')
+                        ->toArray();
 
+                    $this->reassignVariantsToDiscount($productVariantIds, $discount);
+                }
+            }
         } elseif ($request->discount_type === 'category') {
             if ($request->has('categories')) {
                 $discount->categories()->attach($request->categories);
@@ -85,11 +92,20 @@ class DiscountController extends Controller
         if ($request->discount_type === 'specific') {
             if ($request->has('products')) {
                 $this->reassignProductsToDiscount($request->products, $discount);
+
+                if ($request->has('product_variants') && count($request->get('product_variants')) >= 1) {
+                    $this->reassignVariantsToDiscount($request->product_variants, $discount);
+                } else {
+                    $productVariantIds = ProductVariant
+                        ::whereNull('deleted_at')
+                        ->whereIn('product_id', $request->products)
+                        ->pluck('id')
+                        ->toArray();
+
+                    $this->reassignVariantsToDiscount($productVariantIds, $discount);
+                }
             }
 
-            if ($request->has('product_variants')) {
-                $this->reassignVariantsToDiscount($request->product_variants, $discount);
-            }
 
         } elseif ($request->discount_type === 'category') {
             if ($request->has('categories')) {
