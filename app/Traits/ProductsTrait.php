@@ -46,6 +46,8 @@ trait ProductsTrait
                     $q->where('categories.id', $categoryId);
                 });
             })
+
+            // searching by color name
             ->when($request->get('color_name'), function ($query, $color_name) {
                 $query->whereHas('colors', function ($sql) use ($color_name) {
                     $sql->where('colors.name', $color_name);
@@ -55,6 +57,19 @@ trait ProductsTrait
                     });
                 });
             })
+
+
+            // searhcin by color id
+            ->when($request->get('color_id'), function ($query, $color_id) {
+                $query->whereHas('colors', function ($sql) use ($color_id) {
+                    $sql->where('colors.id', $color_id);
+                })->orWhereHas('variants', function ($sql) use ($color_id) {
+                    $sql->whereHas('colors', function ($sql2) use ($color_id) {
+                        $sql2->where('colors.id', $color_id);
+                    });
+                });
+            })
+
             ->latest();
 
 
