@@ -15,6 +15,6 @@ class ProductionBatchMaterial extends Model
 
     public function material()
     {
-        return $this->morphTo('material', 'material_type', 'material_id');
+        return $this->morphTo('component', 'material_type', 'material_id');
     }
 }

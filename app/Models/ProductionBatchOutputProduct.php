@@ -12,6 +12,6 @@ class ProductionBatchOutputProduct extends Model
 
     public function output()
     {
-        return $this->morphTo('output', 'output_type', 'output_id');
+        return $this->morphTo('component', 'output_type', 'output_id');
     }
 }
