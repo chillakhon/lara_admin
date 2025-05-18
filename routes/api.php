@@ -136,6 +136,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     Route::prefix('/orders')->group(function () {
         Route::post('/', [OrderController::class, 'store']);
+        Route::get('/delivery-methods', [DeliveryMethodController::class, 'index']);
         Route::get('/user', [OrderController::class, 'getUserOrders']);
         Route::post('/payment/{order}', [OrderController::class, 'pay']);
     });
