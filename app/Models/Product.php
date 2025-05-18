@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\HasMedia;  // Добавляем интерфейс HasMedia
@@ -329,5 +330,21 @@ class Product extends Model implements HasMedia
         return $this->reviews()
             ->where('is_published', true)
             ->count();
+    }
+
+
+    public function colors(): MorphToMany
+    {
+        return $this->morphToMany(Color::class, 'colorable');
+    }
+
+    public function discountable()
+    {
+        return $this->morphOne(Discountable::class, 'discountable');
+    }
+
+    public function discount()
+    {
+        return $this->discountable?->discount;
     }
 }

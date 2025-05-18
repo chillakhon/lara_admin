@@ -37,7 +37,7 @@ trait RecipeTrait
 
     public function get_parent_product_of_component(Recipe $recipe): Recipe
     {
-        foreach ($recipe->material_items as $materialItem) {
+        foreach ($recipe->material_items as &$materialItem) {
             $get_component_type = $this->get_type_by_model($materialItem->component_type);
 
             if ($get_component_type == PRODUCT_VARIANT) {
@@ -47,6 +47,8 @@ trait RecipeTrait
                     $materialItem->parent_product_name = $product->name;
                 }
             }
+
+            $materialItem->component_type = $get_component_type;
         }
 
         foreach ($recipe->output_products as $outputProduct) {
@@ -59,6 +61,8 @@ trait RecipeTrait
                     $outputProduct->parent_product_name = $product->name;
                 }
             }
+
+            $outputProduct->component_type = $get_component_type;
         }
 
         return $recipe;

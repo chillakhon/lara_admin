@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -41,6 +42,8 @@ class AppServiceProvider extends ServiceProvider
             // 'Variant' => \App\Models\ProductVariant::class,
             // 'variant' => \App\Models\ProductVariant::class,
         ]);
+
+        JsonResource::withoutWrapping();
 
     }
 

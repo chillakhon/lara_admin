@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProductNumberTwoResouce;
 use App\Models\Image as ImageModel;
 use App\Models\InventoryBalance;
 use App\Models\PriceHistory;
@@ -87,7 +88,19 @@ class ProductController extends Controller
         // could not solve the problem with .inventoryBalance relation
         $products = $this->products_query($request);
 
-        if ($request->boolean('paginate', true)) {
+        if ($request->get('product_id')) {
+            $products = $products->first();
+            if (!$products) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Продукт не найден."
+                ]);
+            }
+            $this->solve_products_inventory([$products]);
+            $this->applyDiscountToProduct($products);
+
+            return new ProductNumberTwoResouce($products);
+        } else if ($request->boolean('paginate', true)) {
             $products = $products->paginate(10);
 
             $products->getCollection()->transform(function ($product) {
@@ -95,14 +108,17 @@ class ProductController extends Controller
                 unset($product->images);
                 return $product;
             });
-
+            $this->solve_products_inventory($products);
+            $this->applyDiscountsToCollection($products->getCollection());
         } else {
             $products = $products->get();
+            $this->solve_products_inventory($products);
+            $this->applyDiscountsToCollection($products);
         }
 
-        $this->solve_products_inventory($products);
 
-        return response()->json($products);
+        // return response()->json($products);
+        return ProductNumberTwoResouce::collection($products);
     }
 
 
@@ -112,12 +128,14 @@ class ProductController extends Controller
             'images' => function ($sql) {
                 $sql->orderBy("order", 'asc');
             },
+            'colors:id,name,code',
             // 'options.values',
             // 'variants.optionValues.option',
             'variants' => function ($sql) {
                 $sql->whereNull("deleted_at")
-                    ->with('unit')
                     ->with([
+                        'unit',
+                        'colors:id,name,code',
                         'images' => function ($sql) {
                             $sql->orderBy("order", 'asc');
                         }
@@ -136,7 +154,7 @@ class ProductController extends Controller
             }
         }
 
-        return response()->json($product);
+        return new ProductNumberTwoResouce($product);
     }
 
     // enhanced-dev branch
@@ -145,7 +163,7 @@ class ProductController extends Controller
         // TODO: logic for getting product's prices history
         if ($request->boolean('is_variant', false)) {
             $variant_price_history = PriceHistory
-                ::where('item_type', ProductVariant::class,)
+                ::where('item_type', ProductVariant::class, )
                 ->where('item_id', $request->get('id'))
                 ->whereNull("deleted_at")
                 ->orderBy('created_at', 'desc')
@@ -326,6 +344,10 @@ class ProductController extends Controller
                 ]
             ));
 
+            $colorIds = collect($validated['colors'] ?? [])->pluck('id');
+
+            $product->colors()->attach($colorIds);
+
             // -1 means that its creating for the first time and you have to put null instead
             $this->price_history_create($request, -1, $product);
 
@@ -349,6 +371,10 @@ class ProductController extends Controller
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
                     $cleanVariantData['created_at'] = now();
                     $created_variant = ProductVariant::create($cleanVariantData);
+
+                    $colorIds = collect($variantData['colors'] ?? [])->pluck('id');
+
+                    $created_variant->colors()->attach($colorIds);
                     // -1 means that its creating for the first time and you have to put null instead
                     $this->price_history_create($request, -1, null, $created_variant);
                     if ($request->hasFile("variant_images_" . $uuid)) {
@@ -397,6 +423,7 @@ class ProductController extends Controller
             'length' => 'nullable|numeric|min:0',
             'width' => 'nullable|numeric|min:0',
             'height' => 'nullable|numeric|min:0',
+            'colors' => 'nullable|array',
             'variants' => 'nullable|array',
         ];
     }
@@ -501,6 +528,10 @@ class ProductController extends Controller
 
             $this->update_product_images($request, $product);
 
+            $colorIds = collect($validated['colors'] ?? [])->pluck('id');
+
+            $product->colors()->sync($colorIds);
+
             // Handle variants
             $incomingVariantIds = collect($validated['variants'] ?? [])->pluck('id')->filter()->toArray();
 
@@ -526,6 +557,7 @@ class ProductController extends Controller
                         $image->delete();
                     }
 
+                    $variant->colors()->detach();
                     $variant->delete();
                 });
 
@@ -539,17 +571,20 @@ class ProductController extends Controller
 
                 $cleanVariantData = Arr::except($variantData, ['uuid', 'id']);
                 $cleanVariantData['product_id'] = $product->id;
+                $variant_colors_ids = collect($variantData['colors'] ?? [])->pluck('id');
 
                 if (!empty($variantData['id'])) {
                     $variant = ProductVariant::findOrFail($variantData['id']);
                     $previous_price = $variant->price;
                     $cleanVariantData = Arr::except($cleanVariantData, ['sku']);
                     $variant->update($cleanVariantData);
+                    $variant->colors()->sync($variant_colors_ids);
                     $this->price_history_create($request, $previous_price, null, $variant);
                 } else {
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
                     $variant = ProductVariant::create($cleanVariantData);
                     // -1 means that its creating for the first time and you have to put null instead
+                    $variant->colors()->attach($variant_colors_ids);
                     $this->price_history_create($request, -1, null, $variant);
                 }
 
@@ -577,9 +612,8 @@ class ProductController extends Controller
 
     private function update_product_images(
         Request $request,
-                $product
-    )
-    {
+        $product
+    ) {
 
         // previois saved images of the products
         $existingImages = $request->get('images', []); // e.g., ["image_12_123456.jpg"]
@@ -601,7 +635,7 @@ class ProductController extends Controller
             }
             $normalizedPath = str_replace('.', '_', $image->path);
             $key = "product_image_path_" . $normalizedPath;
-            $position = (int)$request->get($key);
+            $position = (int) $request->get($key);
 
             $image->update([
                 'order' => $position,
@@ -612,7 +646,7 @@ class ProductController extends Controller
         if ($request->hasFile('product_images')) {
             foreach ($request->file('product_images') as $key => $productImage) {
                 $key = "product_image_file_" . $key;
-                $position = (int)$request->get($key);
+                $position = (int) $request->get($key);
                 $this->save_images($productImage, Product::class, $product->id, $position);
             }
         }
@@ -639,7 +673,7 @@ class ProductController extends Controller
             }
             $normalizedPath = str_replace('.', '_', $image->path);
             $key = "variant_" . $uuid . "_image_path_" . $normalizedPath;
-            $position = (int)$request->get($key);
+            $position = (int) $request->get($key);
 
             $image->update([
                 'order' => $position,
@@ -650,7 +684,7 @@ class ProductController extends Controller
         if ($request->hasFile("variant_images_" . $uuid)) {
             foreach ($request->file("variant_images_" . $uuid) as $key => $variantImage) {
                 $key = "variant_" . $uuid . "_image_file_" . $key;
-                $position = (int)$request->get($key);
+                $position = (int) $request->get($key);
                 $this->save_images(
                     $variantImage,
                     ProductVariant::class,

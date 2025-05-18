@@ -4,6 +4,7 @@ namespace App\Traits;
 use App\Models\InventoryBalance;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
 trait ProductsTrait
@@ -15,12 +16,14 @@ trait ProductsTrait
                 'images' => function ($sql) {
                     $sql->orderBy("order", 'asc');
                 },
+                'colors:id,name,code',
                 // 'options.values',
                 // 'variants.optionValues.option',
                 'variants' => function ($sql) {
                     $sql->whereNull("deleted_at")
-                        ->with('unit')
                         ->with([
+                            'unit',
+                            'colors:id,name,code',
                             'images' => function ($sql) {
                                 $sql->orderBy("order", 'asc');
                             }
@@ -43,11 +46,35 @@ trait ProductsTrait
                     $q->where('categories.id', $categoryId);
                 });
             })
+
+            // searching by color name
+            ->when($request->get('color_name'), function ($query, $color_name) {
+                $query->whereHas('colors', function ($sql) use ($color_name) {
+                    $sql->where('colors.name', $color_name);
+                })->orWhereHas('variants', function ($sql) use ($color_name) {
+                    $sql->whereHas('colors', function ($sql2) use ($color_name) {
+                        $sql2->where('colors.name', $color_name);
+                    });
+                });
+            })
+
+
+            // searhcin by color id
+            ->when($request->get('color_id'), function ($query, $color_id) {
+                $query->whereHas('colors', function ($sql) use ($color_id) {
+                    $sql->where('colors.id', $color_id);
+                })->orWhereHas('variants', function ($sql) use ($color_id) {
+                    $sql->whereHas('colors', function ($sql2) use ($color_id) {
+                        $sql2->where('colors.id', $color_id);
+                    });
+                });
+            })
+
             ->latest();
 
 
-        if ($request->get('type')) {
-            $products->where('type', $request->get('type'));
+        if ($request->get('type', 'simple')) {
+            $products->where('type', $request->get('type', 'simple'));
         }
 
         if ($request->get('product_id')) {
@@ -57,7 +84,7 @@ trait ProductsTrait
         return $products;
     }
 
-    public function solve_products_inventory(&$products = [])
+    public function solve_products_inventory($products = [])
     {
         $inventory_balances = InventoryBalance::get()
             ->keyBy(function ($item) {
@@ -80,5 +107,54 @@ trait ProductsTrait
                 $product->inventory_balance = $inventory_balances[$productKey]['total_quantity'] ?? 0.0;
             }
         }
+    }
+
+
+    // FOR SOLVING DISCOUNTS
+    public function applyDiscountsToCollection(Collection $products): void
+    {
+        foreach ($products as $product) {
+            $this->applyDiscountToProduct($product);
+
+            if ($product->relationLoaded('variants')) {
+                foreach ($product->variants as $variant) {
+                    $this->applyDiscountToProduct($variant);
+                }
+            }
+        }
+    }
+
+    public function applyDiscountToProduct($model): void
+    {
+        // Support both Product and ProductVariant
+        $price = $model->price;
+        $oldPrice = $model->old_price;
+        $discount = $model->discount();
+        // $model->tempHEHEHE = $discount ? $discount : "NO";
+        // return;
+
+        $finalPrice = $price;
+        $percentage = null;
+        $totalDiscount = null;
+
+        if ($discount && $discount->is_active) {
+            if ($discount->type === 'fixed') {
+                $totalDiscount = $discount->value;
+                $finalPrice = max(0, $price - $totalDiscount);
+                $percentage = $price > 0 ? round(($totalDiscount / $price) * 100) : null;
+            } elseif ($discount->type === 'percentage') {
+                $percentage = $discount->value;
+                $totalDiscount = round(($percentage / 100) * $price);
+                $finalPrice = max(0, $price - $totalDiscount);
+            }
+        } elseif ($oldPrice && $oldPrice > $price) {
+            $totalDiscount = $oldPrice - $price;
+            $percentage = $oldPrice > 0 ? round(($totalDiscount / $oldPrice) * 100) : null;
+        }
+
+        // $model->final_price = $finalPrice;
+        $model->price = $finalPrice;
+        $model->discount_percentage = $percentage;
+        $model->total_discount = $totalDiscount;
     }
 }
