@@ -37,7 +37,7 @@ class CheckPermission
             ], 403);
         }
 
-//        return redirect()->route('dashboard')
-//            ->with('error', 'У вас нет необходимых разрешений для доступа к этой странице.');
+        return redirect()->route('dashboard')
+            ->with('error', 'У вас нет необходимых разрешений для доступа к этой странице.');
     }
 }
