@@ -156,6 +156,7 @@ trait ProductsTrait
                 $totalDiscount = round(($percentage / 100) * $price);
                 $finalPrice = max(0, $price - $totalDiscount);
             }
+            $model->old_price = $price;
         } elseif ($oldPrice && $oldPrice > $price) {
             $totalDiscount = $oldPrice - $price;
             $percentage = $oldPrice > 0 ? round(($totalDiscount / $oldPrice) * 100) : null;

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\CartController;
 use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\ClientController;
 use App\Http\Controllers\Api\Admin\ClientLevelController;
@@ -67,6 +68,7 @@ Route::get('/products/{product}/main-image', [ProductImageController::class, 'ge
 
 //client
 Route::get('/products', [ProductController::class, 'index'])->middleware('auth:sanctum');
+Route::get('/cart-items', [CartController::class, 'cart_items'])->middleware('auth:sanctum');
 Route::get('/colors', [SettingsController::class, 'get_colors'])->middleware('auth:sanctum');
 //Route::get('/products/{slug}', [ProductController::class, 'show']);
 
