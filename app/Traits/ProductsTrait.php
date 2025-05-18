@@ -31,6 +31,15 @@ trait ProductsTrait
                 },
                 'defaultUnit',
             ])
+            ->withAvg([
+                'reviews' => function ($query) {
+                    $query->where('reviewable_type', Product::class)
+                        ->where('is_published', true)
+                        ->where('is_verified', true)
+                        ->where('is_spam', false)
+                        ->whereNull('deleted_at');
+                }
+            ], 'rating')
             ->when($request->get('search'), function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")

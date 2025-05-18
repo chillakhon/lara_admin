@@ -24,6 +24,7 @@ class ProductNumberTwoResouce extends JsonResource
             'default_unit_id' => $this->default_unit_id,
             'is_active' => $this->is_active,
             'has_variants' => $this->has_variants,
+            'avg_rating' => $this->reviews_avg_rating ? round($this->reviews_avg_rating, 2) : null,
             // 'allow_preorder' => $this->allow_preorder,
             // 'after_purchase_processing_time' => $this->after_purchase_processing_time,
             // 'created_at' => $this->created_at,

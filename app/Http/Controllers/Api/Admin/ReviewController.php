@@ -425,7 +425,7 @@ class ReviewController extends Controller
      *     )
      * )
      */
-    public function publish(Request $request, Review $review)
+    public function publish(Review $review, Request $request)
     {
         $review->update([
             'is_published' => true,

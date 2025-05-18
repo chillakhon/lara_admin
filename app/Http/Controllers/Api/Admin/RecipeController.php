@@ -89,7 +89,8 @@ class RecipeController extends Controller
         }
 
 
-        $this->change_items_model_type($recipes);
+        // return $recipes;
+        // $this->change_items_model_type($recipes);
 
         return response()->json([
             'recipes' => $recipes,
