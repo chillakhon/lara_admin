@@ -13,6 +13,11 @@ class CheckPermission
     {
         if (!$request->user()) {
             Log::info('Access denied: No authenticated user');
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+
             return redirect()->route('login');
         }
 
@@ -25,6 +30,13 @@ class CheckPermission
         }
 
         Log::info('Access denied: Missing required permissions');
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'У вас нет необходимых разрешений для доступа к этой странице.'
+            ], 403);
+        }
+
         return redirect()->route('dashboard')
             ->with('error', 'У вас нет необходимых разрешений для доступа к этой странице.');
     }
