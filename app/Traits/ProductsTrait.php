@@ -35,6 +35,8 @@ trait ProductsTrait
                 'reviews' => function ($query) {
                     $query->where('reviewable_type', Product::class)
                         ->where('is_published', true)
+                        ->where('is_verified', true)
+                        ->where('is_spam', false)
                         ->whereNull('deleted_at');
                 }
             ], 'rating')
