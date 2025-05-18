@@ -333,6 +333,7 @@ class ProductionController extends Controller
             'organization' => 'nullable|string',
             // 'quantity' => 'required|numeric|min:0.001',
             'planned_start_date' => 'nullable|date',
+            'planned_end_date' => 'nullable|date',
             'notes' => 'nullable|string',
             // 'tech_card_id' => 'required|integer|exists:recipes,id', // should exist in recipes table
             'batches' => 'required|array|min:1', // Products to be decremented
@@ -364,6 +365,7 @@ class ProductionController extends Controller
             // $validated['tech_card_id'],
             $validated['batches'],
             $validated['planned_start_date'] ? Carbon::parse($validated['planned_start_date']) : null,
+            $validated['planned_end_date'] ? Carbon::parse($validated['planned_end_date']) : null,
             $validated['notes']
         );
 
