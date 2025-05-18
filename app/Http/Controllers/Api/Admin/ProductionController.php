@@ -482,7 +482,7 @@ class ProductionController extends Controller
 
                 if ($batchModel) {
                     $batchModel->update([
-                        'planned_quantity' => $batch['planned_qty'],
+                        'planned_quantity' => $batch['planned_quantity'],
                         'performer_id' => $batch['performer_id'],
                         'planned_start_date' => $validated['planned_start_date'] ?? now(),
                         'notes' => $validated['notes'],
@@ -494,7 +494,7 @@ class ProductionController extends Controller
                         'recipe_id' => $batch['recipe_id'],
                         'status' => 'in_progress',
                         'created_by' => auth()->id(),
-                        'planned_quantity' => $batch['planned_qty'],
+                        'planned_quantity' => $batch['planned_quantity'],
                         'performer_id' => $batch['performer_id'],
                         'planned_start_date' => $validated['planned_start_date'] ?? now(),
                         'notes' => $validated['notes'],

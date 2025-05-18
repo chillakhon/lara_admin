@@ -92,6 +92,11 @@ class Order extends Model
         return $this->belongsTo(DeliveryMethod::class, 'delivery_method_id');
     }
 
+    public function deliveryZone()
+    {
+        return $this->belongsTo(DeliveryZone::class, 'delivery_zone_id');
+    }
+
     public function deliveryDate(): HasOne
     {
         return $this->hasOne(DeliveryDate::class);

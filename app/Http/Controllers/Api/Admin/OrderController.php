@@ -12,6 +12,7 @@ use App\Models\UserProfile;
 use App\Services\TelegramNotificationService;
 use App\Services\WhatsappService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +40,9 @@ class OrderController extends Controller
         $orders = Order::with([
             'items.product',
             'items.productVariant',
+            'items.color' => function ($sql) {
+                $sql->select(['id', 'name', 'code']);
+            },
             // 'payments',
             'deliveryMethod',
             'deliveryTarget',
@@ -259,12 +263,14 @@ class OrderController extends Controller
             'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.price' => 'required|numeric|min:0',
+            'items.*.color_id' => 'nullable|exists:colors,id',
             'notes' => 'nullable|string',
             // 'status' => 'required|in:' . implode(',', array_column(Order::STATUSES, 'value')),
             // 'payment_status' => 'required|in:pending,paid,failed,refunded',
-            'delivery_date' => 'nullable|date_format:Y-m-d H:i:s',
+            "delivery_address" => 'nullable|string',
+            // 'delivery_date' => 'nullable|date_format:Y-m-d H:i:s',
             'delivery_method_id' => 'required|exists:delivery_methods,id',
-            'delivery_target_id' => 'nullable|exists:delivery_targets,id',
+            'delivery_zone_id' => 'nullable|exists:delivery_zones,id',
             'data' => 'nullable|string',
         ]);
 
@@ -272,7 +278,15 @@ class OrderController extends Controller
 
         try {
             $user = $request->user();
+
             $client = Client::where('user_id', $user->id)->first();
+
+            if (!$client) {
+                return response()->json([
+                    "success" => false,
+                    "message" => "Клиент не найден!"
+                ]);
+            }
 
             $order = Order::create([
                 'client_id' => $client->id,
@@ -283,7 +297,8 @@ class OrderController extends Controller
                 'notes' => $validated['notes'] ?? null,
                 'delivery_date' => $validated['delivery_date'] ?? null,
                 'delivery_method_id' => $validated['delivery_method_id'] ?? null,
-                'delivery_target_id' => $validated['delivery_target_id'] ?? null,
+                // 'delivery_target_id' => $validated['delivery_target_id'] ?? null,
+                'delivery_zone_id' => $validated['delivery_zone_id'] ?? null,
                 'data' => $validated['data'] ?? null,
             ]);
 
@@ -310,6 +325,7 @@ class OrderController extends Controller
             DB::commit();
 
             return response()->json([
+                'success' => true,
                 'message' => 'Заказ успешно создан',
                 'order' => [
                     'id' => $order->id,
@@ -321,6 +337,8 @@ class OrderController extends Controller
                     'delivery_date' => $order->delivery_date,
                     'delivery_method_id' => $order->delivery_method_id,
                     'delivery_method_name' => $order->deliveryMethod ? $order->deliveryMethod->name : null,
+                    'delivery_zone_id' => $order->delivery_zone_id,
+                    'delivery_zone_name' => $order->deliveryZone ? $order->deliveryZone->name : null,
                     'delivery_target_id' => $order->delivery_target_id, // Возвращаем delivery_target_id
                     'data' => $order->data,
                     // 'user_profile' => $find_user_profile,
@@ -328,7 +346,11 @@ class OrderController extends Controller
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Ошибка сервера: ' . $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка сервера: ' . $e->getMessage(),
+                'line' => $e->getLine()
+            ], 500);
         }
     }
 
