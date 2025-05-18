@@ -201,7 +201,23 @@ class ProductionController extends Controller
         $performer_id = $groupedBatche->pluck('performer_id');
         $performers = [];
         if (count($performer_id) >= 1) {
-            $performers = User::whereIn('id', $performer_id)->get();
+            $performers = User
+                ::leftJoin(DB::raw('(
+                    SELECT * FROM user_profiles AS up1
+                        WHERE up1.id = (
+                        SELECT MAX(up2.id)
+                        FROM user_profiles AS up2
+                        WHERE up2.user_id = up1.user_id
+                    )
+                    ) as user_profiles'), 'user_profiles.user_id', 'users.id')
+                ->whereIn('users.id', $performer_id)
+                ->select([
+                    'users.id',
+                    'users.email',
+                    'user_profiles.first_name',
+                    'user_profiles.last_name'
+                ])
+                ->get();
         }
 
 
