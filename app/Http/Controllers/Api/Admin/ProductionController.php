@@ -176,7 +176,17 @@ class ProductionController extends Controller
             return $transformed;
         } else {
             $batches = $batches->get()->map($transform);
-            return $batches;
+            $batch_for_return = null;
+            if ($request->get('batch_number')) {
+                if (count($batches) === 1) {
+                    $batch_for_return = $batches[0];
+                }
+            } else {
+                $batch_for_return = $batches;
+            }
+            return [
+                'data' => $batch_for_return,
+            ];
         }
     }
 

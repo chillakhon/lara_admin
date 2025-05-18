@@ -12,7 +12,7 @@ class ImageResource extends JsonResource
         return [
             'id' => $this->id,
             'blur_hash' => $this->blur_hash,
-            'name' => $this->path,
+            'path' => $this->path,
             'order' => $this->order,
             'is_main' => $this->is_main ?? false,
         ];
