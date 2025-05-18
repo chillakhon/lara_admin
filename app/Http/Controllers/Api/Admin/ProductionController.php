@@ -201,7 +201,23 @@ class ProductionController extends Controller
         $performer_id = $groupedBatche->pluck('performer_id');
         $performers = [];
         if (count($performer_id) >= 1) {
-            $performers = User::whereIn('id', $performer_id)->get();
+            $performers = User
+                ::leftJoin(DB::raw('(
+                    SELECT * FROM user_profiles AS up1
+                        WHERE up1.id = (
+                        SELECT MAX(up2.id)
+                        FROM user_profiles AS up2
+                        WHERE up2.user_id = up1.user_id
+                    )
+                    ) as user_profiles'), 'user_profiles.user_id', 'users.id')
+                ->whereIn('users.id', $performer_id)
+                ->select([
+                    'users.id',
+                    'users.email',
+                    'user_profiles.first_name',
+                    'user_profiles.last_name'
+                ])
+                ->get();
         }
 
 
@@ -333,6 +349,7 @@ class ProductionController extends Controller
             'organization' => 'nullable|string',
             // 'quantity' => 'required|numeric|min:0.001',
             'planned_start_date' => 'nullable|date',
+            'planned_end_date' => 'nullable|date',
             'notes' => 'nullable|string',
             // 'tech_card_id' => 'required|integer|exists:recipes,id', // should exist in recipes table
             'batches' => 'required|array|min:1', // Products to be decremented
@@ -364,6 +381,7 @@ class ProductionController extends Controller
             // $validated['tech_card_id'],
             $validated['batches'],
             $validated['planned_start_date'] ? Carbon::parse($validated['planned_start_date']) : null,
+            $validated['planned_end_date'] ? Carbon::parse($validated['planned_end_date']) : null,
             $validated['notes']
         );
 
