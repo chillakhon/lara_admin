@@ -16,7 +16,8 @@ class OrderItem extends Model
         'product_variant_id',
         'quantity',
         'price',
-        'discount'
+        'discount',
+        'color_id',
     ];
 
     protected $casts = [
@@ -37,5 +38,10 @@ class OrderItem extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function color()
+    {
+        return $this->hasOne(Color::class, 'id', 'color_id');
     }
 }

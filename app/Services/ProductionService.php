@@ -46,7 +46,7 @@ class ProductionService
                     $batchData = [
                         'batch_number' => $batch_number . '-' . $index + 1,
                         'recipe_id' => $batchItem['recipe_id'],
-                        'planned_quantity' => $batchItem['planned_qty'],
+                        'planned_quantity' => $batchItem['planned_quantity'],
                         'status' => 'in_progress',
                         'performer_id' => $batchItem['performer_id'],
                         'planned_start_date' => $plannedStartDate ?? now(),

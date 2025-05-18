@@ -65,14 +65,16 @@ class DeliveryZone extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'country_code',
-        'region_code',
-        'city_code',
-        'postal_code_pattern',
-        'delivery_method_id'
-    ];
+    // protected $fillable = [
+    //     'name',
+    //     'country_code',
+    //     'region_code',
+    //     'city_code',
+    //     'postal_code_pattern',
+    //     'delivery_method_id'
+    // ];
+
+    protected $guarded = ["id"];
 
     public function deliveryMethod(): BelongsTo
     {
