@@ -216,6 +216,27 @@ class TelegramWebhookHandler extends WebhookHandler
             ->send();
     }
 
+
+    public function reset()
+    {
+        $chat = $this->getChat();
+
+        $chat->chatAction(ChatActions::TYPING)->send();
+
+        $user_profile = $this->user_profile();
+
+        if (!$user_profile) {
+            $this->start();
+            return;
+        }
+
+        $user_profile->update([
+            'telegram_user_id' => null,
+        ]);
+
+        $chat->message("Ваши данные были сброшены. Пожалуйста, начните заново с команды /start")->send();
+    }
+
     protected function getChat(): \DefStudio\Telegraph\Telegraph
     {
         if ($this->message?->chat()?->id()) {

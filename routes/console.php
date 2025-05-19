@@ -9,11 +9,12 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Artisan::command('bot_settings', function () {
-    $bot = TelegraphBot::find(1);
+    $bot = TelegraphBot::first();
 
     dd($bot->registerCommands([
         "help" => "Что умеет этот бот",
         "start" => "Начать использовать наш бот",
-        "orders" => "Ожидающие заказы"
+        "orders" => "Ожидающие заказы",
+        "reset" => "Сбросить данные и начать заново"
     ])->send());
 });
