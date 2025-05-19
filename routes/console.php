@@ -9,8 +9,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Artisan::command('bot_settings', function () {
-
-
     $bot = TelegraphBot::find(1);
 
     dd($bot->registerCommands([

@@ -2,6 +2,7 @@
 
 namespace App\Telegraph\Handlers;
 
+use App\Models\Client;
 use App\Models\Conversation;
 use App\Models\Order;
 use App\Models\OrderPayment;
@@ -93,6 +94,15 @@ class TelegramWebhookHandler extends WebhookHandler
                         'user_id' => $user->id,
                     ]);
                 }
+
+                $find_clients = Client::where('user_id', $user->id)->first();
+
+                if (!$find_clients) {
+                    Client::create([
+                        'user_id' => $user->id,
+                    ]);
+                }
+
                 // Сохраняем telegram_user_id в профиль
                 $user_profile->update([
                     'telegram_user_id' => $telegramId,
