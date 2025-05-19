@@ -170,7 +170,6 @@ class TelegramWebhookHandler extends WebhookHandler
             ->with(['payments', 'items'])
             ->get();
 
-
         foreach ($find_pending_orders as $order) {
             $message = "*Спасибо за ваш заказ!*🎉\n";
             $message .= "Вы оформили заказ №{$order->id} от {$order->created_at->format('d.m.Y в H:i')} на сумму {$order->total_amount}.\n\n";
