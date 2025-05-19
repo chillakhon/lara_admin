@@ -54,12 +54,14 @@ trait HelperTrait
         foreach ($recipes as $key => &$recipe) {
             if (isset($recipe['material_items'])) {
                 foreach ($recipe['material_items'] as &$item) {
+                    $item['norm_qty'] = $item['quantity'] ? $item['quantity'] / ($recipe['planned_quantity'] ?? 1) : null;
                     $item[$material_type_name] = $this->get_type_by_model($item[$material_type_name]);
                 }
             }
 
             if (isset($recipe['output_products'])) {
                 foreach ($recipe['output_products'] as &$item) {
+                    $item['norm_qty'] = $item['qty'] ? $item['qty'] / ($recipe['planned_quantity'] ?? 1) : null;
                     $item[$output_type_name] = $this->get_type_by_model($item[$output_type_name]);
                 }
             }
