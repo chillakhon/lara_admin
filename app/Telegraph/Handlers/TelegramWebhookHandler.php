@@ -2,6 +2,7 @@
 
 namespace App\Telegraph\Handlers;
 
+use App\Models\Client;
 use App\Models\Conversation;
 use App\Models\Order;
 use App\Models\OrderPayment;
@@ -93,6 +94,15 @@ class TelegramWebhookHandler extends WebhookHandler
                         'user_id' => $user->id,
                     ]);
                 }
+
+                $find_clients = Client::where('user_id', $user->id)->first();
+
+                if (!$find_clients) {
+                    Client::create([
+                        'user_id' => $user->id,
+                    ]);
+                }
+
                 // Сохраняем telegram_user_id в профиль
                 $user_profile->update([
                     'telegram_user_id' => $telegramId,
@@ -123,19 +133,31 @@ class TelegramWebhookHandler extends WebhookHandler
 
         $user_profile = $this->user_profile();
 
-        if (!$user_profile)
+        if (!$user_profile) {
+            $this->start();
             return;
+        }
 
-        $this->send_order_data($user_profile, $chat);
+        $client = Client::where('user_id', $user_profile->user_id)->first();
+
+        if (!$client) {
+            $this->start();
+            return;
+        }
+
+        $this->send_order_data($client, $chat);
     }
 
     public function send_order_data(
-        UserProfile $user_profile,
+        Client $client,
         \DefStudio\Telegraph\Telegraph $chat
     ) {
         $find_pending_orders_ids = Order
             ::whereIn('status', [Order::STATUS_PROCESSING, Order::STATUS_NEW])
             ->whereNull("deleted_at")
+            // once you found by clients, it's enought
+            // because second time you request with ids
+            ->where('client_id', $client->id)
             ->pluck('id')->toArray();
 
         if (count($find_pending_orders_ids) <= 0) {
@@ -145,10 +167,8 @@ class TelegramWebhookHandler extends WebhookHandler
 
         $find_pending_orders = Order
             ::whereIn('id', $find_pending_orders_ids)
-            ->where('client_id', $user_profile->user_id)
             ->with(['payments', 'items'])
             ->get();
-
 
         foreach ($find_pending_orders as $order) {
             $message = "*Спасибо за ваш заказ!*🎉\n";
@@ -193,6 +213,27 @@ class TelegramWebhookHandler extends WebhookHandler
                 ])
             )
             ->send();
+    }
+
+
+    public function reset()
+    {
+        $chat = $this->getChat();
+
+        $chat->chatAction(ChatActions::TYPING)->send();
+
+        $user_profile = $this->user_profile();
+
+        if (!$user_profile) {
+            $this->start();
+            return;
+        }
+
+        $user_profile->update([
+            'telegram_user_id' => null,
+        ]);
+
+        $chat->message("Ваши данные были сброшены. Пожалуйста, начните заново с команды /start")->send();
     }
 
     protected function getChat(): \DefStudio\Telegraph\Telegraph

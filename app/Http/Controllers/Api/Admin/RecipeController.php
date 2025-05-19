@@ -59,7 +59,22 @@ class RecipeController extends Controller
             //            'material_items.unit',
 //            'material_items.unit',
             'outputUnit',
-            'createdBy',
+            'createdBy' => function ($sql) {
+                $sql->leftJoin(DB::raw('(
+                    SELECT * FROM user_profiles AS up1
+                        WHERE up1.id = (
+                        SELECT MAX(up2.id)
+                        FROM user_profiles AS up2
+                        WHERE up2.user_id = up1.user_id
+                    )
+                    ) as user_profiles'), 'user_profiles.user_id', 'users.id')
+                    ->select([
+                        'users.id',
+                        'users.email',
+                        'user_profiles.first_name',
+                        'user_profiles.last_name'
+                    ]);
+            },
             // 'costRates.category',
             'output_products.component.inventoryBalance',
         ])->whereNull('deleted_at');

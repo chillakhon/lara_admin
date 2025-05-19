@@ -7,6 +7,7 @@ use App\Http\Resources\ReviewResource;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\Role;
+use App\Traits\HelperTrait;
 use App\Traits\ReviewTrait;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -14,7 +15,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ReviewController extends Controller
 {
-    use ReviewTrait;
+    use ReviewTrait, HelperTrait;
     /**
      * Получить список отзывов
      *
@@ -160,6 +161,7 @@ class ReviewController extends Controller
         $reviews->getCollection()->transform(function ($review) {
             $review->client_name = optional($review->client?->user?->profile)->full_name;
             $review->client_email = optional($review->client?->user)->email;
+            $review->reviewable_type = $this->get_type_by_model($review->reviewable_type);
             return $review;
         });
 
