@@ -133,19 +133,31 @@ class TelegramWebhookHandler extends WebhookHandler
 
         $user_profile = $this->user_profile();
 
-        if (!$user_profile)
+        if (!$user_profile) {
+            $this->start();
             return;
+        }
 
-        $this->send_order_data($user_profile, $chat);
+        $client = Client::where('user_id', $user_profile->user_id)->first();
+
+        if (!$client) {
+            $this->start();
+            return;
+        }
+
+        $this->send_order_data($client, $chat);
     }
 
     public function send_order_data(
-        UserProfile $user_profile,
+        Client $client,
         \DefStudio\Telegraph\Telegraph $chat
     ) {
         $find_pending_orders_ids = Order
             ::whereIn('status', [Order::STATUS_PROCESSING, Order::STATUS_NEW])
             ->whereNull("deleted_at")
+            // once you found by clients, it's enought
+            // because second time you request with ids
+            ->where('client_id', $client->id)
             ->pluck('id')->toArray();
 
         if (count($find_pending_orders_ids) <= 0) {
@@ -155,7 +167,6 @@ class TelegramWebhookHandler extends WebhookHandler
 
         $find_pending_orders = Order
             ::whereIn('id', $find_pending_orders_ids)
-            ->where('client_id', $user_profile->user_id)
             ->with(['payments', 'items'])
             ->get();
 
