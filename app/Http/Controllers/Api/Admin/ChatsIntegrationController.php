@@ -23,10 +23,11 @@ class ChatsIntegrationController extends Controller
                 'token' => 'required|string',
                 'bot_name' => 'required|string',
             ]);
-            
 
-            $response = Http::get("https://api.telegram.org/bot{$request->get('token')}/setWebhook", [
-                'url' => env('APP_URL') . "/telegraph/" . $request->get('token') . "/webhook"
+            $telegram_token = $this->decryptToken($request->get('token'));
+
+            $response = Http::get("https://api.telegram.org/bot{$telegram_token}/setWebhook", [
+                'url' => env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook"
             ]);
 
             if (!$response->ok()) {
@@ -38,12 +39,12 @@ class ChatsIntegrationController extends Controller
             }
 
             $bot = TelegraphBot
-                ::where('token', $request->get('token'))
+                ::where('token', $telegram_token)
                 ->first();
 
             if (!$bot) {
                 $bot = TelegraphBot::create([
-                    'token' => $request->get('token'),
+                    'token' => $telegram_token,
                     'name' => $request->get('bot_name'),
                 ]);
             }
