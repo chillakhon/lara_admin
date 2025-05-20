@@ -9,6 +9,7 @@ use Exception;
 use Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
+use Log;
 
 class ChatsIntegrationController extends Controller
 {
@@ -21,6 +22,18 @@ class ChatsIntegrationController extends Controller
                 'bot_name' => 'required|string',
             ]);
 
+            $response = Http::get("https://api.telegram.org/bot{$request->get('token')}/setWebhook", [
+                'url' => env('APP_URL') . "/telegraph/" . $request->get('token') . "/webhook"
+            ]);
+
+            if (!$response->ok()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Telegram API error',
+                    'telegram_response' => $response->json(),
+                ]);
+            }
+
             $bot = TelegraphBot
                 ::where('token', $request->get('token'))
                 ->first();
@@ -29,18 +42,6 @@ class ChatsIntegrationController extends Controller
                 $bot = TelegraphBot::create([
                     'token' => $request->get('token'),
                     'name' => $request->get('bot_name'),
-                ]);
-            }
-
-            $response = Http::get("https://api.telegram.org/bot{$bot->token}/setWebhook", [
-                'url' => env('APP_URL'),
-            ]);
-
-            if (!$response->ok()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Telegram API error',
-                    'telegram_response' => $response->json(),
                 ]);
             }
 
@@ -56,6 +57,7 @@ class ChatsIntegrationController extends Controller
                 'message' => "Bot was connected!"
             ]);
         } catch (Exception $e) {
+            Log::info($e);
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
