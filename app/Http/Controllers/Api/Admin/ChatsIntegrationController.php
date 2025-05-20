@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Traits\HelperTrait;
 use Artisan;
 use DefStudio\Telegraph\Models\TelegraphBot;
 use Exception;
@@ -13,6 +14,7 @@ use Log;
 
 class ChatsIntegrationController extends Controller
 {
+    use HelperTrait;
     public function telegram_integration(Request $request)
     {
         try {
@@ -21,6 +23,7 @@ class ChatsIntegrationController extends Controller
                 'token' => 'required|string',
                 'bot_name' => 'required|string',
             ]);
+            
 
             $response = Http::get("https://api.telegram.org/bot{$request->get('token')}/setWebhook", [
                 'url' => env('APP_URL') . "/telegraph/" . $request->get('token') . "/webhook"

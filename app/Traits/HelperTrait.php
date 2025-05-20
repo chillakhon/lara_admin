@@ -77,4 +77,5 @@ trait HelperTrait
             default => throw new Exception("Unknown item type: {$component_type}"),
         };
     }
+    
 }

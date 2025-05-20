@@ -10,6 +10,7 @@
         "bepsvpt/blurhash": "^4.0",
         "darkaonline/l5-swagger": "^9.0",
         "defstudio/telegraph": "^1.59",
+        "defuse/php-encryption": "^2.4",
         "intervention/image": "^3.11",
         "intervention/image-laravel": "^1.3",
         "kalnoy/nestedset": "^6.0",
