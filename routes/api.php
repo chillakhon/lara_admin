@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Admin\CartController;
 use App\Http\Controllers\Api\Admin\CategoryController;
+use App\Http\Controllers\Api\Admin\ChatsIntegrationController;
 use App\Http\Controllers\Api\Admin\ClientController;
 use App\Http\Controllers\Api\Admin\ClientLevelController;
 use App\Http\Controllers\Api\Admin\CostCategoryController;
@@ -565,5 +566,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            Route::post('/{conversation}/close', [ConversationController::class, 'close'])->name('close');
 //            Route::post('/{conversation}/assign', [ConversationController::class, 'assign'])->name('assign');
 //        });
+
+
+        Route::prefix('/integrations')->group(function () {
+            Route::prefix('/chats')->group(function () {
+                Route::post('/telegram', [ChatsIntegrationController::class, 'telegram_integration']);
+            });
+        });
     });
 });
