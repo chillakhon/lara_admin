@@ -77,4 +77,17 @@ trait HelperTrait
             default => throw new Exception("Unknown item type: {$component_type}"),
         };
     }
+
+    public function decryptToken($base64Token)
+    {
+        $encrypted = base64_decode($base64Token);
+        $decrypted = openssl_decrypt(
+            $encrypted,
+            'AES-256-CBC',
+            env('ENCRYPTED_KEY'),
+            OPENSSL_RAW_DATA,
+            env('ENCRYPTED_IV')
+        );
+        return $decrypted;
+    }
 }
