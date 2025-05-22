@@ -340,6 +340,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             // Route::post('/batches/{batch}/start', [ProductionController::class, 'start'])->name('start');
             Route::put('/batches/complete', [ProductionController::class, 'complete'])->name('complete');
             Route::put('/batches/cancel', [ProductionController::class, 'cancel'])->name('cancel');
+            Route::put('/batches/cancel/all-batch', [ProductionController::class, 'cancelAll']);
             //            Route::post('/batches/{batch}/add-costs', [ProductionController::class, 'addCosts'])->name('addCosts');
 
             // Статистика и отчеты

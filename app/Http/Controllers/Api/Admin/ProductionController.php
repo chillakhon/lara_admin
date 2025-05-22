@@ -14,6 +14,7 @@ use App\Traits\HelperTrait;
 use App\Traits\InventoryTrait;
 use Carbon\Carbon;
 use DB;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -233,8 +234,10 @@ class ProductionController extends Controller
             $groupStatus = 'pending';
         } elseif ($statuses->count() === 1 && $statuses->first() === 'completed') {
             $groupStatus = 'completed';
+        } elseif ($statuses->count() === 1 && $statuses->first() === 'cancelled') {
+            $groupStatus = 'cancelled';
         } else {
-            $groupStatus = 'mixed'; // fallback if statuses are inconsistent
+            $groupStatus = 'mixed';
         }
 
         $completed_datetime = null;
@@ -860,7 +863,7 @@ class ProductionController extends Controller
             }
 
             if (in_array($batch->status, ['cancelled'])) {
-                throw new \Exception("Невозможно отменить производство. Неверный статус партии.");
+                throw new Exception("Невозможно отменить производство. Неверный статус партии.");
             }
 
             if ($batch->performer_id && $batch->performer_id !== auth()->id()) {
@@ -869,17 +872,18 @@ class ProductionController extends Controller
                 ], 403);
             }
 
-            $output_products_for_remove = $this
-                ->validateRemoveProductionPossibility($batch->output_products);
+            if ($batch->status === "completed") {
+                $output_products_for_remove = $this
+                    ->validateRemoveProductionPossibility($batch->output_products);
 
-            if (count($output_products_for_remove) >= 1) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Недостаточно готовой продукции для отмены партии',
-                    'output_products' => $output_products_for_remove
-                ]);
+                if (count($output_products_for_remove) >= 1) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Недостаточно готовой продукции для отмены партии',
+                        'output_products' => $output_products_for_remove
+                    ]);
+                }
             }
-
 
             $this->productionService->cancelProduction($batch);
 
@@ -890,10 +894,84 @@ class ProductionController extends Controller
                     'status' => 'cancelled',
                 ]
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage()
             ], 400);
+        }
+    }
+
+
+    public function cancelAll(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $validated = $request->validate([
+                'batch_number' => 'required|string'
+            ]);
+
+            $production_batches = ProductionBatch
+                ::where('batch_number', 'like', "{$validated['batch_number']}-%")
+                ->with(['output_products', 'material_items'])
+                ->get();
+
+            if (count($production_batches) <= 0) {
+                return response()->json([
+                    'error' => 'Производственные партии не найдены'
+                ], 404);
+            }
+
+            if ($production_batches->every(fn($batch) => $batch->status === 'cancelled')) {
+                throw new Exception("Невозможно отменить производства. Все партии уже отменены.");
+            }
+
+            if ($production_batches->contains(fn($batch) => $batch->status === 'cancelled')) {
+                throw new Exception("Невозможно отменить производства. Одна из партий уже отменена.");
+            }
+
+            $message_for_non_performers = null;
+
+            foreach ($production_batches as $key => $batch) {
+
+                if ($batch->performer_id && $batch->performer_id !== auth()->id()) {
+                    $message_for_non_performers = 'Вы не можете отменить некоторые партии, так как вы не являетесь их исполнителем.';
+                    continue;
+                }
+
+                if ($batch->status === "completed") {
+                    $output_products_for_remove = $this
+                        ->validateRemoveProductionPossibility($batch->output_products);
+
+                    if (count($output_products_for_remove) >= 1) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Недостаточно готовой продукции для отмены партии',
+                            'output_products' => $output_products_for_remove
+                        ]);
+                    }
+                }
+
+                $this->productionService->cancelProduction($batch);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Производственные партии отменены',
+                'note' => $message_for_non_performers,
+                'batches' => [
+                    'status' => 'cancelled',
+                ]
+            ], 200);
+        } catch (Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+            ]);
         }
     }
 
