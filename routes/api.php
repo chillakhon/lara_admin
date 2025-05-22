@@ -572,6 +572,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::prefix('/chats')->group(function () {
                 Route::post('/telegram', [ChatsIntegrationController::class, 'telegram_integration']);
             });
+            Route::prefix('/mail')->group(function () {
+                Route::post('/configuration', [ChatsIntegrationController::class, 'updateMailSettings']);
+            });
         });
     });
 });

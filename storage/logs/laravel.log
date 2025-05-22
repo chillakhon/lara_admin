@@ -264,3 +264,30 @@
 #35 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/avaz/Des...')
 #36 {main}
 "} 
+[2025-05-22 19:31:09] local.INFO: User: 28  
+[2025-05-22 19:31:09] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 19:31:09] local.INFO: Access denied: Missing required roles  
+[2025-05-22 19:31:41] local.INFO: User: 28  
+[2025-05-22 19:31:41] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 19:31:41] local.INFO: Access granted  
+[2025-05-22 19:32:28] local.INFO: User: 28  
+[2025-05-22 19:32:28] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 19:32:28] local.INFO: Access granted  
+[2025-05-22 19:32:29] local.INFO: User: 28  
+[2025-05-22 19:32:29] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 19:32:29] local.INFO: Access granted  
+[2025-05-22 19:32:54] local.INFO: User: 28  
+[2025-05-22 19:32:54] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 19:32:54] local.INFO: Access granted  
+[2025-05-22 19:33:57] local.INFO: User: 28  
+[2025-05-22 19:33:57] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 19:33:57] local.INFO: Access granted  
+[2025-05-22 19:35:17] local.INFO: User: 28  
+[2025-05-22 19:35:17] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 19:35:17] local.INFO: Access granted  
+[2025-05-22 19:35:47] local.INFO: User: 28  
+[2025-05-22 19:35:47] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 19:35:47] local.INFO: Access granted  
+[2025-05-22 19:36:04] local.INFO: User: 28  
+[2025-05-22 19:36:04] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 19:36:04] local.INFO: Access granted  
