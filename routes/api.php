@@ -111,14 +111,13 @@ Route::post('/admin-register', [RegisteredUserController::class, 'admin_registra
 Route::get('/client-user', [AuthenticatedSessionController::class, 'get_user'])->middleware('auth:sanctum');
 
 
+Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
+Route::post('reset-password', [NewPasswordController::class, 'store']);
 //auth user
 Route::middleware('guest')->group(function () {
     Route::post('register', [RegisteredUserController::class, 'register']);
     Route::post('login', [AuthenticatedSessionController::class, 'login']);
     Route::post('check-verification', [AuthenticatedSessionController::class, 'check_verification']);
-
-    Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
-    Route::post('reset-password', [NewPasswordController::class, 'store']);
 });
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class);
@@ -569,9 +568,12 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //        });
 
 
-        Route::prefix('/integrations')->group(function () {
+        Route::prefix('/third-party-intecgrations')->group(function () {
             Route::prefix('/chats')->group(function () {
                 Route::post('/telegram', [ChatsIntegrationController::class, 'telegram_integration']);
+            });
+            Route::prefix('/mail')->group(function () {
+                Route::post('/configuration', [ChatsIntegrationController::class, 'updateMailSettings']);
             });
         });
     });

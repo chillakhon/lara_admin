@@ -10,6 +10,7 @@ use Exception;
 use Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\File;
 use Log;
 
 class ChatsIntegrationController extends Controller
@@ -67,6 +68,59 @@ class ChatsIntegrationController extends Controller
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
             ]);
+        }
+    }
+
+
+    public function updateMailSettings(Request $request)
+    {
+
+        $request->validate([
+            'MAIL_MAILER' => 'required|string',
+            'MAIL_HOST' => 'required|string',
+            'MAIL_PORT' => 'required|numeric',
+            'MAIL_USERNAME' => 'required|string',
+            'MAIL_PASSWORD' => 'required|string',
+            'MAIL_ENCRYPTION' => 'required|string',
+            'MAIL_FROM_ADDRESS' => 'required|email',
+        ]);
+
+        $envPath = base_path('.env');
+
+        if (!File::exists($envPath)) {
+            return response()->json(['error' => '.env file not found'], 404);
+        }
+
+        $data = $request->only([
+            'MAIL_MAILER',
+            'MAIL_HOST',
+            'MAIL_PORT',
+            'MAIL_USERNAME',
+            'MAIL_PASSWORD',
+            'MAIL_ENCRYPTION',
+            'MAIL_FROM_ADDRESS',
+        ]);
+
+        foreach ($data as $key => $value) {
+            self::setEnvValue($key, $value);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Mail settings updated successfully']);
+    }
+
+    private static function setEnvValue($key, $value)
+    {
+        $envPath = base_path('.env');
+        $escaped = preg_quote('=' . env($key), '/');
+
+        if (env($key) !== null) {
+            File::put($envPath, preg_replace(
+                "/^$key$escaped/m",
+                "$key=\"$value\"",
+                File::get($envPath)
+            ));
+        } else {
+            File::append($envPath, "\n$key=\"$value\"");
         }
     }
 }
