@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\User;
+use App\Models\UserProfile;
 use App\Notifications\MailNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -31,10 +32,11 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function admin_registration(Request $request): RedirectResponse
+    public function admin_registration(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string',
             'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
@@ -46,11 +48,27 @@ class RegisteredUserController extends Controller
             'type' => User::TYPE_CLIENT
         ]);
 
-        event(new Registered($user));
+        if ($request->get('first_name') || $request->get('last_name')) {
+            UserProfile::create([
+                'user_id' => $user->id,
+                'first_name' => $request->get('first_name'),
+                'last_name' => $request->get('last_name'),
+            ]);
+        }
 
-        Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        $token = $user->createToken('authToken')->plainTextToken;
+        // event(new Registered($user));
+
+        // Auth::login($user);
+
+        // return redirect(route('dashboard', absolute: false));
+
+        return response()->json([
+            'success' => true,
+            'user' => $user->load(['profile']),
+            'token' => $token,
+        ]);
     }
 
     // users

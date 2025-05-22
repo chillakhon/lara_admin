@@ -58,7 +58,7 @@ class PasswordResetLinkController extends Controller
         // Если ссылка отправлена успешно
         if ($status == Password::RESET_LINK_SENT) {
             return response()->json([
-                'status' => __($status), // Сообщение об успешной отправке
+                'status' => 'Ссылка для сброса пароля отправлена на email', // Сообщение об успешной отправке
             ]);
         }
 
