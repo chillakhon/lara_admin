@@ -231,13 +231,15 @@ class ProductionService
                 $this->add_component_to_inventory($modified_item);
             }
 
-            foreach ($batch->output_products as $output_item) {
-                $modified_item = [
-                    'component_type' => $this->get_type_by_model($output_item['output_type']),
-                    'component_id' => $output_item['output_id'],
-                    'quantity' => $output_item['qty'],
-                ];
-                $this->remove_component_from_inventory($modified_item);
+            if ($batch->status === "completed") {
+                foreach ($batch->output_products as $output_item) {
+                    $modified_item = [
+                        'component_type' => $this->get_type_by_model($output_item['output_type']),
+                        'component_id' => $output_item['output_id'],
+                        'quantity' => $output_item['qty'],
+                    ];
+                    $this->remove_component_from_inventory($modified_item);
+                }
             }
 
             $batch->update([

@@ -1,0 +1,454 @@
+[2025-05-21 18:41:03] local.INFO: User: 11  
+[2025-05-21 18:41:03] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:41:03] local.INFO: Access granted  
+[2025-05-21 18:41:03] local.INFO: Checking manage-tasks for user: {"id":11,"type":null,"passes":false} 
+[2025-05-21 18:44:59] local.INFO: User: 11  
+[2025-05-21 18:44:59] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:44:59] local.INFO: Access granted  
+[2025-05-21 18:45:03] local.INFO: User: 11  
+[2025-05-21 18:45:03] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:03] local.INFO: Access granted  
+[2025-05-21 18:45:04] local.INFO: User: 11  
+[2025-05-21 18:45:04] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:04] local.INFO: Access granted  
+[2025-05-21 18:45:11] local.INFO: User: 11  
+[2025-05-21 18:45:11] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:11] local.INFO: Access granted  
+[2025-05-21 18:45:12] local.INFO: User: 11  
+[2025-05-21 18:45:12] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:12] local.INFO: Access granted  
+[2025-05-21 18:45:12] local.INFO: User: 11  
+[2025-05-21 18:45:12] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:12] local.INFO: Access granted  
+[2025-05-21 18:45:13] local.INFO: User: 11  
+[2025-05-21 18:45:13] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:13] local.INFO: Access granted  
+[2025-05-21 18:45:14] local.INFO: User: 11  
+[2025-05-21 18:45:14] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:14] local.INFO: Access granted  
+[2025-05-21 18:45:20] local.INFO: User: 11  
+[2025-05-21 18:45:20] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:20] local.INFO: Access granted  
+[2025-05-21 18:45:21] local.INFO: User: 11  
+[2025-05-21 18:45:21] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:21] local.INFO: Access granted  
+[2025-05-21 18:45:22] local.INFO: User: 11  
+[2025-05-21 18:45:22] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:22] local.INFO: Access granted  
+[2025-05-21 18:45:22] local.INFO: User: 11  
+[2025-05-21 18:45:22] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:22] local.INFO: Access granted  
+[2025-05-21 18:45:23] local.INFO: User: 11  
+[2025-05-21 18:45:23] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:23] local.INFO: Access granted  
+[2025-05-21 18:45:30] local.INFO: User: 11  
+[2025-05-21 18:45:30] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:30] local.INFO: Access granted  
+[2025-05-21 18:45:37] local.INFO: User: 11  
+[2025-05-21 18:45:37] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:37] local.INFO: Access granted  
+[2025-05-21 18:45:38] local.INFO: User: 11  
+[2025-05-21 18:45:38] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:38] local.INFO: Access granted  
+[2025-05-21 18:45:38] local.INFO: User: 11  
+[2025-05-21 18:45:38] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:38] local.INFO: Access granted  
+[2025-05-21 18:45:46] local.INFO: User: 11  
+[2025-05-21 18:45:46] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:46] local.INFO: Access granted  
+[2025-05-21 18:45:46] local.INFO: User: 11  
+[2025-05-21 18:45:46] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:46] local.INFO: Access granted  
+[2025-05-21 18:45:47] local.INFO: User: 11  
+[2025-05-21 18:45:47] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:45:47] local.INFO: Access granted  
+[2025-05-21 18:46:11] local.INFO: User: 11  
+[2025-05-21 18:46:11] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:11] local.INFO: Access granted  
+[2025-05-21 18:46:12] local.INFO: User: 11  
+[2025-05-21 18:46:12] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:12] local.INFO: Access granted  
+[2025-05-21 18:46:12] local.INFO: User: 11  
+[2025-05-21 18:46:12] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:12] local.INFO: Access granted  
+[2025-05-21 18:46:16] local.INFO: User: 11  
+[2025-05-21 18:46:16] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:16] local.INFO: Access granted  
+[2025-05-21 18:46:17] local.INFO: User: 11  
+[2025-05-21 18:46:17] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:17] local.INFO: Access granted  
+[2025-05-21 18:46:17] local.INFO: User: 11  
+[2025-05-21 18:46:17] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:17] local.INFO: Access granted  
+[2025-05-21 18:46:18] local.INFO: User: 11  
+[2025-05-21 18:46:18] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:18] local.INFO: Access granted  
+[2025-05-21 18:46:20] local.INFO: User: 11  
+[2025-05-21 18:46:20] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:20] local.INFO: Access granted  
+[2025-05-21 18:46:20] local.INFO: User: 11  
+[2025-05-21 18:46:20] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:20] local.INFO: Access granted  
+[2025-05-21 18:46:23] local.INFO: User: 11  
+[2025-05-21 18:46:23] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:23] local.INFO: Access granted  
+[2025-05-21 18:46:44] local.INFO: User: 11  
+[2025-05-21 18:46:44] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:44] local.INFO: Access granted  
+[2025-05-21 18:46:44] local.INFO: User: 11  
+[2025-05-21 18:46:44] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:44] local.INFO: Access granted  
+[2025-05-21 18:46:45] local.INFO: User: 11  
+[2025-05-21 18:46:45] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:45] local.INFO: Access granted  
+[2025-05-21 18:46:55] local.INFO: User: 11  
+[2025-05-21 18:46:55] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:55] local.INFO: Access granted  
+[2025-05-21 18:46:56] local.INFO: User: 11  
+[2025-05-21 18:46:56] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:56] local.INFO: Access granted  
+[2025-05-21 18:46:57] local.INFO: User: 11  
+[2025-05-21 18:46:57] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:57] local.INFO: Access granted  
+[2025-05-21 18:46:58] local.INFO: User: 11  
+[2025-05-21 18:46:58] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:58] local.INFO: Access granted  
+[2025-05-21 18:46:59] local.INFO: User: 11  
+[2025-05-21 18:46:59] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:46:59] local.INFO: Access granted  
+[2025-05-21 18:47:00] local.INFO: User: 11  
+[2025-05-21 18:47:00] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:47:00] local.INFO: Access granted  
+[2025-05-21 18:47:00] local.INFO: User: 11  
+[2025-05-21 18:47:00] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:47:00] local.INFO: Access granted  
+[2025-05-21 18:47:32] local.INFO: User: 11  
+[2025-05-21 18:47:32] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:47:32] local.INFO: Access granted  
+[2025-05-21 18:47:35] local.INFO: User: 11  
+[2025-05-21 18:47:35] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:47:35] local.INFO: Access granted  
+[2025-05-21 18:47:42] local.INFO: User: 11  
+[2025-05-21 18:47:42] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:47:42] local.INFO: Access granted  
+[2025-05-21 18:47:46] local.INFO: User: 11  
+[2025-05-21 18:47:46] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:47:46] local.INFO: Access granted  
+[2025-05-21 18:47:48] local.INFO: User: 11  
+[2025-05-21 18:47:48] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:47:48] local.INFO: Access granted  
+[2025-05-21 18:47:49] local.INFO: User: 11  
+[2025-05-21 18:47:49] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:47:49] local.INFO: Access granted  
+[2025-05-21 18:47:52] local.INFO: User: 11  
+[2025-05-21 18:47:52] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:47:52] local.INFO: Access granted  
+[2025-05-21 18:47:56] local.INFO: User: 11  
+[2025-05-21 18:47:56] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-21 18:47:56] local.INFO: Access granted  
+[2025-05-22 03:17:08] local.INFO: User: 11  
+[2025-05-22 03:17:08] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:17:08] local.INFO: Access granted  
+[2025-05-22 03:17:13] local.INFO: User: 11  
+[2025-05-22 03:17:13] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:17:13] local.INFO: Access granted  
+[2025-05-22 03:17:16] local.INFO: User: 11  
+[2025-05-22 03:17:16] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:17:16] local.INFO: Access granted  
+[2025-05-22 03:17:33] local.INFO: User: 11  
+[2025-05-22 03:17:33] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:17:33] local.INFO: Access granted  
+[2025-05-22 03:17:41] local.INFO: User: 11  
+[2025-05-22 03:17:41] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:17:41] local.INFO: Access granted  
+[2025-05-22 03:17:46] local.INFO: User: 11  
+[2025-05-22 03:17:46] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:17:46] local.INFO: Access granted  
+[2025-05-22 03:29:35] local.INFO: User: 11  
+[2025-05-22 03:29:35] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:29:35] local.INFO: Access granted  
+[2025-05-22 03:39:09] local.INFO: User: 11  
+[2025-05-22 03:39:09] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:39:09] local.INFO: Access granted  
+[2025-05-22 03:39:17] local.INFO: User: 11  
+[2025-05-22 03:39:17] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:39:17] local.INFO: Access granted  
+[2025-05-22 03:39:20] local.INFO: User: 11  
+[2025-05-22 03:39:20] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:39:20] local.INFO: Access granted  
+[2025-05-22 03:46:53] local.INFO: User: 11  
+[2025-05-22 03:46:53] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:46:53] local.INFO: Access granted  
+[2025-05-22 03:47:33] local.INFO: User: 11  
+[2025-05-22 03:47:33] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:47:33] local.INFO: Access granted  
+[2025-05-22 03:49:18] local.INFO: User: 11  
+[2025-05-22 03:49:18] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:49:18] local.INFO: Access granted  
+[2025-05-22 03:49:41] local.INFO: User: 11  
+[2025-05-22 03:49:41] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:49:41] local.INFO: Access granted  
+[2025-05-22 03:49:42] local.INFO: User: 11  
+[2025-05-22 03:49:42] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:49:42] local.INFO: Access granted  
+[2025-05-22 03:50:18] local.INFO: User: 11  
+[2025-05-22 03:50:18] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:50:18] local.INFO: Access granted  
+[2025-05-22 03:52:22] local.INFO: User: 11  
+[2025-05-22 03:52:22] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:52:22] local.INFO: Access granted  
+[2025-05-22 03:52:37] local.INFO: User: 11  
+[2025-05-22 03:52:37] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:52:37] local.INFO: Access granted  
+[2025-05-22 03:52:41] local.INFO: User: 11  
+[2025-05-22 03:52:41] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:52:41] local.INFO: Access granted  
+[2025-05-22 03:52:47] local.INFO: User: 11  
+[2025-05-22 03:52:47] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:52:47] local.INFO: Access granted  
+[2025-05-22 03:53:16] local.INFO: User: 11  
+[2025-05-22 03:53:16] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:53:16] local.INFO: Access granted  
+[2025-05-22 03:56:39] local.INFO: User: 11  
+[2025-05-22 03:56:39] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:56:39] local.INFO: Access granted  
+[2025-05-22 03:56:41] local.INFO: User: 11  
+[2025-05-22 03:56:41] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:56:41] local.INFO: Access granted  
+[2025-05-22 03:56:43] local.INFO: User: 11  
+[2025-05-22 03:56:43] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:56:43] local.INFO: Access granted  
+[2025-05-22 03:57:06] local.INFO: User: 11  
+[2025-05-22 03:57:06] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:57:06] local.INFO: Access granted  
+[2025-05-22 03:57:11] local.INFO: User: 11  
+[2025-05-22 03:57:11] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:57:11] local.INFO: Access granted  
+[2025-05-22 03:57:15] local.INFO: User: 11  
+[2025-05-22 03:57:15] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:57:15] local.INFO: Access granted  
+[2025-05-22 03:57:27] local.INFO: User: 11  
+[2025-05-22 03:57:27] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:57:27] local.INFO: Access granted  
+[2025-05-22 03:57:39] local.INFO: User: 11  
+[2025-05-22 03:57:39] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:57:39] local.INFO: Access granted  
+[2025-05-22 03:57:42] local.INFO: User: 11  
+[2025-05-22 03:57:42] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:57:42] local.INFO: Access granted  
+[2025-05-22 03:58:14] local.INFO: User: 11  
+[2025-05-22 03:58:14] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:58:14] local.INFO: Access granted  
+[2025-05-22 03:58:25] local.INFO: User: 11  
+[2025-05-22 03:58:25] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:58:25] local.INFO: Access granted  
+[2025-05-22 03:58:27] local.INFO: User: 11  
+[2025-05-22 03:58:27] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:58:27] local.INFO: Access granted  
+[2025-05-22 03:58:49] local.INFO: User: 11  
+[2025-05-22 03:58:49] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:58:49] local.INFO: Access granted  
+[2025-05-22 03:58:50] local.INFO: User: 11  
+[2025-05-22 03:58:50] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:58:50] local.INFO: Access granted  
+[2025-05-22 03:58:54] local.INFO: User: 11  
+[2025-05-22 03:58:54] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:58:54] local.INFO: Access granted  
+[2025-05-22 03:59:00] local.INFO: User: 11  
+[2025-05-22 03:59:00] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:59:00] local.INFO: Access granted  
+[2025-05-22 03:59:04] local.INFO: User: 11  
+[2025-05-22 03:59:04] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:59:04] local.INFO: Access granted  
+[2025-05-22 03:59:24] local.INFO: User: 11  
+[2025-05-22 03:59:24] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:59:24] local.INFO: Access granted  
+[2025-05-22 03:59:39] local.INFO: User: 11  
+[2025-05-22 03:59:39] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 03:59:39] local.INFO: Access granted  
+[2025-05-22 04:00:06] local.INFO: User: 11  
+[2025-05-22 04:00:06] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 04:00:06] local.INFO: Access granted  
+[2025-05-22 04:00:20] local.INFO: User: 11  
+[2025-05-22 04:00:20] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 04:00:20] local.INFO: Access granted  
+[2025-05-22 04:00:31] local.INFO: User: 11  
+[2025-05-22 04:00:31] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 04:00:31] local.INFO: Access granted  
+[2025-05-22 04:01:37] local.INFO: User: 11  
+[2025-05-22 04:01:37] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 04:01:37] local.INFO: Access granted  
+[2025-05-22 04:01:50] local.INFO: User: 11  
+[2025-05-22 04:01:50] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 04:01:50] local.INFO: Access granted  
+[2025-05-22 04:02:15] local.INFO: User: 11  
+[2025-05-22 04:02:15] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 04:02:15] local.INFO: Access granted  
+[2025-05-22 04:02:27] local.INFO: User: 11  
+[2025-05-22 04:02:27] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 04:02:27] local.INFO: Access granted  
+[2025-05-22 04:07:08] local.INFO: User: 11  
+[2025-05-22 04:07:08] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 04:07:08] local.INFO: Access granted  
+[2025-05-22 04:07:09] local.INFO: User: 11  
+[2025-05-22 04:07:09] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 04:07:09] local.INFO: Access granted  
+[2025-05-22 04:20:33] local.INFO: User: 11  
+[2025-05-22 04:20:33] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 04:20:33] local.INFO: Access granted  
+[2025-05-22 04:20:36] local.INFO: User: 11  
+[2025-05-22 04:20:36] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 04:20:36] local.INFO: Access granted  
+[2025-05-22 05:00:53] local.INFO: User: 11  
+[2025-05-22 05:00:53] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:00:53] local.INFO: Access granted  
+[2025-05-22 05:01:10] local.INFO: User: 11  
+[2025-05-22 05:01:10] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:01:10] local.INFO: Access granted  
+[2025-05-22 05:02:33] local.INFO: User: 11  
+[2025-05-22 05:02:33] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:02:33] local.INFO: Access granted  
+[2025-05-22 05:02:35] local.INFO: User: 11  
+[2025-05-22 05:02:35] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:02:35] local.INFO: Access granted  
+[2025-05-22 05:02:57] local.INFO: User: 11  
+[2025-05-22 05:02:57] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:02:57] local.INFO: Access granted  
+[2025-05-22 05:03:13] local.INFO: User: 11  
+[2025-05-22 05:03:13] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:03:13] local.INFO: Access granted  
+[2025-05-22 05:03:23] local.INFO: User: 11  
+[2025-05-22 05:03:23] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:03:23] local.INFO: Access granted  
+[2025-05-22 05:03:26] local.INFO: User: 11  
+[2025-05-22 05:03:26] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:03:26] local.INFO: Access granted  
+[2025-05-22 05:03:44] local.INFO: User: 11  
+[2025-05-22 05:03:44] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:03:44] local.INFO: Access granted  
+[2025-05-22 05:03:46] local.INFO: User: 11  
+[2025-05-22 05:03:46] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:03:46] local.INFO: Access granted  
+[2025-05-22 05:04:18] local.INFO: User: 11  
+[2025-05-22 05:04:18] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:04:18] local.INFO: Access granted  
+[2025-05-22 05:04:21] local.INFO: User: 11  
+[2025-05-22 05:04:21] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:04:21] local.INFO: Access granted  
+[2025-05-22 05:04:49] local.INFO: User: 11  
+[2025-05-22 05:04:49] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:04:49] local.INFO: Access granted  
+[2025-05-22 05:05:01] local.INFO: User: 11  
+[2025-05-22 05:05:01] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:05:01] local.INFO: Access granted  
+[2025-05-22 05:05:05] local.INFO: User: 11  
+[2025-05-22 05:05:05] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:05:05] local.INFO: Access granted  
+[2025-05-22 05:05:20] local.INFO: User: 11  
+[2025-05-22 05:05:20] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:05:20] local.INFO: Access granted  
+[2025-05-22 05:05:32] local.INFO: User: 11  
+[2025-05-22 05:05:32] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:05:32] local.INFO: Access granted  
+[2025-05-22 05:05:52] local.INFO: User: 11  
+[2025-05-22 05:05:52] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:05:52] local.INFO: Access granted  
+[2025-05-22 05:05:57] local.INFO: User: 11  
+[2025-05-22 05:05:57] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:05:57] local.INFO: Access granted  
+[2025-05-22 05:06:05] local.INFO: User: 11  
+[2025-05-22 05:06:05] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:06:05] local.INFO: Access granted  
+[2025-05-22 05:06:12] local.INFO: User: 11  
+[2025-05-22 05:06:12] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:06:12] local.INFO: Access granted  
+[2025-05-22 05:06:20] local.INFO: User: 11  
+[2025-05-22 05:06:20] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:06:20] local.INFO: Access granted  
+[2025-05-22 05:06:23] local.INFO: User: 11  
+[2025-05-22 05:06:23] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:06:23] local.INFO: Access granted  
+[2025-05-22 05:06:31] local.INFO: User: 11  
+[2025-05-22 05:06:31] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:06:31] local.INFO: Access granted  
+[2025-05-22 05:06:43] local.INFO: User: 11  
+[2025-05-22 05:06:43] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:06:43] local.INFO: Access granted  
+[2025-05-22 05:06:43] local.INFO: User: 11  
+[2025-05-22 05:06:43] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:06:43] local.INFO: Access granted  
+[2025-05-22 05:07:00] local.INFO: User: 11  
+[2025-05-22 05:07:00] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:07:00] local.INFO: Access granted  
+[2025-05-22 05:07:07] local.INFO: User: 11  
+[2025-05-22 05:07:07] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:07:07] local.INFO: Access granted  
+[2025-05-22 05:07:08] local.INFO: User: 11  
+[2025-05-22 05:07:08] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:07:08] local.INFO: Access granted  
+[2025-05-22 05:07:08] local.INFO: User: 11  
+[2025-05-22 05:07:08] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:07:08] local.INFO: Access granted  
+[2025-05-22 05:07:14] local.INFO: User: 11  
+[2025-05-22 05:07:14] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:07:14] local.INFO: Access granted  
+[2025-05-22 05:07:18] local.INFO: User: 11  
+[2025-05-22 05:07:18] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:07:18] local.INFO: Access granted  
+[2025-05-22 05:07:33] local.INFO: User: 11  
+[2025-05-22 05:07:33] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:07:33] local.INFO: Access granted  
+[2025-05-22 05:08:08] local.INFO: User: 11  
+[2025-05-22 05:08:08] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:08:08] local.INFO: Access granted  
+[2025-05-22 05:08:12] local.INFO: User: 11  
+[2025-05-22 05:08:12] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:08:12] local.INFO: Access granted  
+[2025-05-22 05:13:35] local.INFO: User: 11  
+[2025-05-22 05:13:35] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:13:35] local.INFO: Access granted  
+[2025-05-22 05:13:37] local.INFO: User: 11  
+[2025-05-22 05:13:37] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:13:37] local.INFO: Access granted  
+[2025-05-22 05:13:39] local.INFO: User: 11  
+[2025-05-22 05:13:39] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:13:39] local.INFO: Access granted  
+[2025-05-22 05:13:54] local.INFO: User: 11  
+[2025-05-22 05:13:54] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:13:54] local.INFO: Access granted  
+[2025-05-22 05:13:55] local.INFO: User: 11  
+[2025-05-22 05:13:55] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:13:55] local.INFO: Access granted  
+[2025-05-22 05:14:04] local.INFO: User: 11  
+[2025-05-22 05:14:04] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:14:04] local.INFO: Access granted  
+[2025-05-22 05:14:10] local.INFO: User: 11  
+[2025-05-22 05:14:10] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:14:10] local.INFO: Access granted  
+[2025-05-22 05:14:29] local.INFO: User: 11  
+[2025-05-22 05:14:29] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:14:29] local.INFO: Access granted  
+[2025-05-22 05:14:48] local.INFO: User: 11  
+[2025-05-22 05:14:48] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:14:48] local.INFO: Access granted  
+[2025-05-22 05:14:54] local.INFO: User: 11  
+[2025-05-22 05:14:54] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:14:54] local.INFO: Access granted  
+[2025-05-22 05:14:55] local.INFO: User: 11  
+[2025-05-22 05:14:55] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:14:55] local.INFO: Access granted  
+[2025-05-22 05:14:58] local.INFO: User: 11  
+[2025-05-22 05:14:58] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:14:58] local.INFO: Access granted  
+[2025-05-22 05:15:05] local.INFO: User: 11  
+[2025-05-22 05:15:05] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 05:15:05] local.INFO: Access granted  
+[2025-05-22 07:00:12] local.INFO: User: 11  
+[2025-05-22 07:00:12] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 07:00:12] local.INFO: Access granted  
+[2025-05-22 07:01:07] local.INFO: User: 11  
+[2025-05-22 07:01:07] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 07:01:07] local.INFO: Access granted  
+[2025-05-22 07:01:43] local.INFO: User: 11  
+[2025-05-22 07:01:43] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-22 07:01:43] local.INFO: Access granted  

@@ -7,6 +7,8 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Client;
 use App\Models\User;
 use App\Notifications\MailNotification;
+use DB;
+use Exception;
 use Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
@@ -80,31 +82,42 @@ class AuthenticatedSessionController extends Controller
     // for users login
     public function login(Request $request)
     {
-        $validation = $request->validate([
-            'email' => 'required|string',
-        ]);
+        DB::beginTransaction();
+        try {
+            $validation = $request->validate([
+                'email' => 'required|string',
+            ]);
 
-        $user = User::where('email', $validation['email'])->first();
+            $user = User::where('email', $validation['email'])->first();
 
-        if (!$user) {
-            $user = User::create(['email' => $validation['email']]);
+            if (!$user) {
+                $user = User::create(['email' => $validation['email']]);
 
-            Client::create(['user_id' => $user->id, 'bonus_balance' => 0.0]);
+                Client::create(['user_id' => $user->id, 'bonus_balance' => 0.0]);
+            }
+
+            $user->verification_code = rand(1000, 9999);
+            $user->verification_sent = now();
+            $user->save();
+
+            Notification::route('mail', $user->email)->notify(new MailNotification(
+                $user->email,
+                $user->verification_code
+            ));
+
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'На ваш email был отправлен код',
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => $e->getMessage(),
+            ]);
         }
-
-        $user->verification_code = rand(1000, 9999);
-        $user->verification_sent = now();
-        $user->save();
-
-        Notification::route('mail', $user->email)->notify(new MailNotification(
-            $user->email,
-            $user->verification_code
-        ));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'На ваш email был отправлен код',
-        ]);
     }
 
     public function check_verification(Request $request)
