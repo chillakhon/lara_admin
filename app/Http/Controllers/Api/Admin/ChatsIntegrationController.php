@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\MailSetting;
 use App\Traits\HelperTrait;
 use Artisan;
 use DefStudio\Telegraph\Models\TelegraphBot;
@@ -76,51 +77,36 @@ class ChatsIntegrationController extends Controller
     {
 
         $request->validate([
-            'MAIL_MAILER' => 'required|string',
-            'MAIL_HOST' => 'required|string',
-            'MAIL_PORT' => 'required|numeric',
-            'MAIL_USERNAME' => 'required|string',
-            'MAIL_PASSWORD' => 'required|string',
-            'MAIL_ENCRYPTION' => 'required|string',
-            'MAIL_FROM_ADDRESS' => 'required|email',
+            'mailer' => 'required|string',
+            'host' => 'required|string',
+            'port' => 'required|numeric',
+            'username' => 'required|string',
+            'password' => 'required|string',
+            'encryption' => 'nullable|string',
+            'from_address' => 'required|email',
         ]);
-
-        $envPath = base_path('.env');
-
-        if (!File::exists($envPath)) {
-            return response()->json(['error' => '.env file not found'], 404);
-        }
 
         $data = $request->only([
-            'MAIL_MAILER',
-            'MAIL_HOST',
-            'MAIL_PORT',
-            'MAIL_USERNAME',
-            'MAIL_PASSWORD',
-            'MAIL_ENCRYPTION',
-            'MAIL_FROM_ADDRESS',
+            'mailer',
+            'host',
+            'port',
+            'username',
+            'password',
+            'encryption',
+            'from_address',
         ]);
 
-        foreach ($data as $key => $value) {
-            self::setEnvValue($key, $value);
-        }
+        $setting = MailSetting::first();
 
-        return response()->json(['success' => true, 'message' => 'Mail settings updated successfully']);
-    }
-
-    private static function setEnvValue($key, $value)
-    {
-        $envPath = base_path('.env');
-        $escaped = preg_quote('=' . env($key), '/');
-
-        if (env($key) !== null) {
-            File::put($envPath, preg_replace(
-                "/^$key$escaped/m",
-                "$key=\"$value\"",
-                File::get($envPath)
-            ));
+        if ($setting) {
+            $setting->update($data);
         } else {
-            File::append($envPath, "\n$key=\"$value\"");
+            MailSetting::create($data);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Настройки почты успешно сохранены в базу данных.',
+        ]);
     }
 }

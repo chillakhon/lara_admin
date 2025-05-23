@@ -1,6 +1,7 @@
 <?php
 namespace App\Traits;
 
+use App\Models\MailSetting;
 use App\Models\Material;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -89,5 +90,25 @@ trait HelperTrait
             env('ENCRYPTED_IV')
         );
         return $decrypted;
+    }
+
+
+    public function applyMailSettings()
+    {
+        $settings = MailSetting::first(); // или where('user_id', ...) если на пользователя
+
+        if (!$settings) {
+            throw new Exception('Mail settings not found.');
+        }
+
+        config([
+            'mail.default' => $settings->mailer,
+            'mail.mailers.smtp.host' => $settings->host,
+            'mail.mailers.smtp.port' => $settings->port,
+            'mail.mailers.smtp.username' => $settings->username,
+            'mail.mailers.smtp.password' => $settings->password,
+            'mail.mailers.smtp.encryption' => $settings->encryption,
+            'mail.from.address' => $settings->from_address,
+        ]);
     }
 }
