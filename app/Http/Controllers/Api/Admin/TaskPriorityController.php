@@ -13,9 +13,26 @@ class TaskPriorityController extends Controller
 {
     use AuthorizesRequests, ValidatesRequests;
 
-    public function index()
+    public function index(Request $request)
     {
-        $this->authorize('manage-tasks');
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => "User was not found",
+            ]);
+        }
+
+        if (!$user->hasAnyRole(['admin', 'super-admin', 'manager'])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Sorry, you dont have specific permission to continue"
+            ]);
+        }
+
+        // $this->authorize('manage-tasks');
 
         return response()->json([
             'priorities' => TaskPriority::orderBy('level')->get()
@@ -25,6 +42,22 @@ class TaskPriorityController extends Controller
     public function store(Request $request)
     {
         // $this->authorize('manage-tasks');
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => "User was not found",
+            ]);
+        }
+
+        if (!$user->hasAnyRole(['admin', 'super-admin', 'manager'])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Sorry, you dont have specific permission to continue"
+            ]);
+        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:task_priorities,name',
@@ -39,12 +72,28 @@ class TaskPriorityController extends Controller
 
         return response()->json([
             'message' => 'Priority created successfully',
-            'taskPriority' => $priority], 201);
+            'taskPriority' => $priority
+        ], 201);
     }
 
     public function update(Request $request, TaskPriority $priority)
     {
         //$this->authorize('manage-tasks');
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => "User was not found",
+            ]);
+        }
+
+        if (!$user->hasAnyRole(['admin', 'super-admin', 'manager'])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Sorry, you dont have specific permission to continue"
+            ]);
+        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:task_priorities,name,' . $priority->id,
@@ -59,12 +108,28 @@ class TaskPriorityController extends Controller
 
         return response()->json([
             'message' => 'Priority updated successfully',
-            'taskPriority' => $priority], 201);
+            'taskPriority' => $priority
+        ], 201);
     }
 
-    public function destroy(TaskPriority $priority)
+    public function destroy(Request $request, TaskPriority $priority)
     {
-        $this->authorize('manage-tasks');
+        // $this->authorize('manage-tasks');
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => "User was not found",
+            ]);
+        }
+
+        if (!$user->hasAnyRole(['admin', 'super-admin', 'manager'])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Sorry, you dont have specific permission to continue"
+            ]);
+        }
 
         if ($priority->tasks()->exists()) {
             return redirect()->back()->with('error', 'Cannot delete priority with associated tasks');
@@ -73,6 +138,7 @@ class TaskPriorityController extends Controller
         $priority->delete();
 
         return response()->json([
-            'message' => 'Priority deleted successfully'], 201);
+            'message' => 'Priority deleted successfully'
+        ], 201);
     }
 }

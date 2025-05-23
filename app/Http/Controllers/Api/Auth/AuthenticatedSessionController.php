@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Client;
 use App\Models\User;
 use App\Notifications\MailNotification;
+use App\Traits\HelperTrait;
 use DB;
 use Exception;
 use Hash;
@@ -19,6 +20,8 @@ use OpenApi\Annotations as OA;
 
 class AuthenticatedSessionController extends Controller
 {
+
+    use HelperTrait;
     /**
      * Handle an incoming authentication request.
      *
@@ -99,6 +102,9 @@ class AuthenticatedSessionController extends Controller
             $user->verification_code = rand(1000, 9999);
             $user->verification_sent = now();
             $user->save();
+
+
+            $this->applyMailSettings();
 
             Notification::route('mail', $user->email)->notify(new MailNotification(
                 $user->email,

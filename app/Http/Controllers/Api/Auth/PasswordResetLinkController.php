@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Traits\HelperTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
@@ -10,6 +11,8 @@ use Illuminate\Http\JsonResponse;
 
 class PasswordResetLinkController extends Controller
 {
+
+    use HelperTrait;
     /**
      * Handle an incoming password reset link request.
      *
@@ -49,6 +52,9 @@ class PasswordResetLinkController extends Controller
         $request->validate([
             'email' => 'required|email',
         ]);
+
+
+        $this->applyMailSettings();
 
         // Отправка ссылки для сброса пароля
         $status = Password::sendResetLink(

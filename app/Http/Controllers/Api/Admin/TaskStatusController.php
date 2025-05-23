@@ -45,6 +45,22 @@ class TaskStatusController extends Controller
     {
         // $this->authorize('manage-tasks');
 
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => "User was not found",
+            ]);
+        }
+
+        if (!$user->hasAnyRole(['admin', 'super-admin', 'manager'])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Sorry, you dont have specific permission to continue"
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:task_statuses,name',
             'color' => 'required|string|max:7',
