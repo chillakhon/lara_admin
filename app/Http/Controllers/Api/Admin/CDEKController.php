@@ -35,5 +35,14 @@ class CDEKController extends Controller
         ]);
     }
 
- 
+    public function get_cdek_cities(Request $request)
+    {
+
+        $request->validate([
+            'city' => 'nullable|string',
+            'country_code' => 'nullable|string'
+        ]);
+
+        return $this->cdek_service->location_cities($request);
+    }
 }

@@ -137,7 +137,20 @@ class CdekDeliveryService extends DeliveryService
     }
 
 
-    
+    public function location_cities(Request $request)
+    {
+        $result = $this->cdek->cities()->getFiltered([
+            'country_codes' => $request->get('country_code', 'ru'),
+            'city' => $request->get('city')
+        ]);
+
+        if (!$result->isOk()) {
+            return [];
+        }
+        $cities = $this->cdek->formatResponseList($result, CityList::class);
+
+        return $cities->items;
+    }
 
 
     private function init_cdek_token()
