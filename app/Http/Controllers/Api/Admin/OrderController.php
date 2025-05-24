@@ -9,8 +9,10 @@ use App\Models\Product;
 use App\Models\DeliveryDate;
 use App\Models\DeliveryMethod;
 use App\Models\UserProfile;
+use App\Services\Delivery\CdekDeliveryService;
 use App\Services\TelegramNotificationService;
 use App\Services\WhatsappService;
+use App\Traits\HelperTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +24,8 @@ use Illuminate\Support\Facades\Schema;
 
 class OrderController extends Controller
 {
+
+    use HelperTrait;
 
     public function getUserOrders(Request $request)
     {
@@ -55,63 +59,6 @@ class OrderController extends Controller
             'orders' => $orders
         ]);
     }
-
-    /**
-     * @OA\Get(
-     *     path="/api/orders",
-     *     summary="Получить список заказов",
-     *     tags={"Orders"},
-     *     @OA\Parameter(
-     *         name="status",
-     *         in="query",
-     *         description="Фильтр по статусу заказа (если 'all', то фильтр не применяется)",
-     *         required=false,
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Поиск по номеру заказа или имени клиента",
-     *         required=false,
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Список заказов",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="orders", type="array", @OA\Items(
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="order_number", type="string", example="ORD-20250325-1234"),
-     *                 @OA\Property(property="status", type="string", example="pending"),
-     *                 @OA\Property(property="payment_status", type="string", example="paid"),
-     *                 @OA\Property(property="is_paid", type="boolean", example=true),
-     *                 @OA\Property(property="total_amount", type="string", example="1500.00 руб"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time", example="25.03.2025 14:30"),
-     *                 @OA\Property(property="client", type="object", nullable=true,
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="full_name", type="string", example="Иван Иванов")
-     *                 ),
-     *                 @OA\Property(property="delivery_method", type="object", nullable=true,
-     *                     @OA\Property(property="name", type="string", example="Курьер"),
-     *                     @OA\Property(property="type", type="string", example="express")
-     *                 )
-     *             )),
-     *             @OA\Property(property="filters", type="object",
-     *                 @OA\Property(property="status", type="string", nullable=true, example="pending"),
-     *                 @OA\Property(property="search", type="string", nullable=true, example="ORD-20250325-1234")
-     *             ),
-     *             @OA\Property(property="clients", type="array", @OA\Items(
-     *                 type="object",
-     *                 @OA\Property(property="full_name", type="string", example="Иван Иванов")
-     *             )),
-     *             @OA\Property(property="statuses", type="array", @OA\Items(type="string", example="pending")),
-     *             @OA\Property(property="paymentStatuses", type="array", @OA\Items(type="string", example="paid"))
-     *         )
-     *     )
-     * )
-     */
 
     public function index(Request $request)
     {
@@ -201,59 +148,6 @@ class OrderController extends Controller
             'paymentStatuses' => Order::PAYMENT_STATUSES,
         ]);
     }
-
-    /**
-     * @OA\Post(
-     *     path="/api/orders",
-     *     summary="Создание нового заказа",
-     *     tags={"Orders"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             type="object",
-     *             required={"client_id", "items", "status", "payment_status", "delivery_method_id"},
-     *             @OA\Property(property="client_id", type="integer", example=1),
-     *             @OA\Property(property="items", type="array", @OA\Items(
-     *                 type="object",
-     *                 required={"product_id", "quantity", "price"},
-     *                 @OA\Property(property="product_id", type="integer", example=10),
-     *                 @OA\Property(property="variant_id", type="integer", nullable=true, example=null),
-     *                 @OA\Property(property="quantity", type="number", example=2),
-     *                 @OA\Property(property="price", type="number", example=1999.99)
-     *             )),
-     *             @OA\Property(property="notes", type="string", nullable=true, example="Доставить до 18:00"),
-     *             @OA\Property(property="status", type="string", enum={"new", "processing", "completed", "cancelled"}, example="new"),
-     *             @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "failed", "refunded"}, example="pending"),
-     *             @OA\Property(property="delivery_date", type="string", format="date-time", nullable=true, example="2025-03-18T15:00:00Z", description="Ожидаемая дата доставки"),
-     *             @OA\Property(property="delivery_method_id", type="integer", example=3, description="ID метода доставки"),
-     *             @OA\Property(property="delivery_target_id", type="integer", nullable=true, example=1),
-     *             @OA\Property(property="data", type="string", nullable=true, example="Some additional data")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Заказ успешно создан",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Заказ успешно создан"),
-     *             @OA\Property(property="order", type="object",
-     *                 @OA\Property(property="id", type="integer"),
-     *                 @OA\Property(property="order_number", type="string"),
-     *                 @OA\Property(property="status", type="string"),
-     *                 @OA\Property(property="payment_status", type="string"),
-     *                 @OA\Property(property="total_amount", type="number"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="delivery_date", type="string", format="date-time", nullable=true),
-     *                 @OA\Property(property="delivery_method_id", type="integer", example=3, description="ID метода доставки"),
-     *                 @OA\Property(property="delivery_target_id", type="integer", nullable=true),
-     *                 @OA\Property(property="data", type="string", nullable=true)
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(response=400, description="Ошибка валидации"),
-     *     @OA\Response(response=500, description="Ошибка сервера")
-     * )
-     */
 
     public function store(Request $request)
     {
@@ -414,106 +308,7 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/orders/{order}",
-     *     summary="Получение информации о заказе",
-     *     description="Возвращает детальную информацию о заказе, включая товары, клиента, доставку и историю изменений.",
-     *     operationId="showOrder",
-     *     tags={"Orders"},
-     *     @OA\Parameter(
-     *         name="order",
-     *         in="path",
-     *         required=true,
-     *         description="ID заказа",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Успешный ответ",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="id", type="integer", example=123),
-     *             @OA\Property(property="order_number", type="string", example="ORD-2025-0001"),
-     *             @OA\Property(property="status", type="string", example="processing"),
-     *             @OA\Property(property="payment_status", type="string", example="paid"),
-     *             @OA\Property(property="total_amount", type="number", format="float", example=1500.50),
-     *             @OA\Property(property="discount_amount", type="number", format="float", example=100.00),
-     *             @OA\Property(property="created_at", type="string", format="date-time", example="26.03.2025 12:45"),
-     *             @OA\Property(property="notes", type="string", example="Позвонить перед доставкой"),
-     *
-     *             @OA\Property(property="delivery_date", type="string", format="date", example="2025-03-30"),
-     *             @OA\Property(property="delivery_method", type="object",
-     *                 @OA\Property(property="name", type="string", example="Курьерская доставка"),
-     *                 @OA\Property(property="description", type="string", example="Доставка в течение 2-3 дней"),
-     *                 @OA\Property(property="type", type="string", example="express")
-     *             ),
-     *             @OA\Property(property="delivery_target", type="string", example="Квартира"),
-     *
-     *             @OA\Property(property="client", type="object",
-     *                 @OA\Property(property="id", type="integer", example=5),
-     *                 @OA\Property(property="full_name", type="string", example="Иван Иванов"),
-     *                 @OA\Property(property="email", type="string", example="ivan@example.com"),
-     *                 @OA\Property(property="phone", type="string", example="+79995554433"),
-     *                 @OA\Property(property="address", type="string", example="г. Москва, ул. Ленина, д. 10, кв. 15")
-     *             ),
-     *
-     *             @OA\Property(property="items", type="array",
-     *                 @OA\Items(type="object",
-     *                     @OA\Property(property="id", type="integer", example=101),
-     *                     @OA\Property(property="product", type="object",
-     *                         @OA\Property(property="id", type="integer", example=55),
-     *                         @OA\Property(property="name", type="string", example="Медицинский халат"),
-     *                         @OA\Property(property="image", type="string", format="url", example="https://example.com/images/product1.jpg"),
-     *                         @OA\Property(property="article", type="string", example="ART-123456")
-     *                     ),
-     *                     @OA\Property(property="variant", type="string", example="XL, Белый"),
-     *                     @OA\Property(property="quantity", type="integer", example=2),
-     *                     @OA\Property(property="price", type="number", format="float", example=750.25),
-     *                     @OA\Property(property="reserve", type="integer", example=1)
-     *                 )
-     *             ),
-     *
-     *             @OA\Property(property="history", type="array",
-     *                 @OA\Items(type="object",
-     *                     @OA\Property(property="id", type="integer", example=10),
-     *                     @OA\Property(property="status", type="string", example="shipped"),
-     *                     @OA\Property(property="payment_status", type="string", example="paid"),
-     *                     @OA\Property(property="comment", type="string", example="Отправлен в службу доставки"),
-     *                     @OA\Property(property="user", type="object",
-     *                         @OA\Property(property="name", type="string", example="Менеджер Иван")
-     *                     ),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="26.03.2025 13:15")
-     *                 )
-     *             ),
-     *
-     *             @OA\Property(property="payment_details", type="object",
-     *                 @OA\Property(property="transaction_number", type="string", example="TXN-987654"),
-     *                 @OA\Property(property="payment_type", type="string", example="Карта")
-     *             ),
-     *
-     *             @OA\Property(property="delivery_details", type="object",
-     *                 @OA\Property(property="address", type="string", example="г. Москва, ул. Ленина, д. 10"),
-     *                 @OA\Property(property="pickup_point", type="string", example="Пункт выдачи №123"),
-     *                 @OA\Property(property="delivery_cost", type="number", format="float", example=300.00)
-     *             ),
-     *
-     *             @OA\Property(property="technical_details", type="object",
-     *                 @OA\Property(property="army_card", type="string", example="12345-ABC"),
-     *                 @OA\Property(property="black_price", type="number", format="float", example=5000.00)
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Ошибка сервера",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Ошибка сервера"),
-     *             @OA\Property(property="message", type="string", example="Текст ошибки")
-     *         )
-     *     )
-     * )
-     */
+
     public function show(Order $order)
     {
         try {
@@ -608,49 +403,6 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * @OA\Put(
-     *     path="/api/orders/{order}",
-     *     summary="Обновление заказа",
-     *     tags={"Orders"},
-     *     @OA\Parameter(
-     *         name="order",
-     *         in="path",
-     *         required=true,
-     *         description="ID заказа",
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"status", "payment_status"},
-     *             @OA\Property(property="status", type="string", enum={"new", "processing", "completed", "cancelled"}, example="processing"),
-     *             @OA\Property(property="payment_status", type="string", enum={"pending", "paid", "failed", "refunded"}, example="paid"),
-     *             @OA\Property(property="notes", type="string", nullable=true, example="Обновлен менеджером"),
-     *             @OA\Property(property="delivery_date", type="string", format="date-time", nullable=true, example="2025-03-15T12:00:00Z"),
-     *             @OA\Property(property="delivery_method_id", type="integer", nullable=true, example=3, description="ID метода доставки"),
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Заказ успешно обновлен",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Заказ успешно обновлен"),
-     *             @OA\Property(property="order", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="status", type="string", example="processing"),
-     *                 @OA\Property(property="payment_status", type="string", example="paid"),
-     *                 @OA\Property(property="notes", type="string", example="Обновлен менеджером"),
-     *                 @OA\Property(property="delivery_date", type="string", format="date-time", example="2025-03-15T12:00:00Z"),
-     *                 @OA\Property(property="delivery_method_id", type="integer", nullable=true, example=3, description="ID метода доставки"),
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(response=422, description="Ошибка валидации"),
-     *     @OA\Response(response=500, description="Ошибка сервера")
-     * )
-     */
     public function update(Request $request, Order $order)
     {
         try {
@@ -694,30 +446,6 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/api/orders/{order}",
-     *     summary="Удаление заказа",
-     *     tags={"Orders"},
-     *     @OA\Parameter(
-     *         name="order",
-     *         in="path",
-     *         required=true,
-     *         description="ID заказа",
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Заказ успешно удален",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Заказ успешно удален")
-     *         )
-     *     ),
-     *     @OA\Response(response=404, description="Заказ не найден"),
-     *     @OA\Response(response=500, description="Ошибка сервера")
-     * )
-     */
 
     public function updateStatus(Order $order, Request $request)
     {
