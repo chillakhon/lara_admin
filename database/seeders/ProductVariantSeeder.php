@@ -18,8 +18,8 @@ class ProductVariantSeeder extends Seeder
         // Добавляем продукты
         $products = [
             [
-                'name' => 'Body AGAIN',
-                'slug' => 'body-again_1',
+                'name' => 'Test E BA Body AGAIN',
+                'slug' => 'test-e-body-again_1',
                 'description' => '16 вариантов',
                 'type' => 'simple',
                 'default_unit_id' => 1, // Укажите ID единицы измерения

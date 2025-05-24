@@ -1807,3 +1807,910 @@
 #32 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/avaz/Des...')
 #33 {main}
 "} 
+[2025-05-24 10:43:55] local.ERROR: syntax error, unexpected token "}" {"exception":"[object] (ParseError(code: 0): syntax error, unexpected token \"}\" at /Users/avaz/Desktop/laravels/lara_admin/app/Http/Controllers/Api/Admin/CDEKController.php:75)
+[stacktrace]
+#0 /Users/avaz/Desktop/laravels/lara_admin/vendor/composer/ClassLoader.php(427): Composer\\Autoload\\{closure}('/Users/avaz/Des...')
+#1 [internal function]: Composer\\Autoload\\ClassLoader->loadClass('App\\\\Http\\\\Contro...')
+#2 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(1117): is_a('App\\\\Http\\\\Contro...', 'Illuminate\\\\Rout...', true)
+#3 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(1054): Illuminate\\Routing\\Route->controllerMiddleware()
+#4 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(820): Illuminate\\Routing\\Route->gatherMiddleware()
+#5 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(802): Illuminate\\Routing\\Router->gatherRouteMiddleware(Object(Illuminate\\Routing\\Route))
+#6 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(786): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#7 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(750): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#8 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(739): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#9 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(201): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#10 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#11 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#12 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#13 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#14 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#15 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#16 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\TrimStrings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#17 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#18 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#19 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(110): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#20 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#21 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#22 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\HandleCors->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#23 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#25 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#26 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#27 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#28 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(176): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#29 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(145): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#30 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1220): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#31 /Users/avaz/Desktop/laravels/lara_admin/public/index.php(17): Illuminate\\Foundation\\Application->handleRequest(Object(Illuminate\\Http\\Request))
+#32 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/avaz/Des...')
+#33 {main}
+"} 
+[2025-05-24 12:48:30] local.ERROR: App\Services\Delivery\CdekDeliveryService::searhc_for_city_code(): Return value must be of type ?CdekSDK2\Dto\CityList, CdekSDK2\Dto\City returned {"userId":28,"exception":"[object] (TypeError(code: 0): App\\Services\\Delivery\\CdekDeliveryService::searhc_for_city_code(): Return value must be of type ?CdekSDK2\\Dto\\CityList, CdekSDK2\\Dto\\City returned at /Users/avaz/Desktop/laravels/lara_admin/app/Services/Delivery/CdekDeliveryService.php:171)
+[stacktrace]
+#0 /Users/avaz/Desktop/laravels/lara_admin/app/Services/Delivery/CdekDeliveryService.php(104): App\\Services\\Delivery\\CdekDeliveryService->searhc_for_city_code('\\xD0\\x9C\\xD0\\xBE\\xD1\\x81\\xD0\\xBA\\xD0\\xB2\\xD0\\xB0')
+#1 /Users/avaz/Desktop/laravels/lara_admin/app/Http/Controllers/Api/Admin/CDEKController.php(23): App\\Services\\Delivery\\CdekDeliveryService->get_offices(Object(Illuminate\\Http\\Request))
+#2 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(47): App\\Http\\Controllers\\Api\\Admin\\CDEKController->get_cdek_locations(Object(Illuminate\\Http\\Request))
+#3 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(266): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\Api\\Admin\\CDEKController), 'get_cdek_locati...')
+#4 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(212): Illuminate\\Routing\\Route->runController()
+#5 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(808): Illuminate\\Routing\\Route->run()
+#6 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#7 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/EnsureEmailIsVerified.php(41): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#8 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#9 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(51): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#10 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Routing\\Middleware\\SubstituteBindings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#11 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php(64): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#12 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'sanctum')
+#13 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#14 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(807): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#15 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(786): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#16 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(750): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#17 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(739): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#18 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(201): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#19 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#20 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#21 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#22 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#23 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#25 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\TrimStrings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#28 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(110): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#29 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#30 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#31 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\HandleCors->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#32 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#33 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#34 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#35 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#36 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#37 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(176): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#38 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(145): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#39 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1220): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#40 /Users/avaz/Desktop/laravels/lara_admin/public/index.php(17): Illuminate\\Foundation\\Application->handleRequest(Object(Illuminate\\Http\\Request))
+#41 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/avaz/Des...')
+#42 {main}
+"} 
+[2025-05-24 13:04:10] local.ERROR: cURL error 56: Recv failure: Connection reset by peer (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://api.edu.cdek.ru/v2/deliverypoints?country_code=ru {"userId":28,"exception":"[object] (CdekSDK2\\Exceptions\\RequestException(code: 200): cURL error 56: Recv failure: Connection reset by peer (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://api.edu.cdek.ru/v2/deliverypoints?country_code=ru at /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Http/Api.php:246)
+[stacktrace]
+#0 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Http/Api.php(202): CdekSDK2\\Http\\Api->request('GET', 'https://api.edu...')
+#1 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Actions/FilteredTrait.php(49): CdekSDK2\\Http\\Api->get('/deliverypoints...')
+#2 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Actions/FilteredTrait.php(18): CdekSDK2\\Actions\\Offices->get('country_code=ru')
+#3 /Users/avaz/Desktop/laravels/lara_admin/app/Services/Delivery/CdekDeliveryService.php(108): CdekSDK2\\Actions\\Offices->getFiltered(Array)
+#4 /Users/avaz/Desktop/laravels/lara_admin/app/Http/Controllers/Api/Admin/CDEKController.php(23): App\\Services\\Delivery\\CdekDeliveryService->get_offices(Object(Illuminate\\Http\\Request))
+#5 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(47): App\\Http\\Controllers\\Api\\Admin\\CDEKController->get_cdek_locations(Object(Illuminate\\Http\\Request))
+#6 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(266): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\Api\\Admin\\CDEKController), 'get_cdek_locati...')
+#7 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(212): Illuminate\\Routing\\Route->runController()
+#8 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(808): Illuminate\\Routing\\Route->run()
+#9 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#10 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/EnsureEmailIsVerified.php(41): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#11 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#12 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(51): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#13 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Routing\\Middleware\\SubstituteBindings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#14 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php(64): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#15 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'sanctum')
+#16 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#17 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(807): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#18 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(786): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#19 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(750): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#20 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(739): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#21 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(201): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#22 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#23 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#25 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#28 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\TrimStrings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#31 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(110): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#32 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#33 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#34 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\HandleCors->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#35 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#36 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#37 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#38 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#39 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#40 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(176): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#41 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(145): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#42 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1220): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#43 /Users/avaz/Desktop/laravels/lara_admin/public/index.php(17): Illuminate\\Foundation\\Application->handleRequest(Object(Illuminate\\Http\\Request))
+#44 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/avaz/Des...')
+#45 {main}
+"} 
+[2025-05-24 13:11:08] local.ERROR: cURL error 56: Recv failure: Connection reset by peer (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://api.edu.cdek.ru/v2/deliverypoints?country_code=ru {"userId":28,"exception":"[object] (CdekSDK2\\Exceptions\\RequestException(code: 200): cURL error 56: Recv failure: Connection reset by peer (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://api.edu.cdek.ru/v2/deliverypoints?country_code=ru at /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Http/Api.php:246)
+[stacktrace]
+#0 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Http/Api.php(202): CdekSDK2\\Http\\Api->request('GET', 'https://api.edu...')
+#1 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Actions/FilteredTrait.php(49): CdekSDK2\\Http\\Api->get('/deliverypoints...')
+#2 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Actions/FilteredTrait.php(18): CdekSDK2\\Actions\\Offices->get('country_code=ru')
+#3 /Users/avaz/Desktop/laravels/lara_admin/app/Services/Delivery/CdekDeliveryService.php(110): CdekSDK2\\Actions\\Offices->getFiltered(Array)
+#4 /Users/avaz/Desktop/laravels/lara_admin/app/Http/Controllers/Api/Admin/CDEKController.php(23): App\\Services\\Delivery\\CdekDeliveryService->get_offices(Object(Illuminate\\Http\\Request))
+#5 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(47): App\\Http\\Controllers\\Api\\Admin\\CDEKController->get_cdek_locations(Object(Illuminate\\Http\\Request))
+#6 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(266): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\Api\\Admin\\CDEKController), 'get_cdek_locati...')
+#7 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(212): Illuminate\\Routing\\Route->runController()
+#8 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(808): Illuminate\\Routing\\Route->run()
+#9 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#10 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/EnsureEmailIsVerified.php(41): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#11 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#12 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(51): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#13 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Routing\\Middleware\\SubstituteBindings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#14 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php(64): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#15 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'sanctum')
+#16 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#17 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(807): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#18 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(786): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#19 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(750): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#20 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(739): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#21 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(201): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#22 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#23 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#25 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#28 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\TrimStrings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#31 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(110): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#32 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#33 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#34 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\HandleCors->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#35 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#36 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#37 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#38 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#39 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#40 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(176): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#41 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(145): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#42 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1220): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#43 /Users/avaz/Desktop/laravels/lara_admin/public/index.php(17): Illuminate\\Foundation\\Application->handleRequest(Object(Illuminate\\Http\\Request))
+#44 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/avaz/Des...')
+#45 {main}
+"} 
+[2025-05-24 13:11:32] local.ERROR: cURL error 56: Recv failure: Connection reset by peer (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://api.edu.cdek.ru/v2/deliverypoints?country_code=ru {"userId":28,"exception":"[object] (CdekSDK2\\Exceptions\\RequestException(code: 200): cURL error 56: Recv failure: Connection reset by peer (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://api.edu.cdek.ru/v2/deliverypoints?country_code=ru at /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Http/Api.php:246)
+[stacktrace]
+#0 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Http/Api.php(202): CdekSDK2\\Http\\Api->request('GET', 'https://api.edu...')
+#1 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Actions/FilteredTrait.php(49): CdekSDK2\\Http\\Api->get('/deliverypoints...')
+#2 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Actions/FilteredTrait.php(18): CdekSDK2\\Actions\\Offices->get('country_code=ru')
+#3 /Users/avaz/Desktop/laravels/lara_admin/app/Services/Delivery/CdekDeliveryService.php(110): CdekSDK2\\Actions\\Offices->getFiltered(Array)
+#4 /Users/avaz/Desktop/laravels/lara_admin/app/Http/Controllers/Api/Admin/CDEKController.php(23): App\\Services\\Delivery\\CdekDeliveryService->get_offices(Object(Illuminate\\Http\\Request))
+#5 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(47): App\\Http\\Controllers\\Api\\Admin\\CDEKController->get_cdek_locations(Object(Illuminate\\Http\\Request))
+#6 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(266): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\Api\\Admin\\CDEKController), 'get_cdek_locati...')
+#7 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(212): Illuminate\\Routing\\Route->runController()
+#8 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(808): Illuminate\\Routing\\Route->run()
+#9 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#10 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/EnsureEmailIsVerified.php(41): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#11 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#12 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(51): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#13 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Routing\\Middleware\\SubstituteBindings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#14 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php(64): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#15 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'sanctum')
+#16 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#17 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(807): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#18 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(786): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#19 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(750): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#20 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(739): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#21 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(201): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#22 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#23 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#25 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#28 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\TrimStrings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#31 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(110): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#32 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#33 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#34 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\HandleCors->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#35 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#36 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#37 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#38 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#39 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#40 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(176): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#41 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(145): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#42 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1220): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#43 /Users/avaz/Desktop/laravels/lara_admin/public/index.php(17): Illuminate\\Foundation\\Application->handleRequest(Object(Illuminate\\Http\\Request))
+#44 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/avaz/Des...')
+#45 {main}
+"} 
+[2025-05-24 13:12:12] local.ERROR: cURL error 56: Recv failure: Connection reset by peer (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://api.edu.cdek.ru/v2/deliverypoints?country_code=ru {"userId":28,"exception":"[object] (CdekSDK2\\Exceptions\\RequestException(code: 200): cURL error 56: Recv failure: Connection reset by peer (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://api.edu.cdek.ru/v2/deliverypoints?country_code=ru at /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Http/Api.php:246)
+[stacktrace]
+#0 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Http/Api.php(202): CdekSDK2\\Http\\Api->request('GET', 'https://api.edu...')
+#1 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Actions/FilteredTrait.php(49): CdekSDK2\\Http\\Api->get('/deliverypoints...')
+#2 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Actions/FilteredTrait.php(18): CdekSDK2\\Actions\\Offices->get('country_code=ru')
+#3 /Users/avaz/Desktop/laravels/lara_admin/app/Services/Delivery/CdekDeliveryService.php(110): CdekSDK2\\Actions\\Offices->getFiltered(Array)
+#4 /Users/avaz/Desktop/laravels/lara_admin/app/Http/Controllers/Api/Admin/CDEKController.php(23): App\\Services\\Delivery\\CdekDeliveryService->get_offices(Object(Illuminate\\Http\\Request))
+#5 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(47): App\\Http\\Controllers\\Api\\Admin\\CDEKController->get_cdek_locations(Object(Illuminate\\Http\\Request))
+#6 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(266): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\Api\\Admin\\CDEKController), 'get_cdek_locati...')
+#7 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(212): Illuminate\\Routing\\Route->runController()
+#8 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(808): Illuminate\\Routing\\Route->run()
+#9 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#10 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/EnsureEmailIsVerified.php(41): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#11 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#12 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(51): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#13 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Routing\\Middleware\\SubstituteBindings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#14 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php(64): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#15 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'sanctum')
+#16 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#17 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(807): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#18 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(786): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#19 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(750): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#20 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(739): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#21 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(201): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#22 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#23 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#25 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#28 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\TrimStrings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#31 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(110): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#32 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#33 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#34 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\HandleCors->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#35 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#36 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#37 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#38 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#39 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#40 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(176): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#41 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(145): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#42 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1220): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#43 /Users/avaz/Desktop/laravels/lara_admin/public/index.php(17): Illuminate\\Foundation\\Application->handleRequest(Object(Illuminate\\Http\\Request))
+#44 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/avaz/Des...')
+#45 {main}
+"} 
+[2025-05-24 13:13:44] local.ERROR: cURL error 56: Recv failure: Connection reset by peer (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://api.edu.cdek.ru/v2/deliverypoints?country_code=ru {"userId":28,"exception":"[object] (CdekSDK2\\Exceptions\\RequestException(code: 200): cURL error 56: Recv failure: Connection reset by peer (see https://curl.haxx.se/libcurl/c/libcurl-errors.html) for https://api.edu.cdek.ru/v2/deliverypoints?country_code=ru at /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Http/Api.php:246)
+[stacktrace]
+#0 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Http/Api.php(202): CdekSDK2\\Http\\Api->request('GET', 'https://api.edu...')
+#1 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Actions/FilteredTrait.php(49): CdekSDK2\\Http\\Api->get('/deliverypoints...')
+#2 /Users/avaz/Desktop/laravels/lara_admin/vendor/cdek-it/sdk2.0/src/Actions/FilteredTrait.php(18): CdekSDK2\\Actions\\Offices->get('country_code=ru')
+#3 /Users/avaz/Desktop/laravels/lara_admin/app/Services/Delivery/CdekDeliveryService.php(110): CdekSDK2\\Actions\\Offices->getFiltered(Array)
+#4 /Users/avaz/Desktop/laravels/lara_admin/app/Http/Controllers/Api/Admin/CDEKController.php(23): App\\Services\\Delivery\\CdekDeliveryService->get_offices(Object(Illuminate\\Http\\Request))
+#5 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(47): App\\Http\\Controllers\\Api\\Admin\\CDEKController->get_cdek_locations(Object(Illuminate\\Http\\Request))
+#6 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(266): Illuminate\\Routing\\ControllerDispatcher->dispatch(Object(Illuminate\\Routing\\Route), Object(App\\Http\\Controllers\\Api\\Admin\\CDEKController), 'get_cdek_locati...')
+#7 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(212): Illuminate\\Routing\\Route->runController()
+#8 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(808): Illuminate\\Routing\\Route->run()
+#9 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#10 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/EnsureEmailIsVerified.php(41): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#11 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#12 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(51): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#13 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Routing\\Middleware\\SubstituteBindings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#14 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php(64): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#15 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'sanctum')
+#16 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#17 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(807): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#18 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(786): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#19 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(750): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#20 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(739): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#21 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(201): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#22 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#23 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#24 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#25 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#26 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#28 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\TrimStrings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#31 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(110): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#32 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#33 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#34 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\HandleCors->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#35 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#36 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#37 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#38 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#39 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#40 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(176): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#41 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(145): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#42 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1220): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#43 /Users/avaz/Desktop/laravels/lara_admin/public/index.php(17): Illuminate\\Foundation\\Application->handleRequest(Object(Illuminate\\Http\\Request))
+#44 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/avaz/Des...')
+#45 {main}
+"} 
+[2025-05-24 14:48:32] local.INFO: User: 11  
+[2025-05-24 14:48:32] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:48:32] local.INFO: Access granted  
+[2025-05-24 14:48:32] local.INFO: User: 11  
+[2025-05-24 14:48:32] local.INFO: Required permissions: orders.view, orders.manage  
+[2025-05-24 14:48:32] local.INFO: Access granted  
+[2025-05-24 14:48:34] local.INFO: User: 11  
+[2025-05-24 14:48:34] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:48:34] local.INFO: Access granted  
+[2025-05-24 14:48:37] local.INFO: User: 11  
+[2025-05-24 14:48:37] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:48:37] local.INFO: Access granted  
+[2025-05-24 14:48:43] local.INFO: User: 11  
+[2025-05-24 14:48:43] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:48:43] local.INFO: Access granted  
+[2025-05-24 14:48:51] local.INFO: User: 11  
+[2025-05-24 14:48:51] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:48:51] local.INFO: Access granted  
+[2025-05-24 14:52:32] local.INFO: User: 11  
+[2025-05-24 14:52:32] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:52:32] local.INFO: Access granted  
+[2025-05-24 14:53:26] local.INFO: User: 11  
+[2025-05-24 14:53:26] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:53:26] local.INFO: Access granted  
+[2025-05-24 14:53:26] local.INFO: User: 11  
+[2025-05-24 14:53:26] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:53:26] local.INFO: Access granted  
+[2025-05-24 14:53:29] local.INFO: User: 11  
+[2025-05-24 14:53:29] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:53:29] local.INFO: Access granted  
+[2025-05-24 14:53:31] local.INFO: User: 11  
+[2025-05-24 14:53:31] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:53:31] local.INFO: Access granted  
+[2025-05-24 14:53:32] local.INFO: User: 11  
+[2025-05-24 14:53:32] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:53:32] local.INFO: Access granted  
+[2025-05-24 14:53:32] local.INFO: User: 11  
+[2025-05-24 14:53:32] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 14:53:32] local.INFO: Access granted  
+[2025-05-24 14:53:32] local.INFO: User: 11  
+[2025-05-24 14:53:32] local.INFO: Required permissions: users.view  
+[2025-05-24 14:53:32] local.INFO: Access granted  
+[2025-05-24 14:53:55] local.INFO: User: 11  
+[2025-05-24 14:53:55] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:53:55] local.INFO: Access granted  
+[2025-05-24 14:53:55] local.INFO: User: 11  
+[2025-05-24 14:53:55] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:53:55] local.INFO: Access granted  
+[2025-05-24 14:54:00] local.INFO: User: 11  
+[2025-05-24 14:54:00] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:54:00] local.INFO: Access granted  
+[2025-05-24 14:59:32] local.INFO: User: 28  
+[2025-05-24 14:59:32] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:59:32] local.INFO: Access granted  
+[2025-05-24 14:59:35] local.INFO: User: 11  
+[2025-05-24 14:59:35] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 14:59:35] local.INFO: Access granted  
+[2025-05-24 15:00:15] local.INFO: User: 11  
+[2025-05-24 15:00:15] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:15] local.INFO: Access granted  
+[2025-05-24 15:00:17] local.INFO: User: 11  
+[2025-05-24 15:00:17] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:17] local.INFO: Access granted  
+[2025-05-24 15:00:17] local.INFO: User: 11  
+[2025-05-24 15:00:17] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:17] local.INFO: Access granted  
+[2025-05-24 15:00:17] local.INFO: User: 11  
+[2025-05-24 15:00:17] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:00:17] local.INFO: Access granted  
+[2025-05-24 15:00:17] local.INFO: User: 11  
+[2025-05-24 15:00:17] local.INFO: Required permissions: users.view  
+[2025-05-24 15:00:17] local.INFO: Access granted  
+[2025-05-24 15:00:17] local.INFO: User: 11  
+[2025-05-24 15:00:17] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:17] local.INFO: Access granted  
+[2025-05-24 15:00:19] local.INFO: User: 11  
+[2025-05-24 15:00:19] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:19] local.INFO: Access granted  
+[2025-05-24 15:00:23] local.INFO: User: 11  
+[2025-05-24 15:00:23] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:23] local.INFO: Access granted  
+[2025-05-24 15:00:23] local.INFO: User: 11  
+[2025-05-24 15:00:23] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:23] local.INFO: Access granted  
+[2025-05-24 15:00:23] local.INFO: User: 11  
+[2025-05-24 15:00:23] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:00:23] local.INFO: Access granted  
+[2025-05-24 15:00:23] local.INFO: User: 11  
+[2025-05-24 15:00:23] local.INFO: Required permissions: users.view  
+[2025-05-24 15:00:23] local.INFO: Access granted  
+[2025-05-24 15:00:23] local.INFO: User: 11  
+[2025-05-24 15:00:23] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:23] local.INFO: Access granted  
+[2025-05-24 15:00:46] local.INFO: User: 11  
+[2025-05-24 15:00:46] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:46] local.INFO: Access granted  
+[2025-05-24 15:00:49] local.INFO: User: 11  
+[2025-05-24 15:00:49] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:49] local.INFO: Access granted  
+[2025-05-24 15:00:49] local.INFO: User: 11  
+[2025-05-24 15:00:49] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:49] local.INFO: Access granted  
+[2025-05-24 15:00:49] local.INFO: User: 11  
+[2025-05-24 15:00:49] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:00:49] local.INFO: Access granted  
+[2025-05-24 15:00:49] local.INFO: User: 11  
+[2025-05-24 15:00:49] local.INFO: Required permissions: users.view  
+[2025-05-24 15:00:49] local.INFO: Access granted  
+[2025-05-24 15:00:49] local.INFO: User: 11  
+[2025-05-24 15:00:49] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:49] local.INFO: Access granted  
+[2025-05-24 15:00:50] local.INFO: User: 11  
+[2025-05-24 15:00:50] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:50] local.INFO: Access granted  
+[2025-05-24 15:00:51] local.INFO: User: 11  
+[2025-05-24 15:00:51] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:51] local.INFO: Access granted  
+[2025-05-24 15:00:51] local.INFO: User: 11  
+[2025-05-24 15:00:51] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:00:51] local.INFO: Access granted  
+[2025-05-24 15:00:51] local.INFO: User: 11  
+[2025-05-24 15:00:51] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:00:51] local.INFO: Access granted  
+[2025-05-24 15:00:51] local.INFO: User: 11  
+[2025-05-24 15:00:51] local.INFO: Required permissions: users.view  
+[2025-05-24 15:00:51] local.INFO: Access granted  
+[2025-05-24 15:01:13] local.INFO: User: 11  
+[2025-05-24 15:01:13] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:01:13] local.INFO: Access granted  
+[2025-05-24 15:01:13] local.INFO: User: 11  
+[2025-05-24 15:01:13] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:01:13] local.INFO: Access granted  
+[2025-05-24 15:01:15] local.INFO: User: 11  
+[2025-05-24 15:01:15] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:01:15] local.INFO: Access granted  
+[2025-05-24 15:01:15] local.INFO: User: 11  
+[2025-05-24 15:01:15] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:01:15] local.INFO: Access granted  
+[2025-05-24 15:01:15] local.INFO: User: 11  
+[2025-05-24 15:01:15] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:01:15] local.INFO: Access granted  
+[2025-05-24 15:01:15] local.INFO: User: 11  
+[2025-05-24 15:01:15] local.INFO: Required permissions: users.view  
+[2025-05-24 15:01:15] local.INFO: Access granted  
+[2025-05-24 15:01:15] local.INFO: User: 11  
+[2025-05-24 15:01:15] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:01:15] local.INFO: Access granted  
+[2025-05-24 15:03:01] local.INFO: User: 11  
+[2025-05-24 15:03:01] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:03:01] local.INFO: Access granted  
+[2025-05-24 15:03:03] local.INFO: User: 11  
+[2025-05-24 15:03:03] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:03:03] local.INFO: Access granted  
+[2025-05-24 15:03:03] local.INFO: User: 11  
+[2025-05-24 15:03:03] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:03:03] local.INFO: Access granted  
+[2025-05-24 15:03:03] local.INFO: User: 11  
+[2025-05-24 15:03:03] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:03:03] local.INFO: Access granted  
+[2025-05-24 15:03:03] local.INFO: User: 11  
+[2025-05-24 15:03:03] local.INFO: Required permissions: users.view  
+[2025-05-24 15:03:03] local.INFO: Access granted  
+[2025-05-24 15:03:03] local.INFO: User: 11  
+[2025-05-24 15:03:03] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:03:03] local.INFO: Access granted  
+[2025-05-24 15:03:45] local.INFO: User: 28  
+[2025-05-24 15:03:45] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:03:45] local.INFO: Access granted  
+[2025-05-24 15:03:52] local.INFO: User: 11  
+[2025-05-24 15:03:52] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:03:52] local.INFO: Access granted  
+[2025-05-24 15:03:53] local.INFO: User: 11  
+[2025-05-24 15:03:53] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:03:53] local.INFO: Access granted  
+[2025-05-24 15:03:53] local.INFO: User: 11  
+[2025-05-24 15:03:53] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:03:53] local.INFO: Access granted  
+[2025-05-24 15:03:54] local.INFO: User: 11  
+[2025-05-24 15:03:54] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:03:54] local.INFO: Access granted  
+[2025-05-24 15:03:54] local.INFO: User: 11  
+[2025-05-24 15:03:54] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:03:54] local.INFO: Access granted  
+[2025-05-24 15:03:54] local.INFO: User: 11  
+[2025-05-24 15:03:54] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:03:54] local.INFO: Access granted  
+[2025-05-24 15:03:54] local.INFO: User: 11  
+[2025-05-24 15:03:54] local.INFO: Required permissions: users.view  
+[2025-05-24 15:03:54] local.INFO: Access granted  
+[2025-05-24 15:04:02] local.INFO: User: 11  
+[2025-05-24 15:04:02] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:04:02] local.INFO: Access granted  
+[2025-05-24 15:04:04] local.INFO: User: 11  
+[2025-05-24 15:04:04] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:04:04] local.INFO: Access granted  
+[2025-05-24 15:04:14] local.INFO: User: 11  
+[2025-05-24 15:04:14] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:04:14] local.INFO: Access granted  
+[2025-05-24 15:04:15] local.INFO: User: 11  
+[2025-05-24 15:04:15] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:04:15] local.INFO: Access granted  
+[2025-05-24 15:04:32] local.INFO: User: 11  
+[2025-05-24 15:04:32] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:04:32] local.INFO: Access granted  
+[2025-05-24 15:04:34] local.INFO: User: 11  
+[2025-05-24 15:04:34] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:04:34] local.INFO: Access granted  
+[2025-05-24 15:04:37] local.INFO: User: 11  
+[2025-05-24 15:04:37] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:04:37] local.INFO: Access granted  
+[2025-05-24 15:05:11] local.INFO: User: 11  
+[2025-05-24 15:05:11] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:05:11] local.INFO: Access granted  
+[2025-05-24 15:05:13] local.INFO: User: 11  
+[2025-05-24 15:05:13] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:05:13] local.INFO: Access granted  
+[2025-05-24 15:05:37] local.INFO: User: 11  
+[2025-05-24 15:05:37] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:05:37] local.INFO: Access granted  
+[2025-05-24 15:05:38] local.INFO: User: 11  
+[2025-05-24 15:05:38] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:05:38] local.INFO: Access granted  
+[2025-05-24 15:05:40] local.INFO: User: 11  
+[2025-05-24 15:05:40] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:05:40] local.INFO: Access granted  
+[2025-05-24 15:05:47] local.INFO: User: 11  
+[2025-05-24 15:05:47] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:05:47] local.INFO: Access granted  
+[2025-05-24 15:05:51] local.INFO: User: 11  
+[2025-05-24 15:05:51] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:05:51] local.INFO: Access granted  
+[2025-05-24 15:05:57] local.INFO: User: 11  
+[2025-05-24 15:05:57] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:05:57] local.INFO: Access granted  
+[2025-05-24 15:06:19] local.INFO: User: 11  
+[2025-05-24 15:06:19] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:06:19] local.INFO: Access granted  
+[2025-05-24 15:06:25] local.INFO: User: 11  
+[2025-05-24 15:06:25] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:06:25] local.INFO: Access granted  
+[2025-05-24 15:06:27] local.INFO: User: 11  
+[2025-05-24 15:06:27] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:06:27] local.INFO: Access granted  
+[2025-05-24 15:06:29] local.INFO: User: 11  
+[2025-05-24 15:06:29] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:06:29] local.INFO: Access granted  
+[2025-05-24 15:06:29] local.INFO: User: 11  
+[2025-05-24 15:06:29] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:06:29] local.INFO: Access granted  
+[2025-05-24 15:06:29] local.INFO: User: 11  
+[2025-05-24 15:06:29] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:06:29] local.INFO: Access granted  
+[2025-05-24 15:06:29] local.INFO: User: 11  
+[2025-05-24 15:06:29] local.INFO: Required permissions: users.view  
+[2025-05-24 15:06:29] local.INFO: Access granted  
+[2025-05-24 15:06:43] local.INFO: User: 11  
+[2025-05-24 15:06:43] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:06:43] local.INFO: Access granted  
+[2025-05-24 15:06:43] local.INFO: User: 11  
+[2025-05-24 15:06:43] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:06:43] local.INFO: Access granted  
+[2025-05-24 15:06:45] local.INFO: User: 11  
+[2025-05-24 15:06:45] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:06:45] local.INFO: Access granted  
+[2025-05-24 15:06:45] local.INFO: User: 11  
+[2025-05-24 15:06:45] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:06:45] local.INFO: Access granted  
+[2025-05-24 15:06:45] local.INFO: User: 11  
+[2025-05-24 15:06:45] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:06:45] local.INFO: Access granted  
+[2025-05-24 15:06:45] local.INFO: User: 11  
+[2025-05-24 15:06:45] local.INFO: Required permissions: users.view  
+[2025-05-24 15:06:45] local.INFO: Access granted  
+[2025-05-24 15:06:45] local.INFO: User: 11  
+[2025-05-24 15:06:45] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:06:45] local.INFO: Access granted  
+[2025-05-24 15:07:03] local.INFO: User: 11  
+[2025-05-24 15:07:03] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:03] local.INFO: Access granted  
+[2025-05-24 15:07:03] local.INFO: User: 11  
+[2025-05-24 15:07:03] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:03] local.INFO: Access granted  
+[2025-05-24 15:07:04] local.INFO: User: 11  
+[2025-05-24 15:07:04] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:04] local.INFO: Access granted  
+[2025-05-24 15:07:04] local.INFO: User: 11  
+[2025-05-24 15:07:04] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:04] local.INFO: Access granted  
+[2025-05-24 15:07:04] local.INFO: User: 11  
+[2025-05-24 15:07:04] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:07:04] local.INFO: Access granted  
+[2025-05-24 15:07:04] local.INFO: User: 11  
+[2025-05-24 15:07:04] local.INFO: Required permissions: users.view  
+[2025-05-24 15:07:04] local.INFO: Access granted  
+[2025-05-24 15:07:04] local.INFO: User: 11  
+[2025-05-24 15:07:04] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:04] local.INFO: Access granted  
+[2025-05-24 15:07:27] local.INFO: User: 11  
+[2025-05-24 15:07:27] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:27] local.INFO: Access granted  
+[2025-05-24 15:07:29] local.INFO: User: 11  
+[2025-05-24 15:07:29] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:29] local.INFO: Access granted  
+[2025-05-24 15:07:29] local.INFO: User: 11  
+[2025-05-24 15:07:29] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:29] local.INFO: Access granted  
+[2025-05-24 15:07:29] local.INFO: User: 11  
+[2025-05-24 15:07:29] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:07:29] local.INFO: Access granted  
+[2025-05-24 15:07:29] local.INFO: User: 11  
+[2025-05-24 15:07:29] local.INFO: Required permissions: users.view  
+[2025-05-24 15:07:29] local.INFO: Access granted  
+[2025-05-24 15:07:29] local.INFO: User: 11  
+[2025-05-24 15:07:29] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:29] local.INFO: Access granted  
+[2025-05-24 15:07:31] local.INFO: User: 11  
+[2025-05-24 15:07:31] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:31] local.INFO: Access granted  
+[2025-05-24 15:07:31] local.INFO: User: 11  
+[2025-05-24 15:07:31] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:31] local.INFO: Access granted  
+[2025-05-24 15:07:33] local.INFO: User: 11  
+[2025-05-24 15:07:33] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:33] local.INFO: Access granted  
+[2025-05-24 15:07:33] local.INFO: User: 11  
+[2025-05-24 15:07:33] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:33] local.INFO: Access granted  
+[2025-05-24 15:07:33] local.INFO: User: 11  
+[2025-05-24 15:07:33] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:07:33] local.INFO: Access granted  
+[2025-05-24 15:07:33] local.INFO: User: 11  
+[2025-05-24 15:07:33] local.INFO: Required permissions: users.view  
+[2025-05-24 15:07:33] local.INFO: Access granted  
+[2025-05-24 15:07:33] local.INFO: User: 11  
+[2025-05-24 15:07:33] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:07:33] local.INFO: Access granted  
+[2025-05-24 15:15:22] local.INFO: User: 11  
+[2025-05-24 15:15:22] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:15:22] local.INFO: Access granted  
+[2025-05-24 15:15:45] local.INFO: User: 11  
+[2025-05-24 15:15:45] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:15:45] local.INFO: Access granted  
+[2025-05-24 15:15:46] local.INFO: User: 11  
+[2025-05-24 15:15:46] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:15:47] local.INFO: Access granted  
+[2025-05-24 15:16:22] local.INFO: User: 11  
+[2025-05-24 15:16:22] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:16:22] local.INFO: Access granted  
+[2025-05-24 15:16:24] local.INFO: User: 11  
+[2025-05-24 15:16:24] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:16:24] local.INFO: Access granted  
+[2025-05-24 15:16:25] local.INFO: User: 11  
+[2025-05-24 15:16:25] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:16:25] local.INFO: Access granted  
+[2025-05-24 15:17:09] local.INFO: User: 11  
+[2025-05-24 15:17:09] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:17:09] local.INFO: Access granted  
+[2025-05-24 15:17:33] local.INFO: User: 11  
+[2025-05-24 15:17:33] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:17:33] local.INFO: Access granted  
+[2025-05-24 15:17:33] local.INFO: User: 11  
+[2025-05-24 15:17:33] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:17:33] local.INFO: Access granted  
+[2025-05-24 15:17:35] local.INFO: User: 11  
+[2025-05-24 15:17:35] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:17:35] local.INFO: Access granted  
+[2025-05-24 15:17:36] local.INFO: User: 11  
+[2025-05-24 15:17:36] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:17:36] local.INFO: Access granted  
+[2025-05-24 15:17:36] local.INFO: User: 11  
+[2025-05-24 15:17:36] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:17:36] local.INFO: Access granted  
+[2025-05-24 15:17:36] local.INFO: User: 11  
+[2025-05-24 15:17:36] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:17:36] local.INFO: Access granted  
+[2025-05-24 15:17:36] local.INFO: User: 11  
+[2025-05-24 15:17:36] local.INFO: Required permissions: users.view  
+[2025-05-24 15:17:36] local.INFO: Access granted  
+[2025-05-24 15:18:22] local.INFO: User: 11  
+[2025-05-24 15:18:22] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:18:22] local.INFO: Access granted  
+[2025-05-24 15:18:22] local.INFO: User: 11  
+[2025-05-24 15:18:22] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:18:22] local.INFO: Access granted  
+[2025-05-24 15:19:18] local.INFO: User: 11  
+[2025-05-24 15:19:18] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:19:18] local.INFO: Access granted  
+[2025-05-24 15:19:18] local.INFO: User: 11  
+[2025-05-24 15:19:18] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:19:18] local.INFO: Access granted  
+[2025-05-24 15:19:18] local.INFO: User: 11  
+[2025-05-24 15:19:18] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:19:18] local.INFO: Access granted  
+[2025-05-24 15:19:18] local.INFO: User: 11  
+[2025-05-24 15:19:18] local.INFO: Required permissions: users.view  
+[2025-05-24 15:19:18] local.INFO: Access granted  
+[2025-05-24 15:20:06] local.INFO: User: 28  
+[2025-05-24 15:20:06] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:20:06] local.INFO: Access granted  
+[2025-05-24 15:20:16] local.INFO: User: 11  
+[2025-05-24 15:20:16] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:20:16] local.INFO: Access granted  
+[2025-05-24 15:20:17] local.INFO: User: 11  
+[2025-05-24 15:20:17] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:20:17] local.INFO: Access granted  
+[2025-05-24 15:20:18] local.INFO: User: 11  
+[2025-05-24 15:20:18] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:20:18] local.INFO: Access granted  
+[2025-05-24 15:20:19] local.INFO: User: 11  
+[2025-05-24 15:20:19] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:20:19] local.INFO: Access granted  
+[2025-05-24 15:20:19] local.INFO: User: 11  
+[2025-05-24 15:20:19] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:20:19] local.INFO: Access granted  
+[2025-05-24 15:20:19] local.INFO: User: 11  
+[2025-05-24 15:20:19] local.INFO: Required permissions: users.view  
+[2025-05-24 15:20:19] local.INFO: Access granted  
+[2025-05-24 15:20:19] local.INFO: User: 11  
+[2025-05-24 15:20:19] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:20:19] local.INFO: Access granted  
+[2025-05-24 15:21:12] local.INFO: User: 11  
+[2025-05-24 15:21:12] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:12] local.INFO: Access granted  
+[2025-05-24 15:21:14] local.INFO: User: 11  
+[2025-05-24 15:21:14] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:14] local.INFO: Access granted  
+[2025-05-24 15:21:14] local.INFO: User: 11  
+[2025-05-24 15:21:14] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:14] local.INFO: Access granted  
+[2025-05-24 15:21:14] local.INFO: User: 11  
+[2025-05-24 15:21:14] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:21:14] local.INFO: Access granted  
+[2025-05-24 15:21:14] local.INFO: User: 11  
+[2025-05-24 15:21:14] local.INFO: Required permissions: users.view  
+[2025-05-24 15:21:14] local.INFO: Access granted  
+[2025-05-24 15:21:14] local.INFO: User: 11  
+[2025-05-24 15:21:14] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:14] local.INFO: Access granted  
+[2025-05-24 15:21:15] local.INFO: User: 11  
+[2025-05-24 15:21:15] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:15] local.INFO: Access granted  
+[2025-05-24 15:21:15] local.INFO: User: 11  
+[2025-05-24 15:21:15] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:15] local.INFO: Access granted  
+[2025-05-24 15:21:17] local.INFO: User: 11  
+[2025-05-24 15:21:17] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:17] local.INFO: Access granted  
+[2025-05-24 15:21:17] local.INFO: User: 11  
+[2025-05-24 15:21:17] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:17] local.INFO: Access granted  
+[2025-05-24 15:21:17] local.INFO: User: 11  
+[2025-05-24 15:21:17] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:21:17] local.INFO: Access granted  
+[2025-05-24 15:21:17] local.INFO: User: 11  
+[2025-05-24 15:21:17] local.INFO: Required permissions: users.view  
+[2025-05-24 15:21:17] local.INFO: Access granted  
+[2025-05-24 15:21:17] local.INFO: User: 11  
+[2025-05-24 15:21:17] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:17] local.INFO: Access granted  
+[2025-05-24 15:21:28] local.INFO: User: 11  
+[2025-05-24 15:21:28] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:28] local.INFO: Access granted  
+[2025-05-24 15:21:30] local.INFO: User: 11  
+[2025-05-24 15:21:30] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:30] local.INFO: Access granted  
+[2025-05-24 15:21:30] local.INFO: User: 11  
+[2025-05-24 15:21:30] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:30] local.INFO: Access granted  
+[2025-05-24 15:21:30] local.INFO: User: 11  
+[2025-05-24 15:21:30] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:21:30] local.INFO: Access granted  
+[2025-05-24 15:21:30] local.INFO: User: 11  
+[2025-05-24 15:21:30] local.INFO: Required permissions: users.view  
+[2025-05-24 15:21:30] local.INFO: Access granted  
+[2025-05-24 15:21:30] local.INFO: User: 11  
+[2025-05-24 15:21:30] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:30] local.INFO: Access granted  
+[2025-05-24 15:21:33] local.INFO: User: 11  
+[2025-05-24 15:21:33] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:33] local.INFO: Access granted  
+[2025-05-24 15:21:33] local.INFO: User: 11  
+[2025-05-24 15:21:33] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:33] local.INFO: Access granted  
+[2025-05-24 15:21:34] local.INFO: User: 11  
+[2025-05-24 15:21:34] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:34] local.INFO: Access granted  
+[2025-05-24 15:21:34] local.INFO: User: 11  
+[2025-05-24 15:21:34] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:34] local.INFO: Access granted  
+[2025-05-24 15:21:34] local.INFO: User: 11  
+[2025-05-24 15:21:34] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:21:34] local.INFO: Access granted  
+[2025-05-24 15:21:34] local.INFO: User: 11  
+[2025-05-24 15:21:34] local.INFO: Required permissions: users.view  
+[2025-05-24 15:21:34] local.INFO: Access granted  
+[2025-05-24 15:21:34] local.INFO: User: 11  
+[2025-05-24 15:21:34] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:34] local.INFO: Access granted  
+[2025-05-24 15:21:40] local.INFO: User: 11  
+[2025-05-24 15:21:40] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:40] local.INFO: Access granted  
+[2025-05-24 15:21:40] local.INFO: User: 11  
+[2025-05-24 15:21:40] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:40] local.INFO: Access granted  
+[2025-05-24 15:21:41] local.INFO: User: 11  
+[2025-05-24 15:21:41] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:41] local.INFO: Access granted  
+[2025-05-24 15:21:41] local.INFO: User: 11  
+[2025-05-24 15:21:41] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:41] local.INFO: Access granted  
+[2025-05-24 15:21:41] local.INFO: User: 11  
+[2025-05-24 15:21:41] local.INFO: Required roles: super-admin, admin  
+[2025-05-24 15:21:41] local.INFO: Access granted  
+[2025-05-24 15:21:41] local.INFO: User: 11  
+[2025-05-24 15:21:41] local.INFO: Required permissions: users.view  
+[2025-05-24 15:21:41] local.INFO: Access granted  
+[2025-05-24 15:21:42] local.INFO: User: 11  
+[2025-05-24 15:21:42] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:21:42] local.INFO: Access granted  
+[2025-05-24 15:22:51] local.INFO: User: 11  
+[2025-05-24 15:22:51] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:22:51] local.INFO: Access granted  
+[2025-05-24 15:22:52] local.INFO: User: 11  
+[2025-05-24 15:22:52] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:22:52] local.INFO: Access granted  
+[2025-05-24 15:22:55] local.INFO: User: 11  
+[2025-05-24 15:22:55] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:22:55] local.INFO: Access granted  
+[2025-05-24 15:23:02] local.INFO: User: 11  
+[2025-05-24 15:23:02] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:23:02] local.INFO: Access granted  
+[2025-05-24 15:23:04] local.INFO: User: 11  
+[2025-05-24 15:23:04] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:23:04] local.INFO: Access granted  
+[2025-05-24 15:23:09] local.INFO: User: 11  
+[2025-05-24 15:23:09] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:23:09] local.INFO: Access granted  
+[2025-05-24 15:23:11] local.INFO: User: 11  
+[2025-05-24 15:23:11] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:23:11] local.INFO: Access granted  
+[2025-05-24 15:23:48] local.INFO: User: 11  
+[2025-05-24 15:23:48] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:23:48] local.INFO: Access granted  
+[2025-05-24 15:24:05] local.INFO: User: 11  
+[2025-05-24 15:24:05] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:24:05] local.INFO: Access granted  
+[2025-05-24 15:24:06] local.INFO: User: 11  
+[2025-05-24 15:24:06] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:24:06] local.INFO: Access granted  
+[2025-05-24 15:24:17] local.INFO: User: 11  
+[2025-05-24 15:24:17] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:24:17] local.INFO: Access granted  
+[2025-05-24 15:25:16] local.INFO: User: 11  
+[2025-05-24 15:25:16] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:25:16] local.INFO: Access granted  
+[2025-05-24 15:25:18] local.INFO: User: 11  
+[2025-05-24 15:25:18] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:25:18] local.INFO: Access granted  
+[2025-05-24 15:25:44] local.INFO: User: 11  
+[2025-05-24 15:25:44] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:25:44] local.INFO: Access granted  
+[2025-05-24 15:25:45] local.INFO: User: 11  
+[2025-05-24 15:25:45] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:25:45] local.INFO: Access granted  
+[2025-05-24 15:27:04] local.INFO: User: 11  
+[2025-05-24 15:27:04] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:27:04] local.INFO: Access granted  
+[2025-05-24 15:27:05] local.INFO: User: 11  
+[2025-05-24 15:27:05] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:27:05] local.INFO: Access granted  
+[2025-05-24 15:27:07] local.INFO: User: 11  
+[2025-05-24 15:27:07] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:27:07] local.INFO: Access granted  
+[2025-05-24 15:27:11] local.INFO: User: 11  
+[2025-05-24 15:27:11] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:27:11] local.INFO: Access granted  
+[2025-05-24 15:27:12] local.INFO: User: 11  
+[2025-05-24 15:27:12] local.INFO: Required roles: super-admin, admin, manager  
+[2025-05-24 15:27:12] local.INFO: Access granted  

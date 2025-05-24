@@ -22,17 +22,22 @@ class CDEKController extends Controller
     {
         $locations = $this->cdek_service->get_offices($request);
 
-        $paginated = $this->paginate_collection($locations, $request);
-
-        return response()->json([
-            'cdek_offices' => $paginated->items(),
-            'meta' => [
-                'current_page' => $paginated->currentPage(),
-                'per_page' => $paginated->perPage(),
-                'total' => $paginated->total(),
-                'last_page' => $paginated->lastPage(),
-            ],
-        ]);
+        if ($request->get('per_page')) {
+            $paginated = $this->paginate_collection($locations, $request);
+            return response()->json([
+                'cdek_offices' => $paginated->items(),
+                'meta' => [
+                    'current_page' => $paginated->currentPage(),
+                    'per_page' => $paginated->perPage(),
+                    'total' => $paginated->total(),
+                    'last_page' => $paginated->lastPage(),
+                ],
+            ]);
+        } else {
+            return response()->json([
+                'cdek_offices' => $locations
+            ]);
+        }
     }
 
     public function get_cdek_cities(Request $request)
@@ -46,6 +51,8 @@ class CDEKController extends Controller
         ]);
 
         $cities = $this->cdek_service->location_cities($request);
+
+        return $cities;
 
         $paginated = $this->paginate_collection($cities, $request);
 
@@ -69,5 +76,9 @@ class CDEKController extends Controller
     public function get_tariffs()
     {
         // return 
+    }
+
+    public function check_address()
+    {
     }
 }

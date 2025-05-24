@@ -91,17 +91,27 @@ class CdekDeliveryService extends DeliveryService
 
     public function get_offices(Request $request)
     {
-        $result = $this->cdek->offices()->getFiltered([
+        $filter = [
             'country_code' => $request->get('country_code', 'ru'),
             'city_code' => $request->get('city_code'),
             'region_code' => $request->get('region_code'),
-        ]);
+        ];
+        // city_name should not be empty but city_code should be empty
+        // and region code should be empty
+        if ($request->get('city_name') && !$request->get('city_code') && !$request->get('region_code')) {
+            $city = $this->searhc_for_city_code($request->get('city_name'));
+            if ($city) {
+                $filter['city_code'] = $city->code;
+            } else {
+                return [];
+            }
+        }
+
+        $result = $this->cdek->offices()->getFiltered($filter);
 
         if (!$result->isOk()) {
             return [];
         }
-
-        // Offices::FILTER;
 
         $pick_up_point_list = $this->cdek->formatResponseList($result, PickupPointList::class);
 
@@ -144,6 +154,22 @@ class CdekDeliveryService extends DeliveryService
         return $offices;
     }
 
+    public function searhc_for_city_code($city_name): City|null
+    {
+        $city_result = $this->cdek->cities()->getFiltered([
+            'city' => $city_name,
+        ]);
+
+        if (!$city_result->isOk()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при поиске города',
+            ], 500);
+        }
+
+        $cities = $this->cdek->formatResponseList($city_result, CityList::class);
+        return $cities->items[0] ?? null;
+    }
 
     public function location_cities(Request $request)
     {
@@ -154,7 +180,7 @@ class CdekDeliveryService extends DeliveryService
             'region_code' => $request->get('region_code'),
         ]);
 
-        // LocationCities::FILTER;
+        LocationCities::FILTER;
 
         if (!$result->isOk()) {
             return [];
