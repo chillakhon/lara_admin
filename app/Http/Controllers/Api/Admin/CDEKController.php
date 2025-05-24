@@ -40,9 +40,34 @@ class CDEKController extends Controller
 
         $request->validate([
             'city' => 'nullable|string',
-            'country_code' => 'nullable|string'
+            'country_code' => 'nullable|string',
+            'region_code' => 'nullable|string',
+            'code' => 'nullable|string',
         ]);
 
-        return $this->cdek_service->location_cities($request);
+        $cities = $this->cdek_service->location_cities($request);
+
+        $paginated = $this->paginate_collection($cities, $request);
+
+        return response()->json([
+            'cities' => $paginated->items(),
+            'meta' => [
+                'current_page' => $paginated->currentPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+                'last_page' => $paginated->lastPage(),
+            ],
+        ]);
+    }
+
+
+    public function get_cdek_regions(Request $request)
+    {
+        return $this->cdek_service->location_regions($request);
+    }
+
+    public function get_tariffs()
+    {
+        // return 
     }
 }

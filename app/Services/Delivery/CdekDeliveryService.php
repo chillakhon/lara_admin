@@ -8,10 +8,15 @@ use App\Models\ShipmentStatus;
 // use CdekSDK\CdekClient;
 use Carbon\Carbon;
 use CdekSDK2\Actions\LocationCities;
+use CdekSDK2\Actions\LocationRegions;
 use CdekSDK2\Actions\Offices;
+use CdekSDK2\Constraints\Currencies;
 use CdekSDK2\Dto\City;
 use CdekSDK2\Dto\CityList;
 use CdekSDK2\Dto\PickupPointList;
+use CdekSDK2\Dto\RegionList;
+use CdekSDK2\Dto\TariffList;
+use CdekSDK2\Dto\TariffListItem;
 use CdekSDK2\Exceptions\AuthException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -89,11 +94,14 @@ class CdekDeliveryService extends DeliveryService
         $result = $this->cdek->offices()->getFiltered([
             'country_code' => $request->get('country_code', 'ru'),
             'city_code' => $request->get('city_code'),
+            'region_code' => $request->get('region_code'),
         ]);
 
         if (!$result->isOk()) {
             return [];
         }
+
+        // Offices::FILTER;
 
         $pick_up_point_list = $this->cdek->formatResponseList($result, PickupPointList::class);
 
@@ -141,15 +149,43 @@ class CdekDeliveryService extends DeliveryService
     {
         $result = $this->cdek->cities()->getFiltered([
             'country_codes' => $request->get('country_code', 'ru'),
-            'city' => $request->get('city')
+            'city' => $request->get('city'),
+            'code' => $request->get('code'), // city code
+            'region_code' => $request->get('region_code'),
         ]);
+
+        // LocationCities::FILTER;
 
         if (!$result->isOk()) {
             return [];
         }
+
         $cities = $this->cdek->formatResponseList($result, CityList::class);
 
         return $cities->items;
+    }
+
+    public function location_regions(Request $request)
+    {
+        $result = $this->cdek->regions()->getFiltered([
+            'country_codes' => $request->get('country_code', 'ru'),
+        ]);
+
+        // LocationRegions::FILTER;
+
+        if (!$result->isOk()) {
+            return [];
+        }
+
+        //Запрос успешно выполнился
+        $regions = $this->cdek->formatResponseList($result, RegionList::class);
+
+        return $regions->items;
+    }
+
+    public function cdek_tariffs()
+    {
+        $tariffs = \CdekSDK2\BaseTypes\Tarifflist::TYPE_DELIVERY;
     }
 
 

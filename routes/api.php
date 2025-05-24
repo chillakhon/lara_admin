@@ -140,6 +140,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::prefix('/cdek')->group(function () {
             Route::get('/locations', [CDEKController::class, 'get_cdek_locations']);
             Route::get('/locations-cities', [CDEKController::class, 'get_cdek_cities']);
+            Route::get('/locations-regions', [CDEKController::class, 'get_cdek_regions']);
+            Route::get('/tariffs', [CDEKController::class, '']);
         });
     });
 
