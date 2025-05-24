@@ -139,7 +139,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::prefix('/countries')->group(function () {
         Route::get('/', [CountriesController::class, 'countries']);
         Route::get('/regions', [CountriesController::class, 'regions']);
-        Route::get('/cities', []);
+        Route::get('/cities', [CountriesController::class, 'cities']);
     });
 
     Route::prefix('/delivery-services')->group(function () {

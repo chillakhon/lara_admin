@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\City;
 use App\Models\Country;
 use App\Models\Region;
 use Illuminate\Http\Request;
@@ -35,8 +36,8 @@ class CountriesController extends Controller
             $regions->where("name", "like", "%{$request->get('name')}%");
         }
 
-        if (!is_null($request->integer('country_id'))) {
-            $regions->where("country_id", $request->integer('country_id'));
+        if ($request->filled('country_id')) {
+            $regions->where('country_id', (int) $request->input('country_id'));
         }
 
         $regions = $regions
@@ -51,5 +52,26 @@ class CountriesController extends Controller
 
     public function cities(Request $request)
     {
+        $cities = City
+            ::leftJoin('region', 'city.region_id', 'region.id')
+            ->leftJoin('country', 'region.country_id', 'country.id')
+            ->select('city.*');
+
+        $cities->where("country.id", $request->get('country_id', 0));
+
+        if ($request->get('name')) {
+            $cities->where("city.name", "like", "%{$request->get('name')}%");
+        }
+
+        if ($request->filled('region_id')) {
+            $cities->where("region.id", $request->get('region_id'));
+        }
+
+        $cities = $cities->get();
+
+        return response()->json([
+            'success' => true,
+            'cities' => $cities,
+        ]);
     }
 }
