@@ -766,7 +766,7 @@ class ProductionController extends Controller
             }
 
             if (
-                !$user->hasAnyRole(['admin', 'super-admin']) ||
+                !$user->hasAnyRole(['admin', 'super-admin']) &&
                 ($batch->performer_id && $batch->performer_id !== auth()->id())
             ) {
                 $message = !$user->hasAnyRole(['admin', 'super-admin'])
@@ -895,7 +895,7 @@ class ProductionController extends Controller
             }
 
             if (
-                !$user->hasAnyRole(['admin', 'super-admin']) ||
+                !$user->hasAnyRole(['admin', 'super-admin']) &&
                 ($batch->performer_id && $batch->performer_id !== auth()->id())
             ) {
                 $message = !$user->hasAnyRole(['admin', 'super-admin'])
@@ -980,7 +980,7 @@ class ProductionController extends Controller
             foreach ($production_batches as $key => $batch) {
 
                 if (
-                    !$user->hasAnyRole(['admin', 'super-admin']) ||
+                    !$user->hasAnyRole(['admin', 'super-admin']) &&
                     ($batch->performer_id && $batch->performer_id !== auth()->id())
                 ) {
                     $message_for_non_performers = !$user->hasAnyRole(['admin', 'super-admin'])
