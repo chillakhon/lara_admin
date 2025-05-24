@@ -734,6 +734,16 @@ class ProductionController extends Controller
     public function complete(ProductionBatch $batch, Request $request)
     {
         try {
+
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "User was not found",
+                ]);
+            }
+
             $validated = $request->validate([
                 'id' => 'required|numeric',
                 'batch_number' => 'required|string'
@@ -755,9 +765,17 @@ class ProductionController extends Controller
                 throw new \Exception("Невозможно завершить производство. Неверный статус партии.");
             }
 
-            if ($batch->performer_id && $batch->performer_id !== auth()->id()) {
+            if (
+                !$user->hasAnyRole(['admin', 'super-admin']) ||
+                ($batch->performer_id && $batch->performer_id !== auth()->id())
+            ) {
+                $message = !$user->hasAnyRole(['admin', 'super-admin'])
+                    ? 'У вас нет прав для выполнения этого действия.'
+                    : 'Вы не можете завершить партию, так как вы не являетесь её исполнителем.';
+
                 return response()->json([
-                    'error' => 'Вы не можете завершить партию, так как вы не являетесь исполнителем'
+                    'success' => false,
+                    'message' => $message,
                 ], 403);
             }
 
@@ -845,6 +863,16 @@ class ProductionController extends Controller
     public function cancel(ProductionBatch $batch, Request $request)
     {
         try {
+
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "User was not found",
+                ]);
+            }
+
             $validated = $request->validate([
                 'id' => 'required|numeric',
                 'batch_number' => 'required|string'
@@ -866,9 +894,17 @@ class ProductionController extends Controller
                 throw new Exception("Невозможно отменить производство. Неверный статус партии.");
             }
 
-            if ($batch->performer_id && $batch->performer_id !== auth()->id()) {
+            if (
+                !$user->hasAnyRole(['admin', 'super-admin']) ||
+                ($batch->performer_id && $batch->performer_id !== auth()->id())
+            ) {
+                $message = !$user->hasAnyRole(['admin', 'super-admin'])
+                    ? 'У вас нет прав для выполнения этого действия.'
+                    : 'Вы не можете завершить партию, так как вы не являетесь её исполнителем.';
+
                 return response()->json([
-                    'error' => 'Вы не можете отменить партию, так как вы не являетесь исполнителем'
+                    'success' => false,
+                    'message' => $message,
                 ], 403);
             }
 
@@ -906,6 +942,16 @@ class ProductionController extends Controller
     {
         DB::beginTransaction();
         try {
+
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "User was not found",
+                ]);
+            }
+
             $validated = $request->validate([
                 'batch_number' => 'required|string'
             ]);
@@ -933,8 +979,14 @@ class ProductionController extends Controller
 
             foreach ($production_batches as $key => $batch) {
 
-                if ($batch->performer_id && $batch->performer_id !== auth()->id()) {
-                    $message_for_non_performers = 'Вы не можете отменить некоторые партии, так как вы не являетесь их исполнителем.';
+                if (
+                    !$user->hasAnyRole(['admin', 'super-admin']) ||
+                    ($batch->performer_id && $batch->performer_id !== auth()->id())
+                ) {
+                    $message_for_non_performers = !$user->hasAnyRole(['admin', 'super-admin'])
+                        ? 'У вас нет прав для выполнения этого действия.'
+                        : 'Вы не можете завершить партию, так как вы не являетесь её исполнителем.';
+
                     continue;
                 }
 
