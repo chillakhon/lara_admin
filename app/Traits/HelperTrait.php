@@ -6,7 +6,8 @@ use App\Models\Material;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Exception;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 trait HelperTrait
 {
@@ -90,6 +91,27 @@ trait HelperTrait
             env('ENCRYPTED_IV')
         );
         return $decrypted;
+    }
+
+
+    function paginate_collection(
+        array $items,
+        Request $request,
+    ): LengthAwarePaginator {
+        $array_to_collection = collect($items);
+        $page = (int) $request->get('page', 1);
+        $perPage = (int) $request->get('per_page', 30);
+
+        return new LengthAwarePaginator(
+            $array_to_collection->forPage($page, $perPage)->values(),
+            $array_to_collection->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
     }
 
 

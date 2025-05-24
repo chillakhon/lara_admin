@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Admin\CartController;
 use App\Http\Controllers\Api\Admin\CategoryController;
+use App\Http\Controllers\Api\Admin\CDEKController;
 use App\Http\Controllers\Api\Admin\ChatsIntegrationController;
 use App\Http\Controllers\Api\Admin\ClientController;
 use App\Http\Controllers\Api\Admin\ClientLevelController;
@@ -133,6 +134,16 @@ Route::middleware('auth:sanctum')->group(function () {
 //Route::post('/ssss', [ProductController::class, 'store']);
 
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+
+    Route::prefix('/delivery-services')->group(function () {
+
+        Route::prefix('/cdek')->group(function () {
+            Route::get('/locations', [CDEKController::class, 'get_cdek_locations']);
+            Route::get('/locations-cities', [CDEKController::class, 'get_cdek_cities']);
+            Route::get('/locations-regions', [CDEKController::class, 'get_cdek_regions']);
+            Route::get('/tariffs', [CDEKController::class, '']);
+        });
+    });
 
     Route::prefix('/orders')->group(function () {
         Route::post('/', [OrderController::class, 'store']);
