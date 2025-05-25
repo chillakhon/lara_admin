@@ -14,112 +14,63 @@ class ProductSeeder extends Seeder
      */
     public function run()
     {
-        $products = [
+        $products = collect([
             [
                 'name' => 'Body AGAIN',
                 'slug' => 'body-again',
                 'description' => '16 вариантов',
-                'type' => 'simple',
-                'default_unit_id' => 1, // Укажите ID единицы измерения
-                'is_active' => 1,
-                'has_variants' => 1,
-                'allow_preorder' => 0,
-                'after_purchase_processing_time' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'BOX AGAIN',
                 'slug' => 'box-again',
                 'description' => '8 вариантов',
-                'type' => 'simple',
-                'default_unit_id' => 1,
-                'is_active' => 1,
-                'has_variants' => 1,
-                'allow_preorder' => 0,
-                'after_purchase_processing_time' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Love AGAIN',
                 'slug' => 'love-again',
                 'description' => '32 варианта',
-                'type' => 'simple',
-                'default_unit_id' => 1,
-                'is_active' => 1,
-                'has_variants' => 1,
-                'allow_preorder' => 0,
-                'after_purchase_processing_time' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'LOVE SET',
                 'slug' => 'love-set',
                 'description' => '8 вариантов',
-                'type' => 'simple',
-                'default_unit_id' => 1,
-                'is_active' => 1,
-                'has_variants' => 1,
-                'allow_preorder' => 0,
-                'after_purchase_processing_time' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Passion AGAIN',
                 'slug' => 'passion-again',
                 'description' => '8 вариантов',
-                'type' => 'simple',
-                'default_unit_id' => 1,
-                'is_active' => 1,
-                'has_variants' => 1,
-                'allow_preorder' => 0,
-                'after_purchase_processing_time' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Save AGAIN',
                 'slug' => 'save-again',
                 'description' => '8 вариантов',
-                'type' => 'simple',
-                'default_unit_id' => 1,
-                'is_active' => 1,
-                'has_variants' => 1,
-                'allow_preorder' => 0,
-                'after_purchase_processing_time' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Sexy AGAIN',
                 'slug' => 'sexy-again',
                 'description' => '8 вариантов',
-                'type' => 'simple',
-                'default_unit_id' => 1,
-                'is_active' => 1,
-                'has_variants' => 1,
-                'allow_preorder' => 0,
-                'after_purchase_processing_time' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'name' => 'Любимый SET от доктора Садовская',
                 'slug' => 'set-love-doctor',
                 'description' => '8 вариантов',
+            ],
+        ])->map(function ($product) {
+            return array_merge($product, [
                 'type' => 'simple',
                 'default_unit_id' => 1,
                 'is_active' => 1,
                 'has_variants' => 1,
                 'allow_preorder' => 0,
                 'after_purchase_processing_time' => 0,
+                'weight' => rand(100, 1000) / 10, // weight in grams or kg (10.0 to 100.0)
+                'length' => rand(5, 50), // cm
+                'width' => rand(5, 50),  // cm
+                'height' => rand(5, 50), // cm
                 'created_at' => now(),
                 'updated_at' => now(),
-            ],
-        ];
+            ]);
+        })->toArray();
 
         DB::table('products')->insert($products);
     }
