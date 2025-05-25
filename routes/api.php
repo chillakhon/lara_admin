@@ -366,7 +366,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            Route::get('/history', [ProductionController::class, 'history'])->name('history');
         });
         //
-//
+
 //        // Orders
         Route::prefix('orders')->name('orders.')->middleware(['role:super-admin,admin,manager', 'permission:orders.view,orders.manage'])->group(function () {
             Route::get('/', [OrderController::class, 'index'])->name('orders.index');  // Путь будет /api/orders
