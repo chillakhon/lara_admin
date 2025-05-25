@@ -49,6 +49,9 @@ class DeliveryMethodController extends Controller
 
         foreach ($delivery_methods as $key => &$method) {
             if ($method->code === $cdek_pickup && count($cdek_locations) >= 1) {
+                $location = $cdek_locations[0];
+                $method["city_longitude"] = $location['longitude'];
+                $method["city_latitude"] = $location['latitude'];
                 $method['tariff'] = null;
                 $method['locations'] = $cdek_locations;
                 $solved_methods[] = $method;
@@ -56,7 +59,6 @@ class DeliveryMethodController extends Controller
 
             if ($method->code == $cdek_courier && count($cdek_locations) >= 1) {
                 $location = $cdek_locations[0];
-                return $this->create_packages($request->get('items'));
                 $tariff = $cdek->calculate_with_specific_tariff(
                     $this->get_address_from_location($location, $request->get('country_code')),
                     $this->create_packages($request->get('items'))

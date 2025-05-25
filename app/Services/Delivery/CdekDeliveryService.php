@@ -233,6 +233,8 @@ class CdekDeliveryService extends DeliveryService
                     'region' => $point->location->region,
                     'longitude' => $point->location->longitude,
                     'latitude' => $point->location->latitude,
+                    "city_longitude" => $city->longitude,
+                    "city_latitude" => $city->latitude,
                     'city_code' => $city->code,
                     'region_code' => $city->region_code,
                     'type' => $point->type === "POSTAMAT"
@@ -254,6 +256,8 @@ class CdekDeliveryService extends DeliveryService
                     'region' => $point->location->region,
                     'longitude' => $point->location->longitude,
                     'latitude' => $point->location->latitude,
+                    "city_longitude" => $city->longitude,
+                    "city_latitude" => $city->latitude,
                     'work_time' => $point->work_time,
                     'address_comment' => $point->address_comment,
                     'note' => $point->note,
