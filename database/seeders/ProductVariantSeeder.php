@@ -56,6 +56,10 @@ class ProductVariantSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'weight' => rand(30, 150), // вес в граммах (реалистично)
+                'length' => rand(10, 25),  // см
+                'width' => rand(10, 20),   // см
+                'height' => rand(2, 6),    // см
             ],
             [
                 'product_id' => $bodyAgainId,
@@ -68,6 +72,10 @@ class ProductVariantSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'weight' => rand(30, 150), // вес в граммах (реалистично)
+                'length' => rand(10, 25),  // см
+                'width' => rand(10, 20),   // см
+                'height' => rand(2, 6),    // см
             ],
             [
                 'product_id' => $bodyAgainId,
@@ -80,6 +88,10 @@ class ProductVariantSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'weight' => rand(30, 150), // вес в граммах (реалистично)
+                'length' => rand(10, 25),  // см
+                'width' => rand(10, 20),   // см
+                'height' => rand(2, 6),    // см
             ],
             [
                 'product_id' => $bodyAgainId,
@@ -92,6 +104,10 @@ class ProductVariantSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'weight' => rand(30, 150), // вес в граммах (реалистично)
+                'length' => rand(10, 25),  // см
+                'width' => rand(10, 20),   // см
+                'height' => rand(2, 6),    // см
             ],
             [
                 'product_id' => $bodyAgainId,
@@ -104,6 +120,10 @@ class ProductVariantSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'weight' => rand(30, 150), // вес в граммах (реалистично)
+                'length' => rand(10, 25),  // см
+                'width' => rand(10, 20),   // см
+                'height' => rand(2, 6),    // см
             ],
             [
                 'product_id' => $bodyAgainId,
@@ -116,6 +136,10 @@ class ProductVariantSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'weight' => rand(30, 150), // вес в граммах (реалистично)
+                'length' => rand(10, 25),  // см
+                'width' => rand(10, 20),   // см
+                'height' => rand(2, 6),    // см
             ],
             [
                 'product_id' => $bodyAgainId,
@@ -128,6 +152,10 @@ class ProductVariantSeeder extends Seeder
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'weight' => rand(30, 150), // вес в граммах (реалистично)
+                'length' => rand(10, 25),  // см
+                'width' => rand(10, 20),   // см
+                'height' => rand(2, 6),    // см
             ],
         ];
 
