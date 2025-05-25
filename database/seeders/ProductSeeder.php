@@ -63,10 +63,10 @@ class ProductSeeder extends Seeder
                 'has_variants' => 1,
                 'allow_preorder' => 0,
                 'after_purchase_processing_time' => 0,
-                'weight' => rand(100, 1000) / 10, // weight in grams or kg (10.0 to 100.0)
-                'length' => rand(5, 50), // cm
-                'width' => rand(5, 50),  // cm
-                'height' => rand(5, 50), // cm
+                'weight' => rand(30, 150), // вес в граммах (реалистично)
+                'length' => rand(10, 25),  // см
+                'width' => rand(10, 20),   // см
+                'height' => rand(2, 6),    // см
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

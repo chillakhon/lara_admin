@@ -58,7 +58,11 @@ class CountriesController extends Controller
         $cities->where("country.id", $request->get('country_id', 0));
 
         if ($request->get('name')) {
-            $cities->where("city.name", "like", "%{$request->get('name')}%");
+            $name = $request->get('name');
+            $cities->where(function ($query) use ($name) {
+                $query->where('city.name', 'like', "%{$name}%")
+                    ->orWhere('region.name', 'like', "%{$name}%");
+            });
         }
 
         if ($request->filled('region_id')) {

@@ -4,43 +4,25 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DeliveryMethod;
+use App\Models\Product;
 use App\Services\Delivery\CdekDeliveryService;
+use App\Traits\HelperTrait;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DeliveryMethodController extends Controller
 {
-    /**
-     * @OA\Get(
-     *     path="/api/delivery/methods",
-     *     operationId="getDeliveryMethods",
-     *     tags={"Delivery Methods"},
-     *     summary="Get a list of delivery methods with their associated zones, rates, and shipment count",
-     *     description="Retrieve a list of delivery methods, including their associated zones, rates, and shipment count.",
-     *     @OA\Response(
-     *         response=200,
-     *         description="List of delivery methods successfully retrieved",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="data", type="array",
-     *                 @OA\Items(ref="#/components/schemas/DeliveryMethod")
-     *             ),
-     *             @OA\Property(property="meta", type="object")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Invalid request",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="error", type="string", example="Invalid request parameters")
-     *         )
-     *     ),
-     *     security={{"apiAuth": {}}}
-     * )
-     */
-    public function index()
+
+    use HelperTrait;
+
+    public function index(Request $request)
     {
+
+        $request->validate([
+            'city_name' => 'required|string',
+            'items' => 'required|array',
+        ]);
+
         $cdek_pickup = "cdek_pickup";
         $cdek_courier = "cdek_courier";
         $main_delivery_methods_code = [$cdek_pickup, $cdek_courier];
@@ -52,69 +34,98 @@ class DeliveryMethodController extends Controller
             ->get();
 
 
-        foreach ($delivery_methods as $key => $method) {
-            if ($method->code === $cdek_pickup) {
-                $cdek = new CdekDeliveryService();
-                
+        $cdek = new CdekDeliveryService();
+
+        $cdek_locations = $cdek->get_offices(
+            $request->get('country_code'),
+            null,
+            null,
+            $request->get('city_name'),
+            false,
+            $request->boolean('get_locations_only', false),
+        );
+
+        $solved_methods = collect();
+
+        foreach ($delivery_methods as $key => &$method) {
+            if ($method->code === $cdek_pickup && count($cdek_locations) >= 1) {
+                $location = $cdek_locations[0];
+                $method["city_longitude"] = $location['longitude'];
+                $method["city_latitude"] = $location['latitude'];
+                $method['tariff'] = null;
+                $method['locations'] = $cdek_locations;
+                $solved_methods[] = $method;
+            }
+
+            if ($method->code == $cdek_courier && count($cdek_locations) >= 1) {
+                $location = $cdek_locations[0];
+                $tariff = $cdek->calculate_with_specific_tariff(
+                    $this->get_address_from_location($location, $request->get('country_code')),
+                    $this->create_packages($request->get('items'))
+                );
+                if ($tariff) {
+                    $method['tariff'] = $tariff;
+                    $solved_methods[] = $method;
+                }
             }
         }
 
         return response()->json([
-            'data' => $delivery_methods,
+            'data' => $solved_methods,
             'meta' => [
-                'total_methods' => $delivery_methods->count(),
+                'total_methods' => $solved_methods->count(),
             ]
         ]);
     }
 
+    public function create_packages($items = []): array
+    {
+        $packages = [];
+        foreach ($items as $key => $item) {
+            $id = null;
+            $product_type = null;
 
-    /**
-     * @OA\Get(
-     *     path="/api/delivery/methods/{method}",
-     *     summary="Get delivery method details",
-     *     tags={"Delivery Methods"},
-     *     @OA\Parameter(
-     *         name="method",
-     *         in="path",
-     *         required=true,
-     *         description="ID of the delivery method",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Details of the delivery method",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="id", type="integer", example=1),
-     *             @OA\Property(property="name", type="string", example="Standard Delivery"),
-     *             @OA\Property(property="description", type="string", example="Delivery within 3-5 business days."),
-     *             @OA\Property(
-     *                 property="zones",
-     *                 type="array",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Zone A"),
-     *                     @OA\Property(property="rates", type="array",
-     *                         @OA\Items(
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="price", type="float", example=15.50)
-     *                         )
-     *                     )
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Delivery method not found",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Delivery method not found")
-     *         )
-     *     )
-     * )
-     */
+            if (!is_null($item['product_variant_id'])) {
+                $product_type = $this->get_true_model_by_type("ProductVariant");
+                $id = $item['product_variant_id'];
+            } else if (!is_null($item['product_id'])) {
+                $product_type = $this->get_true_model_by_type("Product");
+                $id = $item['product_id'];
+            }
+
+            $product = $product_type->where('id', $id)->first();
+
+            if (!$product) {
+                continue;
+            }
+
+            $packages[] = [
+                'weight' => $product->weight,
+                'length' => $product->length,
+                'width' => $product->width,
+                'height' => $product->height,
+            ];
+        }
+        return $packages;
+    }
+
+    public function get_address_from_location($location, $country_code = 'RU')
+    {
+        return [
+            'address' => $location['address'],
+            'address_full' => $location['full_address'],
+            'postal_code' => $location['postal_code'],
+            'city' => $location['city'],
+            'region' => $location['region'],
+            'code' => $location['city_code'],
+            'region_code' => $location['region_code'],
+            'country_code' => $country_code,
+            'longitude' => $location['longitude'],
+            'latitude' => $location['latitude'],
+        ];
+    }
+
+
     public function show(DeliveryMethod $method)
     {
         // Загружаем зоны и ставки для метода доставки
@@ -124,45 +135,7 @@ class DeliveryMethodController extends Controller
         return response()->json($methodData);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/delivery/methods",
-     *     operationId="storeDeliveryMethod",
-     *     tags={"Delivery Methods"},
-     *     summary="Create a new delivery method",
-     *     description="Create a new delivery method with provided data.",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name", "code", "provider_class", "settings"},
-     *             @OA\Property(property="name", type="string", description="Name of the delivery method", example="Express Delivery"),
-     *             @OA\Property(property="code", type="string", description="Unique code for the delivery method", example="EXPRESS123"),
-     *             @OA\Property(property="description", type="string", description="Optional description of the delivery method", example="Fast delivery service for urgent orders"),
-     *             @OA\Property(property="provider_class", type="string", description="The class name of the delivery provider", example="App\\Delivery\\Providers\\ExpressProvider"),
-     *             @OA\Property(property="settings", type="array", items=@OA\Items(type="string"), description="Settings for the delivery method", example={"max_weight", "delivery_time"}),
-     *             @OA\Property(property="is_active", type="boolean", description="Whether the delivery method is active", example=true)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Delivery method created successfully",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Метод доставки создан"),
-     *             @OA\Property(property="data", type="object", ref="#/components/schemas/DeliveryMethod")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Invalid input data",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="error", type="string", example="Invalid input data")
-     *         )
-     *     ),
-     *     security={{"apiAuth": {}}}
-     * )
-     */
+
 
     public function store(Request $request)
     {
@@ -185,59 +158,7 @@ class DeliveryMethodController extends Controller
         ], 201); // Статус 201 для успешного создания ресурса
     }
 
-    /**
-     * @OA\Put(
-     *     path="/api/delivery/methods/{method}",
-     *     operationId="updateDeliveryMethod",
-     *     tags={"Delivery Methods"},
-     *     summary="Update an existing delivery method",
-     *     description="Update the details of an existing delivery method with provided data.",
-     *     @OA\Parameter(
-     *         name="method",
-     *         in="path",
-     *         required=true,
-     *         description="ID of the delivery method to be updated",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name", "provider_class", "settings"},
-     *             @OA\Property(property="name", type="string", description="Name of the delivery method", example="Express Delivery"),
-     *             @OA\Property(property="description", type="string", description="Optional description of the delivery method", example="Fast delivery service for urgent orders"),
-     *             @OA\Property(property="provider_class", type="string", description="The class name of the delivery provider", example="App\\Delivery\\Providers\\ExpressProvider"),
-     *             @OA\Property(property="settings", type="array", items=@OA\Items(type="string"), description="Settings for the delivery method", example={"max_weight", "delivery_time"}),
-     *             @OA\Property(property="is_active", type="boolean", description="Whether the delivery method is active", example=true)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Delivery method updated successfully",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Метод доставки обновлен"),
-     *             @OA\Property(property="data", type="object", ref="#/components/schemas/DeliveryMethod")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Invalid input data",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="error", type="string", example="Invalid input data")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Delivery method not found",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="error", type="string", example="Delivery method not found")
-     *         )
-     *     ),
-     *     security={{"apiAuth": {}}}
-     * )
-     */
+
     public function update(Request $request, DeliveryMethod $method)
     {
         $validated = $request->validate([
@@ -256,39 +177,6 @@ class DeliveryMethodController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/api/delivery/methods/{method}",
-     *     operationId="deleteDeliveryMethod",
-     *     tags={"Delivery Methods"},
-     *     summary="Delete an existing delivery method",
-     *     description="Delete the specified delivery method from the system.",
-     *     @OA\Parameter(
-     *         name="method",
-     *         in="path",
-     *         required=true,
-     *         description="ID of the delivery method to be deleted",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Delivery method deleted successfully",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Метод доставки удален")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Delivery method not found",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="error", type="string", example="Delivery method not found")
-     *         )
-     *     ),
-     *     security={{"apiAuth": {}}}
-     * )
-     */
     public function destroy(DeliveryMethod $method)
     {
         $method->delete();
