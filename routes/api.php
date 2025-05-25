@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Admin\ChatsIntegrationController;
 use App\Http\Controllers\Api\Admin\ClientController;
 use App\Http\Controllers\Api\Admin\ClientLevelController;
 use App\Http\Controllers\Api\Admin\CostCategoryController;
+use App\Http\Controllers\Api\Admin\CountriesController;
 use App\Http\Controllers\Api\Admin\DeliveryMethodController;
 use App\Http\Controllers\Api\Admin\DeliveryRateController;
 use App\Http\Controllers\Api\Admin\DeliveryZoneController;
@@ -134,6 +135,12 @@ Route::middleware('auth:sanctum')->group(function () {
 //Route::post('/ssss', [ProductController::class, 'store']);
 
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+
+    Route::prefix('/countries')->group(function () {
+        Route::get('/', [CountriesController::class, 'countries']);
+        Route::get('/regions', [CountriesController::class, 'regions']);
+        Route::get('/cities', [CountriesController::class, 'cities']);
+    });
 
     Route::prefix('/delivery-services')->group(function () {
 

@@ -20,7 +20,14 @@ class CDEKController extends Controller
 
     public function get_cdek_locations(Request $request)
     {
-        $locations = $this->cdek_service->get_offices($request);
+        $locations = $this->cdek_service->get_offices(
+            $request->get('country_code', 'ru'),
+            $request->get('city_code'),
+            $request->get('region_code'),
+            $request->get('city_name'),
+            true,
+            $request->boolean('get_locations_only', false)
+        );
 
         if ($request->get('per_page')) {
             $paginated = $this->paginate_collection($locations, $request);
