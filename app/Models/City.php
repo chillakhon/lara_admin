@@ -9,4 +9,6 @@ class City extends Model
     protected $table = "city";
 
     protected $guarded = ['id'];
+
+    public $timestamps = false;
 }

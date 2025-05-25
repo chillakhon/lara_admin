@@ -18,6 +18,7 @@ use CdekSDK2\Dto\RegionList;
 use CdekSDK2\Dto\TariffList;
 use CdekSDK2\Dto\TariffListItem;
 use CdekSDK2\Exceptions\AuthException;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use CdekSDK2\Client as SdekClient;
@@ -37,7 +38,7 @@ class CdekDeliveryService extends DeliveryService
         $this->cdek = new SdekClient($client);
         $this->cdek->setAccount('wqGwiQx0gg8mLtiEKsUinjVSICCjtTEP'); // put real account (using for tests right now)
         $this->cdek->setSecure('RmAmgvSgSl1yirlz9QupbzOJVqhCxcP5');//  put real secure (using for tests right now)
-        $this->cdek->setTest(true);
+        $this->cdek->setTest(true); // for testing
 
 
         // from docs: https://github.com/cdek-it/sdk2.0/wiki#%D0%B0%D0%B2%D1%82%D0%BE%D1%80%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F
