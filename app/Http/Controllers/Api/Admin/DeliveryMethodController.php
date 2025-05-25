@@ -6,11 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\DeliveryMethod;
 use App\Models\Product;
 use App\Services\Delivery\CdekDeliveryService;
+use App\Traits\HelperTrait;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DeliveryMethodController extends Controller
 {
+
+    use HelperTrait;
+
     public function index(Request $request)
     {
 
@@ -52,6 +56,7 @@ class DeliveryMethodController extends Controller
 
             if ($method->code == $cdek_courier && count($cdek_locations) >= 1) {
                 $location = $cdek_locations[0];
+                return $this->create_packages($request->get('items'));
                 $tariff = $cdek->calculate_with_specific_tariff(
                     $this->get_address_from_location($location, $request->get('country_code')),
                     $this->create_packages($request->get('items'))
@@ -75,10 +80,23 @@ class DeliveryMethodController extends Controller
     {
         $packages = [];
         foreach ($items as $key => $item) {
-            $product = Product::where('id', $item['product_id'])->first();
+            $id = null;
+            $product_type = null;
+
+            if (!is_null($item['product_variant_id'])) {
+                $product_type = $this->get_true_model_by_type("ProductVariant");
+                $id = $item['product_variant_id'];
+            } else if (!is_null($item['product_id'])) {
+                $product_type = $this->get_true_model_by_type("Product");
+                $id = $item['product_id'];
+            }
+
+            $product = $product_type->where('id', $id)->first();
+
             if (!$product) {
                 continue;
             }
+
             $packages[] = [
                 'weight' => $product->weight,
                 'length' => $product->length,
