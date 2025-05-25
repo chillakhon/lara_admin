@@ -75,15 +75,14 @@ class ChatsIntegrationController extends Controller
 
     public function updateMailSettings(Request $request)
     {
-
         $request->validate([
-            'mailer' => 'required|string',
+            'mailer' => 'nullable|string',
             'host' => 'required|string',
             'port' => 'required|numeric',
             'username' => 'required|string',
             'password' => 'required|string',
             'encryption' => 'nullable|string',
-            'from_address' => 'required|email',
+            'from_address' => 'nullable|email',
         ]);
 
         $data = $request->only([
@@ -95,6 +94,11 @@ class ChatsIntegrationController extends Controller
             'encryption',
             'from_address',
         ]);
+
+        // Apply defaults if missing
+        $data['mailer'] = $data['mailer'] ?? 'smtp';
+        $data['encryption'] = $data['encryption'] ?? 'tls';
+        $data['from_address'] = $data['from_address'] ?? $data['username'];
 
         $setting = MailSetting::first();
 
