@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MailSetting;
+use App\Notifications\TestMailNotification;
 use App\Traits\HelperTrait;
 use Artisan;
 use DefStudio\Telegraph\Models\TelegraphBot;
@@ -12,6 +13,7 @@ use Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Notification;
 use Log;
 
 class ChatsIntegrationController extends Controller
@@ -111,6 +113,20 @@ class ChatsIntegrationController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Настройки почты успешно сохранены в базу данных.',
+        ]);
+    }
+
+    public function test_mail(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|string'
+        ]);
+
+        Notification::route('mail', $validated['email'])->notify(new TestMailNotification());
+
+        return response()->json([
+            'success' => true,
+            'message' => "Тестовое уведомление отправлено!"
         ]);
     }
 }
