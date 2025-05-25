@@ -89,17 +89,24 @@ class CdekDeliveryService extends DeliveryService
         return '';
     }
 
-    public function get_offices(Request $request)
-    {
+    public function get_offices(
+        $country_code = "ru",
+        $city_code = null,
+        $region_code = null,
+        $city_name = null,
+        $search_region_if_city_was_not_found = true,
+        $get_locations_only = false,
+    ) {
         $filter = [
-            'country_code' => $request->get('country_code', 'ru'),
-            'city_code' => $request->get('city_code'),
-            'region_code' => $request->get('region_code'),
+            'country_code' => $country_code,
+            'city_code' => $city_code,
+            'region_code' => $region_code,
         ];
         // city_name should not be empty but city_code should be empty
         // and region code should be empty
-        if ($request->get('city_name') && !$request->get('city_code') && !$request->get('region_code')) {
-            $city = $this->searhc_for_city_code($request->get('city_name'));
+        $city = null;
+        if ($city_name && !$city_code && !$region_code) {
+            $city = $this->searhc_for_city_code($city_name);
             if ($city) {
                 $filter['city_code'] = $city->code;
             } else {
@@ -107,6 +114,77 @@ class CdekDeliveryService extends DeliveryService
             }
         }
 
+        $pick_up_point_offices = $this->get_filtered_offices($filter);
+
+        // $city_name && $city_code && $region_code are the values that user may send
+        // if he sent only $city_name we have to find offices first of all,
+        // in that specific city, if we dont find any office we have to make request and 
+        // find offices in the specific region of the city
+        if (
+            $search_region_if_city_was_not_found && count($pick_up_point_offices) <= 0
+            && $city && $city_name && !$city_code && !$region_code
+        ) {
+            $pick_up_point_offices = $this->get_filtered_offices([
+                'region_code' => $city->region_code,
+            ]);
+        }
+
+        $offices = [];
+
+        foreach ($pick_up_point_offices as $point) {
+            if ($get_locations_only) {
+                $offices[] = [
+                    'code' => $point->code,
+                    'address' => $point->location->address,
+                    'full_address' => $point->location->address_full,
+                    'city' => $point->location->city,
+                    'postal_code' => $point->location->postal_code,
+                    'region' => $point->location->region,
+                    'longitude' => $point->location->longitude,
+                    'latitude' => $point->location->latitude,
+                    'city_code' => $city->code,
+                    'region_code' => $city->region_code,
+                ];
+            } else {
+                $offices[] = [
+                    'code' => $point->code,
+                    'name' => $point->name,
+                    'type' => $point->type,
+                    'owner_code' => $point->owner_code,
+                    'address' => $point->location->address,
+                    'full_address' => $point->location->address_full,
+                    'city' => $point->location->city,
+                    'postal_code' => $point->location->postal_code,
+                    'region' => $point->location->region,
+                    'longitude' => $point->location->longitude,
+                    'latitude' => $point->location->latitude,
+                    'work_time' => $point->work_time,
+                    'address_comment' => $point->address_comment,
+                    'note' => $point->note,
+                    'is_dressing_room' => $point->is_dressing_room,
+                    'have_cash' => $point->have_cash,
+                    'have_cashless' => $point->have_cashless,
+                    'allowed_cod' => $point->allowed_cod,
+                    'nearest_station' => $point->nearest_station,
+                    'nearest_metro_station' => $point->nearest_metro_station,
+                    'email' => $point->email,
+                    'phone' => $point->phones[0]->number ?? null,
+                    'images' => array_map(fn($img) => $img->url, $point->office_image_list ?? []),
+                    'work_time_list' => array_map(fn($time) => [
+                        'day' => $time->day,
+                        'time' => $time->time,
+                    ], $point->work_time_list ?? []),
+                    'city_code' => $city->code,
+                    'region_code' => $city->region_code,
+                ];
+            }
+        }
+
+        return $offices;
+    }
+
+    public function get_filtered_offices($filter)
+    {
         $result = $this->cdek->offices()->getFiltered($filter);
 
         if (!$result->isOk()) {
@@ -115,43 +193,7 @@ class CdekDeliveryService extends DeliveryService
 
         $pick_up_point_list = $this->cdek->formatResponseList($result, PickupPointList::class);
 
-        $pick_up_point_offices = $pick_up_point_list->items;
-
-        $offices = [];
-
-        foreach ($pick_up_point_offices as $point) {
-            $offices[] = [
-                'code' => $point->code,
-                'name' => $point->name,
-                'type' => $point->type,
-                'owner_code' => $point->owner_code,
-                'address' => $point->location->address,
-                'full_address' => $point->location->address_full,
-                'city' => $point->location->city,
-                'postal_code' => $point->location->postal_code,
-                'region' => $point->location->region,
-                'longitude' => $point->location->longitude,
-                'latitude' => $point->location->latitude,
-                'work_time' => $point->work_time,
-                'address_comment' => $point->address_comment,
-                'note' => $point->note,
-                'is_dressing_room' => $point->is_dressing_room,
-                'have_cash' => $point->have_cash,
-                'have_cashless' => $point->have_cashless,
-                'allowed_cod' => $point->allowed_cod,
-                'nearest_station' => $point->nearest_station,
-                'nearest_metro_station' => $point->nearest_metro_station,
-                'email' => $point->email,
-                'phone' => $point->phones[0]->number ?? null,
-                'images' => array_map(fn($img) => $img->url, $point->office_image_list ?? []),
-                'work_time_list' => array_map(fn($time) => [
-                    'day' => $time->day,
-                    'time' => $time->time,
-                ], $point->work_time_list ?? []),
-            ];
-        }
-
-        return $offices;
+        return $pick_up_point_list->items;
     }
 
     public function searhc_for_city_code($city_name): City|null

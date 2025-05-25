@@ -159,3 +159,82 @@
 #50 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/avaz/Des...')
 #51 {main}
 "} 
+[2025-05-25 05:20:18] local.ERROR: syntax error, unexpected token "]", expecting identifier or variable or "{" or "$" {"userId":11,"exception":"[object] (ParseError(code: 0): syntax error, unexpected token \"]\", expecting identifier or variable or \"{\" or \"$\" at /Users/avaz/Desktop/laravels/lara_admin/app/Services/Delivery/CdekDeliveryService.php:129)
+[stacktrace]
+#0 /Users/avaz/Desktop/laravels/lara_admin/vendor/composer/ClassLoader.php(427): Composer\\Autoload\\{closure}('/Users/avaz/Des...')
+#1 /Users/avaz/Desktop/laravels/lara_admin/app/Http/Controllers/Api/Admin/CDEKController.php(18): Composer\\Autoload\\ClassLoader->loadClass('App\\\\Services\\\\De...')
+#2 [internal function]: App\\Http\\Controllers\\Api\\Admin\\CDEKController->__construct()
+#3 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Container/Container.php(1004): ReflectionClass->newInstanceArgs(Array)
+#4 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Container/Container.php(832): Illuminate\\Container\\Container->build('App\\\\Http\\\\Contro...')
+#5 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1078): Illuminate\\Container\\Container->resolve('App\\\\Http\\\\Contro...', Array, true)
+#6 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Container/Container.php(763): Illuminate\\Foundation\\Application->resolve('App\\\\Http\\\\Contro...', Array)
+#7 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1058): Illuminate\\Container\\Container->make('App\\\\Http\\\\Contro...', Array)
+#8 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(285): Illuminate\\Foundation\\Application->make('App\\\\Http\\\\Contro...')
+#9 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(267): Illuminate\\Routing\\Route->getController()
+#10 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Route.php(212): Illuminate\\Routing\\Route->runController()
+#11 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(808): Illuminate\\Routing\\Route->run()
+#12 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Routing\\Router->Illuminate\\Routing\\{closure}(Object(Illuminate\\Http\\Request))
+#13 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/EnsureEmailIsVerified.php(41): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#14 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\EnsureEmailIsVerified->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#15 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Middleware/SubstituteBindings.php(51): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#16 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Routing\\Middleware\\SubstituteBindings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#17 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Auth/Middleware/Authenticate.php(64): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#18 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Auth\\Middleware\\Authenticate->handle(Object(Illuminate\\Http\\Request), Object(Closure), 'sanctum')
+#19 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#20 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(807): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#21 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(786): Illuminate\\Routing\\Router->runRouteWithinStack(Object(Illuminate\\Routing\\Route), Object(Illuminate\\Http\\Request))
+#22 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(750): Illuminate\\Routing\\Router->runRoute(Object(Illuminate\\Http\\Request), Object(Illuminate\\Routing\\Route))
+#23 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Routing/Router.php(739): Illuminate\\Routing\\Router->dispatchToRoute(Object(Illuminate\\Http\\Request))
+#24 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(201): Illuminate\\Routing\\Router->dispatch(Object(Illuminate\\Http\\Request))
+#25 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(170): Illuminate\\Foundation\\Http\\Kernel->Illuminate\\Foundation\\Http\\{closure}(Object(Illuminate\\Http\\Request))
+#26 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#27 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/ConvertEmptyStringsToNull.php(31): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#28 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\ConvertEmptyStringsToNull->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#29 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TransformsRequest.php(21): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#30 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/TrimStrings.php(51): Illuminate\\Foundation\\Http\\Middleware\\TransformsRequest->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#31 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\TrimStrings->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#32 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/ValidatePostSize.php(27): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#33 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\ValidatePostSize->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#34 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/PreventRequestsDuringMaintenance.php(110): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#35 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#36 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/HandleCors.php(62): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#37 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\HandleCors->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#38 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Http/Middleware/TrustProxies.php(58): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#39 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Http\\Middleware\\TrustProxies->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#40 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Middleware/InvokeDeferredCallbacks.php(22): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#41 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(209): Illuminate\\Foundation\\Http\\Middleware\\InvokeDeferredCallbacks->handle(Object(Illuminate\\Http\\Request), Object(Closure))
+#42 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(127): Illuminate\\Pipeline\\Pipeline->Illuminate\\Pipeline\\{closure}(Object(Illuminate\\Http\\Request))
+#43 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(176): Illuminate\\Pipeline\\Pipeline->then(Object(Closure))
+#44 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(145): Illuminate\\Foundation\\Http\\Kernel->sendRequestThroughRouter(Object(Illuminate\\Http\\Request))
+#45 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1220): Illuminate\\Foundation\\Http\\Kernel->handle(Object(Illuminate\\Http\\Request))
+#46 /Users/avaz/Desktop/laravels/lara_admin/public/index.php(17): Illuminate\\Foundation\\Application->handleRequest(Object(Illuminate\\Http\\Request))
+#47 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php(23): require_once('/Users/avaz/Des...')
+#48 {main}
+"} 
+[2025-05-25 07:33:05] local.ERROR: Command "mgirate" is not defined.
+
+Did you mean one of these?
+    migrate
+    migrate:fresh
+    migrate:install
+    migrate:refresh
+    migrate:reset
+    migrate:rollback
+    migrate:status {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"mgirate\" is not defined.
+
+Did you mean one of these?
+    migrate
+    migrate:fresh
+    migrate:install
+    migrate:refresh
+    migrate:reset
+    migrate:rollback
+    migrate:status at /Users/avaz/Desktop/laravels/lara_admin/vendor/symfony/console/Application.php:726)
+[stacktrace]
+#0 /Users/avaz/Desktop/laravels/lara_admin/vendor/symfony/console/Application.php(284): Symfony\\Component\\Console\\Application->find('mgirate')
+#1 /Users/avaz/Desktop/laravels/lara_admin/vendor/symfony/console/Application.php(193): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#2 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#3 /Users/avaz/Desktop/laravels/lara_admin/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(1235): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#4 /Users/avaz/Desktop/laravels/lara_admin/artisan(13): Illuminate\\Foundation\\Application->handleCommand(Object(Symfony\\Component\\Console\\Input\\ArgvInput))
+#5 {main}
+"} 

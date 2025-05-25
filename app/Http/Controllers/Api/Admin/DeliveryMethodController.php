@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DeliveryMethod;
+use App\Services\Delivery\CdekDeliveryService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -40,14 +41,28 @@ class DeliveryMethodController extends Controller
      */
     public function index()
     {
-        $methods = DeliveryMethod::with(['zones', 'rates'])
-            ->withCount('shipments')
+        $cdek_pickup = "cdek_pickup";
+        $cdek_courier = "cdek_courier";
+        $main_delivery_methods_code = [$cdek_pickup, $cdek_courier];
+
+        $delivery_methods = DeliveryMethod
+            ::whereIn('code', $main_delivery_methods_code)
+            ->orderBy('id', 'asc')
+            ->select(['id', 'name', 'code', 'description', 'provider_class'])
             ->get();
 
+
+        foreach ($delivery_methods as $key => $method) {
+            if ($method->code === $cdek_pickup) {
+                $cdek = new CdekDeliveryService();
+                
+            }
+        }
+
         return response()->json([
-            'data' => $methods,
+            'data' => $delivery_methods,
             'meta' => [
-                'total_methods' => $methods->count(),
+                'total_methods' => $delivery_methods->count(),
             ]
         ]);
     }
