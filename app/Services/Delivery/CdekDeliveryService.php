@@ -150,12 +150,13 @@ class CdekDeliveryService extends DeliveryService
         // Номера тарифов есть в документации к API: https://apidoc.cdek.ru/#tag/common/Prilozheniya/Prilozhenie-4.-Tarify-SDEK
         $tariff->tariff_code = $tariff_code;
 
-        // temp location of the owners of web-site
+        // location of the owners of web-site
         $tariff->from_location = Location::create([
             'address' => 'пр-т 2-й Муринский, 49',
             'code' => 137,
             'country_code' => "RU",
         ]);
+
         $tariff->to_location = Location::create($location_to);
 
         foreach ($packages as $package) {

@@ -21,6 +21,7 @@ class DeliveryMethodController extends Controller
         $request->validate([
             'city_name' => 'required|string',
             'items' => 'required|array',
+            'address' => "required|string"
         ]);
 
         $cdek_pickup = "cdek_pickup";
@@ -53,14 +54,20 @@ class DeliveryMethodController extends Controller
                 $method["city_longitude"] = $location['longitude'];
                 $method["city_latitude"] = $location['latitude'];
                 $method['tariff'] = null;
+                $method['locations_count'] = count($cdek_locations);
                 $method['locations'] = $cdek_locations;
                 $solved_methods[] = $method;
             }
 
             if ($method->code == $cdek_courier && count($cdek_locations) >= 1) {
                 $location = $cdek_locations[0];
+               
                 $tariff = $cdek->calculate_with_specific_tariff(
-                    $this->get_address_from_location($location, $request->get('country_code')),
+                    $this->get_address_from_location(
+                        $location,
+                        $request->get('address'),
+                        $request->get('country_code')
+                    ),
                     $this->create_packages($request->get('items'))
                 );
                 if ($tariff) {
@@ -109,19 +116,19 @@ class DeliveryMethodController extends Controller
         return $packages;
     }
 
-    public function get_address_from_location($location, $country_code = 'RU')
+    public function get_address_from_location($location, $address, $country_code = 'RU')
     {
         return [
-            'address' => $location['address'],
-            'address_full' => $location['full_address'],
-            'postal_code' => $location['postal_code'],
-            'city' => $location['city'],
-            'region' => $location['region'],
+            'address' => $address, //$location['address'],
+            // 'address_full' => $location['full_address'],
+            // 'postal_code' => $location['postal_code'],
+            // 'city' => $location['city'],
+            // 'region' => $location['region'],
             'code' => $location['city_code'],
-            'region_code' => $location['region_code'],
+            // 'region_code' => $location['region_code'],
             'country_code' => $country_code,
-            'longitude' => $location['longitude'],
-            'latitude' => $location['latitude'],
+            // 'longitude' => $location['longitude'],
+            // 'latitude' => $location['latitude'],
         ];
     }
 
