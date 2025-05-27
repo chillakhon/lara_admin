@@ -125,7 +125,7 @@ class DeliveryMethodController extends Controller
             // 'city' => $location['city'],
             // 'region' => $location['region'],
             'code' => $location['city_code'],
-            // 'region_code' => $location['region_code'],
+            'region_code' => $location['region_code'],
             'country_code' => $country_code,
             // 'longitude' => $location['longitude'],
             // 'latitude' => $location['latitude'],

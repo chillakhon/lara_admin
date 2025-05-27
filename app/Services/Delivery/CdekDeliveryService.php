@@ -2,6 +2,7 @@
 
 namespace App\Services\Delivery;
 
+use App\Models\DeliveryServiceSetting;
 use App\Models\Order;
 use App\Models\Shipment;
 use App\Models\ShipmentStatus;
@@ -41,8 +42,16 @@ class CdekDeliveryService extends DeliveryService
         $client = new HttpClient();
 
         $this->cdek = new SdekClient($client);
-        $this->cdek->setAccount('wqGwiQx0gg8mLtiEKsUinjVSICCjtTEP'); // put real account (using for tests right now)
-        $this->cdek->setSecure('RmAmgvSgSl1yirlz9QupbzOJVqhCxcP5');//  put real secure (using for tests right now)
+
+        $cdek_settings = DeliveryServiceSetting::where('service_name', 'cdek')->first();
+
+
+        if (!$cdek_settings) {
+            throw new Exception("Настройки для СДЭК не найдены. Пожалуйста, настройте сервис в админке.");
+        }
+
+        $this->cdek->setAccount($cdek_settings->token); // put real account (using for tests right now)
+        $this->cdek->setSecure($cdek_settings->secret);//  put real secure (using for tests right now)
         $this->cdek->setTest(true); // for testing
 
 

@@ -204,6 +204,10 @@ class OrderController extends Controller
 
             $find_user_profile = UserProfile::where('user_id', $client->id)->first();
 
+            if ($user->email) {
+                // send email notification about order
+            }
+
             if ($find_user_profile && $find_user_profile->phone) {
                 // $whatsapp_notification = new WhatsappService();
                 // $whatsapp_notification->order_notification(
