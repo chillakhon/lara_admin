@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DeliveryMethod;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Services\Delivery\CdekDeliveryService;
 use App\Traits\HelperTrait;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class DeliveryMethodController extends Controller
         $request->validate([
             'city_name' => 'required|string',
             'items' => 'required|array',
-            'address' => "required|string"
+            'delivery_address' => "required|string"
         ]);
 
         $cdek_pickup = "cdek_pickup";
@@ -61,14 +62,15 @@ class DeliveryMethodController extends Controller
 
             if ($method->code == $cdek_courier && count($cdek_locations) >= 1) {
                 $location = $cdek_locations[0];
-               
+
+                return   $this->create_single_package($request->get('items'));
                 $tariff = $cdek->calculate_with_specific_tariff(
                     $this->get_address_from_location(
                         $location,
-                        $request->get('address'),
+                        $request->get('delivery_address'),
                         $request->get('country_code')
                     ),
-                    $this->create_packages($request->get('items'))
+                    $this->create_single_package($request->get('items'))
                 );
                 if ($tariff) {
                     $method['tariff'] = $tariff;
@@ -83,6 +85,46 @@ class DeliveryMethodController extends Controller
                 'total_methods' => $solved_methods->count(),
             ]
         ]);
+    }
+
+    public function create_single_package($items = []): array
+    {
+        $total_weight = 0;
+        $dimensions = ['length' => 0, 'width' => 0, 'height' => 0];
+
+        foreach ($items as $item) {
+            $product = null;
+
+            if (!is_null($item['product_variant_id'])) {
+                $product = ProductVariant::find($item['product_variant_id']);
+            } elseif (!is_null($item['product_id'])) {
+                $product = Product::find($item['product_id']);
+            }
+
+            if (!$product) {
+                continue;
+            }
+
+            $quantity = isset($item['quantity']) ? (int) $item['quantity'] : 1;
+
+            // Суммируем вес
+            $total_weight += $product->weight * $quantity;
+
+            // Простейшая эвристика для размера коробки (упрощенно):
+            $dimensions['length'] = max($dimensions['length'], $product->length);
+            $dimensions['width'] = max($dimensions['width'], $product->width);
+            $dimensions['height'] += $product->height * $quantity;
+        }
+
+        // collect all items and calculate total dimensions
+        return [
+            [
+                'weight' => max($total_weight, 1), // Минимум 1 грамм
+                'length' => max($dimensions['length'], 1),
+                'width' => max($dimensions['width'], 1),
+                'height' => max($dimensions['height'], 1),
+            ]
+        ];
     }
 
     public function create_packages($items = []): array

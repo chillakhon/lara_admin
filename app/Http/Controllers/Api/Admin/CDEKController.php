@@ -102,7 +102,6 @@ class CDEKController extends Controller
             ]);
         }
 
-
         $cdek_settings->token = $request->get('acount');
         $cdek_settings->secret = $request->get('secure_password');
         $cdek_settings->call_courier_to_the_office = $request->boolean('call_courier_to_the_office', false);

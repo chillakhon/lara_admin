@@ -145,6 +145,11 @@ class CdekDeliveryService extends DeliveryService
         $packages = [],
         $tariff_code = 137 // Склад-дверь
     ) {
+        if (empty($packages)) {
+            Log::warning('CDEK: No packages provided');
+            return null;
+        }
+
         $tariff = Tariff::create([]);
         $tariff->date = (new DateTime())->format(DateTime::ISO8601);
         // Что означает Tariff::TYPE_ECOMMERCE
