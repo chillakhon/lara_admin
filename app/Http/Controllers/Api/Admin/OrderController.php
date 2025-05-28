@@ -269,6 +269,14 @@ class OrderController extends Controller
             ]);
         }
 
+        // if (!empty($deliveryData['weight'])) {
+        //     $shipmentData['weight'] = $deliveryData['weight'];
+        // }
+
+        // if (!empty($deliveryData['dimensions'])) {
+        //     $shipmentData['dimensions'] = json_encode($deliveryData['dimensions']);
+        // }
+
         Shipment::create($shipmentData);
     }
 

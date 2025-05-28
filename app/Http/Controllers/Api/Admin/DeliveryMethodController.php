@@ -72,7 +72,11 @@ class DeliveryMethodController extends Controller
                     $this->create_single_package($request->get('items'))
                 );
                 if ($tariff) {
+                    $method["city_longitude"] = $location['longitude'];
+                    $method["city_latitude"] = $location['latitude'];
+                    $method['locations_count'] = null;
                     $method['tariff'] = $tariff;
+                    $method['locations'] = null;
                     $solved_methods[] = $method;
                 }
             }
