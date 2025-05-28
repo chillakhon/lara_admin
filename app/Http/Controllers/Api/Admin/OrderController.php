@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Product;
 use App\Models\DeliveryDate;
 use App\Models\DeliveryMethod;
+use App\Models\Shipment;
 use App\Models\UserProfile;
 use App\Services\Delivery\CdekDeliveryService;
 use App\Services\TelegramNotificationService;
@@ -151,28 +152,12 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
-            'items.*.quantity' => 'required|numeric|min:0.01',
-            'items.*.price' => 'required|numeric|min:0',
-            'items.*.color_id' => 'nullable|exists:colors,id',
-            'notes' => 'nullable|string',
-            // 'status' => 'required|in:' . implode(',', array_column(Order::STATUSES, 'value')),
-            // 'payment_status' => 'required|in:pending,paid,failed,refunded',
-            "delivery_address" => 'nullable|string',
-            // 'delivery_date' => 'nullable|date_format:Y-m-d H:i:s',
-            'delivery_method_id' => 'required|exists:delivery_methods,id',
-            'delivery_zone_id' => 'nullable|exists:delivery_zones,id',
-            'data' => 'nullable|string',
-        ]);
+        $validated = $this->validateOrderData($request);
 
         DB::beginTransaction();
 
         try {
             $user = $request->user();
-
             $client = Client::where('user_id', $user->id)->first();
 
             if (!$client) {
@@ -182,19 +167,7 @@ class OrderController extends Controller
                 ]);
             }
 
-            $order = Order::create([
-                'client_id' => $client->id,
-                'order_number' => 'ORD-' . now()->format('Ymd-His') . '-' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT),
-                'total_amount' => 0,
-                'status' => 'new',//$validated['status'],
-                'payment_status' => 'pending', //$validated['payment_status'],
-                'notes' => $validated['notes'] ?? null,
-                'delivery_date' => $validated['delivery_date'] ?? null,
-                'delivery_method_id' => $validated['delivery_method_id'] ?? null,
-                // 'delivery_target_id' => $validated['delivery_target_id'] ?? null,
-                'delivery_zone_id' => $validated['delivery_zone_id'] ?? null,
-                'data' => $validated['data'] ?? null,
-            ]);
+            $order = $this->createOrder($validated, $client->id);
 
             foreach ($validated['items'] as $item) {
                 $order->items()->create($item);
@@ -202,45 +175,16 @@ class OrderController extends Controller
 
             $order->updateTotalAmount();
 
-            $find_user_profile = UserProfile::where('user_id', $client->id)->first();
+            $this->createShipmentForOrder($order, $validated);
 
-            if ($user->email) {
-                // send email notification about order
-            }
-
-            if ($find_user_profile && $find_user_profile->phone) {
-                // $whatsapp_notification = new WhatsappService();
-                // $whatsapp_notification->order_notification(
-                //     $find_user_profile->phone,
-                //     $order->id,
-                //     Carbon::parse($order->created_at)->format('d.m.Y в H:i'),
-                //     $order->total_amount,
-                // );
-                $telegram_notification = new TelegramNotificationService();
-                $telegram_notification->sendOrderNotificationToClient($order, $find_user_profile);
-            }
+            $this->sendNotifications($user, $client, $order);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Заказ успешно создан',
-                'order' => [
-                    'id' => $order->id,
-                    'order_number' => $order->order_number,
-                    'status' => $order->status,
-                    'payment_status' => $order->payment_status,
-                    'total_amount' => $order->total_amount,
-                    'created_at' => $order->created_at,
-                    'delivery_date' => $order->delivery_date,
-                    'delivery_method_id' => $order->delivery_method_id,
-                    'delivery_method_name' => $order->deliveryMethod ? $order->deliveryMethod->name : null,
-                    'delivery_zone_id' => $order->delivery_zone_id,
-                    'delivery_zone_name' => $order->deliveryZone ? $order->deliveryZone->name : null,
-                    'delivery_target_id' => $order->delivery_target_id, // Возвращаем delivery_target_id
-                    'data' => $order->data,
-                    // 'user_profile' => $find_user_profile,
-                ]
+                'order' => $order->fresh()
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -249,6 +193,92 @@ class OrderController extends Controller
                 'message' => 'Ошибка сервера: ' . $e->getMessage(),
                 'line' => $e->getLine()
             ], 500);
+        }
+    }
+
+    private function validateOrderData(Request $request)
+    {
+        return $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
+            'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.price' => 'required|numeric|min:0',
+            'items.*.color_id' => 'nullable|exists:colors,id',
+            'notes' => 'nullable|string',
+            'delivery_address' => 'nullable|string',
+            'delivery_method_id' => 'required|exists:delivery_methods,id',
+            'delivery_zone_id' => 'nullable|exists:delivery_zones,id',
+            'data' => 'nullable|string',
+        ]);
+    }
+
+    private function createOrder(array $validated, int $clientId)
+    {
+        return Order::create([
+            'client_id' => $clientId,
+            'order_number' => 'ORD-' . now()->format('Ymd-His') . '-' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT),
+            'total_amount' => 0,
+            'status' => 'new',
+            'payment_status' => 'pending',
+            'notes' => $validated['notes'] ?? null,
+            'delivery_method_id' => $validated['delivery_method_id'],
+            'delivery_zone_id' => $validated['delivery_zone_id'] ?? null,
+            'data' => $validated['data'] ?? null,
+        ]);
+    }
+
+    private function createShipmentForOrder(Order $order, array $validated)
+    {
+        $deliveryMethodId = $validated['delivery_method_id'];
+        $deliveryData = json_decode($validated['data'] ?? '{}', true);
+
+        $shipmentData = [
+            'order_id' => $order->id,
+            'delivery_method_id' => $deliveryMethodId,
+            'status_id' => 1, // статус "new"
+            'shipping_address' => $validated['delivery_address'] ?? '',
+            'recipient_name' => $order->client->getFullNameAttribute ?? '',
+            'recipient_phone' => $order->client->user->phone ?? '',
+            'cost' => 0
+        ];
+
+        if ($deliveryMethodId === 1) {
+            if (empty($deliveryData['location_code'])) {
+                throw new \Exception('Не указан код ПВЗ (location_code)');
+            }
+
+            $shipmentData = array_merge($shipmentData, [
+                'location_code' => $deliveryData['location_code'],
+                'city' => $deliveryData['city'] ?? null,
+                'full_address' => $deliveryData['address'] ?? null,
+                'tariff_code' => null
+            ]);
+        } elseif ($deliveryMethodId === 3) {
+            $tariff = $deliveryData['tariff'] ?? null;
+
+            if (!$tariff || empty($validated['delivery_address'])) {
+                throw new \Exception('Для курьерской доставки нужно указать тариф и адрес доставки');
+            }
+
+            $shipmentData = array_merge($shipmentData, [
+                'tariff_code' => $tariff['code'] ?? null,
+                'price' => $tariff['total_sum'] ?? 0,
+                'period_min' => $tariff['period_min'] ?? null,
+                'period_max' => $tariff['period_max'] ?? null,
+            ]);
+        }
+
+        Shipment::create($shipmentData);
+    }
+
+    private function sendNotifications($user, $client, $order)
+    {
+        $profile = UserProfile::where('user_id', $client->id)->first();
+
+        if ($profile && $profile->phone) {
+            $telegramService = new TelegramNotificationService();
+            $telegramService->sendOrderNotificationToClient($order, $profile);
         }
     }
 

@@ -63,7 +63,6 @@ class DeliveryMethodController extends Controller
             if ($method->code == $cdek_courier && count($cdek_locations) >= 1) {
                 $location = $cdek_locations[0];
 
-                return   $this->create_single_package($request->get('items'));
                 $tariff = $cdek->calculate_with_specific_tariff(
                     $this->get_address_from_location(
                         $location,
