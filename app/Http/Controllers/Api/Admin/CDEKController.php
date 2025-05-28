@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DeliveryServiceSetting;
 use App\Services\Delivery\CdekDeliveryService;
 use App\Traits\HelperTrait;
 use Illuminate\Http\Request;
@@ -11,16 +12,12 @@ class CDEKController extends Controller
 {
     use HelperTrait;
 
-    private CdekDeliveryService $cdek_service;
-
-    public function __construct()
-    {
-        $this->cdek_service = new CdekDeliveryService();
-    }
 
     public function get_cdek_locations(Request $request)
     {
-        $locations = $this->cdek_service->get_offices(
+        $cdek_service = new CdekDeliveryService();
+
+        $locations = $cdek_service->get_offices(
             $request->get('country_code', 'ru'),
             $request->get('city_code'),
             $request->get('region_code'),
@@ -57,9 +54,9 @@ class CDEKController extends Controller
             'code' => 'nullable|string',
         ]);
 
-        $cities = $this->cdek_service->location_cities($request);
+        $cdek_service = new CdekDeliveryService();
 
-        return $cities;
+        $cities = $cdek_service->location_cities($request);
 
         $paginated = $this->paginate_collection($cities, $request);
 
@@ -77,7 +74,8 @@ class CDEKController extends Controller
 
     public function get_cdek_regions(Request $request)
     {
-        return $this->cdek_service->location_regions($request);
+        $cdek_service = new CdekDeliveryService();
+        return $cdek_service->location_regions($request);
     }
 
     public function get_tariffs()
@@ -87,5 +85,31 @@ class CDEKController extends Controller
 
     public function check_address()
     {
+    }
+
+    public function update_cdek_settings(Request $request)
+    {
+        $request->validate([
+            'acount' => 'required|string',
+            'secure_password' => 'required|string',
+        ]);
+
+        $cdek_settings = DeliveryServiceSetting::where('service_name', 'cdek')->first();
+
+        if (!$cdek_settings) {
+            $cdek_settings = DeliveryServiceSetting::create([
+                'service_name' => 'cdek',
+            ]);
+        }
+
+        $cdek_settings->token = $request->get('acount');
+        $cdek_settings->secret = $request->get('secure_password');
+        $cdek_settings->call_courier_to_the_office = $request->boolean('call_courier_to_the_office', false);
+        $cdek_settings->save();
+
+        return response()->json([
+            'message' => 'Настройки CDEK успешно обновлены',
+            'settings' => $cdek_settings
+        ]);
     }
 }

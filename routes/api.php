@@ -592,6 +592,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             });
             Route::prefix('/mail')->group(function () {
                 Route::post('/configuration', [ChatsIntegrationController::class, 'updateMailSettings']);
+                Route::get('/test', [ChatsIntegrationController::class, 'test_mail']);
+            });
+            Route::prefix('/cdek')->group(function () {
+                Route::post('/settings', [CDEKController::class, 'update_cdek_settings']);
             });
         });
     });

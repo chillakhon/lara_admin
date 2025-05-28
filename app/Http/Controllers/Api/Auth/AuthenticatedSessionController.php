@@ -7,6 +7,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Client;
 use App\Models\User;
 use App\Notifications\MailNotification;
+use App\Notifications\WelcomeNotification;
 use App\Traits\HelperTrait;
 use DB;
 use Exception;
@@ -155,6 +156,10 @@ class AuthenticatedSessionController extends Controller
         $user->save();
 
         $token = $user->createToken('authToken')->plainTextToken;
+
+        Notification::route('mail', $user->email)->notify(new WelcomeNotification(
+            $user->email,
+        ));
 
         return response()->json([
             'message' => 'Вход успешно выполнен.',

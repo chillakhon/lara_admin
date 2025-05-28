@@ -2,6 +2,7 @@
 
 namespace App\Services\Delivery;
 
+use App\Models\DeliveryServiceSetting;
 use App\Models\Order;
 use App\Models\Shipment;
 use App\Models\ShipmentStatus;
@@ -41,8 +42,16 @@ class CdekDeliveryService extends DeliveryService
         $client = new HttpClient();
 
         $this->cdek = new SdekClient($client);
-        $this->cdek->setAccount('wqGwiQx0gg8mLtiEKsUinjVSICCjtTEP'); // put real account (using for tests right now)
-        $this->cdek->setSecure('RmAmgvSgSl1yirlz9QupbzOJVqhCxcP5');//  put real secure (using for tests right now)
+
+        $cdek_settings = DeliveryServiceSetting::where('service_name', 'cdek')->first();
+
+
+        if (!$cdek_settings) {
+            throw new Exception("Настройки для СДЭК не найдены. Пожалуйста, настройте сервис в админке.");
+        }
+
+        $this->cdek->setAccount($cdek_settings->token); // put real account (using for tests right now)
+        $this->cdek->setSecure($cdek_settings->secret);//  put real secure (using for tests right now)
         $this->cdek->setTest(true); // for testing
 
 
@@ -136,6 +145,11 @@ class CdekDeliveryService extends DeliveryService
         $packages = [],
         $tariff_code = 137 // Склад-дверь
     ) {
+        if (empty($packages)) {
+            Log::warning('CDEK: No packages provided');
+            return null;
+        }
+
         $tariff = Tariff::create([]);
         $tariff->date = (new DateTime())->format(DateTime::ISO8601);
         // Что означает Tariff::TYPE_ECOMMERCE
@@ -150,12 +164,13 @@ class CdekDeliveryService extends DeliveryService
         // Номера тарифов есть в документации к API: https://apidoc.cdek.ru/#tag/common/Prilozheniya/Prilozhenie-4.-Tarify-SDEK
         $tariff->tariff_code = $tariff_code;
 
-        // temp location of the owners of web-site
+        // location of the owners of web-site
         $tariff->from_location = Location::create([
             'address' => 'пр-т 2-й Муринский, 49',
             'code' => 137,
             'country_code' => "RU",
         ]);
+
         $tariff->to_location = Location::create($location_to);
 
         foreach ($packages as $package) {
@@ -233,10 +248,10 @@ class CdekDeliveryService extends DeliveryService
                     'region' => $point->location->region,
                     'longitude' => $point->location->longitude,
                     'latitude' => $point->location->latitude,
-                    "city_longitude" => $city->longitude,
-                    "city_latitude" => $city->latitude,
-                    'city_code' => $city->code,
-                    'region_code' => $city->region_code,
+                    "city_longitude" => $city?->longitude,
+                    "city_latitude" => $city?->latitude,
+                    'city_code' => $city?->code,
+                    'region_code' => $city?->region_code,
                     'type' => $point->type === "POSTAMAT"
                         ? "Постамат"
                         : ($point->type === "PVZ" ? "ПВЗ" : $point->type),
@@ -256,8 +271,8 @@ class CdekDeliveryService extends DeliveryService
                     'region' => $point->location->region,
                     'longitude' => $point->location->longitude,
                     'latitude' => $point->location->latitude,
-                    "city_longitude" => $city->longitude,
-                    "city_latitude" => $city->latitude,
+                    "city_longitude" => $city?->longitude,
+                    "city_latitude" => $city?->latitude,
                     'work_time' => $point->work_time,
                     'address_comment' => $point->address_comment,
                     'note' => $point->note,
@@ -274,8 +289,8 @@ class CdekDeliveryService extends DeliveryService
                         'day' => $time->day,
                         'time' => $time->time,
                     ], $point->work_time_list ?? []),
-                    'city_code' => $city->code,
-                    'region_code' => $city->region_code,
+                    'city_code' => $city?->code,
+                    'region_code' => $city?->region_code,
                 ];
             }
         }
