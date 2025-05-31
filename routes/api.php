@@ -586,7 +586,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //        });
 
 
-        Route::prefix('/third-party-intecgrations')->group(function () {
+        Route::prefix('/third-party-integrations')->group(function () {
             Route::prefix('/chats')->group(function () {
                 Route::post('/telegram', [ChatsIntegrationController::class, 'telegram_integration']);
             });
