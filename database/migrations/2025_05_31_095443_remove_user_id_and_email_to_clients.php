@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->dropColumn('user_id');
 
             $table->string('email')->unique()->nullable()->after('id');
+            $table->string('password')->nullable()->after('email');
         });
     }
 
@@ -25,7 +26,7 @@ return new class extends Migration {
     {
         Schema::table('clients', function (Blueprint $table) {
             $table->dropUnique(['email']);
-            $table->dropColumn('email');
+            $table->dropColumn(['email', 'password']);
 
             $table->unsignedBigInteger('user_id')->nullable()->after('id');
 
