@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\UserProfile;
+use App\Traits\ClientControllerTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\Validator;
 
 class ClientController extends Controller
 {
+    use ClientControllerTrait;
+
     public function index(Request $request)
     {
         $query = Client::with(['user.profile', 'level'])
@@ -246,17 +249,7 @@ class ClientController extends Controller
         try {
             DB::beginTransaction();
 
-            $check_for_user_with_same_email = User::whereNull('deleted_at')
-                ->where('email', $client->email)
-                ->first();
-
-            $user_profile = null;
-
-            if ($check_for_user_with_same_email) {
-                $user_profile = UserProfile
-                    ::where('user_id', $check_for_user_with_same_email->id)
-                    ->first();
-            }
+            $user_profile = $this->check_users_with_same_email($client);
 
             if ($user_profile) {
                 $user_profile->update([

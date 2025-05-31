@@ -9,6 +9,7 @@ use App\Models\OrderPayment;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Services\Messaging\ConversationService;
+use App\Traits\ClientControllerTrait;
 use DefStudio\Telegraph\Enums\ChatActions;
 use DefStudio\Telegraph\Facades\Telegraph;
 use DefStudio\Telegraph\Handlers\WebhookHandler;
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Message;
 class TelegramWebhookHandler extends WebhookHandler
 {
+
+    use ClientControllerTrait;
 
     public function start()
     {
@@ -87,10 +90,14 @@ class TelegramWebhookHandler extends WebhookHandler
             $client = Client::where('email', $email)->first();
 
             if ($client) {
-                $client_profile = UserProfile::where('client_id', $client->id)->first();
+                $client_profile = $this->check_users_with_same_email($client);
 
                 if (!$client_profile) {
                     $client_profile = UserProfile::create([
+                        'client_id' => $client->id,
+                    ]);
+                } else {
+                    $client_profile->update([
                         'client_id' => $client->id,
                     ]);
                 }
