@@ -159,6 +159,7 @@ class OrderController extends Controller
         try {
             $client = $request->user();
 
+
             if (!$client) {
                 return response()->json([
                     "success" => false,
@@ -237,8 +238,8 @@ class OrderController extends Controller
             'delivery_method_id' => $deliveryMethodId,
             'status_id' => 1, // статус "new"
             'shipping_address' => $validated['delivery_address'] ?? '',
-            'recipient_name' => $order->client->getFullNameAttribute ?? '',
-            'recipient_phone' => $order->client->user->phone ?? '',
+            'recipient_name' => $order->client?->get_full_name() ?? '',
+            'recipient_phone' => $order->client?->profile?->phone ?? '',
             'cost' => 0
         ];
 

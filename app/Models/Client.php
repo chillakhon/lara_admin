@@ -78,9 +78,9 @@ class Client extends Model
      *
      * @return string
      */
-    public function getFullNameAttribute()
+    public function get_full_name()
     {
-        return $this->profile->full_name;
+        return $this?->profile?->getFullNameAttribute();
     }
 
 
