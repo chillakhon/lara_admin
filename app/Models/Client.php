@@ -31,11 +31,13 @@ class Client extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'user_id',
-        'client_level_id',
-        'bonus_balance',
-    ];
+    // protected $fillable = [
+    //     'user_id',
+    //     'client_level_id',
+    //     'bonus_balance',
+    // ];
+
+    protected $guarded = ['id'];
 
     /**
      * The attributes that should be cast.

@@ -92,24 +92,25 @@ class AuthenticatedSessionController extends Controller
                 'email' => 'required|string',
             ]);
 
-            $user = User::where('email', $validation['email'])->first();
+            $client = Client::where('email', $validation['email'])->first();
 
-            if (!$user) {
-                $user = User::create(['email' => $validation['email']]);
-
-                Client::create(['user_id' => $user->id, 'bonus_balance' => 0.0]);
+            if (!$client) {
+                $client = Client::create([
+                    'email' => $validation['email'],
+                    'bonus_balance' => 0.0,
+                ]);
             }
 
-            $user->verification_code = rand(1000, 9999);
-            $user->verification_sent = now();
-            $user->save();
+            $client->verification_code = rand(1000, 9999);
+            $client->verification_sent = now();
+            $client->save();
 
 
             $this->applyMailSettings();
 
-            Notification::route('mail', $user->email)->notify(new MailNotification(
-                $user->email,
-                $user->verification_code
+            Notification::route('mail', $client->email)->notify(new MailNotification(
+                $client->email,
+                $client->verification_code
             ));
 
 
