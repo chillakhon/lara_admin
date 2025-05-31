@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Models\Permission;
 use App\Models\User;
+use App\Models\UserPermission;
 use App\Models\UserProfile;
 use App\Notifications\MailNotification;
 use Illuminate\Auth\Events\Registered;
@@ -74,6 +76,13 @@ class RegisteredUserController extends Controller
                 ]);
             }
         }
+
+        $user_permissions = UserPermission
+            ::where('user_id', $user->id)
+            ->with('roles', 'profile')
+            ->pluck('permission_id')->toArray();
+
+        $user['permissions'] = $user_permissions;
 
 
         $token = $user->createToken('authToken')->plainTextToken;

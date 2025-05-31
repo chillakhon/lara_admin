@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Client;
+use App\Models\Permission;
 use App\Models\User;
+use App\Models\UserPermission;
 use App\Notifications\MailNotification;
 use App\Notifications\WelcomeNotification;
 use App\Traits\HelperTrait;
@@ -66,6 +68,13 @@ class AuthenticatedSessionController extends Controller
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
             $token = $user->createToken('authToken')->plainTextToken;
+
+            $user_permissions = UserPermission
+                ::where('user_id', $user->id)
+                ->with('roles', 'profile')
+                ->pluck('permission_id')->toArray();
+
+            $user['permissions'] = $user_permissions;
 
             return response()->json([
                 'message' => 'Authenticated successfully',
@@ -209,5 +218,20 @@ class AuthenticatedSessionController extends Controller
         return response()->json([
             'message' => 'Logged out successfully',
         ]);
+    }
+
+
+    public function get_admin_user(Request $request)
+    {
+        $user = $request->user();
+
+        $user_permissions = UserPermission
+            ::where('user_id', $user->id)
+            ->with('roles', 'profile')
+            ->pluck('permission_id')->toArray();
+
+        $user['permissions'] = $user_permissions;
+
+        return $user;
     }
 }
