@@ -157,8 +157,7 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            $user = $request->user();
-            $client = Client::where('user_id', $user->id)->first();
+            $client = $request->user();
 
             if (!$client) {
                 return response()->json([
@@ -177,7 +176,7 @@ class OrderController extends Controller
 
             $this->createShipmentForOrder($order, $validated);
 
-            $this->sendNotifications($user, $client, $order);
+            $this->sendNotifications($client, $order);
 
             DB::commit();
 
@@ -280,9 +279,9 @@ class OrderController extends Controller
         Shipment::create($shipmentData);
     }
 
-    private function sendNotifications($user, $client, $order)
+    private function sendNotifications($client, $order)
     {
-        $profile = UserProfile::where('user_id', $client->id)->first();
+        $profile = UserProfile::where('client_id', $client->id)->first();
 
         if ($profile && $profile->phone) {
             $telegramService = new TelegramNotificationService();
