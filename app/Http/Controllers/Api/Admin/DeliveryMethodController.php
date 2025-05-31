@@ -32,7 +32,7 @@ class DeliveryMethodController extends Controller
         $delivery_methods = DeliveryMethod
             ::whereIn('code', $main_delivery_methods_code)
             ->orderBy('id', 'asc')
-            ->select(['id', 'name', 'code', 'description', 'provider_class'])
+            ->select(['id', 'name', 'code as delivery_type_code', 'description'])
             ->get();
 
 
@@ -50,7 +50,7 @@ class DeliveryMethodController extends Controller
         $solved_methods = collect();
 
         foreach ($delivery_methods as $key => &$method) {
-            if ($method->code === $cdek_pickup && count($cdek_locations) >= 1) {
+            if ($method->delivery_type_code === $cdek_pickup && count($cdek_locations) >= 1) {
                 $location = $cdek_locations[0];
                 $method["city_longitude"] = $location['longitude'];
                 $method["city_latitude"] = $location['latitude'];
@@ -60,7 +60,7 @@ class DeliveryMethodController extends Controller
                 $solved_methods[] = $method;
             }
 
-            if ($method->code == $cdek_courier && count($cdek_locations) >= 1) {
+            if ($method->delivery_type_code == $cdek_courier && count($cdek_locations) >= 1) {
                 $location = $cdek_locations[0];
 
                 $tariff = $cdek->calculate_with_specific_tariff(
@@ -169,7 +169,7 @@ class DeliveryMethodController extends Controller
             // 'postal_code' => $location['postal_code'],
             // 'city' => $location['city'],
             // 'region' => $location['region'],
-            'code' => $location['city_code'],
+            'code' => $location['city_code'], // city code is getting from "Населенные пункты СДЭК"
             'region_code' => $location['region_code'],
             'country_code' => $country_code,
             // 'longitude' => $location['longitude'],
