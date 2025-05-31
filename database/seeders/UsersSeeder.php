@@ -110,9 +110,9 @@ class UsersSeeder extends Seeder
                 ]);
                 
                 // Создаем запись клиента
-                Client::factory()->create([
-                    'user_id' => $user->id
-                ]);
+                // Client::factory()->create([
+                //     'user_id' => $user->id
+                // ]);
 
                 // Назначаем роль клиента
                 $clientRole = Role::where('slug', 'client')->first();

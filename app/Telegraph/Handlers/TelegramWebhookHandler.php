@@ -9,6 +9,7 @@ use App\Models\OrderPayment;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Services\Messaging\ConversationService;
+use App\Traits\ClientControllerTrait;
 use DefStudio\Telegraph\Enums\ChatActions;
 use DefStudio\Telegraph\Facades\Telegraph;
 use DefStudio\Telegraph\Handlers\WebhookHandler;
@@ -21,27 +22,29 @@ use App\Models\Message;
 class TelegramWebhookHandler extends WebhookHandler
 {
 
+    use ClientControllerTrait;
+
     public function start()
     {
         $chat = $this->getChat();
 
         $chat->chatAction(ChatActions::TYPING)->send();
 
-        $user_profile = $this->user_profile(true);
+        $client_profile = $this->user_profile(true);
 
-        if (!$user_profile)
+        if (!$client_profile)
             return;
 
         $user_name = '';
-        if ($user_profile->first_name) {
-            $user_name .= $user_profile->first_name . " ";
+        if ($client_profile->first_name) {
+            $user_name .= $client_profile->first_name . " ";
         }
-        if ($user_profile->last_name) {
-            $user_name .= $user_profile->last_name;
+        if ($client_profile->last_name) {
+            $user_name .= $client_profile->last_name;
         }
         if (empty($user_name)) {
-            $user = User::where('id', $user_profile->user_id)->first();
-            $user_name = $user->email;
+            $client = Client::where('id', $client_profile->client_id)->first();
+            $user_name = $client->email;
         }
 
         $chat->message("Привет, {$user_name}! Мы успешно нашли ваш аккаунт. Напишите команду */orders*, чтобы посмотреть свои ожидающие заказы.")->send();
@@ -53,9 +56,9 @@ class TelegramWebhookHandler extends WebhookHandler
         $telegramId = $this->getUserId();
         $chat = $this->getChat();
 
-        $user_profile = UserProfile::where('telegram_user_id', $telegramId)->first();
+        $client_profile = UserProfile::where('telegram_user_id', $telegramId)->first();
 
-        if (!$user_profile) {
+        if (!$client_profile) {
             // save state and wait email
             if ($await_email) {
                 $chat->message("Привет! Пожалуйста, отправьте свой email, чтобы мы могли найти ваш аккаунт.")->send();
@@ -63,7 +66,7 @@ class TelegramWebhookHandler extends WebhookHandler
             }
             return null;
         }
-        return $user_profile;
+        return $client_profile;
     }
 
     public function handleUnknownCommand(Stringable $text): void
@@ -84,27 +87,23 @@ class TelegramWebhookHandler extends WebhookHandler
                 return;
             }
             // Поиск пользователя по email
-            $user = User::where('email', $email)->first();
+            $client = Client::where('email', $email)->first();
 
-            if ($user) {
-                $user_profile = UserProfile::where('user_id', $user->id)->first();
+            if ($client) {
+                $client_profile = $this->check_users_with_same_email($client);
 
-                if (!$user_profile) {
-                    $user_profile = UserProfile::create([
-                        'user_id' => $user->id,
+                if (!$client_profile) {
+                    $client_profile = UserProfile::create([
+                        'client_id' => $client->id,
                     ]);
-                }
-
-                $find_clients = Client::where('user_id', $user->id)->first();
-
-                if (!$find_clients) {
-                    Client::create([
-                        'user_id' => $user->id,
+                } else {
+                    $client_profile->update([
+                        'client_id' => $client->id,
                     ]);
                 }
 
                 // Сохраняем telegram_user_id в профиль
-                $user_profile->update([
+                $client_profile->update([
                     'telegram_user_id' => $telegramId,
                 ]);
 
@@ -131,14 +130,14 @@ class TelegramWebhookHandler extends WebhookHandler
 
         $chat->chatAction(ChatActions::TYPING)->send();
 
-        $user_profile = $this->user_profile();
+        $client_profile = $this->user_profile();
 
-        if (!$user_profile) {
+        if (!$client_profile) {
             $this->start();
             return;
         }
 
-        $client = Client::where('user_id', $user_profile->user_id)->first();
+        $client = Client::where('id', $client_profile->client_id)->first();
 
         if (!$client) {
             $this->start();
@@ -222,14 +221,14 @@ class TelegramWebhookHandler extends WebhookHandler
 
         $chat->chatAction(ChatActions::TYPING)->send();
 
-        $user_profile = $this->user_profile();
+        $client_profile = $this->user_profile();
 
-        if (!$user_profile) {
+        if (!$client_profile) {
             $this->start();
             return;
         }
 
-        $user_profile->update([
+        $client_profile->update([
             'telegram_user_id' => null,
         ]);
 

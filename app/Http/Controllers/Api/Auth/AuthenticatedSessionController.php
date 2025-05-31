@@ -92,24 +92,25 @@ class AuthenticatedSessionController extends Controller
                 'email' => 'required|string',
             ]);
 
-            $user = User::where('email', $validation['email'])->first();
+            $client = Client::where('email', $validation['email'])->first();
 
-            if (!$user) {
-                $user = User::create(['email' => $validation['email']]);
-
-                Client::create(['user_id' => $user->id, 'bonus_balance' => 0.0]);
+            if (!$client) {
+                $client = Client::create([
+                    'email' => $validation['email'],
+                    'bonus_balance' => 0.0,
+                ]);
             }
 
-            $user->verification_code = rand(1000, 9999);
-            $user->verification_sent = now();
-            $user->save();
+            $client->verification_code = rand(1000, 9999);
+            $client->verification_sent = now();
+            $client->save();
 
 
             $this->applyMailSettings();
 
-            Notification::route('mail', $user->email)->notify(new MailNotification(
-                $user->email,
-                $user->verification_code
+            Notification::route('mail', $client->email)->notify(new MailNotification(
+                $client->email,
+                $client->verification_code
             ));
 
 
@@ -135,35 +136,34 @@ class AuthenticatedSessionController extends Controller
             'verification_code' => 'required|string',
         ]);
 
-        $user = User::where('email', $validation['email'])->first();
+        $client = Client::where('email', $validation['email'])->first();
 
-        if (!$user) {
+        if (!$client) {
             return response()->json([
                 'success' => false,
                 'message' => 'Пользователь с таким email не найден.',
             ], 401);
         }
 
-        if ($user->verification_code !== $validation['verification_code']) {
+        if ($client->verification_code !== $validation['verification_code']) {
             return response()->json([
                 'success' => false,
                 'message' => "Неверный код подтверждения."
             ], 401);
         }
 
-        $user->email_verified_at = now();
-        $user->verified_at = now();
-        $user->save();
+        $client->verified_at = now();
+        $client->save();
 
-        $token = $user->createToken('authToken')->plainTextToken;
+        $token = $client->createToken('authToken')->plainTextToken;
 
-        Notification::route('mail', $user->email)->notify(new WelcomeNotification(
-            $user->email,
+        Notification::route('mail', $client->email)->notify(new WelcomeNotification(
+            $client->email,
         ));
 
         return response()->json([
             'message' => 'Вход успешно выполнен.',
-            'user' => $user,
+            'user' => $client,
             'token' => $token,
         ]);
     }

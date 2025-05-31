@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Client;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -58,14 +59,14 @@ class UserController extends Controller
                         break;
                 }
             })
-            ->when($request->boolean('only_admin_users', false), function ($query) {
-                $query->whereDoesntHave('client');
-            })
+            // ->when($request->boolean('only_admin_users', false), function ($query) {
+            //     $query->whereDoesntHave('client');
+            // })
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
         $roles = Role::orderBy('name')->get();
-        
+
         $permissions = Permission::orderBy('name')->get();
 
         return response()->json([
@@ -271,14 +272,37 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
-            $user->profile()->updateOrCreate(
-                ['user_id' => $user->id], // condition
-                [                          // values to update
+            $check_for_client_with_same_email = Client::whereNull('deleted_at')
+                ->where('email', $user->email)
+                ->first();
+
+            $user_profile = null;
+
+            if ($check_for_client_with_same_email) {
+                $user_profile = UserProfile
+                    ::where('client_id', $check_for_client_with_same_email->id)
+                    ->first();
+            }
+
+            if ($user_profile) {
+                $user_profile->update([
+                    'user_id' => $user->id,
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
                     'phone' => $request->phone,
-                ]
-            );
+                    'address' => $request->address,
+                ]);
+            } else {
+                $user->profile()->updateOrCreate(
+                    ['user_id' => $user->id], // condition
+                    [                          // values to update
+                        'first_name' => $request->first_name,
+                        'last_name' => $request->last_name,
+                        'phone' => $request->phone,
+                        'address' => $request->address,
+                    ]
+                );
+            }
 
             DB::commit();
 

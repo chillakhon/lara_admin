@@ -160,7 +160,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     });
 
     Route::prefix('/clients')->group(function () {
-        Route::put('/update-profile', [UserController::class, 'update_profile']);
+        Route::put('/update-profile', [ClientController::class, 'update_profile']);
     });
 
     Route::middleware(['role:super-admin,admin,manager'])->group(function () {
@@ -586,7 +586,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //        });
 
 
-        Route::prefix('/third-party-intecgrations')->group(function () {
+        Route::prefix('/third-party-integrations')->group(function () {
             Route::prefix('/chats')->group(function () {
                 Route::post('/telegram', [ChatsIntegrationController::class, 'telegram_integration']);
             });
