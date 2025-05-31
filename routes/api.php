@@ -160,7 +160,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     });
 
     Route::prefix('/clients')->group(function () {
-        Route::put('/update-profile', [UserController::class, 'update_profile']);
+        Route::put('/update-profile', [ClientController::class, 'update_profile']);
     });
 
     Route::middleware(['role:super-admin,admin,manager'])->group(function () {

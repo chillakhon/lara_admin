@@ -49,11 +49,30 @@ class RegisteredUserController extends Controller
         ]);
 
         if ($request->get('first_name') || $request->get('last_name')) {
-            UserProfile::create([
-                'user_id' => $user->id,
-                'first_name' => $request->get('first_name'),
-                'last_name' => $request->get('last_name'),
-            ]);
+            $check_for_profile = null;
+            $check_for_client_with_same_email = Client::whereNull('deleted_at')
+                ->where('email', $request->get('email'))
+                ->first();
+
+            if ($check_for_client_with_same_email) {
+                $check_for_profile = UserProfile
+                    ::where('client_id', $check_for_client_with_same_email->id)
+                    ->first();
+            }
+
+            if ($check_for_profile) {
+                $check_for_profile->update([
+                    'user_id' => $user->id,
+                    'first_name' => $request->get('first_name'),
+                    'last_name' => $request->get('last_name'),
+                ]);
+            } else {
+                UserProfile::create([
+                    'user_id' => $user->id,
+                    'first_name' => $request->get('first_name'),
+                    'last_name' => $request->get('last_name'),
+                ]);
+            }
         }
 
 
