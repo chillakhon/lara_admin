@@ -79,31 +79,29 @@ class RegisteredUserController extends Controller
             'password' => 'required|string'
         ]);
 
-        $user = User::where('email', $validation['email'])->first();
+        $client = Client::where('email', $validation['email'])->first();
 
-        if ($user) {
+        if ($client) {
             return response()->json([
                 'success' => false,
                 'message' => 'Пользователь с таким email уже зарегистрирован.',
             ], 401);
         }
 
-        $user = User::create([
+        $client = Client::create([
             'email' => $validation['email'],
             'password' => Hash::make($validation['password']),
+            'bonus_balance' => 0.0,
             'verification_code' => rand(1000, 9999),
             'verification_sent' => now(),
         ]);
 
-        Client::create(['user_id' => $user->id, 'bonus_balance' => 0.0]);
-
-        Notification::route('mail', $user->email)->notify(new MailNotification(
-            $user->email,
-            $user->verification_code
+        Notification::route('mail', $client->email)->notify(new MailNotification(
+            $client->email,
+            $client->verification_code
         ));
 
         // send email notification password
-
         return response()->json([
             'success' => true,
             'message' => 'Код подтверждения был отправлен на ваш email.',
