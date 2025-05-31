@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         $this->call([
+            UsersSeeder::class,
             CartSeeder::class,
             CategorySeeder::class,
             ClientSeeder::class,
@@ -51,7 +52,6 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             RoleSeeder::class,
             ShipmentStatusSeeder::class,
-            UsersSeeder::class,
             ReviewAttributeSeeder::class,
             ReviewResponseSeeder::class,
             ProductsColorSeeder::class,
