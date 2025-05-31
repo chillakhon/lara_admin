@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->string('password')->nullable()->after('email');
             $table->string('verification_code')->nullable()->after('password');
             $table->dateTime('verification_sent')->nullable()->after('verification_code');
+            $table->dateTime('verified_at')->nullable()->after('verification_sent');
         });
     }
 
@@ -28,7 +29,13 @@ return new class extends Migration {
     {
         Schema::table('clients', function (Blueprint $table) {
             $table->dropUnique(['email']);
-            $table->dropColumn(['email', 'password', 'verification_code', 'verification_sent']);
+            $table->dropColumn([
+                'email',
+                'password',
+                'verification_code',
+                'verification_sent',
+                'verified_at',
+            ]);
 
             $table->unsignedBigInteger('user_id')->nullable()->after('id');
 

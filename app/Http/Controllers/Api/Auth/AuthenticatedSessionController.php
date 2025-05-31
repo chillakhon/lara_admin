@@ -136,35 +136,34 @@ class AuthenticatedSessionController extends Controller
             'verification_code' => 'required|string',
         ]);
 
-        $user = User::where('email', $validation['email'])->first();
+        $client = Client::where('email', $validation['email'])->first();
 
-        if (!$user) {
+        if (!$client) {
             return response()->json([
                 'success' => false,
                 'message' => 'Пользователь с таким email не найден.',
             ], 401);
         }
 
-        if ($user->verification_code !== $validation['verification_code']) {
+        if ($client->verification_code !== $validation['verification_code']) {
             return response()->json([
                 'success' => false,
                 'message' => "Неверный код подтверждения."
             ], 401);
         }
 
-        $user->email_verified_at = now();
-        $user->verified_at = now();
-        $user->save();
+        $client->verified_at = now();
+        $client->save();
 
-        $token = $user->createToken('authToken')->plainTextToken;
+        $token = $client->createToken('authToken')->plainTextToken;
 
-        Notification::route('mail', $user->email)->notify(new WelcomeNotification(
-            $user->email,
+        Notification::route('mail', $client->email)->notify(new WelcomeNotification(
+            $client->email,
         ));
 
         return response()->json([
             'message' => 'Вход успешно выполнен.',
-            'user' => $user,
+            'user' => $client,
             'token' => $token,
         ]);
     }

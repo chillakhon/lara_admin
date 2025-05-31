@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -51,10 +52,10 @@ class Client extends Model
     /**
      * Get the user that owns the client.
      */
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    // public function user()
+    // {
+    //     return $this->belongsTo(User::class);
+    // }
 
     /**
      * Get the level that owns the client.
@@ -79,6 +80,23 @@ class Client extends Model
      */
     public function getFullNameAttribute()
     {
-        return $this->user->profile->full_name;
+        return $this->profile->full_name;
+    }
+
+
+    public function profile()
+    {
+        return $this->hasOne(UserProfile::class);
+    }
+
+
+    public function routeNotificationForTelegram()
+    {
+        return $this->profile()->telegram_user_id;
+    }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }
