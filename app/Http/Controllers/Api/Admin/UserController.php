@@ -262,17 +262,17 @@ class UserController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $user = $request->user();
+        $client = $request->user();
 
-        if (!$user) {
+        if (!$client) {
             return response()->json(['success' => false, 'message' => "Пользователь не найден"]);
         }
 
         try {
             DB::beginTransaction();
 
-            $user->profile()->updateOrCreate(
-                ['user_id' => $user->id], // condition
+            $client->profile()->updateOrCreate(
+                ['client_id' => $client->id], // condition
                 [                          // values to update
                     'first_name' => $request->first_name,
                     'last_name' => $request->last_name,
@@ -284,7 +284,7 @@ class UserController extends Controller
 
             return response()->json([
                 'message' => 'Информация о пользователе обновлена',
-                'user' => $user->load('profile'),
+                'user' => $client->load('profile'),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
