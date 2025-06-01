@@ -3,6 +3,8 @@
 namespace App\Services\MoySklad;
 
 use App\Models\DeliveryServiceSetting;
+use App\Models\Product;
+use App\Traits\ProductsTrait;
 use Evgeek\Moysklad\Formatters\ArrayFormat;
 use Evgeek\Moysklad\MoySklad;
 use Exception;
@@ -11,10 +13,19 @@ use Illuminate\Support\Facades\Http;
 class ProductsService
 {
 
+    use ProductsTrait;
+
     private MoySklad $moySklad;
     private $token;
-
     private $baseURL = "https://api.moysklad.ru/api/remap/1.2";
+
+    private $rubCurrency = [
+        'meta' => [
+            'href' => 'https://api.moysklad.ru/api/remap/1.2/entity/currency/RUB',
+            'type' => 'currency',
+            'mediaType' => 'application/json',
+        ],
+    ];
 
     public function __construct()
     {
@@ -53,5 +64,36 @@ class ProductsService
         }
 
         return $response->json();
+    }
+
+
+    public function sync_products_with_moysklad()
+    {
+    }
+
+    public function create_product(Product $product)
+    {
+
+        $msProduct = \Evgeek\Moysklad\Api\Record\Objects\Entities\Product::make($this->moySklad);
+
+
+        $metrics = $this->calculateWeightAndVolume($product);
+
+        $msProduct->name = $product->name;
+        $msProduct->code = $product->slug ?? ($product->sku ?? null);
+        $msProduct->description = $product->description ?? '';
+        $msProduct->weight = $metrics['weight'];
+        $msProduct->volume = $metrics['volume'];
+        $msProduct->salePrices = [
+            [
+                'value' => ($product->price ?? 0) * 100, // копейки
+                'currency' => $this->rubCurrency,
+            ],
+        ];
+
+    }
+
+    public function update_product(Product $product)
+    {
     }
 }

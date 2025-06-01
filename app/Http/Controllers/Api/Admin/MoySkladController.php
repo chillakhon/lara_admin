@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DeliveryServiceSetting;
+use App\Models\Product;
 use App\Services\MoySklad\ProductsService;
 use Exception;
 use Http;
@@ -20,10 +21,8 @@ class MoySkladController extends Controller
                 'password' => 'required|string',
             ]);
 
-
             $username = $validated['email'];
             $password = $validated['password'];
-
 
             $response = Http::withHeaders([
                 'Accept-Encoding' => 'gzip',
@@ -42,14 +41,12 @@ class MoySkladController extends Controller
                     'token' => $token,
                 ]);
 
-
                 return response()->json([
                     'success' => true,
                     'message' => 'Настройки МойСклад успешно обновлены'
                 ]);
 
             }
-
             return response()->json([
                 'success' => false,
                 'message' => $response->body(),
@@ -78,5 +75,15 @@ class MoySkladController extends Controller
         return $moySkladService->check_stock();
     }
 
-   
+    public function sync_products_with_moysklad(Request $request)
+    {
+    }
+
+    public function create_product(Product $product)
+    {
+    }
+
+    public function update_product(Product $product)
+    {
+    }
 }
