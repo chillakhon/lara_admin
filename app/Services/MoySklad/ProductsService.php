@@ -19,10 +19,18 @@ class ProductsService
     private $token;
     private $baseURL = "https://api.moysklad.ru/api/remap/1.2";
 
-    private $rubCurrency = [
+    private array $rubCurrency = [
         'meta' => [
-            'href' => 'https://api.moysklad.ru/api/remap/1.2/entity/currency/RUB',
+            'href' => "https://api.moysklad.ru/api/remap/1.2/entity/currency/f0b90b0e-1d39-11f0-0a80-1aa70008efaf",
             'type' => 'currency',
+            'mediaType' => 'application/json',
+        ],
+    ];
+
+    private array $defaultPriceType = [
+        'meta' => [
+            'href' => "https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/f0b980cc-1d39-11f0-0a80-1aa70008efb0",
+            'type' => 'pricetype',
             'mediaType' => 'application/json',
         ],
     ];
@@ -42,6 +50,20 @@ class ProductsService
         $this->moySklad = new MoySklad(["{$moyskadSettings->token}"]);
     }
 
+    public function get_currencies()
+    {
+        return $this->moySklad->query()->entity()->currency()->get();
+    }
+
+    public function get_price_types()
+    {
+        return $this->moySklad->query()->context()->companysettings()->pricetype()->get();
+    }
+
+    public function get_units()
+    {
+        return $this->moySklad->query()->entity()->uom()->get();
+    }
 
     public function check_products()
     {
@@ -73,10 +95,7 @@ class ProductsService
 
     public function create_product(Product $product)
     {
-
         $msProduct = \Evgeek\Moysklad\Api\Record\Objects\Entities\Product::make($this->moySklad);
-
-
         $metrics = $this->calculateWeightAndVolume($product);
 
         $msProduct->name = $product->name;
@@ -88,9 +107,10 @@ class ProductsService
             [
                 'value' => ($product->price ?? 0) * 100, // копейки
                 'currency' => $this->rubCurrency,
+                'priceType' => $this->defaultPriceType,
             ],
         ];
-
+        $msProduct->create();
     }
 
     public function update_product(Product $product)

@@ -348,6 +348,10 @@ class ProductController extends Controller
 
             $product->colors()->attach($colorIds);
 
+            $moySkladController = new MoySkladController();
+
+            $moySkladController->create_product($product);
+
             // -1 means that its creating for the first time and you have to put null instead
             $this->price_history_create($request, -1, $product);
 
@@ -398,6 +402,8 @@ class ProductController extends Controller
             return response()->json([
                 'message' => 'Failed to create product',
                 'error' => $e->getMessage(),
+                "line" => $e->getLine(),
+                "stackTrace" => $e->getTraceAsString(),
             ], 500);
         }
     }
@@ -412,8 +418,8 @@ class ProductController extends Controller
             'length' => 'required|numeric|min:0',
             'width' => 'required|numeric|min:0',
             'height' => 'required|numeric|min:0',
-            'description' => 'nullable|string',
             'default_unit_id' => 'nullable|exists:units,id',
+            'description' => 'nullable|string',
             'is_active' => 'boolean',
             'has_variants' => 'boolean',
             'allow_preorder' => 'boolean',

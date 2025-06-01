@@ -600,6 +600,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 Route::post('/settings', [MoySkladController::class, 'update_moy_sklad_settings']);
                 Route::get('/products', [MoySkladController::class, 'get_products']);
                 Route::get('/products/stock', [MoySkladController::class, 'get_products_stock']);
+                Route::get('/currencies', [MoySkladController::class, 'get_currencies']);
+                Route::get('/priceTypes', [MoySkladController::class, 'get_price_types']);
+                Route::get('/units', [MoySkladController::class, 'get_units']);
             });
         });
     });
