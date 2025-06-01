@@ -31,11 +31,11 @@ class UsersSeeder extends Seeder
             //     'slug' => 'manager',
             //     'description' => 'Доступ менеджера'
             // ],
-            [
-                'name' => 'Клиент',
-                'slug' => 'client',
-                'description' => 'Доступ клиента'
-            ]
+            // [
+            //     'name' => 'Клиент',
+            //     'slug' => 'client',
+            //     'description' => 'Доступ клиента'
+            // ]
         ];
 
         foreach ($roles as $roleData) {

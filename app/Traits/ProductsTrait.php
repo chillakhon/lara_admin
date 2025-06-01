@@ -167,4 +167,35 @@ trait ProductsTrait
         $model->discount_percentage = $percentage;
         $model->total_discount = $totalDiscount;
     }
+
+
+    public function calculateWeightAndVolume(Product $product): array
+    {
+        $weight = $product->weight ?? 0;  // в граммах
+        $length = $product->length ?? 0;  // в сантиметрах
+        $width = $product->width ?? 0;
+        $height = $product->height ?? 0;
+
+        // Получаем единицу
+        $unit = $product->unit; // связь belongsTo с таблицей units
+
+        // Преобразуем вес в граммы
+        $weightInGrams = match ($unit->id) {
+            6 => $weight * 1000,     // кг → г
+            7 => $weight,            // г
+            8 => $weight / 1000,     // мг → г
+            default => $weight,      // Assume grams
+        };
+
+        // Преобразуем объём в м³ (если всё в см)
+        $volumeInM3 = 0;
+        if ($length && $width && $height) {
+            $volumeInM3 = ($length * $width * $height) / 1_000_000;
+        }
+
+        return [
+            'weight' => round($weightInGrams, 3),
+            'volume' => round($volumeInM3, 6),
+        ];
+    }
 }

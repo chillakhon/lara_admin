@@ -78,7 +78,7 @@ class AuthenticatedSessionController extends Controller
 
             return response()->json([
                 'message' => 'Authenticated successfully',
-                'user' => $user,
+                'user' => $user->load('roles', 'profile'),
                 'token' => $token,
             ]);
         }
@@ -227,11 +227,10 @@ class AuthenticatedSessionController extends Controller
 
         $user_permissions = UserPermission
             ::where('user_id', $user->id)
-            ->with('roles', 'profile')
             ->pluck('permission_id')->toArray();
 
         $user['permissions'] = $user_permissions;
 
-        return $user;
+        return $user->load('roles', 'profile');
     }
 }

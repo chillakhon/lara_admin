@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\Admin\DiscountController;
 use App\Http\Controllers\Api\Admin\FinancialAnalyticsController;
 use App\Http\Controllers\Api\Admin\InventoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
+use App\Http\Controllers\Api\Admin\MoySkladController;
 use App\Http\Controllers\Api\Admin\OptionController;
 use App\Http\Controllers\Api\Admin\OrderStatsController;
 use App\Http\Controllers\Api\Admin\PermissionController;
@@ -365,7 +366,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         });
         //
 
-//        // Orders
+        //        // Orders
         Route::prefix('orders')->name('orders.')->middleware(['role:super-admin,admin,manager', 'permission:orders.view,orders.manage'])->group(function () {
             Route::get('/', [OrderController::class, 'index'])->name('orders.index');  // Путь будет /api/orders
             // Route::post('/', [OrderController::class, 'store'])->name('orders.store');  // Путь будет /api/orders
@@ -594,6 +595,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             });
             Route::prefix('/cdek')->group(function () {
                 Route::post('/settings', [CDEKController::class, 'update_cdek_settings']);
+            });
+            Route::prefix('/moysklad')->group(function () {
+                Route::post('/settings', [MoySkladController::class, 'update_moy_sklad_settings']);
+                Route::get('/products', [MoySkladController::class, 'get_products']);
+                Route::get('/products/stock', [MoySkladController::class, 'get_products_stock']);
             });
         });
     });
