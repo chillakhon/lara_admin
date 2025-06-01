@@ -12,6 +12,7 @@
         "darkaonline/l5-swagger": "^9.0",
         "defstudio/telegraph": "^1.59",
         "defuse/php-encryption": "^2.4",
+        "evgeek/moysklad": "^0.12.0",
         "guzzlehttp/guzzle": "^7.9",
         "http-interop/http-factory-guzzle": "^1.2",
         "intervention/image": "^3.11",
