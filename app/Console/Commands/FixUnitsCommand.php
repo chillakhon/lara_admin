@@ -34,45 +34,63 @@ class FixUnitsCommand extends Command
 
     public function handle()
     {
+
         $this->authorizied();
 
-        $msUnits = $this->moySklad->query()->entity()->uom()->get();
+        DB::beginTransaction();
 
-        Unit::where('abbreviation', 'м³')->update(['abbreviation' => 'м3']);
-        Unit::where('abbreviation', 'см³')->update(['abbreviation' => 'см3']);
-        Unit::where('abbreviation', 'м²')->update(['abbreviation' => 'м2']);
-        Unit::where('abbreviation', 'см²')->update(['abbreviation' => 'см2']);
-        Unit::where('abbreviation', 'мм²')->update(['abbreviation' => 'мм2']);
+        try {
+            $msUnits = $this->moySklad->query()->entity()->uom()->get();
 
-        $localUnits = Unit::whereIn('abbreviation', [
-            'шт',
-            'г',
-            'кг',
-            'см',
-            'м',
-            'см2',
-            'м2',
-            'л',
-            'мг',
-            'мл',
-            'мин'
-        ])->get()->keyBy(fn($unit) => strtolower($unit->name));
+            Unit::where('abbreviation', 'м³')->update(['abbreviation' => 'м3']);
+            Unit::where('abbreviation', 'см³')->update(['abbreviation' => 'см3']);
+            Unit::where('abbreviation', 'м²')->update(['abbreviation' => 'м2']);
+            Unit::where('abbreviation', 'см²')->update(['abbreviation' => 'см2']);
+            Unit::where('abbreviation', 'мм²')->update(['abbreviation' => 'мм2']);
 
-        // DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        // Unit::truncate();
-        // DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            $localUnits = Unit::whereIn('abbreviation', [
+                'шт',
+                'г',
+                'кг',
+                'см',
+                'м',
+                'см2',
+                'м2',
+                'л',
+                'мг',
+                'мл',
+                'мин'
+            ])->get()->keyBy(fn($unit) => mb_strtolower($unit->name));
 
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            Unit::truncate();
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
+            foreach ($msUnits->rows as $key => $value) {
+                $msNames = array_map('trim', explode(';', mb_strtolower($value->description)));
 
-        foreach ($msUnits->rows as $key => $value) {
-            $msNames = array_map('trim', explode(';', strtolower($value->description)));
-
-            foreach ($msNames as $abbr) {
-                if (isset($localUnits[$abbr])) {
-                    Log::info("units:", [$abbr, $value->description, $value->name]);
-                    break;
+                foreach ($msNames as $abbr) {
+                    if (isset($localUnits[$abbr])) {
+                        $unit = $localUnits[$abbr];
+                        Unit::create([
+                            'name' => $unit->name,
+                            "abbreviation" => $unit->abbreviation,
+                            "meta_data" => json_encode($value->meta),
+                            "description" => $value->description,
+                        ]);
+                        break;
+                    }
                 }
             }
+
+
+            DB::commit();
+
+            $this->info("Successfully changed!");
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error("Error:", [$e]);
         }
     }
 
