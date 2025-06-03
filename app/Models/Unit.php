@@ -19,7 +19,10 @@ class Unit extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'abbreviation', 'description'];
+
+    public $timestamps = false;
+
+    protected $fillable = ['name', 'abbreviation', 'description', 'meta_data'];
 
     public function inventoryBatches()
     {

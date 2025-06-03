@@ -177,10 +177,10 @@ trait ProductsTrait
         $height = $product->height ?? 0;
 
         // Получаем единицу
-        $unit = $product->unit; // связь belongsTo с таблицей units
+        $unit = $product->defaultUnit; // связь belongsTo с таблицей units
 
         // Преобразуем вес в граммы
-        $weightInGrams = match ($unit->id) {
+        $weightInGrams = match ($unit?->id) {
             6 => $weight * 1000,     // кг → г
             7 => $weight,            // г
             8 => $weight / 1000,     // мг → г

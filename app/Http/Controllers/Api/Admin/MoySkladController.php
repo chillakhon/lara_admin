@@ -60,6 +60,26 @@ class MoySkladController extends Controller
         }
     }
 
+    public function get_currencies()
+    {
+        $moySkladService = new ProductsService();
+
+        return $moySkladService->get_currencies();
+    }
+
+    public function get_price_types()
+    {
+        $moySkladService = new ProductsService();
+
+        return $moySkladService->get_price_types();
+    }
+
+    public function get_units()
+    {
+        $moySkladService = new ProductsService();
+
+        return $moySkladService->get_units();
+    }
 
     public function get_products()
     {
@@ -81,6 +101,11 @@ class MoySkladController extends Controller
 
     public function create_product(Product $product)
     {
+
+        $moySkladService = new ProductsService();
+
+        $moySkladService->create_product($product);
+
     }
 
     public function update_product(Product $product)
