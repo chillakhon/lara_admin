@@ -101,11 +101,9 @@ class MoySkladController extends Controller
 
     public function create_product(Product $product)
     {
-
         $moySkladService = new ProductsService();
 
         $moySkladService->create_product($product);
-
     }
 
     public function update_product(Product $product)

@@ -418,7 +418,7 @@ class ProductController extends Controller
             'length' => 'required|numeric|min:0',
             'width' => 'required|numeric|min:0',
             'height' => 'required|numeric|min:0',
-            'default_unit_id' => 'nullable|exists:units,id',
+            'default_unit_id' => 'required|exists:units,id',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
             'has_variants' => 'boolean',

@@ -9,6 +9,7 @@ use Evgeek\Moysklad\Formatters\ArrayFormat;
 use Evgeek\Moysklad\MoySklad;
 use Exception;
 use Illuminate\Support\Facades\Http;
+use Log;
 
 class ProductsService
 {
@@ -23,14 +24,6 @@ class ProductsService
         'meta' => [
             'href' => "https://api.moysklad.ru/api/remap/1.2/entity/currency/f0b90b0e-1d39-11f0-0a80-1aa70008efaf",
             'type' => 'currency',
-            'mediaType' => 'application/json',
-        ],
-    ];
-
-    private array $defaultPriceType = [
-        'meta' => [
-            'href' => "https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/f0b980cc-1d39-11f0-0a80-1aa70008efb0",
-            'type' => 'pricetype',
             'mediaType' => 'application/json',
         ],
     ];
@@ -98,6 +91,9 @@ class ProductsService
         $msProduct = \Evgeek\Moysklad\Api\Record\Objects\Entities\Product::make($this->moySklad);
         $metrics = $this->calculateWeightAndVolume($product);
 
+
+        $defaultPriceType = $this->get_price_types();
+
         $msProduct->name = $product->name;
         $msProduct->code = $product->slug ?? ($product->sku ?? null);
         $msProduct->description = $product->description ?? '';
@@ -107,9 +103,16 @@ class ProductsService
             [
                 'value' => ($product->price ?? 0) * 100, // копейки
                 'currency' => $this->rubCurrency,
-                'priceType' => $this->defaultPriceType,
+                'priceType' => $defaultPriceType,
             ],
         ];
+
+        Log::info("setting metadata", [json_decode($product->defaultUnit->meta_data)]);
+
+        $msProduct->uom = [
+            "meta" => json_decode($product->defaultUnit->meta_data),
+        ];
+
         $msProduct->create();
     }
 
