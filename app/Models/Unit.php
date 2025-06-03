@@ -22,7 +22,7 @@ class Unit extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['name', 'abbreviation', 'description'];
+    protected $fillable = ['name', 'abbreviation', 'description', 'meta_data'];
 
     public function inventoryBatches()
     {

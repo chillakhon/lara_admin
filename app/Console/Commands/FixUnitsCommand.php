@@ -37,8 +37,7 @@ class FixUnitsCommand extends Command
 
         $this->authorizied();
 
-        DB::beginTransaction();
-
+        // I DO NOT KNOW WHY, BUT TRANSACTIONS ARE NOT WORKING!!!!!
         try {
             $msUnits = $this->moySklad->query()->entity()->uom()->get();
 
@@ -84,12 +83,9 @@ class FixUnitsCommand extends Command
             }
 
 
-            DB::commit();
-
             $this->info("Successfully changed!");
 
         } catch (Exception $e) {
-            DB::rollBack();
             Log::error("Error:", [$e]);
         }
     }
