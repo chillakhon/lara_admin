@@ -20,14 +20,6 @@ class ProductsService
     private $token;
     private $baseURL = "https://api.moysklad.ru/api/remap/1.2";
 
-    private array $rubCurrency = [
-        'meta' => [
-            'href' => "https://api.moysklad.ru/api/remap/1.2/entity/currency/f0b90b0e-1d39-11f0-0a80-1aa70008efaf",
-            'type' => 'currency',
-            'mediaType' => 'application/json',
-        ],
-    ];
-
     public function __construct()
     {
 
@@ -45,7 +37,7 @@ class ProductsService
 
     public function get_currencies()
     {
-        return $this->moySklad->query()->entity()->currency()->get();
+        return $this->moySklad->query()->entity()->currency()->get()->rows[0];
     }
 
     public function get_price_types()
@@ -93,6 +85,7 @@ class ProductsService
 
 
         $defaultPriceType = $this->get_price_types();
+        $defaultCurrency = $this->get_currencies();
 
         $msProduct->name = $product->name;
         $msProduct->code = $product->slug ?? ($product->sku ?? null);
@@ -102,12 +95,10 @@ class ProductsService
         $msProduct->salePrices = [
             [
                 'value' => ($product->price ?? 0) * 100, // копейки
-                'currency' => $this->rubCurrency,
-                'priceType' => $defaultPriceType,
+                'currency' => $defaultCurrency,
+                'priceType' => $defaultPriceType[0],
             ],
         ];
-
-        Log::info("setting metadata", [json_decode($product->defaultUnit->meta_data)]);
 
         $msProduct->uom = [
             "meta" => json_decode($product->defaultUnit->meta_data),
