@@ -59,6 +59,18 @@ class ProductVariantService
             'meta' => $produt->meta,
         ];
 
+        $caracteristics = $moySkladHelperService->get_characteristics();
+        $msModification->characteristics = [
+            [
+                "id" => $caracteristics["Размер"]['id'] ?? null,
+                "value" => $productVariant->name,
+            ],
+            // [
+            //     "id" => $caracteristics["Цвет"]['id'] ?? null,
+            //     "value" => $productVariant->color,
+            // ],
+        ];
+
         $msModification->create();
 
         return $msModification;

@@ -44,6 +44,10 @@ class MoySkladController extends Controller
                     'token' => $token,
                 ]);
 
+                $moySkladService = new MoySkladHelperService();
+
+                $moySkladService->create_characteristics();
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Настройки МойСклад успешно обновлены'
@@ -82,6 +86,13 @@ class MoySkladController extends Controller
         $moySkladService = new MoySkladHelperService();
 
         return $moySkladService->get_units();
+    }
+
+    public function get_characteristics()
+    {
+        $moySkladService = new MoySkladHelperService();
+
+        return $moySkladService->get_characteristics();
     }
 
     public function get_products()

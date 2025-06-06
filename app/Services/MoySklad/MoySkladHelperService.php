@@ -4,9 +4,11 @@ namespace App\Services\MoySklad;
 
 use App\Models\DeliveryServiceSetting;
 use App\Traits\ProductsTrait;
+use Evgeek\Moysklad\Api\Record\Objects\UnknownObject;
 use Evgeek\Moysklad\MoySklad;
 use Exception;
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\TestSize\Unknown;
 
 class MoySkladHelperService
 {
@@ -81,5 +83,60 @@ class MoySkladHelperService
         }
 
         return $response->json();
+    }
+
+
+    public function create_characteristics()
+    {
+        $objects = [
+            ["name" => "Размер", "type" => "string"],
+            ["name" => "Цвет", "type" => "string"],
+            ["test" => "T", "test-2" => "string"]
+        ];
+
+        // $all_characteristics = $this->moySklad->query()->entity()->variant()->metadata()->characteristics()->get();
+
+        foreach ($objects as $key => $value) {
+            // url name after every "/" -> https://api.moysklad.ru/api/remap/1.2/entity/variant/metadata/characteristics
+            $msCharacteristic = UnknownObject::make($this->moySklad, [
+                'entity',
+                'variant',
+                'metadata',
+                'characteristics'
+            ], 'characteristic');
+
+            $msCharacteristic->name = $value['name'];
+            $msCharacteristic->type = $value['type'];
+
+            $msCharacteristic->create();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Характеристики успешно созданы',
+        ]);
+    }
+
+    public function get_characteristics()
+    {
+        $characteristics = $this->moySklad->query()
+            ->entity()
+            ->variant()
+            ->metadata()
+            ->characteristics()
+            ->get();
+
+        $result = [];
+
+        foreach ($characteristics->characteristics as $key => $characteristic) {
+            $result[$characteristic->name] = [
+                'id' => $characteristic->id,
+                'name' => $characteristic->name,
+                'type' => $characteristic->type,
+                'meta' => $characteristic->meta,
+            ];
+        }
+
+        return $result;
     }
 }

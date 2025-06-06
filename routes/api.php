@@ -603,6 +603,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 Route::get('/currencies', [MoySkladController::class, 'get_currencies']);
                 Route::get('/priceTypes', [MoySkladController::class, 'get_price_types']);
                 Route::get('/units', [MoySkladController::class, 'get_units']);
+                Route::get('/characteristics', [MoySkladController::class, 'get_characteristics']);
             });
         });
     });
