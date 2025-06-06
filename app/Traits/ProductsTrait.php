@@ -168,19 +168,10 @@ trait ProductsTrait
         $model->total_discount = $totalDiscount;
     }
 
-
-    public function calculateWeightAndVolume(Product $product): array
+    public function calculateWeightAndVolume($weight, $length, $width, $height, $defaultUnit): array
     {
-        $weight = $product->weight ?? 0;  // в граммах
-        $length = $product->length ?? 0;  // в сантиметрах
-        $width = $product->width ?? 0;
-        $height = $product->height ?? 0;
-
-        // Получаем единицу
-        $unit = $product->defaultUnit; // связь belongsTo с таблицей units
-
         // Преобразуем вес в граммы
-        $weightInGrams = match ($unit?->id) {
+        $weightInGrams = match ($defaultUnit?->id) {
             6 => $weight * 1000,     // кг → г
             7 => $weight,            // г
             8 => $weight / 1000,     // мг → г

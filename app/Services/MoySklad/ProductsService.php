@@ -4,7 +4,9 @@ namespace App\Services\MoySklad;
 
 use App\Models\DeliveryServiceSetting;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Traits\ProductsTrait;
+use Evgeek\Moysklad\Api\Record\Objects\UnknownObject;
 use Evgeek\Moysklad\Formatters\ArrayFormat;
 use Evgeek\Moysklad\MoySklad;
 use Exception;
@@ -35,45 +37,6 @@ class ProductsService
         $this->moySklad = new MoySklad(["{$moyskadSettings->token}"]);
     }
 
-    public function get_currencies()
-    {
-        return $this->moySklad->query()->entity()->currency()->get()->rows[0];
-    }
-
-    public function get_price_types()
-    {
-        return $this->moySklad->query()->context()->companysettings()->pricetype()->get();
-    }
-
-    public function get_units()
-    {
-        return $this->moySklad->query()->entity()->uom()->get();
-    }
-
-    public function check_products()
-    {
-        return $this->moySklad->query()->entity()->product()->get();
-    }
-
-    public function check_stock()
-    {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
-            'Accept-Encoding' => 'gzip',
-            'Content-Type' => 'application/json',
-        ])->get("{$this->baseURL}/report/stock/all/current");
-
-        if (!$response->successful()) {
-            return response()->json([
-                'success' => false,
-                'message' => $response->body(),
-            ], $response->getStatusCode());
-        }
-
-        return $response->json();
-    }
-
-
     public function sync_products_with_moysklad()
     {
     }
@@ -81,11 +44,19 @@ class ProductsService
     public function create_product(Product $product)
     {
         $msProduct = \Evgeek\Moysklad\Api\Record\Objects\Entities\Product::make($this->moySklad);
-        $metrics = $this->calculateWeightAndVolume($product);
 
+        $metrics = $this->calculateWeightAndVolume(
+            $product->weight ?? 0,  // в граммах
+            $product->length ?? 0,  // в сантиметрах
+            $product->width ?? 0,
+            $product->height ?? 0,
+            $product->defaultUnit,
+        );
 
         $defaultPriceType = $this->get_price_types();
         $defaultCurrency = $this->get_currencies();
+        $foundUnit = $this->get_units($product->defaultUnit->name ?? null);
+
 
         $code = rand(1000000000, 9999999999);
 
@@ -102,8 +73,10 @@ class ProductsService
             ],
         ];
 
+        Log::info("coming tuill here", [$metrics]);
+
         $msProduct->uom = [
-            "meta" => json_decode($product->defaultUnit->meta_data),
+            "meta" => $foundUnit->meta,
         ];
 
         return $msProduct->create();

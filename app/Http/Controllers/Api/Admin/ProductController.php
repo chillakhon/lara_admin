@@ -391,6 +391,8 @@ class ProductController extends Controller
                             $this->save_images($variantImage, ProductVariant::class, $created_variant->id, $key);
                         }
                     }
+
+                    $msProductVariant = $moySkladController->create_modification($created_variant, $msProduct);
                 }
             }
 

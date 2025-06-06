@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DeliveryServiceSetting;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Services\MoySklad\ProductsService;
 use Exception;
 use Http;
@@ -104,6 +105,15 @@ class MoySkladController extends Controller
         $moySkladService = new ProductsService();
 
         return $moySkladService->create_product($product);
+    }
+
+    public function create_modification(
+        ProductVariant $productVariant,
+        \Evgeek\Moysklad\Api\Record\Objects\Entities\Product $product // not project's model, it's from MoySklad package
+    ) {
+        $moySkladService = new ProductsService();
+
+        return $moySkladService->create_modification($productVariant, $product);
     }
 
     public function update_product(Product $product)
