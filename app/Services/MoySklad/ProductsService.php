@@ -87,8 +87,10 @@ class ProductsService
         $defaultPriceType = $this->get_price_types();
         $defaultCurrency = $this->get_currencies();
 
+        $code = rand(1000000000, 9999999999);
+
         $msProduct->name = $product->name;
-        $msProduct->code = $product->slug ?? ($product->sku ?? null);
+        $msProduct->code = "{$code}";// $product->slug ?? ($product->sku ?? null);
         $msProduct->description = $product->description ?? '';
         $msProduct->weight = $metrics['weight'];
         $msProduct->volume = $metrics['volume'];
@@ -104,7 +106,7 @@ class ProductsService
             "meta" => json_decode($product->defaultUnit->meta_data),
         ];
 
-        $msProduct->create();
+        return $msProduct->create();
     }
 
     public function update_product(Product $product)

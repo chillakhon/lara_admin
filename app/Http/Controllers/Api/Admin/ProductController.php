@@ -338,6 +338,7 @@ class ProductController extends Controller
             $product = Product::create(array_merge(
                 $validated,
                 [
+                    'uuid' => Str::uuid(),
                     'slug' => Str::slug($validated['name']),
                     'sku' => Str::slug($validated['name']),
                     'created_at' => now(),
@@ -350,7 +351,11 @@ class ProductController extends Controller
 
             $moySkladController = new MoySkladController();
 
-            $moySkladController->create_product($product);
+            $msProduct = $moySkladController->create_product($product);
+
+            $product->update([
+                'uuid' => $msProduct->id,
+            ]);
 
             // -1 means that its creating for the first time and you have to put null instead
             $this->price_history_create($request, -1, $product);
