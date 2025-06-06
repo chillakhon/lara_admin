@@ -8,6 +8,7 @@ use App\Traits\ProductsTrait;
 use Evgeek\Moysklad\Api\Record\Objects\UnknownObject;
 use Evgeek\Moysklad\MoySklad;
 use Exception;
+use Log;
 
 class ProductVariantService
 {
@@ -72,6 +73,10 @@ class ProductVariantService
         ];
 
         $msModification->create();
+
+        Log::info("Modification created in MoySklad", [
+            $msModification
+        ]);
 
         return $msModification;
     }

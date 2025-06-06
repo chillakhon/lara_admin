@@ -94,9 +94,12 @@ class MoySkladHelperService
             ["test" => "T", "test-2" => "string"]
         ];
 
-        // $all_characteristics = $this->moySklad->query()->entity()->variant()->metadata()->characteristics()->get();
+        $all_characteristics = $this->moySklad->query()->entity()->variant()->metadata()->characteristics()->get();
 
         foreach ($objects as $key => $value) {
+            if (isset($all_characteristics[$value['name']])) {
+                continue; // Skip if name or type is not set
+            }
             // url name after every "/" -> https://api.moysklad.ru/api/remap/1.2/entity/variant/metadata/characteristics
             $msCharacteristic = UnknownObject::make($this->moySklad, [
                 'entity',

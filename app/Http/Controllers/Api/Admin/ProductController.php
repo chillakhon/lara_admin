@@ -393,6 +393,10 @@ class ProductController extends Controller
                     }
 
                     $msProductVariant = $moySkladController->create_modification($created_variant, $msProduct);
+                    
+                    $created_variant->update([
+                        'uuid' => $msProductVariant->id,
+                    ]);
                 }
             }
 
