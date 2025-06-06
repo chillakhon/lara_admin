@@ -43,6 +43,7 @@ class ProductsService
 
     public function create_product(Product $product)
     {
+        $moySkladHelperService = new MoySkladHelperService();
         $msProduct = \Evgeek\Moysklad\Api\Record\Objects\Entities\Product::make($this->moySklad);
 
         $metrics = $this->calculateWeightAndVolume(
@@ -53,9 +54,9 @@ class ProductsService
             $product->defaultUnit,
         );
 
-        $defaultPriceType = $this->get_price_types();
-        $defaultCurrency = $this->get_currencies();
-        $foundUnit = $this->get_units($product->defaultUnit->name ?? null);
+        $defaultPriceType = $moySkladHelperService->get_price_types();
+        $defaultCurrency = $moySkladHelperService->get_currencies();
+        $foundUnit = $moySkladHelperService->get_units($product->defaultUnit->name ?? null);
 
 
         $code = rand(1000000000, 9999999999);

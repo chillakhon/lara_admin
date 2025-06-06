@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\DeliveryServiceSetting;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\MoySklad\MoySkladHelperService;
 use App\Services\MoySklad\ProductsService;
+use App\Services\MoySklad\ProductVariantService;
 use Exception;
 use Http;
 use Illuminate\Http\Request;
@@ -63,35 +65,35 @@ class MoySkladController extends Controller
 
     public function get_currencies()
     {
-        $moySkladService = new ProductsService();
+        $moySkladService = new MoySkladHelperService();
 
         return $moySkladService->get_currencies();
     }
 
     public function get_price_types()
     {
-        $moySkladService = new ProductsService();
+        $moySkladService = new MoySkladHelperService();
 
         return $moySkladService->get_price_types();
     }
 
     public function get_units()
     {
-        $moySkladService = new ProductsService();
+        $moySkladService = new MoySkladHelperService();
 
         return $moySkladService->get_units();
     }
 
     public function get_products()
     {
-        $moySkladService = new ProductsService();
+        $moySkladService = new MoySkladHelperService();
 
         return $moySkladService->check_products();
     }
 
     public function get_products_stock()
     {
-        $moySkladService = new ProductsService();
+        $moySkladService = new MoySkladHelperService();
 
         return $moySkladService->check_stock();
     }
@@ -111,7 +113,7 @@ class MoySkladController extends Controller
         ProductVariant $productVariant,
         \Evgeek\Moysklad\Api\Record\Objects\Entities\Product $product // not project's model, it's from MoySklad package
     ) {
-        $moySkladService = new ProductsService();
+        $moySkladService = new ProductVariantService();
 
         return $moySkladService->create_modification($productVariant, $product);
     }

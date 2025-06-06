@@ -37,6 +37,7 @@ class ProductVariantService
         ProductVariant $productVariant,
         \Evgeek\Moysklad\Api\Record\Objects\Entities\Product $produt
     ) {
+        $moySkladHelperService = new MoySkladHelperService();
         $code = rand(1000000000, 9999999999);
 
         $msModification = UnknownObject::make($this->moySklad, ['entity', 'variant'], 'variant');
@@ -49,8 +50,8 @@ class ProductVariantService
         $msModification->salePrices = [
             [
                 'value' => ($productVariant->price ?? 0) * 100, // копейки
-                'currency' => $this->get_currencies(),
-                'priceType' => $this->get_price_types()[0],
+                'currency' => $moySkladHelperService->get_currencies(),
+                'priceType' => $moySkladHelperService->get_price_types()[0],
             ],
         ];
 
