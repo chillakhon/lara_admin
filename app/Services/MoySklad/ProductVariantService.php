@@ -80,8 +80,9 @@ class ProductVariantService
     }
 
 
-    public function update_modification()
+    public function update_modification(ProductVariant $productVariant)
     {
+       
     }
 
     public function delete_variant($id)

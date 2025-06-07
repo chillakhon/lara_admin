@@ -85,8 +85,6 @@ class ProductsService
             ],
         ];
 
-        Log::info("coming tuill here", [$metrics]);
-
         $msProduct->uom = [
             "meta" => $foundUnit->meta,
         ];
@@ -96,6 +94,54 @@ class ProductsService
 
     public function update_product(Product $product)
     {
+        $moySkladHelperService = new MoySkladHelperService();
+        $msProduct = \Evgeek\Moysklad\Api\Record\Objects\Entities\Product::make($this->moySklad);
+        $msProduct->id = $product->uuid;
+
+        $metrics = $this->calculateWeightAndVolume(
+            $product->weight ?? 0,  // в граммах
+            $product->length ?? 0,  // в сантиметрах
+            $product->width ?? 0,
+            $product->height ?? 0,
+            $product->defaultUnit,
+        );
+
+        $defaultPriceType = $moySkladHelperService->get_price_types();
+        if (empty($defaultPriceType)) {
+            throw new Exception('Не удалось получить типы цен из МойСклад.');
+        }
+
+        $defaultCurrency = $moySkladHelperService->get_currencies();
+        if (empty($defaultCurrency)) {
+            throw new Exception('Не удалось получить валюту из МойСклад.');
+        }
+
+        $foundUnit = $moySkladHelperService->get_units($product->defaultUnit->name ?? null);
+        if (!$foundUnit || empty($foundUnit->meta)) {
+            throw new Exception("Не удалось найти единицу измерения '{$product->defaultUnit->name}' в МойСклад.");
+        }
+
+
+        // $code = rand(1000000000, 9999999999);
+
+        $msProduct->name = $product->name;
+        // $msProduct->code = "{$code}";// $product->slug ?? ($product->sku ?? null);
+        $msProduct->description = $product->description ?? '';
+        $msProduct->weight = $metrics['weight'];
+        $msProduct->volume = $metrics['volume'];
+        $msProduct->salePrices = [
+            [
+                'value' => ($product->price ?? 0) * 100, // копейки
+                'currency' => $defaultCurrency,
+                'priceType' => $defaultPriceType[0],
+            ],
+        ];
+
+        $msProduct->uom = [
+            "meta" => $foundUnit->meta,
+        ];
+
+        return $msProduct->update();
     }
 
     public function delete_product($id)
@@ -109,7 +155,7 @@ class ProductsService
         if ($response->successful()) {
             return true;
         }
-        
+
         return false;
     }
 }

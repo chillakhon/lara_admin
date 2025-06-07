@@ -542,8 +542,12 @@ class ProductController extends Controller
 
         DB::beginTransaction();
 
+        $moyskadController = new MoySkladController();
+        $msProduct = null;
+        $createdVariants = [];
+
         try {
-            $product = Product::findOrFail($id);
+            $product = Product::where('id', $id)->firstOrFail();
 
             $prev_price = $product->price;
 
@@ -563,6 +567,10 @@ class ProductController extends Controller
             $colorIds = collect($validated['colors'] ?? [])->pluck('id');
 
             $product->colors()->sync($colorIds);
+
+            $product->refresh();
+
+            $msProduct = $moyskadController->update_product($product);
 
             // Handle variants
             $incomingVariantIds = collect($validated['variants'] ?? [])->pluck('id')->filter()->toArray();
@@ -606,18 +614,23 @@ class ProductController extends Controller
                 $variant_colors_ids = collect($variantData['colors'] ?? [])->pluck('id');
 
                 if (!empty($variantData['id'])) {
-                    $variant = ProductVariant::findOrFail($variantData['id']);
+                    $variant = ProductVariant::where('id', $variantData['id'])->firstOrFail();
                     $previous_price = $variant->price;
                     $cleanVariantData = Arr::except($cleanVariantData, ['sku']);
                     $variant->update($cleanVariantData);
                     $variant->colors()->sync($variant_colors_ids);
                     $this->price_history_create($request, $previous_price, null, $variant);
+                    $value = $variant->refresh();
+                    $moyskadController->update_modification($variant);
                 } else {
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
                     $variant = ProductVariant::create($cleanVariantData);
                     // -1 means that its creating for the first time and you have to put null instead
                     $variant->colors()->attach($variant_colors_ids);
                     $this->price_history_create($request, -1, null, $variant);
+                    $variant = $variant->refresh();
+                    $msProductVariant = $moyskadController->create_modification($variant, $msProduct);
+                    $createdVariants[] = $msProductVariant;
                 }
 
                 $this->update_variant_images($request, $variant, $uuid);
@@ -633,6 +646,9 @@ class ProductController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            foreach ($createdVariants as $key => $value) {
+                $moyskadController->delete_variant($value->id);
+            }
             return response()->json([
                 "error_line" => $e->getLine(),
                 'message' => 'Failed to update product',
