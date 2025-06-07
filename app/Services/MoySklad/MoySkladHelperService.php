@@ -141,7 +141,42 @@ class MoySkladHelperService
                 'meta' => $characteristic->meta,
             ];
         }
-        
         return $result;
+    }
+
+
+    public function ensureCharacteristic(string $name, string $type = 'string'): string
+    {
+        $characteristics = $this->get_characteristics();
+
+        if (!isset($characteristics[$name])) {
+            $this->create_custom_characteristic($name, $type);
+
+            // Повторно получаем после создания
+            $characteristics = $this->get_characteristics();
+        }
+
+        $id = $characteristics[$name]['id'] ?? null;
+
+        if (!$id) {
+            throw new Exception("Характеристика '{$name}' не найдена в МойСклад даже после попытки создания.");
+        }
+
+        return $id;
+    }
+
+    private function create_custom_characteristic(string $name, string $type = 'string'): void
+    {
+        $msCharacteristic = UnknownObject::make($this->moySklad, [
+            'entity',
+            'variant',
+            'metadata',
+            'characteristics'
+        ], 'characteristic');
+
+        $msCharacteristic->name = $name;
+        $msCharacteristic->type = $type;
+
+        $msCharacteristic->create();
     }
 }

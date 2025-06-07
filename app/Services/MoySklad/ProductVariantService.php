@@ -60,12 +60,7 @@ class ProductVariantService
             'meta' => $produt->meta,
         ];
 
-        $caracteristics = $moySkladHelperService->get_characteristics();
-
-        $sizeId = $caracteristics['Размер']['id'] ?? null;
-        if (!$sizeId) {
-            throw new Exception("Не удалось найти характеристику 'Размер' в МойСклад.");
-        }
+        $sizeId = $moySkladHelperService->ensureCharacteristic('Размер', 'string');
 
         $msModification->characteristics = [
             [
