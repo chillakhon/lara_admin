@@ -14,6 +14,7 @@ use App\Traits\HelperTrait;
 use App\Traits\ImageTrait;
 use App\Traits\ProductsTrait;
 use Arr;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -333,8 +334,11 @@ class ProductController extends Controller
 
         DB::beginTransaction();
 
-        try {
+        $moySkladController = new MoySkladController();
+        $createdMsProduct = null;
+        $createdMsVariantIds = [];
 
+        try {
             $product = Product::create(array_merge(
                 $validated,
                 [
@@ -349,12 +353,10 @@ class ProductController extends Controller
 
             $product->colors()->attach($colorIds);
 
-            $moySkladController = new MoySkladController();
-
-            $msProduct = $moySkladController->create_product($product);
+            $createdMsProduct = $moySkladController->create_product($product);
 
             $product->update([
-                'uuid' => $msProduct->id,
+                'uuid' => $createdMsProduct->id,
             ]);
 
             // -1 means that its creating for the first time and you have to put null instead
@@ -392,11 +394,13 @@ class ProductController extends Controller
                         }
                     }
 
-                    $msProductVariant = $moySkladController->create_modification($created_variant, $msProduct);
-                    
+                    $msProductVariant = $moySkladController->create_modification($created_variant, $createdMsProduct);
+
                     $created_variant->update([
                         'uuid' => $msProductVariant->id,
                     ]);
+
+                    $createdMsVariantIds[] = $msProductVariant->id;
                 }
             }
 
@@ -410,8 +414,19 @@ class ProductController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // foreach ($createdMsVariantIds as $key => $value) {
+            //     $moySkladController->delete_variant($value);
+            // }
+
+            // I Guess deleting the product will delete it's modifications in moySklad
+            if ($createdMsProduct) {
+                $moySkladController->delete_product($createdMsProduct->id);
+            }
+
             return response()->json([
                 'message' => 'Failed to create product',
+                "product_exist" => $createdMsProduct,
                 'error' => $e->getMessage(),
                 "line" => $e->getLine(),
                 "stackTrace" => $e->getTraceAsString(),

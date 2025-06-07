@@ -132,4 +132,22 @@ class MoySkladController extends Controller
     public function update_product(Product $product)
     {
     }
+
+    public function update_modification()
+    {
+    }
+
+    public function delete_product($id)
+    {
+        $moySkladService = new ProductsService();
+
+        return $moySkladService->delete_product($id);
+    }
+
+    public function delete_variant($id)
+    {
+        $moySkladService = new ProductVariantService();
+
+        return $moySkladService->delete_variant($id);
+    }
 }

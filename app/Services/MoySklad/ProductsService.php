@@ -97,4 +97,19 @@ class ProductsService
     public function update_product(Product $product)
     {
     }
+
+    public function delete_product($id)
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->token,
+            'Accept-Encoding' => 'gzip',
+            'Content-Type' => 'application/json',
+        ])->delete("{$this->baseURL}/entity/product/{$id}");
+
+        if ($response->successful()) {
+            return true;
+        }
+        
+        return false;
+    }
 }

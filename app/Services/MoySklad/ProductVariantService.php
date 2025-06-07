@@ -82,4 +82,17 @@ class ProductVariantService
     public function update_modification()
     {
     }
+
+    public function delete_variant($id)
+    {
+        UnknownObject
+            ::make(
+                $this->moySklad,
+                ['entity', 'variant'],
+                'variant',
+                ['id' => $id]
+            )->delete();
+
+        return true;
+    }
 }
