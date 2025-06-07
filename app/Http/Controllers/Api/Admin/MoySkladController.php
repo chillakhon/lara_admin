@@ -99,7 +99,14 @@ class MoySkladController extends Controller
     {
         $moySkladService = new MoySkladHelperService();
 
-        return $moySkladService->check_products();
+        return $moySkladService->get_products();
+    }
+
+    public function get_product_variants()
+    {
+        $moySkladService = new MoySkladHelperService();
+
+        return $moySkladService->get_product_variants();
     }
 
     public function get_products_stock()

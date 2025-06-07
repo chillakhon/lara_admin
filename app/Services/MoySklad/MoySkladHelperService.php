@@ -62,9 +62,16 @@ class MoySkladHelperService
         });
     }
 
-    public function check_products()
+    public function get_products()
     {
         return $this->moySklad->query()->entity()->product()->get();
+    }
+
+    public function get_product_variants()
+    {
+        $modifications = $this->moySklad->query()->entity()->variant()->get();
+
+        return $modifications;
     }
 
     public function check_stock()

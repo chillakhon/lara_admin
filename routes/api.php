@@ -599,6 +599,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::prefix('/moysklad')->group(function () {
                 Route::post('/settings', [MoySkladController::class, 'update_moy_sklad_settings']);
                 Route::get('/products', [MoySkladController::class, 'get_products']);
+                Route::get('/products/variants', [MoySkladController::class, 'get_product_variants']);
                 Route::get('/products/stock', [MoySkladController::class, 'get_products_stock']);
                 Route::get('/currencies', [MoySkladController::class, 'get_currencies']);
                 Route::get('/priceTypes', [MoySkladController::class, 'get_price_types']);
