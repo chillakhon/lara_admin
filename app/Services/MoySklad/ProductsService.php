@@ -55,8 +55,19 @@ class ProductsService
         );
 
         $defaultPriceType = $moySkladHelperService->get_price_types();
+        if (empty($defaultPriceType)) {
+            throw new Exception('Не удалось получить типы цен из МойСклад.');
+        }
+
         $defaultCurrency = $moySkladHelperService->get_currencies();
+        if (empty($defaultCurrency)) {
+            throw new Exception('Не удалось получить валюту из МойСклад.');
+        }
+
         $foundUnit = $moySkladHelperService->get_units($product->defaultUnit->name ?? null);
+        if (!$foundUnit || empty($foundUnit->meta)) {
+            throw new Exception("Не удалось найти единицу измерения '{$product->defaultUnit->name}' в МойСклад.");
+        }
 
 
         $code = rand(1000000000, 9999999999);

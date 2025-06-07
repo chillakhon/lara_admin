@@ -122,6 +122,7 @@ class MoySkladHelperService
 
     public function get_characteristics()
     {
+
         $characteristics = $this->moySklad->query()
             ->entity()
             ->variant()
@@ -129,9 +130,11 @@ class MoySkladHelperService
             ->characteristics()
             ->get();
 
+        $characteristics = $response->characteristics ?? [];
+
         $result = [];
 
-        foreach ($characteristics->characteristics as $key => $characteristic) {
+        foreach ($characteristics as $characteristic) {
             $result[$characteristic->name] = [
                 'id' => $characteristic->id,
                 'name' => $characteristic->name,
