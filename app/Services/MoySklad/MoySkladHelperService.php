@@ -91,14 +91,14 @@ class MoySkladHelperService
         $objects = [
             ["name" => "Размер", "type" => "string"],
             ["name" => "Цвет", "type" => "string"],
-            ["test" => "T", "test-2" => "string"]
+            ["name" => "Test", "type" => "string"]
         ];
 
-        $all_characteristics = $this->moySklad->query()->entity()->variant()->metadata()->characteristics()->get();
+        $all_characteristics = $this->get_characteristics();
 
         foreach ($objects as $key => $value) {
             if (isset($all_characteristics[$value['name']])) {
-                continue; // Skip if name or type is not set
+                continue;
             }
             // url name after every "/" -> https://api.moysklad.ru/api/remap/1.2/entity/variant/metadata/characteristics
             $msCharacteristic = UnknownObject::make($this->moySklad, [
@@ -122,7 +122,6 @@ class MoySkladHelperService
 
     public function get_characteristics()
     {
-
         $characteristics = $this->moySklad->query()
             ->entity()
             ->variant()
@@ -130,7 +129,7 @@ class MoySkladHelperService
             ->characteristics()
             ->get();
 
-        $characteristics = $response->characteristics ?? [];
+        $characteristics = $characteristics->characteristics ?? [];
 
         $result = [];
 
@@ -142,7 +141,7 @@ class MoySkladHelperService
                 'meta' => $characteristic->meta,
             ];
         }
-
+        
         return $result;
     }
 }

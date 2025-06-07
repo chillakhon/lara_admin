@@ -72,10 +72,6 @@ class ProductVariantService
                 "id" => "{$sizeId}",
                 "value" => $productVariant->name,
             ],
-            // [
-            //     "id" => $caracteristics["Цвет"]['id'] ?? null,
-            //     "value" => $productVariant->color,
-            // ],
         ];
 
         $msModification->create();
