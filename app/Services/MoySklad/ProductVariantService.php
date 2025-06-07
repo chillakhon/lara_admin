@@ -82,7 +82,46 @@ class ProductVariantService
 
     public function update_modification(ProductVariant $productVariant)
     {
-       
+        $moySkladHelperService = new MoySkladHelperService();
+        // $code = rand(1000000000, 9999999999);
+
+        $msModification = UnknownObject::make($this->moySklad, ['entity', 'variant'], 'variant');
+        $msModification->id = $productVariant->uuid;
+
+        $msModification->name = $productVariant->name;
+        // $msModification->code = "{$code}";
+        $msModification->description = $productVariant->description ?? '';
+        // weight and volume is not necessary for product variants (modifications in MoySklad)
+
+        $msModification->salePrices = [
+            [
+                'value' => ($productVariant->price ?? 0) * 100, // копейки
+                'currency' => $moySkladHelperService->get_currencies(),
+                'priceType' => $moySkladHelperService->get_price_types()[0],
+            ],
+        ];
+
+        // setting product for updating modification is not necessary
+        // $msModification->product = [
+        //     'meta' => $produt->meta,
+        // ];
+
+        $sizeId = $moySkladHelperService->ensureCharacteristic('Размер', 'string');
+
+        $msModification->characteristics = [
+            [
+                "id" => "{$sizeId}",
+                "value" => $productVariant->name,
+            ],
+        ];
+
+        $msModification->update();
+
+        // Log::info("Modification created in MoySklad", [
+        //     $msModification
+        // ]);
+
+        return $msModification;
     }
 
     public function delete_variant($id)
