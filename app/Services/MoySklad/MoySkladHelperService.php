@@ -172,6 +172,14 @@ class MoySkladHelperService
         return $id;
     }
 
+
+    public function sync_products_with_moysklad()
+    {
+        $productsAndVariantsSyncWithMoySklad = new ProductsAndVariantsSyncWithMoySkladService();
+
+        return $productsAndVariantsSyncWithMoySklad->sync_products_with_moysklad();
+    }
+
     private function create_custom_characteristic(string $name, string $type = 'string'): void
     {
         $msCharacteristic = UnknownObject::make($this->moySklad, [

@@ -37,22 +37,18 @@ class ProductsService
         $this->moySklad = new MoySklad(["{$moyskadSettings->token}"]);
     }
 
-    public function sync_products_with_moysklad()
-    {
-    }
-
     public function create_product(Product $product)
     {
         $moySkladHelperService = new MoySkladHelperService();
         $msProduct = \Evgeek\Moysklad\Api\Record\Objects\Entities\Product::make($this->moySklad);
 
-        $metrics = $this->calculateWeightAndVolume(
-            $product->weight ?? 0,  // в граммах
-            $product->length ?? 0,  // в сантиметрах
-            $product->width ?? 0,
-            $product->height ?? 0,
-            $product->defaultUnit,
-        );
+        // $metrics = $this->calculateWeightAndVolume(
+        //     $product->weight ?? 0,  // в граммах
+        //     $product->length ?? 0,  // в сантиметрах
+        //     $product->width ?? 0,
+        //     $product->height ?? 0,
+        //     $product->defaultUnit,
+        // );
 
         $defaultPriceType = $moySkladHelperService->get_price_types();
         if (empty($defaultPriceType)) {
@@ -75,8 +71,8 @@ class ProductsService
         $msProduct->name = $product->name;
         $msProduct->code = "{$code}";// $product->slug ?? ($product->sku ?? null);
         $msProduct->description = $product->description ?? '';
-        $msProduct->weight = $metrics['weight'];
-        $msProduct->volume = $metrics['volume'];
+        // $msProduct->weight = $metrics['weight'];
+        // $msProduct->volume = $metrics['volume'];
         $msProduct->salePrices = [
             [
                 'value' => ($product->price ?? 0) * 100, // копейки

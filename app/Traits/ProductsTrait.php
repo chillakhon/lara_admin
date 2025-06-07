@@ -172,9 +172,9 @@ trait ProductsTrait
     {
         // Преобразуем вес в граммы
         $weightInGrams = match ($defaultUnit?->id) {
-            6 => $weight * 1000,     // кг → г
-            7 => $weight,            // г
-            8 => $weight / 1000,     // мг → г
+            3 => $weight * 1000,     // кг → г
+            6 => $weight,            // г
+            10 => $weight / 1000,     // мг → г
             default => $weight,      // Assume grams
         };
 

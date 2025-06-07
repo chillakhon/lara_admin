@@ -48,6 +48,8 @@ class MoySkladController extends Controller
 
                 $moySkladService->create_characteristics();
 
+                $moySkladService->sync_products_with_moysklad();
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Настройки МойСклад успешно обновлены'
