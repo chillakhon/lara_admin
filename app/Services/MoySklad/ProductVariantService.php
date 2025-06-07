@@ -8,6 +8,7 @@ use App\Traits\ProductsTrait;
 use Evgeek\Moysklad\Api\Record\Objects\UnknownObject;
 use Evgeek\Moysklad\MoySklad;
 use Exception;
+use Http;
 use Log;
 
 class ProductVariantService
@@ -85,14 +86,16 @@ class ProductVariantService
 
     public function delete_variant($id)
     {
-        UnknownObject
-            ::make(
-                $this->moySklad,
-                ['entity', 'variant'],
-                'variant',
-                ['id' => $id]
-            )->delete();
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->token,
+            'Accept-Encoding' => 'gzip',
+            'Content-Type' => 'application/json',
+        ])->delete("{$this->baseURL}/entity/variant/{$id}");
 
-        return true;
+        if ($response->successful()) {
+            return true;
+        }
+
+        return false;
     }
 }

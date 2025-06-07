@@ -336,7 +336,7 @@ class ProductController extends Controller
 
         $moySkladController = new MoySkladController();
         $createdMsProduct = null;
-        $createdMsVariantIds = [];
+        // $createdMsVariantIds = [];
 
         try {
             $product = Product::create(array_merge(
@@ -412,7 +412,7 @@ class ProductController extends Controller
                 'product' => $product
             ], 201);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
 
             // foreach ($createdMsVariantIds as $key => $value) {
