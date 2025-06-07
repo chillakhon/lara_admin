@@ -14,6 +14,7 @@ use App\Traits\HelperTrait;
 use App\Traits\ImageTrait;
 use App\Traits\ProductsTrait;
 use Arr;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -333,11 +334,15 @@ class ProductController extends Controller
 
         DB::beginTransaction();
 
-        try {
+        $moySkladController = new MoySkladController();
+        $createdMsProduct = null;
+        // $createdMsVariantIds = [];
 
+        try {
             $product = Product::create(array_merge(
                 $validated,
                 [
+                    'uuid' => Str::uuid(),
                     'slug' => Str::slug($validated['name']),
                     'sku' => Str::slug($validated['name']),
                     'created_at' => now(),
@@ -348,9 +353,11 @@ class ProductController extends Controller
 
             $product->colors()->attach($colorIds);
 
-            $moySkladController = new MoySkladController();
+            $createdMsProduct = $moySkladController->create_product($product);
 
-            $moySkladController->create_product($product);
+            $product->update([
+                'uuid' => $createdMsProduct->id,
+            ]);
 
             // -1 means that its creating for the first time and you have to put null instead
             $this->price_history_create($request, -1, $product);
@@ -386,6 +393,14 @@ class ProductController extends Controller
                             $this->save_images($variantImage, ProductVariant::class, $created_variant->id, $key);
                         }
                     }
+
+                    $msProductVariant = $moySkladController->create_modification($created_variant, $createdMsProduct);
+
+                    $created_variant->update([
+                        'uuid' => $msProductVariant->id,
+                    ]);
+
+                    $createdMsVariantIds[] = $msProductVariant->id;
                 }
             }
 
@@ -397,10 +412,21 @@ class ProductController extends Controller
                 'product' => $product
             ], 201);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
+
+            // foreach ($createdMsVariantIds as $key => $value) {
+            //     $moySkladController->delete_variant($value);
+            // }
+
+            // I Guess deleting the product will delete it's modifications in moySklad
+            if ($createdMsProduct) {
+                $moySkladController->delete_product($createdMsProduct->id);
+            }
+
             return response()->json([
                 'message' => 'Failed to create product',
+                "product_exist" => $createdMsProduct,
                 'error' => $e->getMessage(),
                 "line" => $e->getLine(),
                 "stackTrace" => $e->getTraceAsString(),
@@ -418,7 +444,7 @@ class ProductController extends Controller
             'length' => 'required|numeric|min:0',
             'width' => 'required|numeric|min:0',
             'height' => 'required|numeric|min:0',
-            'default_unit_id' => 'nullable|exists:units,id',
+            'default_unit_id' => 'required|exists:units,id',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
             'has_variants' => 'boolean',
@@ -516,8 +542,12 @@ class ProductController extends Controller
 
         DB::beginTransaction();
 
+        $moyskadController = new MoySkladController();
+        $msProduct = null;
+        $createdVariants = [];
+
         try {
-            $product = Product::findOrFail($id);
+            $product = Product::where('id', $id)->firstOrFail();
 
             $prev_price = $product->price;
 
@@ -537,6 +567,10 @@ class ProductController extends Controller
             $colorIds = collect($validated['colors'] ?? [])->pluck('id');
 
             $product->colors()->sync($colorIds);
+
+            $product->refresh();
+
+            $msProduct = $moyskadController->update_product($product);
 
             // Handle variants
             $incomingVariantIds = collect($validated['variants'] ?? [])->pluck('id')->filter()->toArray();
@@ -580,18 +614,23 @@ class ProductController extends Controller
                 $variant_colors_ids = collect($variantData['colors'] ?? [])->pluck('id');
 
                 if (!empty($variantData['id'])) {
-                    $variant = ProductVariant::findOrFail($variantData['id']);
+                    $variant = ProductVariant::where('id', $variantData['id'])->firstOrFail();
                     $previous_price = $variant->price;
                     $cleanVariantData = Arr::except($cleanVariantData, ['sku']);
                     $variant->update($cleanVariantData);
                     $variant->colors()->sync($variant_colors_ids);
                     $this->price_history_create($request, $previous_price, null, $variant);
+                    $value = $variant->refresh();
+                    $moyskadController->update_modification($variant);
                 } else {
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
                     $variant = ProductVariant::create($cleanVariantData);
                     // -1 means that its creating for the first time and you have to put null instead
                     $variant->colors()->attach($variant_colors_ids);
                     $this->price_history_create($request, -1, null, $variant);
+                    $variant = $variant->refresh();
+                    $msProductVariant = $moyskadController->create_modification($variant, $msProduct);
+                    $createdVariants[] = $msProductVariant;
                 }
 
                 $this->update_variant_images($request, $variant, $uuid);
@@ -607,6 +646,9 @@ class ProductController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            foreach ($createdVariants as $key => $value) {
+                $moyskadController->delete_variant($value->id);
+            }
             return response()->json([
                 "error_line" => $e->getLine(),
                 'message' => 'Failed to update product',

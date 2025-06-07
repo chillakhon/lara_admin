@@ -74,8 +74,8 @@ class FixUnitsCommand extends Command
                         Unit::create([
                             'name' => $unit->name,
                             "abbreviation" => $unit->abbreviation,
-                            "meta_data" => json_encode($value->meta),
-                            "description" => $value->description,
+                            // "meta_data" => json_encode($value->meta),
+                            "description" => $value->description, // we need only description for finding units while setting product in moySklad 
                         ]);
                         break;
                     }
