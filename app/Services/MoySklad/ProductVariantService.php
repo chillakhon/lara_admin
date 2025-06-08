@@ -138,4 +138,18 @@ class ProductVariantService
 
         return false;
     }
+
+
+    public function mass_variant_deletion(array $ids)
+    {
+        $objects = [];
+
+        foreach ($ids as $value) {
+            $objects[] = UnknownObject::make($this->moySklad, ['id' => $value], 'variant');
+        }
+
+        $this->moySklad->query()->entity()->variant()->massDelete($objects);
+
+        return true;
+    }
 }

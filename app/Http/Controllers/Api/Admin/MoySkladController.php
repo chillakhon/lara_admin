@@ -177,4 +177,11 @@ class MoySkladController extends Controller
 
         return $moySkladService->delete_variant($id);
     }
+
+    public function mass_variant_deletion(array $ids)
+    {
+        $moySkladService = new ProductVariantService();
+
+        return $moySkladService->mass_variant_deletion($ids);
+    }
 }
