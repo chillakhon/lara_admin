@@ -372,7 +372,7 @@ class ProductController extends Controller
 
         $moyskadController = new MoySkladController();
         $msProduct = null;
-        $createdVariants = [];
+        $createdVariantsIds = [];
 
         try {
             $product = Product::where('id', $id)->firstOrFail();
@@ -431,6 +431,7 @@ class ProductController extends Controller
                     $variant->delete();
                 });
 
+            // when you delete some variants it should be deleted from MoySklad too
             if ($product_variant_for_deletion_ids) {
                 $moyskadController->mass_variant_deletion($product_variant_for_deletion_ids);
             }
@@ -444,6 +445,7 @@ class ProductController extends Controller
                 }
 
                 $cleanVariantData = Arr::except($variantData, ['local_uuid', 'id']);
+                // setting the values of product's weight, length, width, height
                 $cleanVariantData['product_id'] = $product->id;
                 $cleanVariantData['weight'] = $product->weight;
                 $cleanVariantData['length'] = $product->length;
@@ -468,7 +470,7 @@ class ProductController extends Controller
                     $this->price_history_create($request, -1, null, $variant);
                     $variant = $variant->refresh();
                     $msProductVariant = $moyskadController->create_modification($variant, $msProduct);
-                    $createdVariants[] = $msProductVariant->id;
+                    $createdVariantsIds[] = $msProductVariant->id;
                 }
 
                 $this->update_variant_images($request, $variant, $uuid);
@@ -484,7 +486,8 @@ class ProductController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            $moyskadController->mass_variant_deletion($createdVariants);
+            // if something goes wrong we will delete only created variants
+            $moyskadController->mass_variant_deletion($createdVariantsIds);
             return response()->json([
                 "error_line" => $e->getLine(),
                 'message' => 'Failed to update product',
