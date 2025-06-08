@@ -69,6 +69,18 @@ class MoySkladController extends Controller
         }
     }
 
+    public function sync_products()
+    {
+        $moySkladService = new MoySkladHelperService();
+
+        $moySkladService->sync_products_with_moysklad();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Продукты синхронизированы!"
+        ]);
+    }
+
     public function get_currencies()
     {
         $moySkladService = new MoySkladHelperService();

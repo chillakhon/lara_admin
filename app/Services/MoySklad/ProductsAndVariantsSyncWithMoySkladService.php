@@ -37,20 +37,29 @@ class ProductsAndVariantsSyncWithMoySkladService
 
         $products = $moySkladService->get_products()->rows ?? [];
         $variants = $moySkladService->get_product_variants()->rows ?? [];
+        $stock = $moySkladService->check_stock();
 
         // Index variants by product UUID
         $variantsGrouped = collect($variants)->groupBy(fn($v) => optional($v->product->meta)->href ?? '');
 
         foreach ($products as $productData) {
+
+            $stockQty = 0;
+
+            if (isset($stock[$productData->id])) {
+                $stockQty = $stock[$productData->id]['stock'];
+            }
+
             $product = Product::updateOrCreate(
                 ['uuid' => $productData->id],
                 [
                     'name' => $productData->name ?? '',
-                    'description' => $productData->description,
+                    'description' => $productData->description ?? null,
                     'slug' => Str::slug($productData->name ?? ''),
                     'price' => ($productData->salePrices[0]->value ?? 0) / 100,
                     'cost_price' => ($productData->buyPrice->value ?? 0) / 100,
                     'barcode' => $productData->barcodes[0]->ean13 ?? null,
+                    'stock_quantity' => $stockQty,
                     'sku' => Str::slug($productData->name ?? ''),
                     'weight' => $productData->weight ?? 0,
                     'currency' => 'RUB',
@@ -62,6 +71,13 @@ class ProductsAndVariantsSyncWithMoySkladService
 
             // Обновим/создадим варианты, если есть
             foreach ($variantsGrouped[$productHref] ?? [] as $variantData) {
+
+                $variantStockQty = 0;
+
+                if (isset($stock[$variantData->id])) {
+                    $variantStockQty = $stock[$variantData->id]['stock'];
+                }
+
                 ProductVariant::updateOrCreate(
                     ['uuid' => $variantData->id],
                     [
@@ -71,8 +87,8 @@ class ProductsAndVariantsSyncWithMoySkladService
                         'barcode' => $variantData->barcodes[0]->ean13 ?? null,
                         'price' => ($variantData->salePrices[0]->value ?? 0) / 100,
                         'cost_price' => null,
-                        'stock' => 0,
-                        'weight' => $variantData->weight ?? 0,
+                        'stock' => $variantStockQty,
+                        'weight' => $productData->weight ?? 0, // should get product's weight
                         'type' => 'simple',
                         'is_active' => true,
                     ]

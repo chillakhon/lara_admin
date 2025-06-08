@@ -89,7 +89,16 @@ class MoySkladHelperService
             ], $response->getStatusCode());
         }
 
-        return $response->json();
+        $stocks = $response->json();
+
+        $result = [];
+        if ($stocks) {
+            foreach ($stocks as $key => $value) {
+                $result[$value['assortmentId']] = $value;
+            }
+        }
+
+        return $result;
     }
 
 
