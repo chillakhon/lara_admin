@@ -144,11 +144,21 @@ class ProductVariantService
     {
         $objects = [];
 
-        foreach ($ids as $value) {
-            $objects[] = UnknownObject::make($this->moySklad, ['id' => $value], 'variant');
+        foreach ($ids as $id) {
+            try {
+                // Optional: validate variant exists
+                $variant = $this->moySklad->query()->entity()->variant()->byId($id)->get();
+
+                $objects[] = UnknownObject::make($this->moySklad, ['id' => $id], 'variant');
+                
+            } catch (\Exception $e) {
+                Log::warning("Skipping unknown variant ID: $id");
+            }
         }
 
-        $this->moySklad->query()->entity()->variant()->massDelete($objects);
+        if (!empty($objects)) {
+            $this->moySklad->query()->entity()->variant()->massDelete($objects);
+        }
 
         return true;
     }

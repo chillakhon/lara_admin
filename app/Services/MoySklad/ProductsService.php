@@ -137,7 +137,13 @@ class ProductsService
             "meta" => $foundUnit->meta,
         ];
 
-        return $msProduct->update();
+        try {
+            $this->moySklad->query()->entity()->product()->byId($product->uuid)->get();
+            return $msProduct->update();
+        } catch (Exception $e) {
+            return $msProduct->create();
+        }
+
     }
 
     public function delete_product($id)

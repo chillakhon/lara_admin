@@ -10,6 +10,7 @@ use App\Models\PriceHistory;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\MaterialService;
+use App\Services\MoySklad\MoySkladHelperService;
 use App\Traits\HelperTrait;
 use App\Traits\ImageTrait;
 use App\Traits\ProductsTrait;
@@ -431,11 +432,6 @@ class ProductController extends Controller
                     $variant->delete();
                 });
 
-            // when you delete some variants it should be deleted from MoySklad too
-            if ($product_variant_for_deletion_ids) {
-                $moyskadController->mass_variant_deletion($product_variant_for_deletion_ids);
-            }
-
             // Add or update variants
             foreach (($validated['variants'] ?? []) as $variantData) {
                 $uuid = $variantData['local_uuid'] ?? null;
@@ -477,6 +473,12 @@ class ProductController extends Controller
             }
 
             DB::commit();
+
+            // if everything goes good
+            // when you delete some variants it should be deleted from MoySklad too
+            if ($product_variant_for_deletion_ids) {
+                $moyskadController->mass_variant_deletion($product_variant_for_deletion_ids);
+            }
 
             return response()->json([
                 'success' => true,
@@ -586,8 +588,22 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        $product->update([
+            'slug' => null,
+            "sku" => null,
+        ]);
+
+        $product->variants()->update([
+            'sku' => null,
+        ]);
+
         $product->delete();
         $product->variants()->delete();
+
+        $moySkladController = new MoySkladController();
+
+        $moySkladController->delete_product($product->uuid);
+
         return response()->json(['success' => true, 'message' => 'Product deleted successfully']);
     }
 
