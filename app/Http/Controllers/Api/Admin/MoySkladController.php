@@ -130,10 +130,6 @@ class MoySkladController extends Controller
         return $moySkladService->check_stock();
     }
 
-    public function sync_products_with_moysklad(Request $request)
-    {
-    }
-
     public function create_product(Product $product)
     {
         $moySkladService = new ProductsService();
@@ -176,6 +172,15 @@ class MoySkladController extends Controller
         $moySkladService = new ProductVariantService();
 
         return $moySkladService->delete_variant($id);
+    }
+
+    public function mass_variant_creation_and_update(
+        array $productVariants,
+        \Evgeek\Moysklad\Api\Record\Objects\Entities\Product $product
+    ) {
+        $moySkladService = new ProductVariantService();
+
+        return $moySkladService->mass_variant_creation_and_update($productVariants, $product);
     }
 
     public function mass_variant_deletion(array $ids)

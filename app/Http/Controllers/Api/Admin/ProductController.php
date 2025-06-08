@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Log;
 
 class ProductController extends Controller
 {
@@ -250,6 +251,9 @@ class ProductController extends Controller
 
             // $product->categories()->sync($validated['categories']);
             if (count($validated['variants'] ?? []) >= 1) {
+
+                $createdVariants = [];
+
                 foreach ($validated['variants'] as $variantData) {
                     $uuid = $variantData['local_uuid'] ?? null;
 
@@ -264,6 +268,8 @@ class ProductController extends Controller
                     $cleanVariantData['width'] = $product->width;
                     $cleanVariantData['height'] = $product->height;
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
+                    // temp value for syncing with MoySklad
+                    $cleanVariantData['code'] = (string) rand(1000000000, 9999999999);
                     $cleanVariantData['created_at'] = now();
 
                     $created_variant = ProductVariant::create($cleanVariantData);
@@ -279,13 +285,29 @@ class ProductController extends Controller
                         }
                     }
 
-                    $msProductVariant = $moySkladController->create_modification($created_variant, $createdMsProduct);
+                    $createdVariants[] = $created_variant;
 
-                    $created_variant->update([
-                        'uuid' => $msProductVariant->id,
-                    ]);
+                    // $msProductVariant = $moySkladController->create_modification($created_variant, $createdMsProduct);
 
-                    $createdMsVariantIds[] = $msProductVariant->id;
+                    // $created_variant->update([
+                    //     'uuid' => $msProductVariant->id,
+                    // ]);
+
+                    // $createdMsVariantIds[] = $msProductVariant->id;
+                }
+
+                $massCreatedModifications = $moySkladController->mass_variant_creation_and_update(
+                    $createdVariants,
+                    $createdMsProduct,
+                );
+
+                // update local variants after mass creation
+                foreach ($createdVariants as $key => $cv) {
+                    if (array_key_exists($cv->code, $massCreatedModifications)) {
+                        $cv->update([
+                            'uuid' => $massCreatedModifications[$cv->code],
+                        ]);
+                    }
                 }
             }
 
@@ -373,7 +395,7 @@ class ProductController extends Controller
 
         $moyskadController = new MoySkladController();
         $msProduct = null;
-        $createdVariantsIds = [];
+        $createdVariants = [];
 
         try {
             $product = Product::where('id', $id)->firstOrFail();
@@ -409,8 +431,13 @@ class ProductController extends Controller
             $prod_variant_check = ProductVariant::where('product_id', $product->id);
             if (!empty($incomingVariantIds)) {
                 $prod_variant_check->whereNotIn('id', $incomingVariantIds);
-                $product_variant_for_deletion_ids = (clone $prod_variant_check)->pluck('uuid')->toArray();
             }
+
+            $product_variant_for_deletion_ids = (clone $prod_variant_check)
+                ->withTrashed()
+                ->pluck('uuid')->toArray();
+
+            Log::info("test all ids", $product_variant_for_deletion_ids);
 
             $prod_variant_check = $prod_variant_check->get()
                 ->each(function ($variant) {
@@ -429,6 +456,9 @@ class ProductController extends Controller
                     }
 
                     $variant->colors()->detach();
+                    $variant->update([
+                        'sku' => null,
+                    ]);
                     $variant->delete();
                 });
 
@@ -456,26 +486,49 @@ class ProductController extends Controller
                     $variant->update($cleanVariantData);
                     $variant->colors()->sync($variant_colors_ids);
                     $this->price_history_create($request, $previous_price, null, $variant);
-                    $value = $variant->refresh();
-                    $moyskadController->update_modification($variant);
+                    $createdVariants[] = $variant;
+                    // $value = $variant->refresh();
+                    // if modification updates or failes it's not so serious
+                    // $moyskadController->update_modification($variant);
                 } else {
+                    // temp value for syncing with MoySklad
+                    $cleanVariantData['code'] = (string) rand(1000000000, 9999999999);
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
                     $variant = ProductVariant::create($cleanVariantData);
                     // -1 means that its creating for the first time and you have to put null instead
                     $variant->colors()->attach($variant_colors_ids);
                     $this->price_history_create($request, -1, null, $variant);
                     $variant = $variant->refresh();
-                    $msProductVariant = $moyskadController->create_modification($variant, $msProduct);
-                    $createdVariantsIds[] = $msProductVariant->id;
+                    $createdVariants[] = $variant;
+                    // but it's serious when modification creates in moySklad
+                    // something goes wrong in php code
+                    // $msProductVariant = $moyskadController->create_modification($variant, $msProduct);
+                    // $createdVariantsIds[] = $msProductVariant->id;
                 }
 
                 $this->update_variant_images($request, $variant, $uuid);
             }
 
+            if ($createdVariants) {
+                $massCreatedModifications = $moyskadController->mass_variant_creation_and_update(
+                    $createdVariants,
+                    $msProduct,
+                );
+
+                // update local variants after mass creation with uuid
+                foreach ($createdVariants as $key => $cv) {
+                    if (array_key_exists($cv->code, $massCreatedModifications)) {
+                        $cv->update([
+                            'uuid' => $massCreatedModifications[$cv->code],
+                        ]);
+                    }
+                }
+            }
+
             DB::commit();
 
-            // if everything goes good
-            // when you delete some variants it should be deleted from MoySklad too
+            // if everything goes perfect
+            // we will delete all deleted variants from moysklad too
             if ($product_variant_for_deletion_ids) {
                 $moyskadController->mass_variant_deletion($product_variant_for_deletion_ids);
             }
@@ -488,8 +541,8 @@ class ProductController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            // if something goes wrong we will delete only created variants
-            $moyskadController->mass_variant_deletion($createdVariantsIds);
+            // that is why if something goes wrong we will delete only created variants
+            // $moyskadController->mass_variant_deletion($createdVariantsIds);
             return response()->json([
                 "error_line" => $e->getLine(),
                 'message' => 'Failed to update product',

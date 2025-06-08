@@ -5,6 +5,7 @@ namespace App\Services\MoySklad;
 use App\Models\DeliveryServiceSetting;
 use App\Models\ProductVariant;
 use App\Traits\ProductsTrait;
+use Evgeek\Moysklad\Api\Record\Objects\Entities\Product;
 use Evgeek\Moysklad\Api\Record\Objects\UnknownObject;
 use Evgeek\Moysklad\MoySklad;
 use Exception;
@@ -139,6 +140,82 @@ class ProductVariantService
         return false;
     }
 
+    public function mass_variant_creation_and_update(
+        array $productVariants,
+        \Evgeek\Moysklad\Api\Record\Objects\Entities\Product $product
+    ) {
+        $modifications = [];
+        $moySkladHelperService = new MoySkladHelperService();
+
+        $codeAndIds = [];
+
+        $currency = $moySkladHelperService->get_currencies();
+        $priceType = $moySkladHelperService->get_price_types()[0];
+        $sizeId = $moySkladHelperService->ensureCharacteristic('Размер', 'string');
+
+        foreach ($productVariants as $key => $variant) {
+            $existingVariant = ProductVariant::find($variant->id);
+
+            $data = [
+                'name' => $variant->name,
+                'description' => $variant->description ?? '',
+                'salePrices' => [
+                    [
+                        'value' => ($variant->price ?? 0) * 100,
+                        'currency' => $currency,
+                        'priceType' => $priceType,
+                    ]
+                ],
+                'characteristics' => [
+                    [
+                        'id' => (string) $sizeId,
+                        'value' => $variant->name,
+                    ]
+                ],
+            ];
+
+            $codeAndIds[$existingVariant->code] = $existingVariant?->uuid;
+
+            if ($existingVariant?->uuid) {
+                $data['meta'] = [
+                    'href' => "{$this->baseURL}/entity/variant/{$existingVariant->uuid}",
+                    "metadataHref" => "{$this->baseURL}/entity/variant/metadata",
+                    'type' => 'variant',
+                    'mediaType' => 'application/json',
+                ];
+            } else {
+                $data['code'] = $existingVariant->code;
+                $data['product'] = ['meta' => $product->meta];
+            }
+
+            $modifications[] = $data;
+        }
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->token,
+            'Accept-Encoding' => 'gzip',
+            'Content-Type' => 'application/json',
+        ])->post('https://api.moysklad.ru/api/remap/1.2/entity/variant', $modifications);
+
+        if (!$response->successful()) {
+            Log::info("error from creation of variants", [$modifications]);
+            throw new Exception($response->body());
+        }
+
+        $coming_json = $response->json();
+
+        if ($coming_json) {
+            foreach ($coming_json as $key => $jsonData) {
+                $code = (string) $jsonData['code'];
+                if (array_key_exists($code, $codeAndIds)) {
+                    $codeAndIds[$code] = $jsonData['id'];
+                }
+            }
+        }
+
+        Log::info("data", [$codeAndIds]);
+
+        return $codeAndIds;
+    }
 
     public function mass_variant_deletion(array $ids)
     {
@@ -150,7 +227,7 @@ class ProductVariantService
                 $variant = $this->moySklad->query()->entity()->variant()->byId($id)->get();
 
                 $objects[] = UnknownObject::make($this->moySklad, ['id' => $id], 'variant');
-                
+
             } catch (\Exception $e) {
                 Log::warning("Skipping unknown variant ID: $id");
             }
