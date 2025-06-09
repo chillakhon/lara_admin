@@ -69,10 +69,11 @@ Route::get('/products/{product}/main-image', [ProductImageController::class, 'ge
 
 
 //client - admin
-Route::get('/products', [ProductController::class, 'index'])->middleware('auth:sanctum');
+Route::get('/products', [ProductController::class, 'index']);
 // clients
-Route::get('/cart-items', [CartController::class, 'cart_items'])->middleware('auth:sanctum');
-Route::get('/colors', [SettingsController::class, 'get_colors'])->middleware('auth:sanctum');
+Route::get('/cart-items', [CartController::class, 'cart_items']);
+Route::get('/colors', [SettingsController::class, 'get_colors']);
+Route::get('reviews/product/{product}', [ReviewController::class, 'productReviews']);
 //Route::get('/products/{slug}', [ProductController::class, 'show']);
 
 //Route::get('/categories', [CategoryController::class, 'index']);
@@ -89,7 +90,7 @@ Route::prefix('leads')->group(function () {
 Route::middleware('auth:sanctum')->prefix('reviews')->group(function () {
     Route::get('/', [ReviewController::class, 'index']);
     Route::post('/', [ReviewController::class, 'store']);
-    Route::get('product/{product}', [ReviewController::class, 'productReviews']);
+    
     Route::post('{review}/publish', [ReviewController::class, 'publish']);
     Route::post('{review}/unpublish', [ReviewController::class, 'unpublish']);
     Route::delete('{review}', [ReviewController::class, 'destroy']); // ->middleware('auth:api'); was removed because sending error
