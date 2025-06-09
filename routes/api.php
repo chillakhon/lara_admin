@@ -68,8 +68,9 @@ Route::get('/products/{product}/main-image', [ProductImageController::class, 'ge
 
 
 
-//client
+//client - admin
 Route::get('/products', [ProductController::class, 'index'])->middleware('auth:sanctum');
+// clients
 Route::get('/cart-items', [CartController::class, 'cart_items'])->middleware('auth:sanctum');
 Route::get('/colors', [SettingsController::class, 'get_colors'])->middleware('auth:sanctum');
 //Route::get('/products/{slug}', [ProductController::class, 'show']);

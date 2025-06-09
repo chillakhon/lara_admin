@@ -36,40 +36,55 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        // could not solve the problem with .inventoryBalance relation
-        $products = $this->products_query($request);
+        try {
+            $product_stock_sklad = [];
 
-        if ($request->get('product_id')) {
-            $products = $products->first();
-            if (!$products) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Продукт не найден."
-                ]);
+            if ($request->boolean('admin', false)) {
+                $moySkaldController = new MoySkladController();
+                $product_stock_sklad = $moySkaldController->get_products_stock();
             }
-            $this->solve_products_inventory([$products]);
-            $this->applyDiscountToProduct($products);
 
-            return new ProductNumberTwoResouce($products);
-        } else if ($request->boolean('paginate', true)) {
-            $products = $products->paginate(10);
+            // could not solve the problem with .inventoryBalance relation
+            $products = $this->products_query($request);
 
-            $products->getCollection()->transform(function ($product) {
-                $product->image_path = $product->images->isNotEmpty() ? $product->images->first()->path : null;
-                unset($product->images);
-                return $product;
-            });
-            $this->solve_products_inventory($products);
-            $this->applyDiscountsToCollection($products->getCollection());
-        } else {
-            $products = $products->get();
-            $this->solve_products_inventory($products);
-            $this->applyDiscountsToCollection($products);
+            if ($request->get('product_id')) {
+                $products = $products->first();
+                if (!$products) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Продукт не найден."
+                    ]);
+                }
+                $this->solve_products_inventory([$products], $product_stock_sklad);
+                $this->applyDiscountToProduct($products);
+
+                return new ProductNumberTwoResouce($products);
+            } else if ($request->boolean('paginate', true)) {
+                $products = $products->paginate(10);
+
+                $products->getCollection()->transform(function ($product) {
+                    $product->image_path = $product->images->isNotEmpty() ? $product->images->first()->path : null;
+                    unset($product->images);
+                    return $product;
+                });
+                $this->solve_products_inventory($products, $product_stock_sklad);
+                $this->applyDiscountsToCollection($products->getCollection());
+            } else {
+                $products = $products->get();
+                $this->solve_products_inventory($products, $product_stock_sklad);
+                $this->applyDiscountsToCollection($products);
+            }
+
+
+            // return response()->json($products);
+            return ProductNumberTwoResouce::collection($products);
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                "line" => $e->getLine(),
+                "stackTrace" => $e->getTraceAsString(),
+            ]);
         }
-
-
-        // return response()->json($products);
-        return ProductNumberTwoResouce::collection($products);
     }
 
 
