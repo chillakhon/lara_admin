@@ -395,7 +395,12 @@ class ProductController extends Controller
 
         $moyskadController = new MoySkladController();
         $msProduct = null;
+        // this is for local data after creation
         $createdVariants = [];
+
+        // this is for moysklad data that comes after creation
+        $createdVariantsIds = [];
+
 
         try {
             $product = Product::where('id', $id)->firstOrFail();
@@ -521,6 +526,7 @@ class ProductController extends Controller
                         $cv->update([
                             'uuid' => $massCreatedModifications[$cv->code],
                         ]);
+                        $createdVariantsIds[] = $massCreatedModifications[$cv->code];
                     }
                 }
             }
@@ -542,7 +548,7 @@ class ProductController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             // that is why if something goes wrong we will delete only created variants
-            // $moyskadController->mass_variant_deletion($createdVariantsIds);
+            $moyskadController->mass_variant_deletion($createdVariantsIds);
             return response()->json([
                 "error_line" => $e->getLine(),
                 'message' => 'Failed to update product',

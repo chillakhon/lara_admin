@@ -226,15 +226,36 @@ class ProductVariantService
                 // Optional: validate variant exists
                 $variant = $this->moySklad->query()->entity()->variant()->byId($id)->get();
 
-                $objects[] = UnknownObject::make($this->moySklad, ['id' => $id], 'variant');
+                $objects[] = [
+                    "meta" => [
+                        "href" => "{$this->baseURL}/entity/variant/{$id}",
+                        "metadataHref" => "{$this->baseURL}/entity/variant/metadata",
+                        "type" => "variant",
+                        "mediaType" => "application/json"
+                    ]
+                ];
 
             } catch (\Exception $e) {
-                Log::warning("Skipping unknown variant ID: $id");
+                Log::warning("Skipping unknown variant ID: $id", [$e]);
             }
         }
 
+        Log::info("deleting only:", $objects);
+
         if (!empty($objects)) {
-            $this->moySklad->query()->entity()->variant()->massDelete($objects);
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->token,
+                'Accept-Encoding' => 'gzip',
+                'Content-Type' => 'application/json',
+            ])->post("{$this->baseURL}/entity/variant/delete", $objects);
+
+            if (!$response->successful()) {
+                Log::error("Failed to mass delete variants", [
+                    'response' => $response->body(),
+                    'payload' => $objects
+                ]);
+                throw new \Exception("Failed to delete variants: " . $response->body());
+            }
         }
 
         return true;
