@@ -93,29 +93,44 @@ trait ProductsTrait
         return $products;
     }
 
-    public function solve_products_inventory($products = [])
+    public function solve_products_inventory($products = [], $product_stock_sklad = [])
     {
-        $inventory_balances = InventoryBalance::get()
-            ->keyBy(function ($item) {
-                return $this->get_type_by_model($item->item_type) . '_' . $item->item_id;
-            });
 
         foreach ($products as &$product) {
-            $productKey = "Product_{$product->id}";
-
             $product->inventory_balance = 0.0;
 
             if (!empty($product['variants'])) {
                 foreach ($product['variants'] as &$variant) {
-                    $variantKey = "ProductVariant_{$variant->id}";
-                    $variant_total_qty = $inventory_balances[$variantKey]['total_quantity'] ?? 0.0;
+                    $variant_total_qty = $product_stock_sklad[$variant->uuid]['stock'] ?? 0.0;
                     $variant->inventory_balance = $variant_total_qty;
                     $product->inventory_balance += $variant_total_qty;
                 }
             } else {
-                $product->inventory_balance = $inventory_balances[$productKey]['total_quantity'] ?? 0.0;
+                $product->inventory_balance = $inventory_balances[$$product->uuid]['stock'] ?? 0.0;
             }
         }
+
+        // $inventory_balances = InventoryBalance::get()
+        //     ->keyBy(function ($item) {
+        //         return $this->get_type_by_model($item->item_type) . '_' . $item->item_id;
+        //     });
+
+        // foreach ($products as &$product) {
+        //     $productKey = "Product_{$product->id}";
+
+        //     $product->inventory_balance = 0.0;
+
+        //     if (!empty($product['variants'])) {
+        //         foreach ($product['variants'] as &$variant) {
+        //             $variantKey = "ProductVariant_{$variant->id}";
+        //             $variant_total_qty = $inventory_balances[$variantKey]['total_quantity'] ?? 0.0;
+        //             $variant->inventory_balance = $variant_total_qty;
+        //             $product->inventory_balance += $variant_total_qty;
+        //         }
+        //     } else {
+        //         $product->inventory_balance = $inventory_balances[$productKey]['total_quantity'] ?? 0.0;
+        //     }
+        // }
     }
 
 
