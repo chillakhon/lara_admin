@@ -4,11 +4,14 @@ namespace App\Services\MoySklad;
 
 use App\Models\DeliveryServiceSetting;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Traits\ProductsTrait;
+use Evgeek\Moysklad\Api\Record\Objects\UnknownObject;
 use Evgeek\Moysklad\Formatters\ArrayFormat;
 use Evgeek\Moysklad\MoySklad;
 use Exception;
 use Illuminate\Support\Facades\Http;
+use Log;
 
 class ProductsService
 {
@@ -18,22 +21,6 @@ class ProductsService
     private MoySklad $moySklad;
     private $token;
     private $baseURL = "https://api.moysklad.ru/api/remap/1.2";
-
-    private array $rubCurrency = [
-        'meta' => [
-            'href' => "https://api.moysklad.ru/api/remap/1.2/entity/currency/f0b90b0e-1d39-11f0-0a80-1aa70008efaf",
-            'type' => 'currency',
-            'mediaType' => 'application/json',
-        ],
-    ];
-
-    private array $defaultPriceType = [
-        'meta' => [
-            'href' => "https://api.moysklad.ru/api/remap/1.2/context/companysettings/pricetype/f0b980cc-1d39-11f0-0a80-1aa70008efb0",
-            'type' => 'pricetype',
-            'mediaType' => 'application/json',
-        ],
-    ];
 
     public function __construct()
     {
@@ -50,70 +37,127 @@ class ProductsService
         $this->moySklad = new MoySklad(["{$moyskadSettings->token}"]);
     }
 
-    public function get_currencies()
-    {
-        return $this->moySklad->query()->entity()->currency()->get();
-    }
-
-    public function get_price_types()
-    {
-        return $this->moySklad->query()->context()->companysettings()->pricetype()->get();
-    }
-
-    public function get_units()
-    {
-        return $this->moySklad->query()->entity()->uom()->get();
-    }
-
-    public function check_products()
-    {
-        return $this->moySklad->query()->entity()->product()->get();
-    }
-
-    public function check_stock()
-    {
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
-            'Accept-Encoding' => 'gzip',
-            'Content-Type' => 'application/json',
-        ])->get("{$this->baseURL}/report/stock/all/current");
-
-        if (!$response->successful()) {
-            return response()->json([
-                'success' => false,
-                'message' => $response->body(),
-            ], $response->getStatusCode());
-        }
-
-        return $response->json();
-    }
-
-
-    public function sync_products_with_moysklad()
-    {
-    }
-
     public function create_product(Product $product)
     {
+        $moySkladHelperService = new MoySkladHelperService();
         $msProduct = \Evgeek\Moysklad\Api\Record\Objects\Entities\Product::make($this->moySklad);
-        $metrics = $this->calculateWeightAndVolume($product);
+
+        // $metrics = $this->calculateWeightAndVolume(
+        //     $product->weight ?? 0,  // в граммах
+        //     $product->length ?? 0,  // в сантиметрах
+        //     $product->width ?? 0,
+        //     $product->height ?? 0,
+        //     $product->defaultUnit,
+        // );
+
+        $defaultPriceType = $moySkladHelperService->get_price_types();
+        if (empty($defaultPriceType)) {
+            throw new Exception('Не удалось получить типы цен из МойСклад.');
+        }
+
+        $defaultCurrency = $moySkladHelperService->get_currencies();
+        if (empty($defaultCurrency)) {
+            throw new Exception('Не удалось получить валюту из МойСклад.');
+        }
+
+        $foundUnit = $moySkladHelperService->get_units($product->defaultUnit->name ?? null);
+        if (!$foundUnit || empty($foundUnit->meta)) {
+            throw new Exception("Не удалось найти единицу измерения '{$product->defaultUnit->name}' в МойСклад.");
+        }
+
+
+        $code = rand(1000000000, 9999999999);
 
         $msProduct->name = $product->name;
-        $msProduct->code = $product->slug ?? ($product->sku ?? null);
+        $msProduct->code = "{$code}";// $product->slug ?? ($product->sku ?? null);
+        $msProduct->description = $product->description ?? '';
+        // $msProduct->weight = $metrics['weight'];
+        // $msProduct->volume = $metrics['volume'];
+        $msProduct->salePrices = [
+            [
+                'value' => ($product->price ?? 0) * 100, // копейки
+                'currency' => $defaultCurrency,
+                'priceType' => $defaultPriceType[0],
+            ],
+        ];
+
+        $msProduct->uom = [
+            "meta" => $foundUnit->meta,
+        ];
+
+        return $msProduct->create();
+    }
+
+    public function update_product(Product $product)
+    {
+        $moySkladHelperService = new MoySkladHelperService();
+        $msProduct = \Evgeek\Moysklad\Api\Record\Objects\Entities\Product::make($this->moySklad);
+        $msProduct->id = $product->uuid;
+
+        $metrics = $this->calculateWeightAndVolume(
+            $product->weight ?? 0,  // в граммах
+            $product->length ?? 0,  // в сантиметрах
+            $product->width ?? 0,
+            $product->height ?? 0,
+            $product->defaultUnit,
+        );
+
+        $defaultPriceType = $moySkladHelperService->get_price_types();
+        if (empty($defaultPriceType)) {
+            throw new Exception('Не удалось получить типы цен из МойСклад.');
+        }
+
+        $defaultCurrency = $moySkladHelperService->get_currencies();
+        if (empty($defaultCurrency)) {
+            throw new Exception('Не удалось получить валюту из МойСклад.');
+        }
+
+        $foundUnit = $moySkladHelperService->get_units($product->defaultUnit->name ?? null);
+        if (!$foundUnit || empty($foundUnit->meta)) {
+            throw new Exception("Не удалось найти единицу измерения '{$product->defaultUnit->name}' в МойСклад.");
+        }
+
+
+        // $code = rand(1000000000, 9999999999);
+
+        $msProduct->name = $product->name;
+        // $msProduct->code = "{$code}";// $product->slug ?? ($product->sku ?? null);
         $msProduct->description = $product->description ?? '';
         $msProduct->weight = $metrics['weight'];
         $msProduct->volume = $metrics['volume'];
         $msProduct->salePrices = [
             [
                 'value' => ($product->price ?? 0) * 100, // копейки
-                'currency' => $this->rubCurrency,
-                'priceType' => $this->defaultPriceType,
+                'currency' => $defaultCurrency,
+                'priceType' => $defaultPriceType[0],
             ],
         ];
-        $msProduct->create();
+
+        $msProduct->uom = [
+            "meta" => $foundUnit->meta,
+        ];
+
+        try {
+            $this->moySklad->query()->entity()->product()->byId($product->uuid)->get();
+            return $msProduct->update();
+        } catch (Exception $e) {
+            return $msProduct->create();
+        }
+
     }
 
-    public function update_product(Product $product)
+    public function delete_product($id)
     {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->token,
+            'Accept-Encoding' => 'gzip',
+            'Content-Type' => 'application/json',
+        ])->delete("{$this->baseURL}/entity/product/{$id}");
+
+        if ($response->successful()) {
+            return true;
+        }
+
+        return false;
     }
 }

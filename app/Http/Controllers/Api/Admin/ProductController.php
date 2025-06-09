@@ -10,16 +10,19 @@ use App\Models\PriceHistory;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\MaterialService;
+use App\Services\MoySklad\MoySkladHelperService;
 use App\Traits\HelperTrait;
 use App\Traits\ImageTrait;
 use App\Traits\ProductsTrait;
 use Arr;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Log;
 
 class ProductController extends Controller
 {
@@ -31,58 +34,6 @@ class ProductController extends Controller
         $this->materialService = $materialService;
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/products",
-     *     summary="Получить список продуктов",
-     *     description="Возвращает список продуктов с фильтрацией по названию, описанию и категориям.",
-     *     operationId="getProducts",
-     *     tags={"Products"},
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Поиск по названию, описанию или категории",
-     *         required=false,
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
-     *         name="category",
-     *         in="query",
-     *         description="Фильтр по категории (ID категории)",
-     *         required=false,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Список продуктов",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="current_page", type="integer"),
-     *             @OA\Property(property="data", type="array",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Product Name"),
-     *                     @OA\Property(property="description", type="string", example="Product Description"),
-     *                     @OA\Property(property="categories", type="array",
-     *                         @OA\Items(
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="name", type="string", example="Category Name")
-     *                         )
-     *                     ),
-     *                     @OA\Property(property="options", type="array", @OA\Items(type="object")),
-     *                     @OA\Property(property="variants", type="array", @OA\Items(type="object")),
-     *                     @OA\Property(property="created_at", type="string", format="date-time"),
-     *                     @OA\Property(property="updated_at", type="string", format="date-time")
-     *                 )
-     *             ),
-     *             @OA\Property(property="per_page", type="integer", example=10),
-     *             @OA\Property(property="total", type="integer", example=100)
-     *         )
-     *     )
-     * )
-     */
     public function index(Request $request)
     {
         // could not solve the problem with .inventoryBalance relation
@@ -258,86 +209,21 @@ class ProductController extends Controller
         }
     }
 
-
-    /**
-     * @OA\Post(
-     *     path="/api/products",
-     *     summary="Create a new product",
-     *     tags={"Products"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name", "type", "price", "categories"},
-     *             @OA\Property(property="name", type="string", example="Product Name"),
-     *             @OA\Property(property="description", type="string", nullable=true, example="Product description"),
-     *             @OA\Property(
-     *                 property="type",
-     *                 type="string",
-     *                 enum={"simple", "manufactured", "composite"},
-     *                 example="simple"
-     *             ),
-     *             @OA\Property(property="default_unit_id", type="integer", nullable=true, example=1),
-     *             @OA\Property(property="is_active", type="boolean", example=true),
-     *             @OA\Property(property="has_variants", type="boolean", example=false),
-     *             @OA\Property(property="allow_preorder", type="boolean", example=true),
-     *             @OA\Property(property="after_purchase_processing_time", type="integer", example=3),
-     *             @OA\Property(property="price", type="number", format="float", example=99.99),
-     *             @OA\Property(property="cost_price", type="number", format="float", nullable=true, example=50.00),
-     *             @OA\Property(property="stock_quantity", type="integer", example=100),
-     *             @OA\Property(property="min_order_quantity", type="integer", nullable=true, example=1),
-     *             @OA\Property(property="max_order_quantity", type="integer", nullable=true, example=10),
-     *             @OA\Property(property="is_featured", type="boolean", nullable=true, example=false),
-     *             @OA\Property(property="is_new", type="boolean", nullable=true, example=true),
-     *             @OA\Property(property="discount_price", type="number", format="float", nullable=true, example=89.99),
-     *             @OA\Property(property="sku", type="string", nullable=true, example="SKU12345"),
-     *             @OA\Property(property="barcode", type="string", nullable=true, example="123456789012"),
-     *             @OA\Property(property="weight", type="number", format="float", nullable=true, example=1.5),
-     *             @OA\Property(property="length", type="number", format="float", nullable=true, example=10.0),
-     *             @OA\Property(property="width", type="number", format="float", nullable=true, example=5.0),
-     *             @OA\Property(property="height", type="number", format="float", nullable=true, example=2.0),
-     *             @OA\Property(
-     *                 property="categories",
-     *                 type="array",
-     *                 @OA\Items(type="integer", example={1, 2})
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Product created successfully",
-     *         @OA\JsonContent(ref="#/components/schemas/Product")
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="name",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="The name field is required.")
-     *                 )
-     *             )
-     *         )
-     *     )
-     * )
-     */
-
-
     public function store(Request $request)
     {
         $validated = $this->validate_of_product($request);
 
         DB::beginTransaction();
 
-        try {
+        $moySkladController = new MoySkladController();
+        $createdMsProduct = null;
+        // $createdMsVariantIds = [];
 
+        try {
             $product = Product::create(array_merge(
                 $validated,
                 [
+                    // 'uuid' => Str::uuid(),
                     'slug' => Str::slug($validated['name']),
                     'sku' => Str::slug($validated['name']),
                     'created_at' => now(),
@@ -348,9 +234,11 @@ class ProductController extends Controller
 
             $product->colors()->attach($colorIds);
 
-            $moySkladController = new MoySkladController();
+            $createdMsProduct = $moySkladController->create_product($product);
 
-            $moySkladController->create_product($product);
+            $product->update([
+                'uuid' => $createdMsProduct->id,
+            ]);
 
             // -1 means that its creating for the first time and you have to put null instead
             $this->price_history_create($request, -1, $product);
@@ -363,17 +251,27 @@ class ProductController extends Controller
 
             // $product->categories()->sync($validated['categories']);
             if (count($validated['variants'] ?? []) >= 1) {
+
+                $createdVariants = [];
+
                 foreach ($validated['variants'] as $variantData) {
-                    $uuid = $variantData['uuid'] ?? null;
+                    $uuid = $variantData['local_uuid'] ?? null;
 
                     if (!$uuid) {
                         continue;
                     }
 
-                    $cleanVariantData = Arr::except($variantData, ['uuid']);
+                    $cleanVariantData = Arr::except($variantData, ['local_uuid']);
                     $cleanVariantData['product_id'] = $product->id;
+                    $cleanVariantData['weight'] = $product->weight;
+                    $cleanVariantData['length'] = $product->length;
+                    $cleanVariantData['width'] = $product->width;
+                    $cleanVariantData['height'] = $product->height;
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
+                    // temp value for syncing with MoySklad
+                    $cleanVariantData['code'] = (string) rand(1000000000, 9999999999);
                     $cleanVariantData['created_at'] = now();
+
                     $created_variant = ProductVariant::create($cleanVariantData);
 
                     $colorIds = collect($variantData['colors'] ?? [])->pluck('id');
@@ -386,6 +284,30 @@ class ProductController extends Controller
                             $this->save_images($variantImage, ProductVariant::class, $created_variant->id, $key);
                         }
                     }
+
+                    $createdVariants[] = $created_variant;
+
+                    // $msProductVariant = $moySkladController->create_modification($created_variant, $createdMsProduct);
+
+                    // $created_variant->update([
+                    //     'uuid' => $msProductVariant->id,
+                    // ]);
+
+                    // $createdMsVariantIds[] = $msProductVariant->id;
+                }
+
+                $massCreatedModifications = $moySkladController->mass_variant_creation_and_update(
+                    $createdVariants,
+                    $createdMsProduct,
+                );
+
+                // update local variants after mass creation
+                foreach ($createdVariants as $key => $cv) {
+                    if (array_key_exists($cv->code, $massCreatedModifications)) {
+                        $cv->update([
+                            'uuid' => $massCreatedModifications[$cv->code],
+                        ]);
+                    }
                 }
             }
 
@@ -397,10 +319,21 @@ class ProductController extends Controller
                 'product' => $product
             ], 201);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
+
+            // foreach ($createdMsVariantIds as $key => $value) {
+            //     $moySkladController->delete_variant($value);
+            // }
+
+            // I Guess deleting the product will delete it's modifications in moySklad
+            if ($createdMsProduct) {
+                $moySkladController->delete_product($createdMsProduct->id);
+            }
+
             return response()->json([
                 'message' => 'Failed to create product',
+                "product_exist" => $createdMsProduct,
                 'error' => $e->getMessage(),
                 "line" => $e->getLine(),
                 "stackTrace" => $e->getTraceAsString(),
@@ -418,7 +351,7 @@ class ProductController extends Controller
             'length' => 'required|numeric|min:0',
             'width' => 'required|numeric|min:0',
             'height' => 'required|numeric|min:0',
-            'default_unit_id' => 'nullable|exists:units,id',
+            'default_unit_id' => 'required|exists:units,id',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
             'has_variants' => 'boolean',
@@ -453,71 +386,24 @@ class ProductController extends Controller
         return \Validator::make($request->all(), $rules)->validate();
     }
 
-    /**
-     * @OA\Put(
-     *     path="/api/products/{product}",
-     *     summary="Обновить продукт",
-     *     description="Обновляет существующий продукт по его ID.",
-     *     operationId="updateProduct",
-     *     tags={"Products"},
-     *     @OA\Parameter(
-     *         name="product",
-     *         in="path",
-     *         description="ID продукта",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", example="Updated Product"),
-     *             @OA\Property(property="description", type="string", nullable=true, example="Updated description"),
-     *             @OA\Property(property="type", type="string", enum={"simple", "manufactured", "composite"}, example="manufactured"),
-     *             @OA\Property(property="default_unit_id", type="integer", nullable=true, example=2),
-     *             @OA\Property(property="is_active", type="boolean", example=true),
-     *             @OA\Property(property="has_variants", type="boolean", example=true),
-     *             @OA\Property(property="allow_preorder", type="boolean", example=true),
-     *             @OA\Property(property="after_purchase_processing_time", type="integer", example=5),
-     *             @OA\Property(property="categories", type="array",
-     *                 @OA\Items(type="integer", example=2)
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Продукт успешно обновлён",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Product updated successfully"),
-     *             @OA\Property(property="product", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="Updated Product"),
-     *                 @OA\Property(property="slug", type="string", example="updated-product"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Продукт не найден",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Product not found")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Ошибка валидации"
-     *     )
-     * )
-     */
+
     public function update(Request $request, $id)
     {
         $validated = $this->validate_of_product_update($request, $id);
 
         DB::beginTransaction();
 
+        $moyskadController = new MoySkladController();
+        $msProduct = null;
+        // this is for local data after creation
+        $createdVariants = [];
+
+        // this is for moysklad data that comes after creation
+        $createdVariantsIds = [];
+
+
         try {
-            $product = Product::findOrFail($id);
+            $product = Product::where('id', $id)->firstOrFail();
 
             $prev_price = $product->price;
 
@@ -538,14 +424,25 @@ class ProductController extends Controller
 
             $product->colors()->sync($colorIds);
 
+            $product->refresh();
+
+            $msProduct = $moyskadController->update_product($product);
+
             // Handle variants
             $incomingVariantIds = collect($validated['variants'] ?? [])->pluck('id')->filter()->toArray();
 
             // Delete removed variants
+            $product_variant_for_deletion_ids = [];
             $prod_variant_check = ProductVariant::where('product_id', $product->id);
             if (!empty($incomingVariantIds)) {
                 $prod_variant_check->whereNotIn('id', $incomingVariantIds);
             }
+
+            $product_variant_for_deletion_ids = (clone $prod_variant_check)
+                ->withTrashed()
+                ->pluck('uuid')->toArray();
+
+            Log::info("test all ids", $product_variant_for_deletion_ids);
 
             $prod_variant_check = $prod_variant_check->get()
                 ->each(function ($variant) {
@@ -564,40 +461,83 @@ class ProductController extends Controller
                     }
 
                     $variant->colors()->detach();
+                    $variant->update([
+                        'sku' => null,
+                    ]);
                     $variant->delete();
                 });
 
             // Add or update variants
             foreach (($validated['variants'] ?? []) as $variantData) {
-                $uuid = $variantData['uuid'] ?? null;
+                $uuid = $variantData['local_uuid'] ?? null;
 
                 if (!$uuid) {
                     continue;
                 }
 
-                $cleanVariantData = Arr::except($variantData, ['uuid', 'id']);
+                $cleanVariantData = Arr::except($variantData, ['local_uuid', 'id']);
+                // setting the values of product's weight, length, width, height
                 $cleanVariantData['product_id'] = $product->id;
+                $cleanVariantData['weight'] = $product->weight;
+                $cleanVariantData['length'] = $product->length;
+                $cleanVariantData['width'] = $product->width;
+                $cleanVariantData['height'] = $product->height;
                 $variant_colors_ids = collect($variantData['colors'] ?? [])->pluck('id');
 
                 if (!empty($variantData['id'])) {
-                    $variant = ProductVariant::findOrFail($variantData['id']);
+                    $variant = ProductVariant::where('id', $variantData['id'])->firstOrFail();
                     $previous_price = $variant->price;
                     $cleanVariantData = Arr::except($cleanVariantData, ['sku']);
                     $variant->update($cleanVariantData);
                     $variant->colors()->sync($variant_colors_ids);
                     $this->price_history_create($request, $previous_price, null, $variant);
+                    $createdVariants[] = $variant;
+                    // $value = $variant->refresh();
+                    // if modification updates or failes it's not so serious
+                    // $moyskadController->update_modification($variant);
                 } else {
+                    // temp value for syncing with MoySklad
+                    $cleanVariantData['code'] = (string) rand(1000000000, 9999999999);
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
                     $variant = ProductVariant::create($cleanVariantData);
                     // -1 means that its creating for the first time and you have to put null instead
                     $variant->colors()->attach($variant_colors_ids);
                     $this->price_history_create($request, -1, null, $variant);
+                    $variant = $variant->refresh();
+                    $createdVariants[] = $variant;
+                    // but it's serious when modification creates in moySklad
+                    // something goes wrong in php code
+                    // $msProductVariant = $moyskadController->create_modification($variant, $msProduct);
+                    // $createdVariantsIds[] = $msProductVariant->id;
                 }
 
                 $this->update_variant_images($request, $variant, $uuid);
             }
 
+            if ($createdVariants) {
+                $massCreatedModifications = $moyskadController->mass_variant_creation_and_update(
+                    $createdVariants,
+                    $msProduct,
+                );
+
+                // update local variants after mass creation with uuid
+                foreach ($createdVariants as $key => $cv) {
+                    if (array_key_exists($cv->code, $massCreatedModifications)) {
+                        $cv->update([
+                            'uuid' => $massCreatedModifications[$cv->code],
+                        ]);
+                        $createdVariantsIds[] = $massCreatedModifications[$cv->code];
+                    }
+                }
+            }
+
             DB::commit();
+
+            // if everything goes perfect
+            // we will delete all deleted variants from moysklad too
+            if ($product_variant_for_deletion_ids) {
+                $moyskadController->mass_variant_deletion($product_variant_for_deletion_ids);
+            }
 
             return response()->json([
                 'success' => true,
@@ -607,6 +547,8 @@ class ProductController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            // that is why if something goes wrong we will delete only created variants
+            $moyskadController->mass_variant_deletion($createdVariantsIds);
             return response()->json([
                 "error_line" => $e->getLine(),
                 'message' => 'Failed to update product',
@@ -702,40 +644,25 @@ class ProductController extends Controller
 
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/api/products/{product}",
-     *     summary="Удалить продукт",
-     *     description="Удаляет продукт по его ID.",
-     *     operationId="deleteProduct",
-     *     tags={"Products"},
-     *     @OA\Parameter(
-     *         name="product",
-     *         in="path",
-     *         description="ID продукта",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Продукт успешно удалён",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Product deleted successfully")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Продукт не найден",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Product not found")
-     *         )
-     *     )
-     * )
-     */
+
     public function destroy(Product $product)
     {
+        $product->update([
+            'slug' => null,
+            "sku" => null,
+        ]);
+
+        $product->variants()->update([
+            'sku' => null,
+        ]);
+
         $product->delete();
         $product->variants()->delete();
+
+        $moySkladController = new MoySkladController();
+
+        $moySkladController->delete_product($product->uuid);
+
         return response()->json(['success' => true, 'message' => 'Product deleted successfully']);
     }
 
@@ -764,97 +691,7 @@ class ProductController extends Controller
         return response()->json(['message' => 'Images uploaded successfully', 'images' => $uploadedImages]);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/products/{product}/generate-variants",
-     *     summary="Generate multiple variants for a product",
-     *     tags={"Product Variants"},
-     *     security={{"bearerAuth": {}}},
-     *     @OA\Parameter(
-     *         name="product",
-     *         in="path",
-     *         description="ID of the product",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"variants"},
-     *             @OA\Property(
-     *                 property="variants",
-     *                 type="array",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     required={"name", "sku", "price", "option_values"},
-     *                     @OA\Property(property="name", type="string", example="Variant 1"),
-     *                     @OA\Property(property="sku", type="string", example="variant-1-unique-sku"),
-     *                     @OA\Property(property="price", type="number", format="float", example=19.99),
-     *                     @OA\Property(
-     *                         property="option_values",
-     *                         type="array",
-     *                         @OA\Items(type="integer", example=1)
-     *                     )
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Variants generated successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Variants generated successfully"),
-     *             @OA\Property(
-     *                 property="variants",
-     *                 type="array",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Variant 1"),
-     *                     @OA\Property(property="sku", type="string", example="variant-1-unique-sku"),
-     *                     @OA\Property(property="price", type="number", format="float", example=19.99),
-     *                     @OA\Property(property="type", type="string", example="simple"),
-     *                     @OA\Property(property="unit_id", type="integer", example=1),
-     *                     @OA\Property(property="is_active", type="boolean", example=true),
-     *                     @OA\Property(
-     *                         property="option_values",
-     *                         type="array",
-     *                         @OA\Items(
-     *                             type="object",
-     *                             @OA\Property(property="id", type="integer", example=1),
-     *                             @OA\Property(property="name", type="string", example="Option Value 1")
-     *                         )
-     *                     )
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="variants.0.sku",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="The variants.0.sku has already been taken.")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Internal server error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Failed to generate variants"),
-     *             @OA\Property(property="error", type="string", example="Error message details")
-     *         )
-     *     )
-     * )
-     */
+
     public function generateVariants(Request $request, Product $product)
     {
         $validated = $request->validate([
@@ -902,40 +739,6 @@ class ProductController extends Controller
     }
 
 
-    /**
-     * @OA\Post(
-     *     path="/api/products/{product}/components",
-     *     summary="Add a component to a product",
-     *     tags={"Products"},
-     *     @OA\Parameter(
-     *         name="product",
-     *         in="path",
-     *         required=true,
-     *         description="ID of the product",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"material_id", "quantity"},
-     *             @OA\Property(property="material_id", type="integer", example=1),
-     *             @OA\Property(property="quantity", type="number", example=5)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Component added successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Component added successfully."),
-     *             @OA\Property(property="component", type="object")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error"
-     *     )
-     * )
-     */
     public function addComponent(Request $request, Product $product)
     {
         $validated = $request->validate([
@@ -951,38 +754,7 @@ class ProductController extends Controller
         ], 201);
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/api/products/{product}/components/{component}",
-     *     summary="Remove a component from a product",
-     *     tags={"Products"},
-     *     @OA\Parameter(
-     *         name="product",
-     *         in="path",
-     *         required=true,
-     *         description="ID of the product",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Parameter(
-     *         name="component",
-     *         in="path",
-     *         required=true,
-     *         description="ID of the component",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Component removed successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Component removed successfully.")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Component not found"
-     *     )
-     * )
-     */
+
     public function removeComponent(Product $product, $componentId)
     {
         $product->components()->findOrFail($componentId)->delete();
@@ -992,32 +764,7 @@ class ProductController extends Controller
         ], 200);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/products/{product}/calculate-cost",
-     *     summary="Calculate the cost of a product",
-     *     tags={"Products"},
-     *     @OA\Parameter(
-     *         name="product",
-     *         in="path",
-     *         required=true,
-     *         description="ID of the product",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Calculated product cost",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="The calculated cost is: 100"),
-     *             @OA\Property(property="cost", type="number", example=100)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Product not found"
-     *     )
-     * )
-     */
+
     public function calculateCost(Product $product)
     {
         $cost = $this->materialService->calculateProductCost($product);
