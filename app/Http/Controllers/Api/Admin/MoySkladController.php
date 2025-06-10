@@ -189,4 +189,11 @@ class MoySkladController extends Controller
 
         return $moySkladService->mass_variant_deletion($ids);
     }
+
+    public function check_product_for_existence($uuid)
+    {
+        $productsService = new ProductsService();
+
+        return $productsService->check_product_for_existence($uuid);
+    }
 }

@@ -143,7 +143,16 @@ class ProductsService
         } catch (Exception $e) {
             return $msProduct->create();
         }
+    }
 
+    public function check_product_for_existence($uuid)
+    {
+        try {
+            $product = $this->moySklad->query()->entity()->product()->byId($uuid);
+            return true;
+        } catch (\Throwable $th) {
+            return false;
+        }
     }
 
     public function delete_product($id)

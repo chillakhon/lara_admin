@@ -2,11 +2,13 @@
 
 namespace App\Services\MoySklad;
 
+use App\Http\Controllers\Api\Admin\MoySkladController;
 use App\Models\DeliveryServiceSetting;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Evgeek\Moysklad\MoySklad;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Str;
 
 class ProductsAndVariantsSyncWithMoySkladService
@@ -34,10 +36,13 @@ class ProductsAndVariantsSyncWithMoySkladService
     public function sync_products_with_moysklad()
     {
         $moySkladService = new MoySkladHelperService();
+        $moySkladController = new MoySkladController();
 
         $products = $moySkladService->get_products()->rows ?? [];
         $variants = $moySkladService->get_product_variants()->rows ?? [];
         $stock = $moySkladService->check_stock();
+
+        $updatedCreatedProductUUID = [];
 
         // Index variants by product UUID
         $variantsGrouped = collect($variants)->groupBy(fn($v) => optional($v->product->meta)->href ?? '');
@@ -49,6 +54,8 @@ class ProductsAndVariantsSyncWithMoySkladService
             if (isset($stock[$productData->id])) {
                 $stockQty = $stock[$productData->id]['stock'];
             }
+
+            $updatedCreatedProductUUID[] = $productData->id;
 
             $product = Product::updateOrCreate(
                 ['uuid' => $productData->id],
@@ -93,6 +100,27 @@ class ProductsAndVariantsSyncWithMoySkladService
                         'is_active' => true,
                     ]
                 );
+            }
+        }
+
+        $unsyncedProducts = Product
+            ::where(function (Builder $query) use ($updatedCreatedProductUUID) {
+                $query->whereNull('uuid')
+                    ->orWhereNotIn('uuid', $updatedCreatedProductUUID);
+            })->get();
+
+
+        foreach ($unsyncedProducts as $key => $unsyncedProduct) {
+            $msProduct = null;
+            if ($moySkladController->check_product_for_existence($unsyncedProduct->uuid)) {
+                $msProduct = $moySkladController->update_product($unsyncedProduct);
+            } else {
+                $msProduct = $moySkladController->create_product($unsyncedProduct);
+            }
+
+            if ($msProduct) {
+                $variants = ProductVariant::where('product_id', $unsyncedProduct->id)->get()->toArray();
+                $moySkladController->mass_variant_creation_and_update($variants, $msProduct);
             }
         }
 
