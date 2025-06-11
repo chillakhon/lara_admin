@@ -141,7 +141,7 @@ class ProductVariantService
     }
 
     public function mass_variant_creation_and_update(
-        array $productVariants,
+        $productVariants,
         \Evgeek\Moysklad\Api\Record\Objects\Entities\Product $product
     ) {
         $modifications = [];
@@ -184,6 +184,10 @@ class ProductVariantService
                     'mediaType' => 'application/json',
                 ];
             } else {
+                if (!$existingVariant->code) {
+                    $existingVariant->code = (string) rand(1000000000, 9999999999);
+                    $existingVariant->save();
+                }
                 $data['code'] = $existingVariant->code;
                 $data['product'] = ['meta' => $product->meta];
             }

@@ -30,31 +30,31 @@ class ProductSeeder extends Seeder
                 'slug' => 'love-again',
                 'description' => '32 варианта',
             ],
-            [
-                'name' => 'LOVE SET',
-                'slug' => 'love-set',
-                'description' => '8 вариантов',
-            ],
-            [
-                'name' => 'Passion AGAIN',
-                'slug' => 'passion-again',
-                'description' => '8 вариантов',
-            ],
-            [
-                'name' => 'Save AGAIN',
-                'slug' => 'save-again',
-                'description' => '8 вариантов',
-            ],
-            [
-                'name' => 'Sexy AGAIN',
-                'slug' => 'sexy-again',
-                'description' => '8 вариантов',
-            ],
-            [
-                'name' => 'Любимый SET от доктора Садовская',
-                'slug' => 'set-love-doctor',
-                'description' => '8 вариантов',
-            ],
+            // [
+            //     'name' => 'LOVE SET',
+            //     'slug' => 'love-set',
+            //     'description' => '8 вариантов',
+            // ],
+            // [
+            //     'name' => 'Passion AGAIN',
+            //     'slug' => 'passion-again',
+            //     'description' => '8 вариантов',
+            // ],
+            // [
+            //     'name' => 'Save AGAIN',
+            //     'slug' => 'save-again',
+            //     'description' => '8 вариантов',
+            // ],
+            // [
+            //     'name' => 'Sexy AGAIN',
+            //     'slug' => 'sexy-again',
+            //     'description' => '8 вариантов',
+            // ],
+            // [
+            //     'name' => 'Любимый SET от доктора Садовская',
+            //     'slug' => 'set-love-doctor',
+            //     'description' => '8 вариантов',
+            // ],
         ])->map(function ($product) {
             return array_merge($product, [
                 'type' => 'simple',

@@ -175,7 +175,7 @@ class MoySkladController extends Controller
     }
 
     public function mass_variant_creation_and_update(
-        array $productVariants,
+        $productVariants,
         \Evgeek\Moysklad\Api\Record\Objects\Entities\Product $product
     ) {
         $moySkladService = new ProductVariantService();

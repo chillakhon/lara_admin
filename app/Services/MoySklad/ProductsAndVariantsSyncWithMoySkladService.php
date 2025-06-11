@@ -49,57 +49,96 @@ class ProductsAndVariantsSyncWithMoySkladService
 
         foreach ($products as $productData) {
 
-            $stockQty = 0;
+            $stockQty = $stock[$productData->id]['stock'] ?? 0.0;
 
-            if (isset($stock[$productData->id])) {
-                $stockQty = $stock[$productData->id]['stock'];
-            }
+            $slug = Str::slug($productData->name ?? '');
 
             $updatedCreatedProductUUID[] = $productData->id;
 
-            $product = Product::updateOrCreate(
-                ['uuid' => $productData->id],
-                [
+            $product = Product::where('uuid', $productData->id)->first();
+
+            if (!$product) {
+                $product = Product::where('slug', $slug)->first();
+            }
+
+            if ($product) {
+                $product->update([
+                    'uuid' => $productData->id, // обновим uuid если не был установлен
                     'name' => $productData->name ?? '',
                     'description' => $productData->description ?? null,
-                    'slug' => Str::slug($productData->name ?? ''),
+                    'slug' => $slug,
                     'price' => ($productData->salePrices[0]->value ?? 0) / 100,
                     'cost_price' => ($productData->buyPrice->value ?? 0) / 100,
                     'barcode' => $productData->barcodes[0]->ean13 ?? null,
                     'stock_quantity' => $stockQty,
-                    'sku' => Str::slug($productData->name ?? ''),
+                    'sku' => $slug,
                     'weight' => $productData->weight ?? 0,
                     'currency' => 'RUB',
                     'has_variants' => $productData->variantsCount > 0,
-                ]
-            );
+                ]);
+            } else {
+                $product = Product::create([
+                    'uuid' => $productData->id,
+                    'name' => $productData->name ?? '',
+                    'description' => $productData->description ?? null,
+                    'slug' => $slug,
+                    'price' => ($productData->salePrices[0]->value ?? 0) / 100,
+                    'cost_price' => ($productData->buyPrice->value ?? 0) / 100,
+                    'barcode' => $productData->barcodes[0]->ean13 ?? null,
+                    'stock_quantity' => $stockQty,
+                    'sku' => $slug,
+                    'weight' => $productData->weight ?? 0,
+                    'currency' => 'RUB',
+                    'has_variants' => $productData->variantsCount > 0,
+                ]);
+            }
 
             $productHref = $productData->meta->href;
 
             // Обновим/создадим варианты, если есть
             foreach ($variantsGrouped[$productHref] ?? [] as $variantData) {
 
-                $variantStockQty = 0;
+                $variantStockQty = $stock[$variantData->id]['stock'] ?? 0.0;
+                $variantSlug = Str::slug($variantData->name ?? '');
 
-                if (isset($stock[$variantData->id])) {
-                    $variantStockQty = $stock[$variantData->id]['stock'];
+
+                $variant = ProductVariant::where('uuid', $variantData->id)->first();
+
+                if (!$variant) {
+                    $variant = ProductVariant::where('sku', $variantSlug)
+                        ->where('product_id', $product->id) // важно уточнить товар
+                        ->first();
                 }
 
-                ProductVariant::updateOrCreate(
-                    ['uuid' => $variantData->id],
-                    [
+                if ($variant) {
+                    $variant->update([
+                        'uuid' => $variantData->id,
                         'product_id' => $product->id,
                         'name' => $variantData->name ?? '',
-                        'sku' => $variantData->code ?? '',
+                        'sku' => $variantSlug,
                         'barcode' => $variantData->barcodes[0]->ean13 ?? null,
                         'price' => ($variantData->salePrices[0]->value ?? 0) / 100,
                         'cost_price' => null,
                         'stock' => $variantStockQty,
-                        'weight' => $productData->weight ?? 0, // should get product's weight
+                        'weight' => $productData->weight ?? 0,
                         'type' => 'simple',
                         'is_active' => true,
-                    ]
-                );
+                    ]);
+                } else {
+                    ProductVariant::create([
+                        'uuid' => $variantData->id,
+                        'product_id' => $product->id,
+                        'name' => $variantData->name ?? '',
+                        'sku' => $variantSlug,
+                        'barcode' => $variantData->barcodes[0]->ean13 ?? null,
+                        'price' => ($variantData->salePrices[0]->value ?? 0) / 100,
+                        'cost_price' => null,
+                        'stock' => $variantStockQty,
+                        'weight' => $productData->weight ?? 0,
+                        'type' => 'simple',
+                        'is_active' => true,
+                    ]);
+                }
             }
         }
 
@@ -110,19 +149,19 @@ class ProductsAndVariantsSyncWithMoySkladService
             })->get();
 
 
-        foreach ($unsyncedProducts as $key => $unsyncedProduct) {
-            $msProduct = null;
-            if ($moySkladController->check_product_for_existence($unsyncedProduct->uuid)) {
-                $msProduct = $moySkladController->update_product($unsyncedProduct);
-            } else {
-                $msProduct = $moySkladController->create_product($unsyncedProduct);
-            }
+        // foreach ($unsyncedProducts as $key => $unsyncedProduct) {
+        //     $msProduct = null;
+        //     if ($moySkladController->check_product_for_existence($unsyncedProduct->uuid)) {
+        //         $msProduct = $moySkladController->update_product($unsyncedProduct);
+        //     } else {
+        //         $msProduct = $moySkladController->create_product($unsyncedProduct);
+        //     }
 
-            if ($msProduct) {
-                $variants = ProductVariant::where('product_id', $unsyncedProduct->id)->get()->toArray();
-                $moySkladController->mass_variant_creation_and_update($variants, $msProduct);
-            }
-        }
+        //     if ($msProduct) {
+        //         $variants = ProductVariant::where('product_id', $unsyncedProduct->id)->get();
+        //         $moySkladController->mass_variant_creation_and_update($variants, $msProduct);
+        //     }
+        // }
 
         return true;
     }
