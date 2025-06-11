@@ -63,6 +63,7 @@ class ProductSeeder extends Seeder
                 'has_variants' => 1,
                 'allow_preorder' => 0,
                 'after_purchase_processing_time' => 0,
+                "price" => rand(10000, 99999),
                 'weight' => rand(30, 150), // вес в граммах (реалистично)
                 'length' => rand(10, 25),  // см
                 'width' => rand(10, 20),   // см

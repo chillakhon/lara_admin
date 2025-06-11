@@ -149,19 +149,44 @@ class ProductsAndVariantsSyncWithMoySkladService
             })->get();
 
 
-        // foreach ($unsyncedProducts as $key => $unsyncedProduct) {
-        //     $msProduct = null;
-        //     if ($moySkladController->check_product_for_existence($unsyncedProduct->uuid)) {
-        //         $msProduct = $moySkladController->update_product($unsyncedProduct);
-        //     } else {
-        //         $msProduct = $moySkladController->create_product($unsyncedProduct);
-        //     }
+        foreach ($unsyncedProducts as $key => $unsyncedProduct) {
+            $msProduct = null;
+            if ($moySkladController->check_product_for_existence($unsyncedProduct->uuid)) {
+                $msProduct = $moySkladController->update_product($unsyncedProduct);
+            } else {
+                $msProduct = $moySkladController->create_product($unsyncedProduct);
+            }
 
-        //     if ($msProduct) {
-        //         $variants = ProductVariant::where('product_id', $unsyncedProduct->id)->get();
-        //         $moySkladController->mass_variant_creation_and_update($variants, $msProduct);
-        //     }
-        // }
+            if ($msProduct) {
+                $unsyncedProduct->update([
+                    'uuid' => $msProduct->id,
+                ]);
+
+                $variants = ProductVariant::where('product_id', $unsyncedProduct->id)->get();
+
+                // update those variants where code are null
+                // because code will be necessary when we to synchronize our product_variants with server
+                foreach ($variants as $key => $tempVar) {
+                    if (!$tempVar->code) {
+                        $tempVar->update([
+                            'code' => (string) rand(1000000000, 9999999999),
+                        ]);
+                    }
+                }
+
+                if (count($variants) >= 1) {
+                    $massCreatedModifications = $moySkladController->mass_variant_creation_and_update($variants, $msProduct);
+
+                    foreach ($variants as $key => $cv) {
+                        if (array_key_exists($cv->code, $massCreatedModifications)) {
+                            $cv->update([
+                                'uuid' => $massCreatedModifications[$cv->code],
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
 
         return true;
     }
