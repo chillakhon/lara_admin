@@ -73,7 +73,7 @@ class MoySkladController extends Controller
     {
         $moySkladService = new MoySkladHelperService();
 
-        $moySkladService->sync_products_with_moysklad();
+        return $moySkladService->sync_products_with_moysklad();
 
         return response()->json([
             'success' => true,

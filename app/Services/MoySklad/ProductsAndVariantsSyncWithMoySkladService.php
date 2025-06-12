@@ -6,202 +6,177 @@ use App\Http\Controllers\Api\Admin\MoySkladController;
 use App\Models\DeliveryServiceSetting;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Unit;
 use Evgeek\Moysklad\MoySklad;
+use Illuminate\Support\Str;
 use Exception;
-use Illuminate\Database\Eloquent\Builder;
-use Str;
 
 class ProductsAndVariantsSyncWithMoySkladService
 {
     private MoySklad $moySklad;
-    private $token;
-    private $baseURL = "https://api.moysklad.ru/api/remap/1.2";
+    private string $token;
+    private string $baseURL = "https://api.moysklad.ru/api/remap/1.2";
 
     public function __construct()
     {
+        $settings = DeliveryServiceSetting::where('service_name', 'moysklad')->first();
 
-        $moyskadSettings = DeliveryServiceSetting
-            ::where('service_name', 'moysklad')
-            ->first();
-
-        if (!$moyskadSettings) {
+        if (!$settings) {
             throw new Exception("Настройки для МойСклад не найдены. Пожалуйста, настройте сервис в админке.");
         }
 
-        $this->token = $moyskadSettings->token;
-        $this->moySklad = new MoySklad(["{$moyskadSettings->token}"]);
+        $this->token = $settings->token;
+        $this->moySklad = new MoySklad([$this->token]);
     }
 
-
-    // the logic of this function should be in this way:
-    // we have to sync those products which are in MoySklad.
-    // it means that all those products which are in MoySklad should appear in our database.
-    // And also we have to send those products which uuid are null
-    // cause it means that something happend when user were creating product (uuid of that product was not saved in Database)
-    // or any other error.
-    // 
-    // After syncing all necessary products, we need to delete all products whose UUIDs
-    // were not received from MoySklad. Means that user deleted them from MoySklad
-    public function sync_products_with_moysklad()
+    public function sync_products_with_moysklad(): bool
     {
-        $moySkladService = new MoySkladHelperService();
-        $moySkladController = new MoySkladController();
+        $helper = new MoySkladHelperService();
+        $controller = new MoySkladController();
 
-        $products = $moySkladService->get_products()->rows ?? [];
-        $variants = $moySkladService->get_product_variants()->rows ?? [];
-        $stock = $moySkladService->check_stock();
+        $units = $this->getUnitsMap($helper);
+        $products = $helper->get_products()->rows ?? [];
+        $variants = $helper->get_product_variants()->rows ?? [];
+        $stock = $helper->check_stock();
 
-        $updatedCreatedProductUUID = [];
-
-        // Index variants by product UUID
         $variantsGrouped = collect($variants)->groupBy(fn($v) => optional($v->product->meta)->href ?? '');
 
+        $syncedUUIDs = [];
+
         foreach ($products as $productData) {
+            $product = $this->upsertProduct($productData, $stock, $units);
+            $syncedUUIDs[] = $productData->id;
 
-            $stockQty = $stock[$productData->id]['stock'] ?? 0.0;
-
-            $slug = Str::slug($productData->name ?? '');
-
-            $updatedCreatedProductUUID[] = $productData->id;
-
-            $product = Product::where('uuid', $productData->id)->first();
-
-            if (!$product) {
-                $product = Product::where('slug', $slug)->first();
-            }
-
-            if ($product) {
-                $product->update([
-                    'uuid' => $productData->id, // обновим uuid если не был установлен
-                    'name' => $productData->name ?? '',
-                    'description' => $productData->description ?? null,
-                    'slug' => $slug,
-                    'price' => ($productData->salePrices[0]->value ?? 0) / 100,
-                    'cost_price' => ($productData->buyPrice->value ?? 0) / 100,
-                    'barcode' => $productData->barcodes[0]->ean13 ?? null,
-                    'stock_quantity' => $stockQty,
-                    'sku' => $slug,
-                    'weight' => $productData->weight ?? 0,
-                    'currency' => 'RUB',
-                    'has_variants' => $productData->variantsCount > 0,
-                ]);
-            } else {
-                $product = Product::create([
-                    'uuid' => $productData->id,
-                    'name' => $productData->name ?? '',
-                    'description' => $productData->description ?? null,
-                    'slug' => $slug,
-                    'price' => ($productData->salePrices[0]->value ?? 0) / 100,
-                    'cost_price' => ($productData->buyPrice->value ?? 0) / 100,
-                    'barcode' => $productData->barcodes[0]->ean13 ?? null,
-                    'stock_quantity' => $stockQty,
-                    'sku' => $slug,
-                    'weight' => $productData->weight ?? 0,
-                    'currency' => 'RUB',
-                    'has_variants' => $productData->variantsCount > 0,
-                ]);
-            }
-
-            $productHref = $productData->meta->href;
-
-            // Обновим/создадим варианты, если есть
-            foreach ($variantsGrouped[$productHref] ?? [] as $variantData) {
-
-                $productCreatedUpdatedVarinatsId = [];
-                $variantStockQty = $stock[$variantData->id]['stock'] ?? 0.0;
-                $variantSlug = Str::slug($variantData->name ?? '');
-
-
-                $variant = ProductVariant::where('uuid', $variantData->id)->first();
-
-                if (!$variant) {
-                    $variant = ProductVariant::where('sku', $variantSlug)
-                        ->where('product_id', $product->id) // важно уточнить товар
-                        ->first();
-                }
-
-                $productCreatedUpdatedVarinatsId[] = $variantData->id;
-
-                if ($variant) {
-                    $variant->update([
-                        'uuid' => $variantData->id,
-                        'product_id' => $product->id,
-                        'name' => $variantData->name ?? '',
-                        'sku' => $variantSlug,
-                        'barcode' => $variantData->barcodes[0]->ean13 ?? null,
-                        'price' => ($variantData->salePrices[0]->value ?? 0) / 100,
-                        'cost_price' => null,
-                        'stock' => $variantStockQty,
-                        'weight' => $productData->weight ?? 0,
-                        'type' => 'simple',
-                        'is_active' => true,
-                    ]);
-                } else {
-                    ProductVariant::create([
-                        'uuid' => $variantData->id,
-                        'product_id' => $product->id,
-                        'name' => $variantData->name ?? '',
-                        'sku' => $variantSlug,
-                        'barcode' => $variantData->barcodes[0]->ean13 ?? null,
-                        'price' => ($variantData->salePrices[0]->value ?? 0) / 100,
-                        'cost_price' => null,
-                        'stock' => $variantStockQty,
-                        'weight' => $productData->weight ?? 0,
-                        'type' => 'simple',
-                        'is_active' => true,
-                    ]);
-                }
-            }
+            $this->syncVariantsForProduct($product, $productData, $variantsGrouped);
         }
 
-        // delete only those products which uuids are not null and not insdie created/updated 
-        // products
-        Product::whereNotNull('uuid')->whereNotIn('uuid', $updatedCreatedProductUUID)->delete();
+        $this->removeDeletedProducts($syncedUUIDs);
+        $this->syncLocalUnsyncedProducts($controller);
 
-        // write comment for this section then
-        // only sync those products which do not have 
-        $unsyncedProducts = Product::whereNull('uuid')->get();
+        return true;
+    }
 
+    private function getUnitsMap(MoySkladHelperService $service): array
+    {
+        $units = $service->get_units();
+        return collect($units)->mapWithKeys(fn($unit) => [$unit->meta->href => $unit])->toArray();
+    }
 
-        foreach ($unsyncedProducts as $key => $unsyncedProduct) {
-            $msProduct = null;
-            if ($moySkladController->check_product_for_existence($unsyncedProduct->uuid)) {
-                $msProduct = $moySkladController->update_product($unsyncedProduct);
-            } else {
-                $msProduct = $moySkladController->create_product($unsyncedProduct);
-            }
+    private function findLocalUnit($msUnit): ?Unit
+    {
+        if (!$msUnit)
+            return null;
+
+        $msName = mb_strtolower($msUnit->name ?? '');
+        $msDescription = mb_strtolower($msUnit->description ?? '');
+
+        return Unit::all()->first(function ($unit) use ($msName, $msDescription) {
+            $name = mb_strtolower($unit->name ?? '');
+            return str_contains($msName, $name) || str_contains($msDescription, $name);
+        });
+    }
+
+    private function upsertProduct($data, array $stock, array $units): Product
+    {
+        $slug = Str::slug($data->name ?? '');
+        $stockQty = $stock[$data->id]['stock'] ?? 0;
+        $unit = $this->findLocalUnit($units[$data->uom->meta->href ?? null] ?? null);
+
+        $product = Product::where('uuid', $data->id)->first()
+            ?? Product::where('slug', $slug)->first();
+
+        $attributes = [
+            'uuid' => $data->id,
+            'name' => $data->name ?? '',
+            'description' => $data->description ?? null,
+            'default_unit_id' => $unit?->id,
+            'slug' => $slug,
+            'price' => ($data->salePrices[0]->value ?? 0) / 100,
+            'cost_price' => ($data->buyPrice->value ?? 0) / 100,
+            'barcode' => $data->barcodes[0]->ean13 ?? null,
+            'stock_quantity' => $stockQty,
+            'sku' => $slug,
+            'weight' => $data->weight ?? 0,
+            'currency' => 'RUB',
+            'has_variants' => $data->variantsCount > 0,
+        ];
+
+        return $product ? tap($product)->update($attributes) : Product::create($attributes);
+    }
+
+    private function syncVariantsForProduct(Product $product, $productData, $variantsGrouped): void
+    {
+        $productHref = $productData->meta->href;
+        $variantDataList = $variantsGrouped[$productHref] ?? [];
+
+        foreach ($variantDataList as $variantData) {
+            $this->upsertVariant($product, $variantData, $productData);
+        }
+    }
+
+    private function upsertVariant(Product $product, $data, $productData): void
+    {
+        $slug = Str::slug($data->name ?? '');
+        $variant = ProductVariant::where('uuid', $data->id)->first()
+            ?? ProductVariant::where('sku', $slug)->where('product_id', $product->id)->first();
+
+        $attributes = [
+            'uuid' => $data->id,
+            'product_id' => $product->id,
+            'name' => $data->name ?? '',
+            'unit_id' => $product->default_unit_id,
+            'sku' => $slug,
+            'barcode' => $data->barcodes[0]->ean13 ?? null,
+            'price' => ($data->salePrices[0]->value ?? 0) / 100,
+            'cost_price' => null,
+            'stock' => $data->stock ?? 0,
+            'weight' => $productData->weight ?? 0,
+            'type' => 'simple',
+            'is_active' => true,
+        ];
+
+        $variant ? $variant->update($attributes) : ProductVariant::create($attributes);
+    }
+
+    private function removeDeletedProducts(array $syncedUUIDs): void
+    {
+        Product::whereNotNull('uuid')->whereNotIn('uuid', $syncedUUIDs)->delete();
+    }
+
+    private function syncLocalUnsyncedProducts(MoySkladController $controller): void
+    {
+        $unsynced = Product::whereNull('uuid')->get();
+
+        foreach ($unsynced as $product) {
+            $msProduct = $controller->check_product_for_existence($product->uuid)
+                ? $controller->update_product($product)
+                : $controller->create_product($product);
 
             if ($msProduct) {
-                $unsyncedProduct->update([
-                    'uuid' => $msProduct->id,
-                ]);
+                $product->update(['uuid' => $msProduct->id]);
 
-                $variants = ProductVariant::where('product_id', $unsyncedProduct->id)->get();
+                $variants = ProductVariant::where('product_id', $product->id)->get();
 
-                // update those variants where code are null
-                // because code will be necessary when we to synchronize our product_variants with server
-                foreach ($variants as $key => $tempVar) {
-                    if (!$tempVar->code) {
-                        $tempVar->update([
+                foreach ($variants as $variant) {
+                    if (!$variant->code) {
+                        $variant->update([
                             'code' => (string) rand(1000000000, 9999999999),
                         ]);
                     }
                 }
 
-                if (count($variants) >= 1) {
-                    $massCreatedModifications = $moySkladController->mass_variant_creation_and_update($variants, $msProduct);
+                if ($variants->count() > 0) {
+                    $remoteVariants = $controller->mass_variant_creation_and_update($variants, $msProduct);
 
-                    foreach ($variants as $key => $cv) {
-                        if (array_key_exists($cv->code, $massCreatedModifications)) {
-                            $cv->update([
-                                'uuid' => $massCreatedModifications[$cv->code],
+                    foreach ($variants as $variant) {
+                        if (isset($remoteVariants[$variant->code])) {
+                            $variant->update([
+                                'uuid' => $remoteVariants[$variant->code],
                             ]);
                         }
                     }
                 }
             }
         }
-
-        return true;
     }
 }

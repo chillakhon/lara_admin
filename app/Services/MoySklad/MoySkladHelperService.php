@@ -46,7 +46,7 @@ class MoySkladHelperService
 
     public function get_units($search = null)
     {
-        $search = "штук";
+        // $search = "штук";
         $units = $this->moySklad->query()->entity()->uom()->get();
         $rows = collect($units->rows ?? []);
 
