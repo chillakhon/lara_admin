@@ -33,6 +33,15 @@ class ProductsAndVariantsSyncWithMoySkladService
     }
 
 
+    // the logic of this function should be in this way:
+    // we have to sync those products which are in MoySklad.
+    // it means that all those products which are in MoySklad should appear in our database.
+    // And also we have to send those products which uuid are null
+    // cause it means that something happend when user were creating product (uuid of that product was not saved in Database)
+    // or any other error.
+    // 
+    // After syncing all necessary products, we need to delete all products whose UUIDs
+    // were not received from MoySklad. Means that user deleted them from MoySklad
     public function sync_products_with_moysklad()
     {
         $moySkladService = new MoySkladHelperService();
@@ -145,9 +154,12 @@ class ProductsAndVariantsSyncWithMoySkladService
             }
         }
 
+        // delete only those products which uuids are not null and not insdie created/updated 
+        // products
         Product::whereNotNull('uuid')->whereNotIn('uuid', $updatedCreatedProductUUID)->delete();
 
         // write comment for this section then
+        // only sync those products which do not have 
         $unsyncedProducts = Product::whereNull('uuid')->get();
 
 
