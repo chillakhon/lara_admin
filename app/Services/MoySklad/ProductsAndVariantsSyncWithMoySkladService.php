@@ -98,6 +98,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             // Обновим/создадим варианты, если есть
             foreach ($variantsGrouped[$productHref] ?? [] as $variantData) {
 
+                $productCreatedUpdatedVarinatsId = [];
                 $variantStockQty = $stock[$variantData->id]['stock'] ?? 0.0;
                 $variantSlug = Str::slug($variantData->name ?? '');
 
@@ -109,6 +110,8 @@ class ProductsAndVariantsSyncWithMoySkladService
                         ->where('product_id', $product->id) // важно уточнить товар
                         ->first();
                 }
+
+                $productCreatedUpdatedVarinatsId[] = $variantData->id;
 
                 if ($variant) {
                     $variant->update([
@@ -142,11 +145,10 @@ class ProductsAndVariantsSyncWithMoySkladService
             }
         }
 
-        $unsyncedProducts = Product
-            ::where(function (Builder $query) use ($updatedCreatedProductUUID) {
-                $query->whereNull('uuid')
-                    ->orWhereNotIn('uuid', $updatedCreatedProductUUID);
-            })->get();
+        Product::whereNotNull('uuid')->whereNotIn('uuid', $updatedCreatedProductUUID)->delete();
+
+        // write comment for this section then
+        $unsyncedProducts = Product::whereNull('uuid')->get();
 
 
         foreach ($unsyncedProducts as $key => $unsyncedProduct) {
