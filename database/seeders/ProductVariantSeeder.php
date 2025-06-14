@@ -21,6 +21,7 @@ class ProductVariantSeeder extends Seeder
                 'name' => 'Test E BA Body AGAIN',
                 'slug' => 'test-e-body-again_1',
                 'description' => '16 вариантов',
+                "price" => rand(10000, 99999),
                 'type' => 'simple',
                 'default_unit_id' => 1, // Укажите ID единицы измерения
                 'is_active' => 1,
@@ -41,7 +42,7 @@ class ProductVariantSeeder extends Seeder
         DB::table('products')->insert($products);
 
         // Получаем ID добавленных продуктов
-        $bodyAgainId = DB::table('products')->where('slug', 'body-again')->first()->id;
+        $bodyAgainId = DB::table('products')->where('slug', 'test-e-body-again_1')->first()->id;
 
         // Добавляем варианты для продукта Body AGAIN
         $variants = [
@@ -49,7 +50,8 @@ class ProductVariantSeeder extends Seeder
                 'product_id' => $bodyAgainId,
                 'name' => 'XS / Черный',
                 'sku' => 'again-body-черный-xs',
-                'price' => 2490.00,
+                'code' => (string) rand(1000000000, 9999999999),
+                "price" => rand(10000, 99999),
                 'additional_cost' => 0.00,
                 'type' => 'simple',
                 'unit_id' => 1,
@@ -65,7 +67,8 @@ class ProductVariantSeeder extends Seeder
                 'product_id' => $bodyAgainId,
                 'name' => 'XS / Фиолет',
                 'sku' => 'again-body-фиолет-xs',
-                'price' => 2490.00,
+                'code' => (string) rand(1000000000, 9999999999),
+                "price" => rand(10000, 99999),
                 'additional_cost' => 0.00,
                 'type' => 'simple',
                 'unit_id' => 1,
@@ -81,7 +84,8 @@ class ProductVariantSeeder extends Seeder
                 'product_id' => $bodyAgainId,
                 'name' => 'S / Черный',
                 'sku' => 'again-body-черный-s',
-                'price' => 2490.00,
+                'code' => (string) rand(1000000000, 9999999999),
+                "price" => rand(10000, 99999),
                 'additional_cost' => 0.00,
                 'type' => 'simple',
                 'unit_id' => 1,
@@ -97,7 +101,8 @@ class ProductVariantSeeder extends Seeder
                 'product_id' => $bodyAgainId,
                 'name' => 'S / Фиолет',
                 'sku' => 'again-body-фиолет-s',
-                'price' => 2490.00,
+                'code' => (string) rand(1000000000, 9999999999),
+                "price" => rand(10000, 99999),
                 'additional_cost' => 0.00,
                 'type' => 'simple',
                 'unit_id' => 1,
@@ -113,7 +118,8 @@ class ProductVariantSeeder extends Seeder
                 'product_id' => $bodyAgainId,
                 'name' => 'M / Черный',
                 'sku' => 'again-body-черный-m',
-                'price' => 2490.00,
+                'code' => (string) rand(1000000000, 9999999999),
+                "price" => rand(10000, 99999),
                 'additional_cost' => 0.00,
                 'type' => 'simple',
                 'unit_id' => 1,
@@ -129,7 +135,8 @@ class ProductVariantSeeder extends Seeder
                 'product_id' => $bodyAgainId,
                 'name' => 'M / Фиолет',
                 'sku' => 'again-body-фиолет-m',
-                'price' => 2490.00,
+                'code' => (string) rand(1000000000, 9999999999),
+                "price" => rand(10000, 99999),
                 'additional_cost' => 0.00,
                 'type' => 'simple',
                 'unit_id' => 1,
@@ -145,7 +152,8 @@ class ProductVariantSeeder extends Seeder
                 'product_id' => $bodyAgainId,
                 'name' => 'L / Черный',
                 'sku' => 'again-body-черный-l',
-                'price' => 2490.00,
+                'code' => (string) rand(1000000000, 9999999999),
+                "price" => rand(10000, 99999),
                 'additional_cost' => 0.00,
                 'type' => 'simple',
                 'unit_id' => 1,
@@ -166,6 +174,7 @@ class ProductVariantSeeder extends Seeder
         $variantIds = DB::table('product_variants')->where('product_id', $bodyAgainId)->pluck('id');
 
         // Добавляем остатки на складе для каждого варианта
+        // not necessary anymore
         $inventory = [
             [
                 'item_type' => ProductVariant::class,

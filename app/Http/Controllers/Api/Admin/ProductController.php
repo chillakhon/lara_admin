@@ -662,6 +662,16 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+
+
+        $moySkladController = new MoySkladController();
+
+        $deleteResult = $moySkladController->delete_product($product->uuid);
+
+        if (!$deleteResult['success']) {
+            return response()->json($deleteResult);
+        }
+
         $product->update([
             'slug' => null,
             "sku" => null,
@@ -674,11 +684,11 @@ class ProductController extends Controller
         $product->delete();
         $product->variants()->delete();
 
-        $moySkladController = new MoySkladController();
-
-        $moySkladController->delete_product($product->uuid);
-
-        return response()->json(['success' => true, 'message' => 'Product deleted successfully']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Product deleted successfully',
+            "delete_result" => $deleteResult
+        ]);
     }
 
     public function restoreProduct(Request $request)

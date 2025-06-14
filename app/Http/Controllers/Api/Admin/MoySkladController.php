@@ -73,7 +73,7 @@ class MoySkladController extends Controller
     {
         $moySkladService = new MoySkladHelperService();
 
-        $moySkladService->sync_products_with_moysklad();
+        return $moySkladService->sync_products_with_moysklad();
 
         return response()->json([
             'success' => true,
@@ -175,7 +175,7 @@ class MoySkladController extends Controller
     }
 
     public function mass_variant_creation_and_update(
-        array $productVariants,
+        $productVariants,
         \Evgeek\Moysklad\Api\Record\Objects\Entities\Product $product
     ) {
         $moySkladService = new ProductVariantService();
@@ -188,5 +188,12 @@ class MoySkladController extends Controller
         $moySkladService = new ProductVariantService();
 
         return $moySkladService->mass_variant_deletion($ids);
+    }
+
+    public function check_product_for_existence($uuid)
+    {
+        $productsService = new ProductsService();
+
+        return $productsService->check_product_for_existence($uuid);
     }
 }

@@ -143,7 +143,16 @@ class ProductsService
         } catch (Exception $e) {
             return $msProduct->create();
         }
+    }
 
+    public function check_product_for_existence($uuid)
+    {
+        try {
+            $product = $this->moySklad->query()->entity()->product()->byId($uuid);
+            return true;
+        } catch (\Throwable $th) {
+            return false;
+        }
     }
 
     public function delete_product($id)
@@ -155,9 +164,15 @@ class ProductsService
         ])->delete("{$this->baseURL}/entity/product/{$id}");
 
         if ($response->successful()) {
-            return true;
+            return [
+                'success' => true,
+            ];
         }
 
-        return false;
+        return [
+            'success' => false,
+            'message_type' => "MoySklad Error",
+            'message' => json_decode($response->body())?->errors[0]?->error ?? "Ошибка удаления: невозможно удалить, так как продукт используется в других модулях.",
+        ];
     }
 }
