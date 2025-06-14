@@ -415,7 +415,8 @@ class ProductController extends Controller
 
         // this is for moysklad data that comes after creation
         $createdVariantsIds = [];
-
+        $product_variant_for_deletion_ids = [];
+        // $productVariantDeletionReached = false;
 
         try {
             $product = Product::where('id', $id)->firstOrFail();
@@ -447,7 +448,6 @@ class ProductController extends Controller
             $incomingVariantIds = collect($validated['variants'] ?? [])->pluck('id')->filter()->toArray();
 
             // Delete removed variants
-            $product_variant_for_deletion_ids = [];
             $prod_variant_check = ProductVariant::where('product_id', $product->id);
             if (!empty($incomingVariantIds)) {
                 $prod_variant_check->whereNotIn('id', $incomingVariantIds);
@@ -545,14 +545,16 @@ class ProductController extends Controller
                     }
                 }
             }
-
-            DB::commit();
-
             // if everything goes perfect
             // we will delete all deleted variants from moysklad too
+            // BUT! remember if there is any supplier invoice that were made for
+            // specific variant or product you cant delete that
             if ($product_variant_for_deletion_ids) {
+                // $productVariantDeletionReached = true;
                 $moyskadController->mass_variant_deletion($product_variant_for_deletion_ids);
             }
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -560,10 +562,22 @@ class ProductController extends Controller
                 'product' => $product
             ], 200);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             // that is why if something goes wrong we will delete only created variants
             $moyskadController->mass_variant_deletion($createdVariantsIds);
+
+            // NOTE!!! I want to recreate delete variants in server but it's becoming
+            // impossible
+            // if $product_variant_for_deletion_ids is not empty
+            // and the code of deletion reached specific place (means that it was deleting but something went wrong)
+            // then this code should work
+            // becuase there will be cases that $product_variant_for_deletion_ids is not empty
+            // but code was not reached specific place, it will create - created products once again (maybe creation throws an error).
+            // when "catch" statement works
+            // if ($product_variant_for_deletion_ids && $productVariantDeletionReached) {
+
+            // }
             return response()->json([
                 "error_line" => $e->getLine(),
                 'message' => 'Failed to update product',

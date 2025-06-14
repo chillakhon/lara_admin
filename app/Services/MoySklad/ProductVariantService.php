@@ -258,7 +258,9 @@ class ProductVariantService
                     'response' => $response->body(),
                     'payload' => $objects
                 ]);
-                throw new \Exception("Failed to delete variants: " . $response->body());
+                $decodedBody = json_decode($response->body());
+                $message = $decodedBody?->errors[0]->error ?? "Ошибка удаления: невозможно удалить, так как продукт используется в других модулях.";
+                throw new \Exception("Ошибка при удалении вариантов товара: " . $message);
             }
         }
 
