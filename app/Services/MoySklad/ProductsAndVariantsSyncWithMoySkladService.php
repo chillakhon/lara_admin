@@ -29,7 +29,7 @@ class ProductsAndVariantsSyncWithMoySkladService
         $this->moySklad = new MoySklad([$this->token]);
     }
 
-    public function sync_products_with_moysklad(): bool
+    public function sync_products_with_moysklad()
     {
         $helper = new MoySkladHelperService();
         $controller = new MoySkladController();

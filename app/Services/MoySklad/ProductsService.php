@@ -164,9 +164,15 @@ class ProductsService
         ])->delete("{$this->baseURL}/entity/product/{$id}");
 
         if ($response->successful()) {
-            return true;
+            return [
+                'success' => true,
+            ];
         }
 
-        return false;
+        return [
+            'success' => false,
+            'message_type' => "MoySklad Error",
+            'message' => json_decode($response->body())?->errors[0]?->error ?? "Ошибка удаления: невозможно удалить, так как продукт используется в других модулях.",
+        ];
     }
 }
