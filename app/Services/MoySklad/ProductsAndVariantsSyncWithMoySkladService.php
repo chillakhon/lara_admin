@@ -34,7 +34,7 @@ class ProductsAndVariantsSyncWithMoySkladService
         $helper = new MoySkladHelperService();
         $controller = new MoySkladController();
 
-        $units = $this->getUnitsMap($helper);
+        $moyskladUnits = $this->getUnitsMap($helper);
         $products = $helper->get_products()->rows ?? [];
         $variants = $helper->get_product_variants()->rows ?? [];
         $stock = $helper->check_stock();
@@ -44,7 +44,7 @@ class ProductsAndVariantsSyncWithMoySkladService
         $syncedUUIDs = [];
 
         foreach ($products as $productData) {
-            $product = $this->upsertProduct($productData, $stock, $units);
+            $product = $this->upsertProduct($productData, $stock, $moyskladUnits);
             $syncedUUIDs[] = $productData->id;
 
             $this->syncVariantsForProduct($product, $productData, $variantsGrouped);
@@ -70,17 +70,17 @@ class ProductsAndVariantsSyncWithMoySkladService
         $msName = mb_strtolower($msUnit->name ?? '');
         $msDescription = mb_strtolower($msUnit->description ?? '');
 
-        return Unit::all()->first(function ($unit) use ($msName, $msDescription) {
-            $name = mb_strtolower($unit->name ?? '');
-            return str_contains($msName, $name) || str_contains($msDescription, $name);
-        });
+        return Unit::where(function ($sql) use ($msName, $msDescription) {
+            $sql->where('description', 'like', "%{$msDescription}%")
+                ->orWhere('name', 'like', "%{$msName}%");
+        })->first();
     }
 
-    private function upsertProduct($data, array $stock, array $units): Product
+    private function upsertProduct($data, array $stock, array $moyskladUnits): Product
     {
         $slug = Str::slug($data->name ?? '');
         $stockQty = $stock[$data->id]['stock'] ?? 0;
-        $unit = $this->findLocalUnit($units[$data->uom->meta->href ?? null] ?? null);
+        $unit = $this->findLocalUnit($moyskladUnits[$data->uom->meta->href ?? null] ?? null);
 
         $product = Product::where('uuid', $data->id)->first()
             ?? Product::where('slug', $slug)->first();
