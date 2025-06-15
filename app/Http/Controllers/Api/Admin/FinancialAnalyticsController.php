@@ -32,7 +32,7 @@ class FinancialAnalyticsController extends Controller
 
         $financialSummaryOrders = $this->moySkladReportService->financialSummarySales($request);
 
-        return $financialSummaryOrders;
+        return response()->json($financialSummaryOrders);
         // incomes
         // $revenues = Order
         //     ::where('status', Order::STATUS_COMPLETED)
@@ -98,7 +98,7 @@ class FinancialAnalyticsController extends Controller
     {
         $financialSummaryOrders = $this->moySkladReportService->financialSummaryOrders($request);
 
-        return $financialSummaryOrders;
+        return response()->json($financialSummaryOrders);
     }
 
     // info learning
@@ -117,7 +117,7 @@ class FinancialAnalyticsController extends Controller
     {
         $product_profites = $this->moySkladReportService->income_by_products($request);
 
-        return $product_profites;
+        return response()->json($product_profites);
     }
 
 
@@ -180,6 +180,26 @@ class FinancialAnalyticsController extends Controller
                 'client_id' => $clientId,
             ],
             'weeks' => $weeks
+        ]);
+    }
+
+
+    public function combined_analytics(Request $request)
+    {
+
+        $reportService = new ReportService();
+
+        $sales_summary = $reportService->financialSummarySales($request);
+
+        $orders_summary = $reportService->financialSummaryOrders($request);
+
+        $products_summary = $reportService->income_by_products($request);
+
+        return response()->json([
+            'success' => true,
+            'sales_summary' => $sales_summary,
+            "orders_summary" => $orders_summary,
+            "products_summary" => $products_summary,
         ]);
     }
 }

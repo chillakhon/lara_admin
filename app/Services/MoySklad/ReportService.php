@@ -115,19 +115,17 @@ class ReportService
             } while ($received === $limit);
 
 
-            return response()->json([
-                'success' => true,
+            return [
                 'total_profit' => $totalProfit,
                 'total_revenue' => $totalRevenue,
                 'total_cost' => $totalCost,
-            ]);
+            ];
         } catch (Exception $e) {
-            return response()->json([
-                'success' => false,
+            return [
                 'line' => $e->getLine(),
                 "message" => $e->getMessage(),
                 'stack_trace' => $e->getTraceAsString()
-            ]);
+            ];
         }
     }
 
@@ -184,11 +182,11 @@ class ReportService
             ];
         }
 
-        return response()->json([
+        return [
             'total_quantity' => $totalQuantity,
             'total_sum' => $totalSum,
             'series' => $series,
-        ]);
+        ];
     }
 
     public function financialSummaryOrders(Request $request)
@@ -239,10 +237,10 @@ class ReportService
             ];
         }
 
-        return response()->json([
+        return [
             'total_quantity' => $totalQuantity,
             'total_sum' => $totalSum,
             'series' => $series,
-        ]);
+        ];
     }
 }
