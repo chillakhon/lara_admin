@@ -167,7 +167,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::middleware(['role:super-admin,admin,manager'])->group(function () {
         // Financial info api
         Route::prefix('/analytics')->group(function () {
-            Route::get('/financial-summary', [FinancialAnalyticsController::class, 'financialSummary']);
+            Route::get('/financial-summary-sales', [FinancialAnalyticsController::class, 'financialSummarySales']);
+            Route::get('/financial-summary-orders', [FinancialAnalyticsController::class, 'financialSummaryOrders']);
+            Route::get('/products/income', [FinancialAnalyticsController::class, 'income_by_products']);
             Route::get('/chart', [FinancialAnalyticsController::class, 'weeklyAmount']);
         });
 

@@ -7,30 +7,50 @@ use App\Models\Order;
 use App\Models\ProductionBatch;
 use App\Models\ProductionBatchMaterial;
 use App\Models\ProductVariant;
+use App\Services\MoySklad\MoySkladHelperService;
+use App\Services\MoySklad\ReportService;
 use Carbon\Carbon;
+use Evgeek\Moysklad\MoySklad;
+use Http;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class FinancialAnalyticsController extends Controller
 {
-    public function financialSummary(Request $request)
-    {
-        $from = $request->input('from');
-        $to = $request->input('to');
 
+    private ReportService $moySkladReportService;
+
+    public function __construct()
+    {
+        $this->moySkladReportService = new ReportService();
+    }
+
+    public function financialSummarySales(Request $request)
+    {
+        // $from = $request->input('from');
+        // $to = $request->input('to');
+
+        $validate = $request->validate([
+            'type' => ['required', 'string', Rule::in(['day', 'week', 'month'])],
+        ]);
+
+        $indicators = $this->moySkladReportService->report_dashboard($validate['type']);
+
+        return $indicators;
         // incomes
-        $revenues = Order
-            ::where('status', Order::STATUS_COMPLETED)
-            ->when($from, fn($q) => $q->where('created_at', '>=', $from))
-            ->when($to, fn($q) => $q->where('created_at', '<=', $to))
-            ->sum('total_amount');
+        // $revenues = Order
+        //     ::where('status', Order::STATUS_COMPLETED)
+        //     ->when($from, fn($q) => $q->where('created_at', '>=', $from))
+        //     ->when($to, fn($q) => $q->where('created_at', '<=', $to))
+        //     ->sum('total_amount');
 
         // additional consumption 
-        $production_costs = ProductionBatch
-            ::where('status', 'completed')
-            ->when($from, fn($q) => $q->where('completed_at', '>=', $from))
-            ->when($to, fn($q) => $q->where('completed_at', '<=', $to))
-            ->selectRaw('SUM(total_material_cost + additional_costs) as total')
-            ->value('total');
+        // $production_costs = ProductionBatch
+        //     ::where('status', 'completed')
+        //     ->when($from, fn($q) => $q->where('completed_at', '>=', $from))
+        //     ->when($to, fn($q) => $q->where('completed_at', '<=', $to))
+        //     ->selectRaw('SUM(total_material_cost + additional_costs) as total')
+        //     ->value('total');
 
         // $additionalVariantCosts = ProductVariant
         //     ::whereNull('deleted_at')
@@ -64,17 +84,28 @@ class FinancialAnalyticsController extends Controller
         // + $additionalVariantCosts;
 
 
-        $profit = $revenues - $production_costs;
+        // $profit = $revenues - $production_costs;
 
-        return response()->json([
-            'from' => $from,
-            'to' => $to,
-            'revenues' => round($revenues, 2),
-            'production_costs' => round($production_costs, 2),
-            // 'additional_costs' => round($additionalProductionCosts + $additionalVariantCosts, 2),
-            // 'total_costs' => round($totalCosts, 2),
-            'profit' => round($profit, 2),
-        ]);
+        // return response()->json([
+        //     'from' => $from,
+        //     'to' => $to,
+        //     'revenues' => round($revenues, 2),
+        //     'production_costs' => round($production_costs, 2),
+        //     // 'additional_costs' => round($additionalProductionCosts + $additionalVariantCosts, 2),
+        //     // 'total_costs' => round($totalCosts, 2),
+        //     'profit' => round($profit, 2),
+        // ]);
+    }
+
+    public function financialSummaryOrders(Request $request)
+    {
+    }
+
+    public function income_by_products(Request $request)
+    {
+        $product_profites = $this->moySkladReportService->income_by_products($request);
+
+        return $product_profites;
     }
 
 
