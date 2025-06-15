@@ -47,7 +47,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             $product = $this->upsertProduct($productData, $stock, $moyskladUnits);
             $syncedUUIDs[] = $productData->id;
 
-            $this->syncVariantsForProduct($product, $productData, $variantsGrouped);
+            $this->syncVariantsForProduct($product, $stock, $productData, $variantsGrouped);
         }
 
         $this->removeDeletedProducts($syncedUUIDs);
@@ -104,21 +104,33 @@ class ProductsAndVariantsSyncWithMoySkladService
         return $product ? tap($product)->update($attributes) : Product::create($attributes);
     }
 
-    private function syncVariantsForProduct(Product $product, $productData, $variantsGrouped): void
+    private function syncVariantsForProduct(Product $product, array $stock, $productData, $variantsGrouped): void
     {
         $productHref = $productData->meta->href;
         $variantDataList = $variantsGrouped[$productHref] ?? [];
+        $updateCreatedVariantsIds = [];
 
         foreach ($variantDataList as $variantData) {
-            $this->upsertVariant($product, $variantData, $productData);
+            $variantLocal = $this->upsertVariant($product, $stock, $variantData, $productData);
+            $updateCreatedVariantsIds[] = $variantLocal->id;
         }
+
+        ProductVariant::where('product_id', $product->id)
+            ->whereNotIn('id', $updateCreatedVariantsIds)
+            ->each(function ($variant) {
+                $variant->update(['sku' => null]);
+                $variant->delete();
+            });
     }
 
-    private function upsertVariant(Product $product, $data, $productData): void
+    private function upsertVariant(Product $product, array $stock, $data, $productData): ProductVariant
     {
         $slug = Str::slug($data->name ?? '');
         $variant = ProductVariant::where('uuid', $data->id)->first()
             ?? ProductVariant::where('sku', $slug)->where('product_id', $product->id)->first();
+
+
+        $stockQty = $stock[$data->id]['stock'] ?? 0;
 
         $attributes = [
             'uuid' => $data->id,
@@ -129,13 +141,18 @@ class ProductsAndVariantsSyncWithMoySkladService
             'barcode' => $data->barcodes[0]->ean13 ?? null,
             'price' => ($data->salePrices[0]->value ?? 0) / 100,
             'cost_price' => null,
-            'stock' => $data->stock ?? 0,
+            'stock' => $stockQty,
             'weight' => $productData->weight ?? 0,
             'type' => 'simple',
             'is_active' => true,
         ];
 
-        $variant ? $variant->update($attributes) : ProductVariant::create($attributes);
+        if ($variant) {
+            $variant->update($attributes);
+            return $variant;
+        }
+
+        return ProductVariant::create($attributes);
     }
 
     private function removeDeletedProducts(array $syncedUUIDs): void
