@@ -58,6 +58,10 @@ class ProductVariantService
             ],
         ];
 
+        $msModification->buyPrice = [
+            'value' => ($productVariant->cost_price ?? 0) * 100, // копейки
+        ];
+
         $msModification->product = [
             'meta' => $produt->meta,
         ];
@@ -100,6 +104,10 @@ class ProductVariantService
                 'currency' => $moySkladHelperService->get_currencies(),
                 'priceType' => $moySkladHelperService->get_price_types()[0],
             ],
+        ];
+
+        $msModification->buyPrice = [
+            'value' => ($productVariant->cost_price ?? 0) * 100, // копейки
         ];
 
         // setting product for updating modification is not necessary
@@ -165,6 +173,9 @@ class ProductVariantService
                         'currency' => $currency,
                         'priceType' => $priceType,
                     ]
+                ],
+                'buyPrice' => [
+                    'value' => ($variant->cost_price ?? 0) * 100, // копейки
                 ],
                 'characteristics' => [
                     [

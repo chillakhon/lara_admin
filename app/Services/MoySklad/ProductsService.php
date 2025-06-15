@@ -81,6 +81,11 @@ class ProductsService
             ],
         ];
 
+        $msProduct->buyPrice = [
+            'value' => ($product->cost_price ?? 0) * 100, // копейки
+            'currency' => $defaultCurrency,
+        ];
+
         $msProduct->uom = [
             "meta" => $foundUnit->meta,
         ];
@@ -131,6 +136,11 @@ class ProductsService
                 'currency' => $defaultCurrency,
                 'priceType' => $defaultPriceType[0],
             ],
+        ];
+
+        $msProduct->buyPrice = [
+            'value' => ($product->cost_price ?? 0) * 100, // копейки
+            'currency' => $defaultCurrency,
         ];
 
         $msProduct->uom = [
