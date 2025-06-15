@@ -14,6 +14,8 @@ class ProductVariantNumberTwoResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $isAdmin = $request->boolean('admin', false);
+
         return [
             'id' => $this->id,
             'product_id' => $this->product_id,
@@ -23,7 +25,10 @@ class ProductVariantNumberTwoResource extends JsonResource
             'price' => $this->price,
             'old_price' => $this->old_price,
             // 'cost_price' => $this->cost_price,
-            'stock_quantity' => $this->inventory_balance,
+            $this->mergeWhen($isAdmin, [
+                'stock_quantity' => $this->inventory_balance,
+            ]),
+            // 'stock_quantity' => $this->inventory_balance,
             // 'additional_cost' => $this->additional_cost,
             'type' => $this->type,
             'unit_id' => $this->unit_id,

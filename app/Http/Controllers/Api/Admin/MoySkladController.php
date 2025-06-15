@@ -9,6 +9,7 @@ use App\Models\ProductVariant;
 use App\Services\MoySklad\MoySkladHelperService;
 use App\Services\MoySklad\ProductsService;
 use App\Services\MoySklad\ProductVariantService;
+use App\Services\MoySklad\ReportService;
 use Exception;
 use Http;
 use Illuminate\Http\Request;
@@ -195,5 +196,13 @@ class MoySkladController extends Controller
         $productsService = new ProductsService();
 
         return $productsService->check_product_for_existence($uuid);
+    }
+
+
+    public function report_dashboard(Request $request)
+    {
+        $reportService = new ReportService();
+
+        return $reportService->report_dashboard($request);
     }
 }

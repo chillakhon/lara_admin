@@ -14,6 +14,8 @@ class ProductNumberTwoResouce extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $isAdmin = $request->boolean('admin', false);
+
         return [
             // Your custom structure based on the JSON you shared
             'id' => $this->id,
@@ -32,7 +34,9 @@ class ProductNumberTwoResouce extends JsonResource
             // 'deleted_at' => $this->deleted_at,
             'price' => $this->price,
             'old_price' => $this->old_price,
-            'stock_quantity' => $this->inventory_balance,
+            $this->mergeWhen($isAdmin, [
+                'stock_quantity' => $this->inventory_balance,
+            ]),
             // 'cost_price' => $this->cost_price,
             // 'currency' => $this->currency,
             // 'stock_quantity' => $this->stock_quantity,

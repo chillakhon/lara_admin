@@ -167,7 +167,11 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::middleware(['role:super-admin,admin,manager'])->group(function () {
         // Financial info api
         Route::prefix('/analytics')->group(function () {
-            Route::get('/financial-summary', [FinancialAnalyticsController::class, 'financialSummary']);
+            Route::get('/financial-summary-sales', [FinancialAnalyticsController::class, 'financialSummarySales']);
+            Route::get('/financial-summary-orders', [FinancialAnalyticsController::class, 'financialSummaryOrders']);
+            Route::get('/combined/analytics', [FinancialAnalyticsController::class, 'combined_analytics']);
+            Route::get('/report/dashboard', [FinancialAnalyticsController::class, 'report_dashboard']);
+            Route::get('/products/income', [FinancialAnalyticsController::class, 'income_by_products']);
             Route::get('/chart', [FinancialAnalyticsController::class, 'weeklyAmount']);
         });
 
@@ -608,6 +612,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 Route::get('/priceTypes', [MoySkladController::class, 'get_price_types']);
                 Route::get('/units', [MoySkladController::class, 'get_units']);
                 Route::get('/characteristics', [MoySkladController::class, 'get_characteristics']);
+                
+                //
+                Route::get('/report/dashboard', [MoySkladController::class, 'report_dashboard']);
             });
         });
     });

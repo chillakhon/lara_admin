@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Models\Order;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -14,50 +15,7 @@ use OpenApi\Annotations as OA;
 
 class OrderStatsController extends Controller
 {
-    /**
-     * Получить статистику заказов по статусам
-     *
-     * @OA\Get(
-     *     path="/api/orders/stats",
-     *     summary="Статистика заказов",
-     *     description="Возвращает агрегированную статистику по заказам: количество и общую сумму для каждого статуса",
-     *     tags={"Orders"},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Успешный ответ",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(
-     *                 property="new",
-     *                 type="object",
-     *                 @OA\Property(property="count", type="integer", example=105),
-     *                 @OA\Property(property="total_amount", type="number", format="float", example=584200.50)
-     *             ),
-     *             @OA\Property(
-     *                 property="processing",
-     *                 type="object",
-     *                 @OA\Property(property="count", type="integer", example=42),
-     *                 @OA\Property(property="total_amount", type="number", format="float", example=215700.00)
-     *             ),
-     *             @OA\Property(
-     *                 property="approved",
-     *                 type="object",
-     *                 @OA\Property(property="count", type="integer", example=8),
-     *                 @OA\Property(property="total_amount", type="number", format="float", example=43200.00)
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Ошибка сервера",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="error", type="string", example="Internal Server Error"),
-     *             @OA\Property(property="message", type="string", example="Не удалось получить статистику")
-     *         )
-     *     )
-     * )
-     */
-    public function stats(): JsonResponse
+    public function stats(Request $request): JsonResponse
     {
         try {
             if (!Schema::hasTable('orders')) {
@@ -71,8 +29,16 @@ class OrderStatsController extends Controller
                 }
             }
 
-            // Основная статистика по статусам
+
+            $from = $request->query('from') ? Carbon::parse($request->query('from')) : now()->subMonths(5)->startOfMonth();
+            $to = $request->query('to') ? Carbon::parse($request->query('to')) : now()->endOfMonth();
+
+            
+
             $stats = Order::query()
+                ->when($request->has(['from', 'to']), function ($query) use ($from, $to) {
+                    $query->whereBetween('created_at', [$from, $to]);
+                })
                 ->select([
                     'status',
                     DB::raw('COUNT(*) as count'),
@@ -82,10 +48,6 @@ class OrderStatsController extends Controller
                 ->get()
                 ->keyBy('status');
 
-            // Подготовка данных для графика за последние 6 месяцев
-            $startDate = now()->subMonths(5)->startOfMonth();
-            $endDate = now()->endOfMonth();
-
             // Получаем данные по месяцам и статусам
             $chartRawData = Order::query()
                 ->select([
@@ -93,12 +55,12 @@ class OrderStatsController extends Controller
                     'status',
                     DB::raw('COUNT(*) as count')
                 ])
-                ->whereBetween('created_at', [$startDate, $endDate])
+                ->whereBetween('created_at', [$from, $to])
                 ->groupBy('month', 'status')
                 ->orderBy('month')
                 ->get();
 
-            // Формируем массивы для графика
+            // Подготовка данных для графика
             $months = collect();
             $statuses = ['new', 'processing', 'approved'];
             $chartData = [
@@ -108,22 +70,17 @@ class OrderStatsController extends Controller
                 'approved' => [],
             ];
 
-            // Собираем список месяцев
-            for ($date = clone $startDate; $date <= $endDate; $date->addMonth()) {
+            for ($date = clone $from; $date <= $to; $date->addMonth()) {
                 $months->push($date->format('Y-m'));
             }
 
-            \Carbon\Carbon::setLocale('ru');
+            Carbon::setLocale('ru');
+            $monthLabels = $months->map(fn($month) => Carbon::createFromFormat('Y-m', $month)->translatedFormat('F'))->toArray();
 
-            $monthLabels = $months->map(function ($month) {
-                return \Carbon\Carbon::createFromFormat('Y-m', $month)->translatedFormat('F');
-            })->toArray();
-
-            // Заполняем данные по статусам
             foreach ($months as $month) {
                 foreach ($statuses as $status) {
                     $count = $chartRawData
-                        ->firstWhere(fn ($item) => $item->month === $month && $item->status === $status)
+                        ->firstWhere(fn($item) => $item->month === $month && $item->status === $status)
                         ->count ?? 0;
 
                     $chartData[$status][] = (int) $count;

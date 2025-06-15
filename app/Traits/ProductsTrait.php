@@ -95,9 +95,12 @@ trait ProductsTrait
 
     public function solve_products_inventory($products = [], $product_stock_sklad = [])
     {
-
+        // In MoySklad, each modification (variant) can have its own stock quantity,
+        // and the main product can also have its own stock.
+        // Therefore, to get the total available stock, we need to sum both.
         foreach ($products as &$product) {
-            $product->inventory_balance = 0.0;
+            // $product->inventory_balance = 0.0;
+            $product->inventory_balance = $product_stock_sklad[$product->uuid]['stock'] ?? 0.0;
 
             if (!empty($product['variants'])) {
                 foreach ($product['variants'] as &$variant) {
@@ -105,9 +108,10 @@ trait ProductsTrait
                     $variant->inventory_balance = $variant_total_qty;
                     $product->inventory_balance += $variant_total_qty;
                 }
-            } else {
-                $product->inventory_balance = $inventory_balances[$$product->uuid]['stock'] ?? 0.0;
             }
+            // else {
+            //     $product->inventory_balance = $inventory_balances[$product->uuid]['stock'] ?? 0.0;
+            // }
         }
 
         // $inventory_balances = InventoryBalance::get()
