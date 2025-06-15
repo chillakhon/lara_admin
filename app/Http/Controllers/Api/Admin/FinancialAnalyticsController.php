@@ -30,13 +30,7 @@ class FinancialAnalyticsController extends Controller
         // $from = $request->input('from');
         // $to = $request->input('to');
 
-        $validate = $request->validate([
-            'type' => ['required', 'string', Rule::in(['day', 'week', 'month'])],
-        ]);
 
-        $indicators = $this->moySkladReportService->report_dashboard($validate['type']);
-
-        return $indicators;
         // incomes
         // $revenues = Order
         //     ::where('status', Order::STATUS_COMPLETED)
@@ -97,8 +91,24 @@ class FinancialAnalyticsController extends Controller
         // ]);
     }
 
+    // info learning
     public function financialSummaryOrders(Request $request)
     {
+        $financialSummaryOrders = $this->moySkladReportService->financialSummaryOrders($request);
+
+        return $financialSummaryOrders;
+    }
+
+    // info learning
+    public function report_dashboard(Request $request)
+    {
+        $validate = $request->validate([
+            'interval' => ['required', 'string', Rule::in(['day', 'week', 'month'])],
+        ]);
+
+        $indicators = $this->moySkladReportService->report_dashboard($validate['interval']);
+
+        return $indicators;
     }
 
     public function income_by_products(Request $request)

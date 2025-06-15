@@ -3,6 +3,7 @@
 namespace App\Services\MoySklad;
 
 use App\Models\DeliveryServiceSetting;
+use Carbon\Carbon;
 use Evgeek\Moysklad\MoySklad;
 use Exception;
 use Http;
@@ -128,5 +129,65 @@ class ReportService
                 'stack_trace' => $e->getTraceAsString()
             ]);
         }
+    }
+
+
+    public function financialSummaryOrders(Request $request)
+    {
+
+        $dateFrom = $request->get('from')
+            ? Carbon::createFromFormat('Y-m-d H:i:s', $request->get('from'))
+            : now()->startOfDay();
+
+        $dateTo = $request->get('to')
+            ? Carbon::createFromFormat('Y-m-d H:i:s', $request->get('to'))
+            : now()->endOfDay();
+
+        $diffInDays = $dateFrom->diffInDays($dateTo);
+
+        if (in_array($request->get('interval'), ['hour', 'day', 'month'])) {
+            $interval = $request->get('interval');
+        }
+
+        $interval = match (true) {
+            $diffInDays <= 1 => 'hour',
+            // $diffInDays <= 7 => 'day',
+            $diffInDays <= 31 => 'day',
+            default => 'month',
+        };
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->token,
+            'Accept-Encoding' => 'gzip',
+            'Content-Type' => 'application/json',
+        ])->get('https://api.moysklad.ru/api/remap/1.2/report/sales/plotseries', [
+                    'momentFrom' => $dateFrom->format('Y-m-d H:i:s'),
+                    'momentTo' => $dateTo->format('Y-m-d H:i:s'),
+                    'interval' => $interval,
+                ]);
+
+        $data = $response->json();
+
+        // Calculate totals from series
+        $totalQuantity = 0;
+        $totalSum = 0;
+        $series = [];
+
+        foreach ($data['series'] ?? [] as $item) {
+            $totalQuantity += $item['quantity'];
+            $totalSum += $item['sum'];
+
+            $series[] = [
+                'date' => $item['date'],
+                'quantity' => $item['quantity'],
+                'sum' => $item['sum'],
+            ];
+        }
+
+        return response()->json([
+            'total_quantity' => $totalQuantity,
+            'total_sum' => $totalSum,
+            'series' => $series,
+        ]);
     }
 }

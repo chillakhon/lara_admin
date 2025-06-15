@@ -169,6 +169,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::prefix('/analytics')->group(function () {
             Route::get('/financial-summary-sales', [FinancialAnalyticsController::class, 'financialSummarySales']);
             Route::get('/financial-summary-orders', [FinancialAnalyticsController::class, 'financialSummaryOrders']);
+            Route::get('/report/dashboard', [FinancialAnalyticsController::class, 'report_dashboard']);
             Route::get('/products/income', [FinancialAnalyticsController::class, 'income_by_products']);
             Route::get('/chart', [FinancialAnalyticsController::class, 'weeklyAmount']);
         });
