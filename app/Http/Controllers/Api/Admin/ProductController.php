@@ -676,8 +676,6 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-
-
         $moySkladController = new MoySkladController();
 
         $deleteResult = $moySkladController->delete_product($product->uuid);
