@@ -30,7 +30,9 @@ class FinancialAnalyticsController extends Controller
         // $from = $request->input('from');
         // $to = $request->input('to');
 
+        $financialSummaryOrders = $this->moySkladReportService->financialSummarySales($request);
 
+        return $financialSummaryOrders;
         // incomes
         // $revenues = Order
         //     ::where('status', Order::STATUS_COMPLETED)
