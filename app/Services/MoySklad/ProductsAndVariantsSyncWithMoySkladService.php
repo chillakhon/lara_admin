@@ -52,8 +52,6 @@ class ProductsAndVariantsSyncWithMoySkladService
 
         $this->removeDeletedProducts($syncedUUIDs);
         $this->syncLocalUnsyncedProducts($controller);
-
-        return true;
     }
 
     private function getUnitsMap(MoySkladHelperService $service): array
