@@ -99,4 +99,9 @@ class Client extends Model
     {
         $this->notify(new ResetPasswordNotification($token));
     }
+
+    public function hasAnyRole($roles)
+    {
+        return false;
+    }
 }

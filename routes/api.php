@@ -94,6 +94,7 @@ Route::middleware('auth:sanctum')->prefix('reviews')->group(function () {
     
     Route::post('{review}/publish', [ReviewController::class, 'publish']);
     Route::post('{review}/unpublish', [ReviewController::class, 'unpublish']);
+    Route::post('{review}/respond', [ReviewController::class, 'respond']);
     Route::delete('{review}', [ReviewController::class, 'destroy']); // ->middleware('auth:api'); was removed because sending error
 
     // Route::get('/shipments', [ShipmentController::class, 'userShipments'])

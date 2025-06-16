@@ -22,7 +22,10 @@ class ReviewController extends Controller
     public function index(Request $request)
     {
 
-        if (!$request->boolean('admin', false) && !$request->get('product_id')) {
+        $admin_role = $request->user()->hasAnyRole(Role::$admin_roles);
+
+
+        if (!$admin_role && !$request->get('product_id')) {
             return response()->json([
                 'success' => false,
                 'message' => "Пожалуйста, укажите ID товара"
@@ -30,7 +33,6 @@ class ReviewController extends Controller
         }
 
         $reviewableMorphMap = $this->reviewable_morph_review_map($request);
-        $admin_role = $request->user()->hasAnyRole(Role::$admin_roles);
 
         $reviews = Review::query()
             ->with([
@@ -42,8 +44,10 @@ class ReviewController extends Controller
                         $query->whereNull('deleted_at');
                     }
                 },
-                'reviewable' => function ($morphTo) use ($reviewableMorphMap) {
-                    $morphTo->morphWith($reviewableMorphMap);
+                'reviewable' => function ($morphTo) use ($reviewableMorphMap, $admin_role) {
+                    if ($admin_role) {
+                        $morphTo->morphWith($reviewableMorphMap);
+                    }
                 },
                 'images',
             ]);
@@ -197,4 +201,35 @@ class ReviewController extends Controller
         ], 204);
     }
 
+
+    public function respond(Request $request, Review $review)
+    {
+        $validated = $request->validate([
+            'content' => 'required|string|min:1',
+            'is_published' => 'nullable|boolean',
+        ]);
+
+        $alreadyExists = $review->responses()
+            ->where('user_id', $request->user()->id)
+            ->where('content', $validated['content'])
+            ->exists();
+
+        if ($alreadyExists) {
+            return response()->json([
+                'message' => 'Такой ответ уже был добавлен ранее.',
+                'duplicate' => true,
+            ], 409); // HTTP 409 Conflict
+        }
+
+        $response = $review->responses()->create([
+            'user_id' => $request->user()->id,
+            'content' => $validated['content'],
+            'is_published' => $validated['is_published'] ?? true,
+        ]);
+
+        return response()->json([
+            'message' => 'Ответ добавлен',
+            'data' => $response,
+        ], 201);
+    }
 }
