@@ -89,6 +89,7 @@ Route::prefix('leads')->group(function () {
 
 Route::middleware('auth:sanctum')->prefix('reviews')->group(function () {
     Route::get('/', [ReviewController::class, 'index']);
+    Route::get('/attributes', [ReviewController::class, 'attributes']);
     Route::post('/', [ReviewController::class, 'store']);
     
     Route::post('{review}/publish', [ReviewController::class, 'publish']);
