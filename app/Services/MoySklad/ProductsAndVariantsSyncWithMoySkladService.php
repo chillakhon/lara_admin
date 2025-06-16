@@ -140,7 +140,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             'sku' => $slug,
             'barcode' => $data->barcodes[0]->ean13 ?? null,
             'price' => ($data->salePrices[0]->value ?? 0) / 100,
-            'cost_price' => null,
+            'cost_price' => ($data->buyPrice->value ?? 0) / 100,
             'stock' => $stockQty,
             'weight' => $productData->weight ?? 0,
             'type' => 'simple',
