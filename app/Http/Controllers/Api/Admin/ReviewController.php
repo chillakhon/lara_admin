@@ -22,7 +22,8 @@ class ReviewController extends Controller
     public function index(Request $request)
     {
 
-        $admin_role = $request->user()->hasAnyRole(Role::$admin_roles);
+        // it's not in middleware that is why better to send parameter
+        $admin_role = $request->boolean('admin', false);
 
 
         if (!$admin_role && !$request->get('product_id')) {
@@ -44,10 +45,8 @@ class ReviewController extends Controller
                         $query->whereNull('deleted_at');
                     }
                 },
-                'reviewable' => function ($morphTo) use ($reviewableMorphMap, $admin_role) {
-                    if ($admin_role) {
-                        $morphTo->morphWith($reviewableMorphMap);
-                    }
+                'reviewable' => function ($morphTo) use ($reviewableMorphMap) {
+                    $morphTo->morphWith($reviewableMorphMap);
                 },
                 'images',
             ]);
@@ -66,7 +65,7 @@ class ReviewController extends Controller
         // Возвращаем JSON-ответ напрямую
         return response()->json([
             'success' => true,
-            'data' => $reviews->items(),
+            'data' => ReviewResource::collection($reviews->items()),
             'current_page' => $reviews->currentPage(),
             'per_page' => $reviews->perPage(),
             'total' => $reviews->total(),

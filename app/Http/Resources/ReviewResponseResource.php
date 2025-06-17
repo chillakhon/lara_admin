@@ -14,6 +14,7 @@ class ReviewResponseResource extends JsonResource
             'user' => [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
+                'email' => $this->user->email
             ],
             'created_at' => $this->created_at,
         ];
