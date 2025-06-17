@@ -19,6 +19,9 @@ class ReviewController extends Controller
     use ReviewTrait, HelperTrait;
 
 
+    // in this whole controller the image field is not using.
+    // you will not get that back in response
+
     public function index(Request $request)
     {
 
