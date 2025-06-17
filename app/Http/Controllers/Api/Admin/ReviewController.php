@@ -10,8 +10,11 @@ use App\Models\ReviewAttribute;
 use App\Models\Role;
 use App\Traits\HelperTrait;
 use App\Traits\ReviewTrait;
+use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use function PHPUnit\Framework\isInstanceOf;
 
 
 class ReviewController extends Controller
@@ -43,7 +46,7 @@ class ReviewController extends Controller
                 // 'client',
                 'attributes',
                 'responses' => function ($query) use ($admin_role) {
-                    $query->with('user');
+                    $query->with('user')->orderBy('created_at', 'desc');
                     if (!$admin_role) {
                         $query->whereNull('deleted_at');
                     }
@@ -206,32 +209,64 @@ class ReviewController extends Controller
 
     public function respond(Request $request, Review $review)
     {
-        $validated = $request->validate([
-            'content' => 'required|string|min:1',
-            'is_published' => 'nullable|boolean',
-        ]);
+        try {
+            $validated = $request->validate([
+                'content' => 'required|string|min:1',
+                'is_published' => 'nullable|boolean',
+            ]);
 
-        $alreadyExists = $review->responses()
-            ->where('user_id', $request->user()->id)
-            ->where('content', $validated['content'])
-            ->exists();
+            $authenticatedUser = $request->user();
 
-        if ($alreadyExists) {
+            $user = null;
+            $client = null;
+
+            if ($authenticatedUser instanceof \App\Models\User) {
+                $user = $authenticatedUser;
+            } else if ($authenticatedUser instanceof \App\Models\Client) {
+                $client = $authenticatedUser;
+            }
+
+            if (is_null($client) && is_null($user)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Пользователь не аутентифицирован или не распознан.',
+                ], 401);
+            }
+
+            $alreadyExists = $review->responses()->where('content', $validated['content']);
+
+            if ($client) {
+                $alreadyExists->where('client_id', $client->id);
+            } else if ($user) {
+                $alreadyExists->where('user_id', $user->id);
+            }
+
+            $alreadyExists = $alreadyExists->exists();
+
+            if ($alreadyExists) {
+                return response()->json([
+                    'message' => 'Такой ответ уже был добавлен ранее.',
+                    'duplicate' => true,
+                ], 409); // HTTP 409 Conflict
+            }
+
+            $response = $review->responses()->create([
+                'user_id' => $user?->id,
+                'client_id' => $client?->id,
+                'content' => $validated['content'],
+                'is_published' => $validated['is_published'] ?? true,
+            ]);
+
             return response()->json([
-                'message' => 'Такой ответ уже был добавлен ранее.',
-                'duplicate' => true,
-            ], 409); // HTTP 409 Conflict
+                'message' => 'Ответ добавлен',
+                'data' => $response,
+            ], 201);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                "line" => $e->getLine(),
+                "stack_trace" => $e->getTraceAsString()
+            ]);
         }
-
-        $response = $review->responses()->create([
-            'user_id' => $request->user()->id,
-            'content' => $validated['content'],
-            'is_published' => $validated['is_published'] ?? true,
-        ]);
-
-        return response()->json([
-            'message' => 'Ответ добавлен',
-            'data' => $response,
-        ], 201);
     }
 }
