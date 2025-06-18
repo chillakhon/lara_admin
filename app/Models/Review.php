@@ -84,17 +84,19 @@ class Review extends Model
     const STATUS_NEW = 'new';
     const STATUS_PUBLISHED = 'published';
 
-    protected $fillable = [
-        'client_id',
-        'reviewable_type',
-        'reviewable_id',
-        'content',
-        'rating',
-        'is_verified',
-        'is_published',
-        'published_at',
-        'status',
-    ];
+    // protected $fillable = [
+    //     'client_id',
+    //     'reviewable_type',
+    //     'reviewable_id',
+    //     'content',
+    //     'rating',
+    //     'is_verified',
+    //     'is_published',
+    //     'published_at',
+    //     'status',
+    // ];
+
+    protected $guarded = ['id'];
 
     protected $casts = [
         'is_verified' => 'boolean',

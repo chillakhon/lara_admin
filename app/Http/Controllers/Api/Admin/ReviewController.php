@@ -46,7 +46,7 @@ class ReviewController extends Controller
                 // 'client',
                 'attributes',
                 'responses' => function ($query) use ($admin_role) {
-                    $query->with('user')->orderBy('created_at', 'desc');
+                    $query->with('user')->orderBy('created_at', 'asc');
                     if (!$admin_role) {
                         $query->whereNull('deleted_at');
                     }

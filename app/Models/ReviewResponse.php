@@ -33,4 +33,9 @@ class ReviewResponse extends Model
     {
         return $this->belongsTo(User::class);
     }
-} 
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+}
