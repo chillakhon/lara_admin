@@ -41,6 +41,11 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    public function get_full_name()
+    {
+        return $this?->profile?->getFullNameAttribute();
+    }
+
     public function profile()
     {
         return $this->hasOne(UserProfile::class);

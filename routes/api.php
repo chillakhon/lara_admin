@@ -87,17 +87,23 @@ Route::prefix('leads')->group(function () {
 });
 
 
-Route::middleware('auth:sanctum')->prefix('reviews')->group(function () {
+Route::prefix('reviews')->group(function () {
     Route::get('/', [ReviewController::class, 'index']);
-    Route::post('/', [ReviewController::class, 'store']);
-    
-    Route::post('{review}/publish', [ReviewController::class, 'publish']);
-    Route::post('{review}/unpublish', [ReviewController::class, 'unpublish']);
-    Route::delete('{review}', [ReviewController::class, 'destroy']); // ->middleware('auth:api'); was removed because sending error
+    Route::get('/attributes', [ReviewController::class, 'attributes']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/', [ReviewController::class, 'store']);
+        Route::post('{review}/publish', [ReviewController::class, 'publish']);
+        Route::post('{review}/unpublish', [ReviewController::class, 'unpublish']);
+        Route::post('{review}/respond', [ReviewController::class, 'respond']);
+        Route::delete('{review}', [ReviewController::class, 'destroy']); // ->middleware('auth:api'); was removed because sending error
+    });
 
     // Route::get('/shipments', [ShipmentController::class, 'userShipments'])
     //     ->name('shipments.index');
 });
+
+
 Route::prefix('delivery')->name('delivery.')->group(function () {
     Route::post('/calculate', [DeliveryController::class, 'calculate'])->name('calculate');
 
@@ -612,7 +618,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 Route::get('/priceTypes', [MoySkladController::class, 'get_price_types']);
                 Route::get('/units', [MoySkladController::class, 'get_units']);
                 Route::get('/characteristics', [MoySkladController::class, 'get_characteristics']);
-                
+
                 //
                 Route::get('/report/dashboard', [MoySkladController::class, 'report_dashboard']);
             });

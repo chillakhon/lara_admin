@@ -99,4 +99,11 @@ class Client extends Model
     {
         $this->notify(new ResetPasswordNotification($token));
     }
+
+    // is not necessary for clients, but in order to not get a error
+    // just let it be here
+    public function hasAnyRole($roles)
+    {
+        return false;
+    }
 }

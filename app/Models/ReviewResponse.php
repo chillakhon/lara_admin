@@ -11,12 +11,14 @@ class ReviewResponse extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = [
-        'review_id',
-        'user_id',
-        'content',
-        'is_published'
-    ];
+    // protected $fillable = [
+    //     'review_id',
+    //     'user_id',
+    //     'content',
+    //     'is_published'
+    // ];
+
+    protected $guarded = ['id'];
 
     protected $casts = [
         'is_published' => 'boolean'
@@ -31,4 +33,14 @@ class ReviewResponse extends Model
     {
         return $this->belongsTo(User::class);
     }
-} 
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function responded_to()
+    {
+        return $this->hasOne(ReviewResponse::class, 'id', 'review_response_id');
+    }
+}
