@@ -38,4 +38,9 @@ class ReviewResponse extends Model
     {
         return $this->belongsTo(Client::class);
     }
+
+    public function responded_to()
+    {
+        return $this->hasOne(ReviewResponse::class, 'id', 'review_response_id');
+    }
 }
