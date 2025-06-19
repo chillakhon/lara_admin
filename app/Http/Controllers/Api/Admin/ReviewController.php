@@ -10,6 +10,7 @@ use App\Models\ReviewAttribute;
 use App\Models\Role;
 use App\Traits\HelperTrait;
 use App\Traits\ReviewTrait;
+use DB;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -209,12 +210,15 @@ class ReviewController extends Controller
 
     public function respond(Request $request, Review $review)
     {
-        try {
-            $validated = $request->validate([
-                'content' => 'required|string|min:1',
-                'is_published' => 'nullable|boolean',
-            ]);
+        $validated = $request->validate([
+            'content' => 'required|string|min:1',
+            'is_published' => 'nullable|boolean',
+            'review_response_id' => 'nullable|exists:review_responses,id',
+        ]);
 
+        DB::beginTransaction();
+
+        try {
             $authenticatedUser = $request->user();
 
             $user = null;
@@ -254,14 +258,18 @@ class ReviewController extends Controller
                 'user_id' => $user?->id,
                 'client_id' => $client?->id,
                 'content' => $validated['content'],
+                'review_response_id' => $validated['review_response_id'],
                 'is_published' => $validated['is_published'] ?? true,
             ]);
+
+            DB::commit();
 
             return response()->json([
                 'message' => 'Ответ добавлен',
                 'data' => $response,
             ], 201);
         } catch (Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'message' => $e->getMessage(),
                 "line" => $e->getLine(),
