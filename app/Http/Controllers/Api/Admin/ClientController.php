@@ -213,9 +213,9 @@ class ClientController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
+            'birthday' => 'required|date',
             'last_name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:255',
-            'birthday' => 'nullable|date',
         ]);
 
         if ($validator->fails()) {
