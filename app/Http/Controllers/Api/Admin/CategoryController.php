@@ -69,11 +69,12 @@ class CategoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'parent_id' => 'nullable|exists:categories,id'
         ]);
 
         $category->name = $validated['name'];
-        // slug will be automatically updated if name changes
+        $category->description = $validated['description'] ?? null;
 
         if ($validated['parent_id'] !== $category->parent_id) {
             if ($validated['parent_id']) {
@@ -86,7 +87,10 @@ class CategoryController extends Controller
             $category->save();
         }
 
-        return response()->json(['message' => 'Category updated successfully', 'category' => $category]);
+        return response()->json([
+            'message' => 'Category updated successfully',
+            'category' => $category
+        ]);
     }
 
     public function destroy(Category $category)
