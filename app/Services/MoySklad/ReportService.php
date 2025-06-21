@@ -191,7 +191,6 @@ class ReportService
 
     public function financialSummaryOrders(Request $request)
     {
-
         $dateFrom = $request->get('from')
             ? Carbon::createFromFormat('Y-m-d H:i:s', $request->get('from'))
             : now()->startOfDay();
@@ -229,7 +228,6 @@ class ReportService
         foreach ($data['series'] ?? [] as $item) {
             $totalQuantity += $item['quantity'];
             $totalSum += $item['sum'];
-
             $series[] = [
                 'date' => $item['date'],
                 'quantity' => $item['quantity'],
