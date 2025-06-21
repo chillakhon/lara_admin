@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DiscountRequest;
 use App\Http\Resources\DiscountResource;
+use App\Models\CategoryProduct;
 use App\Models\Discount;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use DB;
 use Illuminate\Http\Request;
 
 class DiscountController extends Controller
@@ -64,7 +66,19 @@ class DiscountController extends Controller
             }
         } elseif ($request->discount_type === 'category') {
             if ($request->has('categories')) {
-                $discount->categories()->attach($request->categories);
+                // $discount->categories()->attach($request->categories);
+
+                $productIds = CategoryProduct
+                    ::whereIn('category_id', $request->get('categories'))
+                    ->pluck('product_id')->unique()->toArray();
+
+                $variantIds = ProductVariant
+                    ::whereIn('product_id', $productIds)
+                    ->pluck('id')
+                    ->toArray();
+
+                $this->reassignProductsToDiscount($productIds, $discount);
+                $this->reassignVariantsToDiscount($variantIds, $discount);
             }
 
         } elseif ($request->discount_type === 'all') {
@@ -109,7 +123,20 @@ class DiscountController extends Controller
 
         } elseif ($request->discount_type === 'category') {
             if ($request->has('categories')) {
-                $discount->categories()->attach($request->categories);
+                // $discount->categories()->attach($request->categories);
+
+
+                $productIds = CategoryProduct
+                    ::whereIn('category_id', $request->get('categories'))
+                    ->pluck('product_id')->unique()->toArray();
+
+                $variantIds = ProductVariant
+                    ::whereIn('product_id', $productIds)
+                    ->pluck('id')
+                    ->toArray();
+
+                $this->reassignProductsToDiscount($productIds, $discount);
+                $this->reassignVariantsToDiscount($variantIds, $discount);
             }
 
         } elseif ($request->discount_type === 'all') {

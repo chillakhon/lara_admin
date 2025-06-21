@@ -184,7 +184,7 @@ class Product extends Model implements HasMedia
 
     public function categories()
     {
-        return $this->belongsToMany(Category::class);
+        return $this->belongsToMany(Category::class, 'category_product', 'product_id', 'category_id');
     }
 
     public function options(): BelongsToMany
