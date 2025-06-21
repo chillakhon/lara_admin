@@ -44,7 +44,9 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'parent_id' => 'nullable|exists:categories,id'
+            'parent_id' => 'nullable|exists:categories,id',
+            'product_ids' => 'nullable|array',
+            'product_ids.*' => 'exists:products,id',
         ]);
 
         $category = new Category();
@@ -59,6 +61,10 @@ class CategoryController extends Controller
             $category->save();
         }
 
+        if (!empty($validated['product_ids'])) {
+            $category->products()->attach($validated['product_ids']);
+        }
+
         return response()->json([
             'message' => 'Category created successfully.',
             'category' => $category
@@ -70,7 +76,9 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'parent_id' => 'nullable|exists:categories,id'
+            'parent_id' => 'nullable|exists:categories,id',
+            'product_ids' => 'nullable|array',
+            'product_ids.*' => 'exists:products,id',
         ]);
 
         $category->name = $validated['name'];
@@ -87,6 +95,10 @@ class CategoryController extends Controller
             $category->save();
         }
 
+        if (array_key_exists('product_ids', $validated)) {
+            $category->products()->sync($validated['product_ids']);
+        }
+
         return response()->json([
             'message' => 'Category updated successfully',
             'category' => $category
@@ -95,6 +107,7 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
+        $category->products()->detach();
         $category->delete();
         return response()->json(['message' => 'Категория удалена!']);
     }
