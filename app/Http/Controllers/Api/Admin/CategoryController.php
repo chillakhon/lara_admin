@@ -52,7 +52,6 @@ class CategoryController extends Controller
         $category = new Category();
         $category->name = $validated['name'];
         $category->description = $validated['description'] ?? null;
-        // slug will be automatically generated
 
         if ($validated['parent_id']) {
             $parent = Category::findOrFail($validated['parent_id']);
