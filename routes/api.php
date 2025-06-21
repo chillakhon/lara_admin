@@ -182,6 +182,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         // Categories
         Route::group(['prefix' => 'categories', 'as' => 'categories.'], function () {
             Route::get('/', [CategoryController::class, 'index']);
+            Route::get('/products', [CategoryController::class, 'get_products_of_category']);
             Route::post('/', [CategoryController::class, 'store']);
             Route::put('/{category}', [CategoryController::class, 'update']);
             Route::delete('/{category}', [CategoryController::class, 'destroy']);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CategoryResource;
+use App\Http\Resources\ProductNumberTwoResouce;
 use App\Models\Category;
 use Illuminate\Http\Request;
 
@@ -109,5 +110,20 @@ class CategoryController extends Controller
         $category->products()->detach();
         $category->delete();
         return response()->json(['message' => 'Категория удалена!']);
+    }
+
+    public function get_products_of_category(Request $request)
+    {
+        $validated = $request->validate([
+            'category_id' => 'required|exists:categories,id',
+        ]);
+
+        $category = Category::with('products')->findOrFail($validated['category_id']);
+
+        return response()->json([
+            'category_id' => $category->id,
+            'category_name' => $category->name,
+            'products' => ProductNumberTwoResouce::collection($category->products),
+        ]);
     }
 }
