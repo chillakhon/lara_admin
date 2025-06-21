@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Admin\CountriesController;
 use App\Http\Controllers\Api\Admin\DeliveryMethodController;
 use App\Http\Controllers\Api\Admin\DeliveryRateController;
 use App\Http\Controllers\Api\Admin\DeliveryZoneController;
+use App\Http\Controllers\Api\Admin\DiscountAnalyticsController;
 use App\Http\Controllers\Api\Admin\DiscountController;
 use App\Http\Controllers\Api\Admin\FinancialAnalyticsController;
 use App\Http\Controllers\Api\Admin\InventoryController;
@@ -165,6 +166,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/financial-summary-sales', [FinancialAnalyticsController::class, 'financialSummarySales']);
             Route::get('/financial-summary-orders', [FinancialAnalyticsController::class, 'financialSummaryOrders']);
             Route::get('/combined/analytics', [FinancialAnalyticsController::class, 'combined_analytics']);
+            Route::get('/discounts/analytics', [DiscountAnalyticsController::class, 'index']);
             Route::get('/report/dashboard', [FinancialAnalyticsController::class, 'report_dashboard']);
             Route::get('/products/income', [FinancialAnalyticsController::class, 'income_by_products']);
             Route::get('/chart', [FinancialAnalyticsController::class, 'weeklyAmount']);
