@@ -75,7 +75,7 @@ Route::get('reviews/product/{product}', [ReviewController::class, 'productReview
 
 //Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('search', [SearchController::class, 'search'])->name('api.search');
-Route::post('/promo-codes/validate', [PromoCodeController::class, 'validate'])->name('api.promo-codes.validate');
+// Route::post('/promo-codes/validate', [PromoCodeController::class, 'validate'])
 
 Route::prefix('leads')->group(function () {
     Route::post('/', [LeadController::class, 'store']);
@@ -132,6 +132,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 //Route::post('/ssss', [ProductController::class, 'store']);
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+
+    Route::get('/promo-codes/validate', [PromoCodeController::class, 'validate'])->name('api.promo-codes.validate');
+
 
     Route::prefix('/countries')->group(function () {
         Route::get('/', [CountriesController::class, 'countries']);
@@ -323,7 +326,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/', [PromoCodeController::class, 'store'])->name('store');
             Route::put('/{promoCode}', [PromoCodeController::class, 'update'])->name('update');
             Route::delete('/{promoCode}', [PromoCodeController::class, 'destroy'])->name('destroy');
-            Route::get('/validate', [PromoCodeController::class, 'validate']);
             // Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('usage');
         });
         //
@@ -342,7 +344,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            Route::post('/release-reservation/{reservation}', [InventoryController::class, 'releaseReservation'])
 //                ->name('release-reservation');
         });
-//
+        //
 //        // Производство
         Route::prefix('production')->name('production.')->group(function () {
             Route::get('/', [ProductionController::class, 'index']);

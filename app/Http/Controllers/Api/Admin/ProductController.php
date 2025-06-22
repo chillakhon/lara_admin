@@ -282,6 +282,7 @@ class ProductController extends Controller
                     $cleanVariantData['length'] = $product->length;
                     $cleanVariantData['width'] = $product->width;
                     $cleanVariantData['height'] = $product->height;
+                    $cleanVariantData['colors'] = $validated['colors'] ?? []; // product's colors
                     $cleanVariantData['sku'] = Str::slug($variantData['name']);
                     // temp value for syncing with MoySklad
                     $cleanVariantData['code'] = (string) rand(1000000000, 9999999999);
@@ -289,7 +290,7 @@ class ProductController extends Controller
 
                     $created_variant = ProductVariant::create($cleanVariantData);
 
-                    $colorIds = collect($variantData['colors'] ?? [])->pluck('id');
+                    $colorIds = collect($cleanVariantData['colors'] ?? [])->pluck('id');
 
                     $created_variant->colors()->attach($colorIds);
                     // -1 means that its creating for the first time and you have to put null instead
@@ -497,7 +498,8 @@ class ProductController extends Controller
                 $cleanVariantData['length'] = $product->length;
                 $cleanVariantData['width'] = $product->width;
                 $cleanVariantData['height'] = $product->height;
-                $variant_colors_ids = collect($variantData['colors'] ?? [])->pluck('id');
+                $cleanVariantData['colors'] = $validated['colors'] ?? [];
+                $variant_colors_ids = collect($cleanVariantData['colors'] ?? [])->pluck('id');
 
                 if (!empty($variantData['id'])) {
                     $variant = ProductVariant::where('id', $variantData['id'])->firstOrFail();
