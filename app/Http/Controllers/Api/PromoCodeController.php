@@ -16,6 +16,27 @@ class PromoCodeController extends Controller
         ]);
     }
 
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|unique:promo_codes,code',
+            'discount_amount' => 'required|numeric|min:0',
+            'discount_type' => 'required|in:percentage,fixed',
+            'starts_at' => 'nullable|date',
+            'expires_at' => 'nullable|date|after_or_equal:starts_at',
+            'max_uses' => 'nullable|integer|min:1',
+            'is_active' => 'boolean',
+        ]);
+
+        $promo = PromoCode::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Промокод создан',
+            'data' => $promo,
+        ], 201);
+    }
+
     public function validate(Request $request)
     {
         $request->validate([
