@@ -37,6 +37,27 @@ class PromoCodeController extends Controller
         ], 201);
     }
 
+    public function update(Request $request, PromoCode $promoCode)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|unique:promo_codes,code,' . $promoCode->id,
+            'discount_amount' => 'required|numeric|min:0',
+            'discount_type' => 'required|in:percentage,fixed',
+            'starts_at' => 'nullable|date',
+            'expires_at' => 'nullable|date|after_or_equal:starts_at',
+            'max_uses' => 'nullable|integer|min:1',
+            'is_active' => 'boolean',
+        ]);
+
+        $promoCode->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Промокод обновлён',
+            'data' => $promoCode,
+        ]);
+    }
+
     public function validate(Request $request)
     {
         $request->validate([
