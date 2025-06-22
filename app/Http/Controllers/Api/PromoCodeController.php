@@ -58,6 +58,16 @@ class PromoCodeController extends Controller
         ]);
     }
 
+    public function destroy(PromoCode $promoCode)
+    {
+        $promoCode->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Промокод удалён'
+        ]);
+    }
+
     public function validate(Request $request)
     {
         $request->validate([
