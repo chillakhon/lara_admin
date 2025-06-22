@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Admin\CountriesController;
 use App\Http\Controllers\Api\Admin\DeliveryMethodController;
 use App\Http\Controllers\Api\Admin\DeliveryRateController;
 use App\Http\Controllers\Api\Admin\DeliveryZoneController;
+use App\Http\Controllers\Api\Admin\DiscountAnalyticsController;
 use App\Http\Controllers\Api\Admin\DiscountController;
 use App\Http\Controllers\Api\Admin\FinancialAnalyticsController;
 use App\Http\Controllers\Api\Admin\InventoryController;
@@ -59,14 +60,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/admin-user', [AuthenticatedSessionController::class, 'get_admin_user'])->middleware('auth:sanctum');
 
-
 //Route::get('products/{product}/images-path', [ProductImageController::class, 'index']);
 Route::get('/products/{product}/image', [ProductImageController::class, 'getProductImage']);
 Route::get('/product/image/{name}', [ProductImageController::class, 'getProductImageByName']);
 Route::get('/products/{product}/main-image', [ProductImageController::class, 'getMainProductImage']);
-
-
-
 
 //client - admin
 Route::get('/products', [ProductController::class, 'index']);
@@ -77,15 +74,12 @@ Route::get('reviews/product/{product}', [ReviewController::class, 'productReview
 //Route::get('/products/{slug}', [ProductController::class, 'show']);
 
 //Route::get('/categories', [CategoryController::class, 'index']);
-
 Route::get('search', [SearchController::class, 'search'])->name('api.search');
-Route::post('/promo-codes/validate', [PromoCodeController::class, 'validate'])->name('api.promo-codes.validate');
-
+// Route::post('/promo-codes/validate', [PromoCodeController::class, 'validate'])
 
 Route::prefix('leads')->group(function () {
     Route::post('/', [LeadController::class, 'store']);
 });
-
 
 Route::prefix('reviews')->group(function () {
     Route::get('/', [ReviewController::class, 'index']);
@@ -98,11 +92,9 @@ Route::prefix('reviews')->group(function () {
         Route::post('{review}/respond', [ReviewController::class, 'respond']);
         Route::delete('{review}', [ReviewController::class, 'destroy']); // ->middleware('auth:api'); was removed because sending error
     });
-
     // Route::get('/shipments', [ShipmentController::class, 'userShipments'])
     //     ->name('shipments.index');
 });
-
 
 Route::prefix('delivery')->name('delivery.')->group(function () {
     Route::post('/calculate', [DeliveryController::class, 'calculate'])->name('calculate');
@@ -118,7 +110,6 @@ Route::prefix('delivery')->name('delivery.')->group(function () {
 Route::post('/admin-login', [AuthenticatedSessionController::class, 'admin_login']);
 Route::post('/admin-register', [RegisteredUserController::class, 'admin_registration']);
 Route::get('/client-user', [AuthenticatedSessionController::class, 'get_user'])->middleware('auth:sanctum');
-
 
 Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
 Route::post('reset-password', [NewPasswordController::class, 'store']);
@@ -140,8 +131,10 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 //Route::post('/ssss', [ProductController::class, 'store']);
-
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+
+    Route::get('/promo-codes/validate', [PromoCodeController::class, 'validate'])->name('api.promo-codes.validate');
+
 
     Route::prefix('/countries')->group(function () {
         Route::get('/', [CountriesController::class, 'countries']);
@@ -176,6 +169,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/financial-summary-sales', [FinancialAnalyticsController::class, 'financialSummarySales']);
             Route::get('/financial-summary-orders', [FinancialAnalyticsController::class, 'financialSummaryOrders']);
             Route::get('/combined/analytics', [FinancialAnalyticsController::class, 'combined_analytics']);
+            Route::get('/discounts/analytics', [DiscountAnalyticsController::class, 'index']);
             Route::get('/report/dashboard', [FinancialAnalyticsController::class, 'report_dashboard']);
             Route::get('/products/income', [FinancialAnalyticsController::class, 'income_by_products']);
             Route::get('/chart', [FinancialAnalyticsController::class, 'weeklyAmount']);
@@ -193,6 +187,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         // Categories
         Route::group(['prefix' => 'categories', 'as' => 'categories.'], function () {
             Route::get('/', [CategoryController::class, 'index']);
+            Route::get('/products', [CategoryController::class, 'get_products_of_category']);
             Route::post('/', [CategoryController::class, 'store']);
             Route::put('/{category}', [CategoryController::class, 'update']);
             Route::delete('/{category}', [CategoryController::class, 'destroy']);
@@ -267,7 +262,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //                ->name('options.update');
 //            Route::delete('/{product}/options/{option}', [ProductController::class, 'destroyOption'])
 //                ->name('options.destroy');
-
             //
         });
         //
@@ -321,24 +315,21 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::put('/{client}', [ClientController::class, 'update'])->name('update');
             Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
         });
-
-
         //
 //        Route::group(['prefix' => 'orders', 'as' => 'orders.'], function () {
 //            Route::get('/', [OrderController::class, 'index'])->name('index');
 //            Route::put('/{order}', [OrderController::class, 'update'])->name('update');
 //            Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
 //        });
-//
         Route::group(['prefix' => 'promo-codes', 'as' => 'promo-codes.'], function () {
             Route::get('/', [PromoCodeController::class, 'index'])->name('index');
             Route::post('/', [PromoCodeController::class, 'store'])->name('store');
             Route::put('/{promoCode}', [PromoCodeController::class, 'update'])->name('update');
             Route::delete('/{promoCode}', [PromoCodeController::class, 'destroy'])->name('destroy');
-            Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('usage');
+            // Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('usage');
         });
         //
-//        // Инвентарь
+        // Инвентарь
         Route::prefix('inventory')->name('inventory.')->group(function () {
             Route::get('/', [InventoryController::class, 'index'])->name('index');
             Route::post('/add', [InventoryController::class, 'addStock'])->name('add');
@@ -346,8 +337,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/transactions', [InventoryController::class, 'transactions'])->name('transactions');
             Route::get('/stock', [InventoryController::class, 'getStock'])->name('stock');
             Route::get('/transactions/history', [InventoryController::class, 'getTransactionHistory'])->name('transactions.history');
-
-
             //            Route::get('/component-usage', [InventoryController::class, 'componentUsage'])
 //                ->name('component-usage');
 //            Route::post('/reserve-components', [InventoryController::class, 'reserveComponents'])
@@ -356,7 +345,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //                ->name('release-reservation');
         });
         //
-//
 //        // Производство
         Route::prefix('production')->name('production.')->group(function () {
             Route::get('/', [ProductionController::class, 'index']);
@@ -376,8 +364,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            Route::get('/pending', [ProductionController::class, 'pending'])->name('pending');
 //            Route::get('/history', [ProductionController::class, 'history'])->name('history');
         });
-        //
-
         //        // Orders
         Route::prefix('orders')->name('orders.')->middleware(['role:super-admin,admin,manager', 'permission:orders.view,orders.manage'])->group(function () {
             Route::get('/', [OrderController::class, 'index'])->name('orders.index');  // Путь будет /api/orders
@@ -386,24 +372,17 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');  // Путь будет /api/orders/{order}
             Route::put('/{order}', [OrderController::class, 'update'])->name('orders.update');  // Путь будет /api/orders/{order}
             Route::delete('/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');  // Путь будет /api/orders/{order}
-
-
-
-
             // Дополнительные действия с заказами
             Route::put('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');  // Путь будет /api/orders/{order}/status
             Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');  // Путь будет /api/orders/{order}/items
             Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');  // Путь будет /api/orders/{order}/items/{item}
         });
 
-
         // Маршруты, доступные только администраторам
         Route::middleware(['role:super-admin,admin'])->group(function () {
             // Управление пользователями
             Route::prefix('users')->name('users.')->group(function () {
                 Route::put('/update-profile/{user}', [UserController::class, 'update_profile']);
-
-
                 Route::get('/', [UserController::class, 'index'])
                     ->middleware('permission:users.view')
                     ->name('index');
@@ -586,7 +565,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 ->middleware('permission:settings.manage')
                 ->name('update');
         });
-
         // Conversations routes
 //        Route::group(['prefix' => 'conversations', 'as' => 'conversations.'], function () {
 //            Route::get('/', [ConversationController::class, 'index'])->name('index');
@@ -595,8 +573,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            Route::post('/{conversation}/close', [ConversationController::class, 'close'])->name('close');
 //            Route::post('/{conversation}/assign', [ConversationController::class, 'assign'])->name('assign');
 //        });
-
-
         Route::prefix('/third-party-integrations')->group(function () {
             Route::prefix('/chats')->group(function () {
                 Route::post('/telegram', [ChatsIntegrationController::class, 'telegram_integration']);
@@ -618,7 +594,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 Route::get('/priceTypes', [MoySkladController::class, 'get_price_types']);
                 Route::get('/units', [MoySkladController::class, 'get_units']);
                 Route::get('/characteristics', [MoySkladController::class, 'get_characteristics']);
-
                 //
                 Route::get('/report/dashboard', [MoySkladController::class, 'report_dashboard']);
             });

@@ -213,7 +213,9 @@ class ClientController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
+            'birthday' => 'required|date',
             'last_name' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
             'phone' => 'nullable|string|max:255',
         ]);
 
@@ -239,6 +241,7 @@ class ClientController extends Controller
                     'last_name' => $request->last_name,
                     'phone' => $request->phone,
                     'address' => $request->address,
+                    'birthday' => $request->birthday,
                 ]);
             } else {
                 $client->profile()->updateOrCreate(
@@ -248,6 +251,7 @@ class ClientController extends Controller
                         'last_name' => $request->last_name,
                         'phone' => $request->phone,
                         'address' => $request->address,
+                        'birthday' => $request->birthday,
                     ]
                 );
             }
