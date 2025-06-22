@@ -323,7 +323,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::post('/', [PromoCodeController::class, 'store'])->name('store');
             Route::put('/{promoCode}', [PromoCodeController::class, 'update'])->name('update');
             Route::delete('/{promoCode}', [PromoCodeController::class, 'destroy'])->name('destroy');
-            Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('usage');
+            Route::get('/validate', [PromoCodeController::class, 'validate']);
+            // Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('usage');
         });
         //
         // Инвентарь
