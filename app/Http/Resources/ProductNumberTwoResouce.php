@@ -47,6 +47,7 @@ class ProductNumberTwoResouce extends JsonResource
             'discount_price' => $this->discount_price,
             'discount_percentage' => $this->discount_percentage,
             'total_discount' => $this->total_discount,
+            'discount_id' => $this->discount_id,
             'sku' => $this->sku,
             'barcode' => $this->barcode,
             'weight' => $this->weight,
