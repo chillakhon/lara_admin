@@ -11,16 +11,18 @@ class PromoCode extends Model
     use HasFactory;
     use SoftDeletes;
 
-    protected $fillable = [
-        'code',
-        'discount_amount',
-        'discount_type',
-        'starts_at',
-        'expires_at',
-        'max_uses',
-        'times_used',
-        'is_active',
-    ];
+    // protected $fillable = [
+    //     'code',
+    //     'discount_amount',
+    //     'discount_type',
+    //     'starts_at',
+    //     'expires_at',
+    //     'max_uses',
+    //     'times_used',
+    //     'is_active',
+    // ];
+
+    protected $guarded = ['id'];
 
     protected $casts = [
         'starts_at' => 'datetime',
@@ -37,9 +39,14 @@ class PromoCode extends Model
             ($this->max_uses === null || $this->times_used < $this->max_uses);
     }
 
+    // public function usages()
+    // {
+    //     return $this->hasMany(PromoCodeUsage::class);
+    // }
+
     public function usages()
     {
-        return $this->hasMany(PromoCodeUsage::class);
+        return $this->hasMany(Order::class);
     }
 
     public function isValidForClient(Client $client)

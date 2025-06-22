@@ -8,6 +8,14 @@ use Illuminate\Http\Request;
 
 class PromoCodeController extends Controller
 {
+    public function index()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => PromoCode::all()
+        ]);
+    }
+
     public function validate(Request $request)
     {
         $request->validate([
@@ -30,14 +38,12 @@ class PromoCodeController extends Controller
             ], 404);
         }
 
-        // Проверяем лимит использований
         if ($promoCode->max_uses && $promoCode->total_uses >= $promoCode->max_uses) {
             return response()->json([
                 'message' => 'Превышен лимит использований промокода'
             ], 400);
         }
 
-        // Проверяем использование клиентом
         if ($promoCode->usages()->where('client_id', $request->client_id)->exists()) {
             return response()->json([
                 'message' => 'Вы уже использовали этот промокод'
