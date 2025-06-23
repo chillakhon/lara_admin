@@ -60,7 +60,7 @@ class ProductController extends Controller
 
                 return new ProductNumberTwoResouce($products);
             } else if ($request->boolean('paginate', true)) {
-                $products = $products->paginate(10);
+                $products = $products->paginate($request->get('per_page') ?? 10);
 
                 $products->getCollection()->transform(function ($product) {
                     $product->image_path = $product->images->isNotEmpty() ? $product->images->first()->path : null;
