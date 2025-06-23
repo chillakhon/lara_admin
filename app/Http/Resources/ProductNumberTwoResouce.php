@@ -55,6 +55,7 @@ class ProductNumberTwoResouce extends JsonResource
             'width' => $this->width,
             'height' => $this->height,
             // 'image_path' => $this->image_path,
+            'main_image' => $this->main_image ? new ImageResource($this->main_image) : null,
             'images' => ImageResource::collection($this->images ?? []),
             'colors' => ColorResource::collection($this->colors ?? []),
             'variants' => ProductVariantNumberTwoResource::collection($this->variants ?? []),

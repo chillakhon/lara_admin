@@ -201,6 +201,11 @@ class Product extends Model implements HasMedia
         return $this->morphMany(Image::class, 'item');
     }
 
+    public function main_image()
+    {
+        return $this->morphOne(Image::class, 'item')->where('is_main', true);
+    }
+
     public function getImagesForVariant($variantId)
     {
         return $this->images()
