@@ -63,6 +63,11 @@ class ProductVariant extends Model
         return $this->morphMany(Image::class, 'item');
     }
 
+    public function main_image()
+    {
+        return $this->morphOne(Image::class, 'item')->where('is_main', true);
+    }
+
     public function getMainImageAttribute()
     {
         return $this->images->where('is_main', true)->first()
