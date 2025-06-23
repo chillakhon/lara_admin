@@ -176,9 +176,15 @@ trait ProductsTrait
                 $finalPrice = max(0, $price - $totalDiscount);
             }
             $model->old_price = $price;
+            $model->discount_id = $discount->id;
         } elseif ($oldPrice && $oldPrice > $price) {
             $totalDiscount = $oldPrice - $price;
             $percentage = $oldPrice > 0 ? round(($totalDiscount / $oldPrice) * 100) : null;
+            // setting null to discount_id if discount is null
+            $model->discount_id = null;
+        } else {
+            // setting null to discount_id if discount is null
+            $model->discount_id = null;
         }
 
         // $model->final_price = $finalPrice;

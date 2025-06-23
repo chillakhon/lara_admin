@@ -47,6 +47,7 @@ class ProductNumberTwoResouce extends JsonResource
             'discount_price' => $this->discount_price,
             'discount_percentage' => $this->discount_percentage,
             'total_discount' => $this->total_discount,
+            'discount_id' => $this->discount_id,
             'sku' => $this->sku,
             'barcode' => $this->barcode,
             'weight' => $this->weight,
@@ -54,10 +55,10 @@ class ProductNumberTwoResouce extends JsonResource
             'width' => $this->width,
             'height' => $this->height,
             // 'image_path' => $this->image_path,
-            'images' => ImageResource::collection($this->whenLoaded('images')),
-            'colors' => ColorResource::collection($this->whenLoaded('colors')),
-            'variants' => ProductVariantNumberTwoResource::collection($this->whenLoaded('variants')),
-            'default_unit' => new UnitResource($this->whenLoaded('defaultUnit')),
+            'images' => ImageResource::collection($this->images ?? []),
+            'colors' => ColorResource::collection($this->colors ?? []),
+            'variants' => ProductVariantNumberTwoResource::collection($this->variants ?? []),
+            'default_unit' => $this->defaultUnit ? new UnitResource($this->defaultUnit) : null,
             // 'discountable' => new DiscountableResource($this->whenLoaded('discountable')),
         ];
     }

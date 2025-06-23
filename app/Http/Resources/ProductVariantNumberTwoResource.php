@@ -39,9 +39,9 @@ class ProductVariantNumberTwoResource extends JsonResource
             // 'inventory_balance' => $this->inventory_balance,
             'discount_percentage' => $this->discount_percentage,
             'total_discount' => $this->total_discount,
-            'unit' => new UnitResource($this->whenLoaded('unit')),
-            'colors' => ColorResource::collection($this->whenLoaded('colors')),
-            'images' => ImageResource::collection($this->whenLoaded('images')),
+            'unit' => $this->unit ? new UnitResource($this->unit) : null,
+            'colors' => ColorResource::collection($this->colors ?? []),
+            'images' => ImageResource::collection($this->images ?? []),
             // 'discountable' => new DiscountableResource($this->whenLoaded('discountable')),
         ];
     }
