@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Discount;
 use App\Models\Order;
 use App\Models\Client;
+use App\Models\OrderDiscount;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\DeliveryDate;
 use App\Models\DeliveryMethod;
+use App\Models\PromoCode;
 use App\Models\Shipment;
 use App\Models\UserProfile;
 use App\Services\Delivery\CdekDeliveryService;
@@ -159,7 +163,6 @@ class OrderController extends Controller
         try {
             $client = $request->user();
 
-
             if (!$client) {
                 return response()->json([
                     "success" => false,
@@ -167,13 +170,33 @@ class OrderController extends Controller
                 ]);
             }
 
-            $order = $this->createOrder($validated, $client->id);
-
-            foreach ($validated['items'] as $item) {
-                $order->items()->create($item);
+            $promo = null;
+            if (!empty($validated['promo_code'])) {
+                try {
+                    $promo = $this->validatePromoCode($validated['promo_code'], $client);
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $e->getMessage()
+                    ], 422);
+                }
             }
 
-            $order->updateTotalAmount();
+            $order = $this->createOrder($validated, $client->id);
+
+            $result = $this->processOrderItems($order, $validated['items']);
+            $totalDiscountAmount = $result['total_discount'];
+            $orderTotalBefore = $result['order_total'];
+
+            if ($promo) {
+                $promoDiscount = $this->applyPromoCodeToOrder($order, $promo, $orderTotalBefore, $totalDiscountAmount);
+                $totalDiscountAmount += $promoDiscount;
+            } else {
+                $order->update([
+                    'discount_amount' => $totalDiscountAmount
+                ]);
+                $order->updateTotalAmount();
+            }
 
             $this->createShipmentForOrder($order, $validated);
 
@@ -213,6 +236,38 @@ class OrderController extends Controller
         ]);
     }
 
+    private function validatePromoCode(?string $code, $client)
+    {
+        $promo = PromoCode::where('code', $code)
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+            })
+            ->where(function ($query) {
+                $query->whereNull('expires_at')->orWhere('expires_at', '>=', now());
+            })
+            ->first();
+
+        if (!$promo) {
+            throw new \Exception('Купон недействителен или истёк.');
+        }
+
+        if ($promo->max_uses !== null && $promo->times_used >= $promo->max_uses) {
+            throw new \Exception('Лимит использований купона исчерпан.');
+        }
+
+        $alreadyUsed = $promo->usages()
+            ->where('client_id', $client->id)
+            ->where('promo_code_id', $promo->id)
+            ->exists();
+
+        if ($alreadyUsed) {
+            throw new \Exception('Вы уже использовали этот купон ранее.');
+        }
+
+        return $promo;
+    }
+
     private function createOrder(array $validated, int $clientId)
     {
         return Order::create([
@@ -226,6 +281,85 @@ class OrderController extends Controller
             'delivery_zone_id' => $validated['delivery_zone_id'] ?? null,
             'data' => $validated['data'] ?? null,
         ]);
+    }
+
+    private function processOrderItems(Order $order, array $items): array
+    {
+        $totalDiscountAmount = 0;
+        $orderTotalBefore = 0;
+
+        foreach ($items as $item) {
+            $finalPrice = $item['price']; // уже со скидкой
+            $discountAmount = 0;
+            $originalPrice = $finalPrice; // по умолчанию считаем что скидки не было
+
+            if (!empty($item['discount_id'])) {
+                $discount = Discount::find($item['discount_id']);
+
+                if ($discount && $discount->is_active) {
+                    // Допустим, если есть скидка — то клиент передал `original_price` как (price + скидка)
+                    // либо считаем old_price приходит в $item['original_price']
+                    $originalPrice = $finalPrice; // можно заменить на $item['original_price'] если передаётся
+                    if ($discount->type === 'fixed') {
+                        $originalPrice = $finalPrice + $discount->value;
+                    } elseif ($discount->type === 'percentage') {
+                        $originalPrice = round($finalPrice / (1 - $discount->value / 100), 2);
+                    }
+
+                    $discountAmount = $originalPrice - $finalPrice;
+
+                    OrderDiscount::create([
+                        'order_id' => $order->id,
+                        'discount_id' => $discount->id,
+                        'discountable_type' => $item['product_variant_id'] ? 'product_variant' : 'product',
+                        'discountable_id' => $item['product_variant_id'] ?? $item['product_id'],
+                        'original_price' => $originalPrice,
+                        'discount_amount' => $discountAmount,
+                        'final_price' => $finalPrice,
+                    ]);
+
+                    $totalDiscountAmount += $discountAmount * $item['quantity'];
+                }
+            }
+
+            $orderTotalBefore += $finalPrice * $item['quantity'];
+
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $item['product_id'],
+                'product_variant_id' => $item['product_variant_id'],
+                'color_id' => $item['color_id'],
+                'quantity' => $item['quantity'],
+                'price' => $finalPrice,
+                'discount' => $discountAmount
+            ]);
+        }
+
+        return [
+            'total_discount' => $totalDiscountAmount,
+            'order_total' => $orderTotalBefore,
+        ];
+    }
+
+    private function applyPromoCodeToOrder(Order $order, PromoCode $promo, float $orderTotalBefore, float $existingDiscount): float
+    {
+        $promoDiscount = 0;
+
+        if ($promo->discount_type === 'fixed') {
+            $promoDiscount = min($promo->discount_amount, $orderTotalBefore);
+        } elseif ($promo->discount_type === 'percentage') {
+            $promoDiscount = round($orderTotalBefore * ($promo->discount_amount / 100), 2);
+        }
+
+        $promo->increment('times_used');
+
+        $order->update([
+            'promo_code_id' => $promo->id,
+            'discount_amount' => $existingDiscount + $promoDiscount,
+            'total_amount' => max(0, $orderTotalBefore - $promoDiscount)
+        ]);
+
+        return $promoDiscount;
     }
 
     private function createShipmentForOrder(Order $order, array $validated)
