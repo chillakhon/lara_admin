@@ -40,7 +40,8 @@ trait ImageTrait
             $img = $manager->read($image);
 
             // Resize
-            $img->resize($img_sizes[$i], $img_sizes[$i]);
+            // $img->resize($img_sizes[$i], null);
+            $img->scale(width: $img_sizes[$i]);
 
             // Save
             $img->save($image_path);
