@@ -228,11 +228,18 @@ class OrderController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.price' => 'required|numeric|min:0',
             'items.*.color_id' => 'nullable|exists:colors,id',
-            'notes' => 'nullable|string',
-            'delivery_address' => 'nullable|string',
-            'delivery_method_id' => 'required|exists:delivery_methods,id',
-            'delivery_zone_id' => 'nullable|exists:delivery_zones,id',
-            'data' => 'nullable|string',
+            // 'notes' => 'nullable|string',
+            // 'delivery_address' => 'nullable|string',
+            // 'delivery_method_id' => 'required|exists:delivery_methods,id',
+            // 'delivery_zone_id' => 'nullable|exists:delivery_zones,id',
+            // 'data' => 'nullable|string',
+            'delivery_data' => 'required|array',
+            'delivery_data.delivery_method_id' => 'required|exists:delivery_methods,id',
+            'delivery_data.delivery_type_code' => 'required|string',
+            'delivery_data.country_code' => 'required|string|size:2',
+            'delivery_data.city_name' => 'required|string',
+            'delivery_data.delivery_address' => 'nullable|string',
+            'delivery_data.location' => 'nullable',
         ]);
     }
 
