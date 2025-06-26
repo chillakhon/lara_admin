@@ -222,24 +222,26 @@ class OrderController extends Controller
     private function validateOrderData(Request $request)
     {
         return $request->validate([
+            'promo_code' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.price' => 'required|numeric|min:0',
             'items.*.color_id' => 'nullable|exists:colors,id',
-            // 'notes' => 'nullable|string',
-            // 'delivery_address' => 'nullable|string',
-            // 'delivery_method_id' => 'required|exists:delivery_methods,id',
-            // 'delivery_zone_id' => 'nullable|exists:delivery_zones,id',
-            // 'data' => 'nullable|string',
-            'delivery_data' => 'required|array',
-            'delivery_data.delivery_method_id' => 'required|exists:delivery_methods,id',
-            'delivery_data.delivery_type_code' => 'required|string',
-            'delivery_data.country_code' => 'required|string|size:2',
-            'delivery_data.city_name' => 'required|string',
-            'delivery_data.delivery_address' => 'nullable|string',
-            'delivery_data.location' => 'nullable',
+            'items.*.discount_id' => 'nullable|exists:discounts,id',
+            'notes' => 'nullable|string',
+            'delivery_address' => 'nullable|string',
+            'delivery_method_id' => 'required|exists:delivery_methods,id',
+            'delivery_zone_id' => 'nullable|exists:delivery_zones,id',
+            'data' => 'nullable|string',
+            // 'delivery_data' => 'required|array',
+            // 'delivery_data.delivery_method_id' => 'required|exists:delivery_methods,id',
+            // 'delivery_data.delivery_type_code' => 'required|string',
+            'country_code' => 'required|string|size:2',
+            'city_name' => 'required|string',
+            'location' => 'nullable',
+            'tariff' => 'nullable'
         ]);
     }
 
@@ -372,7 +374,7 @@ class OrderController extends Controller
     private function createShipmentForOrder(Order $order, array $validated)
     {
         $deliveryMethodId = $validated['delivery_method_id'];
-        $deliveryData = json_decode($validated['data'] ?? '{}', true);
+        $deliveryData = $validated;//json_decode($validated['data'] ?? '{}', true);
 
         $shipmentData = [
             'order_id' => $order->id,
@@ -399,6 +401,7 @@ class OrderController extends Controller
             $tariff = $deliveryData['tariff'] ?? null;
 
             if (!$tariff || empty($validated['delivery_address'])) {
+                Log::info("about tariff", [$tariff, $validated['delivery_address']]);
                 throw new \Exception('Для курьерской доставки нужно указать тариф и адрес доставки');
             }
 
