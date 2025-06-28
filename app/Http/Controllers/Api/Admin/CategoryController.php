@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CategoryResource;
 use App\Http\Resources\ProductNumberTwoResouce;
 use App\Models\Category;
+use App\Models\CategoryProduct;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
@@ -118,12 +120,28 @@ class CategoryController extends Controller
             'category_id' => 'required|exists:categories,id',
         ]);
 
-        $category = Category::with('products')->findOrFail($validated['category_id']);
+        $category = Category::where('id', $validated['category_id'])->first();
+
+        $products = [];
+
+        if ($category) {
+            $category_children_ids = Category::whereNotNull('parent_id')
+                ->where('parent_id', $category->id)
+                ->pluck('id')
+                ->toArray();
+
+            $category_products_ids = CategoryProduct::where('category_id', $category->id)
+                ->orWhereIn('category_id', $category_children_ids)
+                ->pluck('product_id')
+                ->toArray();
+
+            $products = Product::whereIn('id', $category_products_ids)->get();
+        }
 
         return response()->json([
             'category_id' => $category->id,
             'category_name' => $category->name,
-            'products' => ProductNumberTwoResouce::collection($category->products),
+            'products' => ProductNumberTwoResouce::collection($products),
         ]);
     }
 }
