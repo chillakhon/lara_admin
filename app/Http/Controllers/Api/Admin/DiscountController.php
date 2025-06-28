@@ -19,7 +19,7 @@ class DiscountController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->get('per_page', 10);
-        $discounts = Discount::with(['products', 'productVariants'])
+        $discounts = Discount::with(['products'])
             ->orderBy('priority')
             ->paginate($perPage);
 
