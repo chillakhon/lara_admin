@@ -37,7 +37,7 @@ class ProductNumberTwoResouce extends JsonResource
             $this->mergeWhen($isAdmin, [
                 'stock_quantity' => $this->inventory_balance,
             ]),
-            // 'cost_price' => $this->cost_price,
+            'cost_price' => $this->cost_price,
             // 'currency' => $this->currency,
             // 'stock_quantity' => $this->stock_quantity,
             // 'min_order_quantity' => $this->min_order_quantity,
