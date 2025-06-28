@@ -18,10 +18,25 @@ class DiscountController extends Controller
 
     public function index(Request $request)
     {
-        $perPage = $request->get('per_page', 10);
-        $discounts = Discount::with(['products'])
-            ->orderBy('priority')
-            ->paginate($perPage);
+        $perPage = $request->get('per_page', $request->get('per_page') ?? 10);
+
+        $discounts = Discount
+            ::with(['products'])
+            ->orderBy('priority');
+
+        if ($request->get('name')) {
+            $discounts->where('name', 'like', "%{$request->get("name")}%");
+        }
+
+        if ($request->get('type')) {
+            $discounts->where('type', $request->get('type'));
+        }
+
+        if ($request->get('discount_type')) {
+            $discounts->where('discount_type', $request->get('discount_type'));
+        }
+
+        $discounts = $discounts->paginate(15);
 
         return response()->json([
             'data' => DiscountResource::collection($discounts),
