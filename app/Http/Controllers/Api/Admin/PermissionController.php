@@ -10,9 +10,6 @@ use Illuminate\Http\JsonResponse;
 
 class PermissionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(): JsonResponse
     {
         $permissions = Permission::all();
@@ -23,9 +20,6 @@ class PermissionController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StorePermissionRequest $request): JsonResponse
     {
         $permission = Permission::create($request->validated());
@@ -37,9 +31,6 @@ class PermissionController extends Controller
         ], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Permission $permission): JsonResponse
     {
         return response()->json([
@@ -48,9 +39,6 @@ class PermissionController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(UpdatePermissionRequest $request, Permission $permission): JsonResponse
     {
         $permission->update($request->validated());
@@ -62,9 +50,6 @@ class PermissionController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Permission $permission): JsonResponse
     {
         $permission->delete();

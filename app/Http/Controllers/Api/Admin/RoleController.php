@@ -3,43 +3,69 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreRoleRequest;
 use App\Http\Requests\UpdateRoleRequest;
+use App\Models\Permission;
 use App\Models\Role;
+use DB;
 use Illuminate\Http\JsonResponse;
+use Str;
 
 class RoleController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(): JsonResponse
     {
-        $roles = Role::all();
+        $roles = Role::with('permissions')->orderBy('name')->get();
+
+        $permissions = Permission::orderBy('name')->get();
 
         return response()->json([
             'success' => true,
-            'data' => $roles
+            'roles' => $roles,
+            'permissions' => $permissions,
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreRoleRequest $request): JsonResponse
+    public function store(\Illuminate\Http\Request $request): JsonResponse
     {
-        $role = Role::create($request->validated());
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'permission_ids' => 'nullable|array',
+            'permission_ids.*' => 'integer|exists:permissions,id',
+        ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Role created successfully',
-            'data' => $role
-        ], 201);
+        DB::beginTransaction();
+
+        try {
+            $data['slug'] = Str::slug($data['name']);
+
+            $permissionIds = $data['permission_ids'] ?? [];
+
+            unset($data['permission_ids']);
+
+            $role = Role::create($data);
+
+            if (!empty($permissionIds)) {
+                $role->permissions()->sync($permissionIds);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Role created and permissions assigned successfully.',
+                'data' => $role->load('permissions')
+            ], 201);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create role: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Role $role): JsonResponse
     {
         return response()->json([
@@ -48,9 +74,6 @@ class RoleController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(UpdateRoleRequest $request, Role $role): JsonResponse
     {
         $role->update($request->validated());
@@ -62,9 +85,6 @@ class RoleController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Role $role): JsonResponse
     {
         $role->delete();
