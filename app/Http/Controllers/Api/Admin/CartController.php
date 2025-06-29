@@ -25,6 +25,16 @@ class CartController extends Controller
     // function that addes single item to cart
     public function add_item_to_cart(Request $request)
     {
+
+    }
+
+    private function sync($user, $found_items)
+    {
+        if (!$user) {
+            return;
+        }
+
+        
     }
 
 
@@ -36,6 +46,8 @@ class CartController extends Controller
         $validated = $request->validate([
             'items' => 'required|array'
         ]);
+
+        $user = $request->user();
 
         $found_items = [];
 
@@ -103,6 +115,8 @@ class CartController extends Controller
                 }
             }
         }
+
+        $this->sync($user, $found_items);
 
         return response()->json([
             'success' => false,

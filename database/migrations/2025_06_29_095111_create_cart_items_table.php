@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('cart_id')->nullable();
             $table->unsignedBigInteger('product_id')->nullable();
             $table->unsignedBigInteger('product_variant_id')->nullable();
+            $table->unsignedBigInteger('color_id')->nullable();
             $table->integer('quantity');
 
 
@@ -26,6 +27,12 @@ return new class extends Migration {
 
             $table->foreign('product_variant_id', 'fk_product_variants')->on('product_variants')
                 ->references('id')->onDelete('set null')->onUpdate('cascade');
+
+            $table->foreign('color_id', 'fk_cart_items_color_id')
+                ->on('colors')
+                ->references('id')
+                ->onDelete('set null')
+                ->onUpdate('cascade');
         });
     }
 
