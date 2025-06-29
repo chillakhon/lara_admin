@@ -8,6 +8,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use DB;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Str;
 
 class RoleController extends Controller
@@ -74,15 +75,42 @@ class RoleController extends Controller
         ]);
     }
 
-    public function update(UpdateRoleRequest $request, Role $role): JsonResponse
+    public function update(Request $request, Role $role): JsonResponse
     {
-        $role->update($request->validated());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Role updated successfully',
-            'data' => $role
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'permission_ids' => 'nullable|array',
+            'permission_ids.*' => 'integer|exists:permissions,id',
         ]);
+
+        DB::beginTransaction();
+
+        try {
+            $data['slug'] = Str::slug($data['name']);
+
+            $permissionIds = $data['permission_ids'] ?? [];
+            unset($data['permission_ids']);
+
+            $role->update($data);
+
+            $role->permissions()->sync($permissionIds);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Роль успешно обновлена.',
+                'data' => $role->load('permissions'),
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при обновлении роли: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function destroy(Role $role): JsonResponse
