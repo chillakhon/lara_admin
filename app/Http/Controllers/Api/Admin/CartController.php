@@ -14,6 +14,23 @@ use Illuminate\Http\Request;
 class CartController extends Controller
 {
     use ProductsTrait;
+
+
+    // function that addes multiple items to cart
+    public function add_multiple_items_to_cart(Request $request)
+    {
+    }
+
+
+    // function that addes single item to cart
+    public function add_item_to_cart(Request $request)
+    {
+    }
+
+
+    // function that finds product or product_variant 
+    // from table when user refreshes his items after while
+    // maybe between that duration of absence products or variants were deleted
     public function cart_items(Request $request)
     {
         $validated = $request->validate([
