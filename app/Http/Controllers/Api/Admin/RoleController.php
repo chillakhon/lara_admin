@@ -26,6 +26,22 @@ class RoleController extends Controller
         ]);
     }
 
+    public function all_permissions()
+    {
+        return response()->json([
+            'success' => true,
+            'permissions' => Permission::orderBy('name')->get(),
+        ]);
+    }
+
+    public function all_roles()
+    {
+        return response()->json([
+            'success' => true,
+            'roles' => Role::with('permissions')->orderBy('name')->get(),
+        ]);
+    }
+
     public function store(\Illuminate\Http\Request $request): JsonResponse
     {
         $data = $request->validate([

@@ -407,7 +407,9 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 // Route::resource('permissions', PermissionController::class);
                 // Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
                 //     ->name('roles.updatePermissions');
-                Route::get('/', [RoleController::class, 'index']);
+                Route::get('/with-permissions', [RoleController::class, 'index']);
+                Route::get('/', [RoleController::class, 'all_roles']);
+                Route::get('/permissions', [RoleController::class, 'all_permissions']);
                 Route::post('/', [RoleController::class, 'store']);
                 Route::put('/{role}', [RoleController::class, 'update']);
             });
