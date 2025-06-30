@@ -123,7 +123,11 @@ class ProductsAndVariantsSyncWithMoySkladService
 
     private function upsertVariant(Product $product, array $stock, $data, $productData): ProductVariant
     {
-        $slug = Str::slug($data->name ?? '');
+        $characteristic = collect($data->characteristics ?? [])
+            ->firstWhere('name', 'Размер');
+        $variant_name = $characteristic?->value ?? '';
+
+        $slug = Str::slug($variant_name);
         $variant = ProductVariant::where('uuid', $data->id)->first()
             ?? ProductVariant::where('sku', $slug)->where('product_id', $product->id)->first();
 
@@ -133,7 +137,7 @@ class ProductsAndVariantsSyncWithMoySkladService
         $attributes = [
             'uuid' => $data->id,
             'product_id' => $product->id,
-            'name' => $data->name ?? '',
+            'name' => $variant_name,
             'unit_id' => $product->default_unit_id,
             'sku' => $slug,
             'barcode' => $data->barcodes[0]->ean13 ?? null,

@@ -402,11 +402,16 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             });
 
             // Управление ролями и разрешениями (только для супер-админа)
-            Route::middleware(['role:super-admin'])->group(function () {
-                Route::resource('roles', RoleController::class);
-                Route::resource('permissions', PermissionController::class);
-                Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
-                    ->name('roles.updatePermissions');
+            Route::middleware(['role:super-admin'])->prefix('/roles')->group(function () {
+                // Route::resource('roles', RoleController::class);
+                // Route::resource('permissions', PermissionController::class);
+                // Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
+                //     ->name('roles.updatePermissions');
+                Route::get('/with-permissions', [RoleController::class, 'index']);
+                Route::get('/', [RoleController::class, 'all_roles']);
+                Route::get('/permissions', [RoleController::class, 'all_permissions']);
+                Route::post('/', [RoleController::class, 'store']);
+                Route::put('/{role}', [RoleController::class, 'update']);
             });
         });
         //

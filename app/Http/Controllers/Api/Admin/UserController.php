@@ -65,14 +65,8 @@ class UserController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
-        $roles = Role::orderBy('name')->get();
-
-        $permissions = Permission::orderBy('name')->get();
-
         return response()->json([
             'users' => $users,
-            'roles' => $roles,
-            'permissions' => $permissions,
             'filters' => $request->only(['search', 'role', 'status']),
         ]);
     }
