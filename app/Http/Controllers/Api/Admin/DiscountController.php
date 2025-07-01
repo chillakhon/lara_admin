@@ -18,10 +18,10 @@ class DiscountController extends Controller
 
     public function index(Request $request)
     {
-        $perPage = $request->get('per_page', $request->get('per_page') ?? 10);
+        $perPage = $request->get('per_page', $request->get('per_page') ?? 15);
 
         $discounts = Discount
-            ::with(['products'])
+            ::with(['categories', 'products'])
             ->orderBy('priority');
 
         if ($request->get('name')) {
@@ -36,7 +36,7 @@ class DiscountController extends Controller
             $discounts->where('discount_type', $request->get('discount_type'));
         }
 
-        $discounts = $discounts->paginate(15);
+        $discounts = $discounts->paginate($perPage);
 
         return response()->json([
             'data' => DiscountResource::collection($discounts),
@@ -81,7 +81,7 @@ class DiscountController extends Controller
             }
         } elseif ($request->discount_type === 'category') {
             if ($request->has('categories')) {
-                // $discount->categories()->attach($request->categories);
+                $discount->categories()->attach($request->categories);
 
                 $productIds = CategoryProduct
                     ::whereIn('category_id', $request->get('categories'))
@@ -138,7 +138,7 @@ class DiscountController extends Controller
 
         } elseif ($request->discount_type === 'category') {
             if ($request->has('categories')) {
-                // $discount->categories()->attach($request->categories);
+                $discount->categories()->attach($request->categories);
 
 
                 $productIds = CategoryProduct
