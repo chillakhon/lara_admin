@@ -15,7 +15,7 @@ class DiscountRequest extends FormRequest
             'is_active' => 'boolean',
             'starts_at' => 'nullable|date',
             'ends_at' => 'nullable|date|after:starts_at',
-            'priority' => 'integer|min:0',
+            'priority' => 'nullable|integer|min:0',
             'conditions' => 'nullable|array',
             'discount_type' => 'required|in:specific,category,all',
             'categories' => 'nullable|array|required_if:discount_type,category',

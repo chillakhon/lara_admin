@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DiscountRequest;
 use App\Http\Resources\DiscountResource;
+use App\Models\Category;
 use App\Models\CategoryProduct;
 use App\Models\Discount;
 use App\Models\Product;
@@ -102,6 +103,12 @@ class DiscountController extends Controller
 
             $this->reassignProductsToDiscount($allProductIds, $discount);
             $this->reassignVariantsToDiscount($allVariantIds, $discount);
+
+            if (!empty($allProductIds) || !empty($allVariantIds)) {
+                Discount::whereNot('id', $discount->id)->update([
+                    'is_active' => 0,
+                ]);
+            }
         }
 
         return response()->json([
