@@ -11,6 +11,8 @@ class Cart extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $table = "cart";
 
     protected $guarded = ['id'];

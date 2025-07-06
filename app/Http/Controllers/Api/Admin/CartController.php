@@ -25,11 +25,11 @@ class CartController extends Controller
             'items.*.product_id' => 'required|integer|exists:products,id',
             'items.*.product_variant_id' => 'nullable|integer|exists:product_variants,id',
             'items.*.color_id' => 'nullable|integer|exists:colors,id',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.qty' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric|min:0'
         ]);
 
-        $client = $request->user();
+        $client = auth('sanctum')->user();
 
         if ($client instanceof \App\Models\User) {
             return response()->json([
@@ -94,11 +94,11 @@ class CartController extends Controller
             'product_id' => 'required|integer|exists:products,id',
             'product_variant_id' => 'nullable|integer|exists:product_variants,id',
             'color_id' => 'nullable|integer|exists:colors,id',
-            'quantity' => 'required|integer|min:1',
+            'qty' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0'
         ]);
 
-        $client = $request->user();
+        $client = auth('sanctum')->user();
 
         if ($client instanceof \App\Models\User) {
             return response()->json([
@@ -126,64 +126,112 @@ class CartController extends Controller
         return response()->json(['success' => true, 'message' => 'Item added to cart.']);
     }
 
-    private function sync($user, $found_items)
+    private function sync($user, $found_items, $delete_others = true)
     {
-        if (!$user || empty($found_items))
+        if (!$user || empty($found_items)) {
             return;
+        }
+
+        // user should be instance of Client not User
+        if ($user instanceof \App\Models\User) {
+            return;
+        }
 
         $cart = Cart::firstOrCreate(
-            ['user_id' => $user->id, 'status' => null],
+            ['client_id' => $user->id, 'status' => null],
             ['created_at' => now()]
         );
 
-        $keysToKeep = collect($found_items)->map(function ($item) {
-            return [
-                'product_id' => $item['product_id'],
-                'product_variant_id' => $item['product_variant_id'] ?? null,
-            ];
-        });
+        if ($delete_others) {
+            $keysToKeep = collect($found_items)->map(function ($item) {
+                return [
+                    'product_id' => $item['product_id'],
+                    'product_variant_id' => $item['product_variant_id'] ?? null,
+                ];
+            });
 
-        $cart->items()->whereNot(function ($query) use ($keysToKeep) {
-            foreach ($keysToKeep as $index => $key) {
-                $method = $index === 0 ? 'where' : 'orWhere';
-                $query->{$method}(function ($subQuery) use ($key) {
-                    $subQuery->where('product_id', $key['product_id'])
-                        ->where(function ($q) use ($key) {
-                            if (is_null($key['product_variant_id'])) {
-                                $q->whereNull('product_variant_id');
-                            } else {
-                                $q->where('product_variant_id', $key['product_variant_id']);
-                            }
-                        });
-                });
-            }
-        })->delete();
+            $cart->items()->whereNot(function ($query) use ($keysToKeep) {
+                foreach ($keysToKeep as $index => $key) {
+                    $method = $index === 0 ? 'where' : 'orWhere';
+                    $query->{$method}(function ($subQuery) use ($key) {
+                        $subQuery->where('product_id', $key['product_id'])
+                            ->where(function ($q) use ($key) {
+                                if (is_null($key['product_variant_id'])) {
+                                    $q->whereNull('product_variant_id');
+                                } else {
+                                    $q->where('product_variant_id', $key['product_variant_id']);
+                                }
+                            });
+                    });
+                }
+            })->delete();
+        }
 
         foreach ($found_items as $item) {
+
+            $originalPrice = null;
+            $discountValue = 0;
+            $product = null;
+
+            if (!empty($item['product_variant_id'])) {
+                $product = ProductVariant::find($item['product_variant_id']);
+            } else {
+                $product = Product::find($item['product_id']);
+            }
+
+            if ($product) {
+                $originalPrice = $product->price ?? $item['price'];
+
+                $discount = $product->discount();
+
+                if ($discount && $discount->is_active) {
+                    if ($discount->type === 'percentage') {
+                        $discountValue = round(($originalPrice * $discount->value) / 100, 2);
+                    } elseif ($discount->type === 'fixed') {
+                        $discountValue = min($discount->value, $originalPrice);
+                    }
+                }
+            }
+
+            $finalPrice = $originalPrice - $discountValue;
+
             $cart->items()->updateOrCreate(
                 [
                     'product_id' => $item['product_id'],
                     'product_variant_id' => $item['product_variant_id'] ?? null
                 ],
                 [
-                    'price' => $item['price'],
-                    'quantity' => 1
+                    'quantity' => $item['qty'],
+                    'color_id' => $item['color_id'] ?? null,
+                    'price' => ($item['price'] ?? $finalPrice),
+                    'price_original' => $originalPrice,
+                    'total_discount' => $discountValue * $item['qty'],
+                    'total' => ($item['price'] ?? $finalPrice) * $item['qty'],
+                    'total_original' => $originalPrice * $item['qty'],
                 ]
             );
         }
     }
 
 
-    // function that finds product or product_variant 
-    // from table when user refreshes his items after while
-    // maybe between that duration of absence products or variants were deleted
+    // logic for finding products or variants
+    // --
+    // what does it do ?
+    // for example let's imagine that we haven't entered to the application/website for a while,
+    // for this period of non existing, products and variants were deleted or even no longer sold.
+    // This api endpoint checks whether selected items in cart are still available or not.
+    // Available products or variants will be returned in "items" field in response 
+    // 
+    // NOTE!
+    // This route works both for authenticated and unauthenticated rotues!
+    // That is why if you are authenticated do not forget to send your token in headers!!!!
     public function cart_items(Request $request)
     {
         $validated = $request->validate([
             'items' => 'required|array'
         ]);
 
-        $user = $request->user();
+        $user = auth('sanctum')->user();
 
         $found_items = [];
 
@@ -218,8 +266,9 @@ class CartController extends Controller
                         }
                     }
 
-                    if ($has_color)
-                        $found_items[] = $this->get_product_variants_fields($product_variant);
+                    if ($has_color) {
+                        $found_items[] = $this->get_product_variants_fields($product_variant, $item);
+                    }
                 }
 
             } else if (!is_null($item['product_id'])) {
@@ -246,8 +295,9 @@ class CartController extends Controller
                         }
                     }
 
-                    if ($has_color)
-                        $found_items[] = $this->get_product_fields($product);
+                    if ($has_color) {
+                        $found_items[] = $this->get_product_fields($product, $item);
+                    }
                 }
             }
         }
@@ -255,18 +305,20 @@ class CartController extends Controller
         $this->sync($user, $found_items);
 
         return response()->json([
-            'success' => false,
+            'success' => true,
             'items' => $found_items,
         ]);
     }
 
-    protected function get_product_fields($product)
+    protected function get_product_fields($product, $item)
     {
         $this->applyDiscountToProduct($product);
 
         return [
             'product_id' => $product->id,
             'product_variant_id' => null,
+            'color_id' => $item['color_id'] ?? null,
+            'qty' => $item['qty'] ?? 1,
             "name" => $product->name,
             "slug" => $product->slug,
             "description" => $product->description,
@@ -280,7 +332,7 @@ class CartController extends Controller
         ];
     }
 
-    protected function get_product_variants_fields($product_variant)
+    protected function get_product_variants_fields($product_variant, $item)
     {
 
         $this->applyDiscountToProduct($product_variant);
@@ -288,6 +340,8 @@ class CartController extends Controller
         return [
             'product_id' => $product_variant->product_id,
             'product_variant_id' => $product_variant->id,
+            'color_id' => $item['color_id'] ?? null,
+            'qty' => $item['qty'] ?? 1,
             "name" => $product_variant->name,
             "slug" => $product_variant->slug,
             "description" => $product_variant->description,
