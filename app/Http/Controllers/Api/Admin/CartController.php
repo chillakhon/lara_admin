@@ -38,50 +38,7 @@ class CartController extends Controller
             ]);
         }
 
-        $cart = Cart::firstOrCreate(
-            ['client_id' => $client->id, 'status' => null],
-            ['created_at' => now()]
-        );
-
-        $incomingItems = collect($validated['items']);
-
-        $toKeep = $incomingItems->map(function ($item) {
-            return [
-                'product_id' => $item['product_id'],
-                'product_variant_id' => $item['product_variant_id'] ?? null,
-            ];
-        });
-
-        $cart->items()->whereNot(function ($query) use ($toKeep) {
-            foreach ($toKeep as $index => $item) {
-                $method = $index === 0 ? 'where' : 'orWhere';
-                $query->{$method}(function ($subQuery) use ($item) {
-                    $subQuery->where('product_id', $item['product_id'])
-                        ->where(function ($q) use ($item) {
-                            if ($item['product_variant_id'] === null) {
-                                $q->whereNull('product_variant_id');
-                            } else {
-                                $q->where('product_variant_id', $item['product_variant_id']);
-                            }
-                        });
-                });
-            }
-        })->delete();
-
-
-        foreach ($validated['items'] as $item) {
-            $cart->items()->updateOrCreate(
-                [
-                    'product_id' => $item['product_id'],
-                    'product_variant_id' => $item['product_variant_id'] ?? null,
-                ],
-                [
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price'],
-                    'color_id' => $item['color_id'] ?? null,
-                ]
-            );
-        }
+        $this->sync($client, $validated['items'], true);
 
         return response()->json(['success' => true, 'message' => 'Items added to cart.']);
     }
@@ -107,118 +64,10 @@ class CartController extends Controller
             ]);
         }
 
-        $cart = Cart::firstOrCreate(
-            ['client_id' => $client->id, 'status' => null],
-            ['created_at' => now()]
-        );
-
-        $cart->items()->updateOrCreate(
-            [
-                'product_id' => $validated['product_id'],
-                'product_variant_id' => $validated['product_variant_id'] ?? null,
-            ],
-            [
-                'quantity' => $validated['quantity'],
-                'price' => $validated['price']
-            ]
-        );
+        $this->sync($client, [$validated], false);
 
         return response()->json(['success' => true, 'message' => 'Item added to cart.']);
     }
-
-    private function sync($user, $found_items, $delete_others = true)
-    {
-        if (!$user || empty($found_items)) {
-            return;
-        }
-
-        // user should be instance of Client not User
-        if ($user instanceof \App\Models\User) {
-            return;
-        }
-
-        $cart = Cart::firstOrCreate(
-            ['client_id' => $user->id, 'status' => null],
-            ['created_at' => now()]
-        );
-
-        if ($delete_others) {
-            $keysToKeep = collect($found_items)->map(function ($item) {
-                return [
-                    'product_id' => $item['product_id'],
-                    'product_variant_id' => $item['product_variant_id'] ?? null,
-                ];
-            });
-
-            $cart->items()->whereNot(function ($query) use ($keysToKeep) {
-                foreach ($keysToKeep as $index => $key) {
-                    $method = $index === 0 ? 'where' : 'orWhere';
-                    $query->{$method}(function ($subQuery) use ($key) {
-                        $subQuery->where('product_id', $key['product_id'])
-                            ->where(function ($q) use ($key) {
-                                if (is_null($key['product_variant_id'])) {
-                                    $q->whereNull('product_variant_id');
-                                } else {
-                                    $q->where('product_variant_id', $key['product_variant_id']);
-                                }
-                            });
-                    });
-                }
-            })->delete();
-        }
-
-        foreach ($found_items as $item) {
-
-            $originalPrice = null;
-            $discountValue = 0;
-            $product = null;
-
-            if (!empty($item['product_variant_id'])) {
-                $product = ProductVariant::find($item['product_variant_id']);
-            } else {
-                $product = Product::find($item['product_id']);
-            }
-
-            if ($product) {
-                $originalPrice = $product->price ?? $item['price'];
-
-                $discount = $product->discount();
-
-                if ($discount && $discount->is_active) {
-                    if ($discount->type === 'percentage') {
-                        $discountValue = round(($originalPrice * $discount->value) / 100, 2);
-                    } elseif ($discount->type === 'fixed') {
-                        $discountValue = min($discount->value, $originalPrice);
-                    }
-                }
-            }
-
-            $finalPrice = $originalPrice - $discountValue;
-
-            $cart->items()->updateOrCreate(
-                [
-                    'product_id' => $item['product_id'],
-                    'product_variant_id' => $item['product_variant_id'] ?? null
-                ],
-                [
-                    'quantity' => $item['qty'],
-                    'color_id' => $item['color_id'] ?? null,
-                    'price' => ($item['price'] ?? $finalPrice),
-                    'price_original' => $originalPrice,
-                    'total_discount' => $discountValue * $item['qty'],
-                    'total' => ($item['price'] ?? $finalPrice) * $item['qty'],
-                    'total_original' => $originalPrice * $item['qty'],
-                ]
-            );
-        }
-
-        $cart->update([
-            'total' => $cart->items()->sum('total'),
-            'total_original' => $cart->items()->sum('total_original'),
-            'total_discount' => $cart->items()->sum('total_discount'),
-        ]);
-    }
-
 
     // logic for finding products or variants
     // --
@@ -359,5 +208,99 @@ class CartController extends Controller
             'barcode' => $product_variant->barcode,
             "images" => ImageResource::collection($product_variant->images),
         ];
+    }
+
+
+    private function sync($user, $found_items, $delete_others = true)
+    {
+        if (!$user || empty($found_items)) {
+            return;
+        }
+
+        // user should be instance of Client not User
+        if ($user instanceof \App\Models\User) {
+            return;
+        }
+
+        $cart = Cart::firstOrCreate(
+            ['client_id' => $user->id, 'status' => null],
+            ['created_at' => now()]
+        );
+
+        if ($delete_others) {
+            $keysToKeep = collect($found_items)->map(function ($item) {
+                return [
+                    'product_id' => $item['product_id'],
+                    'product_variant_id' => $item['product_variant_id'] ?? null,
+                ];
+            });
+
+            $cart->items()->whereNot(function ($query) use ($keysToKeep) {
+                foreach ($keysToKeep as $index => $key) {
+                    $method = $index === 0 ? 'where' : 'orWhere';
+                    $query->{$method}(function ($subQuery) use ($key) {
+                        $subQuery->where('product_id', $key['product_id'])
+                            ->where(function ($q) use ($key) {
+                                if (is_null($key['product_variant_id'])) {
+                                    $q->whereNull('product_variant_id');
+                                } else {
+                                    $q->where('product_variant_id', $key['product_variant_id']);
+                                }
+                            });
+                    });
+                }
+            })->delete();
+        }
+
+        foreach ($found_items as $item) {
+
+            $originalPrice = null;
+            $discountValue = 0;
+            $product = null;
+
+            if (!empty($item['product_variant_id'])) {
+                $product = ProductVariant::find($item['product_variant_id']);
+            } else {
+                $product = Product::find($item['product_id']);
+            }
+
+            if ($product) {
+                $originalPrice = $product->price ?? $item['price'];
+
+                $discount = $product->discount();
+
+                if ($discount && $discount->is_active) {
+                    if ($discount->type === 'percentage') {
+                        $discountValue = round(($originalPrice * $discount->value) / 100, 2);
+                    } elseif ($discount->type === 'fixed') {
+                        $discountValue = min($discount->value, $originalPrice);
+                    }
+                }
+            }
+
+            $finalPrice = $originalPrice - $discountValue;
+
+            $cart->items()->updateOrCreate(
+                [
+                    'product_id' => $item['product_id'],
+                    'product_variant_id' => $item['product_variant_id'] ?? null
+                ],
+                [
+                    'quantity' => $item['qty'],
+                    'color_id' => $item['color_id'] ?? null,
+                    'price' => ($item['price'] ?? $finalPrice),
+                    'price_original' => $originalPrice,
+                    'total_discount' => $discountValue * $item['qty'],
+                    'total' => ($item['price'] ?? $finalPrice) * $item['qty'],
+                    'total_original' => $originalPrice * $item['qty'],
+                ]
+            );
+        }
+
+        $cart->update([
+            'total' => $cart->items()->sum('total'),
+            'total_original' => $cart->items()->sum('total_original'),
+            'total_discount' => $cart->items()->sum('total_discount'),
+        ]);
     }
 }
