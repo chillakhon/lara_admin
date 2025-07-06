@@ -38,7 +38,7 @@ class CartController extends Controller
             ]);
         }
 
-        $this->sync($client, $validated['items'], true);
+        $this->sync($client, $validated['items'], true, false);
 
         return response()->json(['success' => true, 'message' => 'Items added to cart.']);
     }
@@ -64,9 +64,36 @@ class CartController extends Controller
             ]);
         }
 
-        $this->sync($client, [$validated], false);
+        $this->sync($client, [$validated], false, false);
 
         return response()->json(['success' => true, 'message' => 'Item added to cart.']);
+    }
+
+    public function cancel_cart(Request $request)
+    {
+        $user = auth('sanctum')->user();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        if ($user instanceof \App\Models\User) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Клиент должен быть экземпляром модели Client, а не User.',
+            ]);
+        }
+
+        $cart = Cart::where('client_id', $user->id)->whereNull('status')->first();
+
+        if ($cart) {
+            $cart->update([
+                'status' => 'abandoned',
+                'updated_at' => now(),
+            ]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Корзина отменена успешно!']);
     }
 
     // logic for finding products or variants
@@ -157,7 +184,7 @@ class CartController extends Controller
             }
         }
 
-        $this->sync($user, $found_items);
+        $this->sync($user, $found_items, true, true);
 
         return response()->json([
             'success' => true,
@@ -211,14 +238,29 @@ class CartController extends Controller
     }
 
 
-    private function sync($user, $found_items, $delete_others = true)
-    {
+    private function sync(
+        $user,
+        $found_items,
+        $delete_others = true,
+        $cancel_cart_if_found_items_are_empty = true,
+    ) {
         if (!$user || empty($found_items)) {
             return;
         }
 
         // user should be instance of Client not User
         if ($user instanceof \App\Models\User) {
+            return;
+        }
+
+        if ($cancel_cart_if_found_items_are_empty && empty($found_items)) {
+            $cart = Cart::where('client_id', $user->id)->whereNull('status')->first();
+            if ($cart) {
+                $cart->update([
+                    'status' => 'abandoned',
+                    'updated_at' => now(),
+                ]);
+            }
             return;
         }
 
