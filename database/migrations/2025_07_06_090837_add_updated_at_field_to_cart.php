@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('cart', function (Blueprint $table) {
-            $table->dateTime('updated_at')
+            $table->timestamp('updated_at')
                 ->after('created_at')
                 ->nullable();
         });

@@ -211,6 +211,12 @@ class CartController extends Controller
                 ]
             );
         }
+
+        $cart->update([
+            'total' => $cart->items()->sum('total'),
+            'total_original' => $cart->items()->sum('total_original'),
+            'total_discount' => $cart->items()->sum('total_discount'),
+        ]);
     }
 
 
