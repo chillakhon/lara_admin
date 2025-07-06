@@ -69,6 +69,9 @@ Route::get('/products/{product}/main-image', [ProductImageController::class, 'ge
 Route::get('/products', [ProductController::class, 'index']);
 // clients
 Route::get('/cart-items', [CartController::class, 'cart_items']);
+Route::post('/cart-items/add-to-cart', [CartController::class, 'add_item_to_cart']);
+Route::post('/cart-items/add-multiple-items-to-cart', [CartController::class, 'add_multiple_items_to_cart']);
+Route::delete('/cart-items/cancel', [CartController::class, 'cancel_cart']);
 Route::get('/colors', [SettingsController::class, 'get_colors']);
 Route::get('reviews/product/{product}', [ReviewController::class, 'productReviews']);
 //Route::get('/products/{slug}', [ProductController::class, 'show']);
