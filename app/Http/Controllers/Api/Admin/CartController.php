@@ -16,6 +16,27 @@ class CartController extends Controller
 {
     use ProductsTrait;
 
+    public function carts(Request $request)
+    {
+        $request->validate([
+            'status' => 'nullable|in:abandoned,ordered',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
+
+        $carts = Cart::with('client')
+            ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
+            ->when($request->filled('date_from'), fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
+            ->when($request->filled('date_to'), fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            ->orderByDesc('created_at')
+            ->paginate($request->get('per_page', 10));
+
+        return response()->json([
+            'success' => true,
+            'data' => $carts
+        ]);
+    }
+
 
     // function that addes multiple items to cart
     public function add_multiple_items_to_cart(Request $request)
