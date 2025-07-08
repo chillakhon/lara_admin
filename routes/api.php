@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\CartAnalyticsController;
 use App\Http\Controllers\Api\Admin\CartController;
 use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\CDEKController;
@@ -167,7 +168,10 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     });
 
     Route::middleware(['role:super-admin,admin,manager'])->group(function () {
-        Route::get('/carts', [CartController::class, 'carts']);
+        Route::prefix('/carts')->group(function () {
+            Route::get('/', [CartController::class, 'carts']);
+            Route::get('/analytics', [CartAnalyticsController::class, 'cartAnalytics']);
+        });
 
         // Financial info api
         Route::prefix('/analytics')->group(function () {
