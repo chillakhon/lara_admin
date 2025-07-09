@@ -69,10 +69,13 @@ Route::get('/products/{product}/main-image', [ProductImageController::class, 'ge
 //client - admin
 Route::get('/products', [ProductController::class, 'index']);
 // clients
-Route::get('/cart-items', [CartController::class, 'cart_items']);
-Route::post('/cart-items/add-to-cart', [CartController::class, 'add_item_to_cart']);
-Route::post('/cart-items/add-multiple-items-to-cart', [CartController::class, 'add_multiple_items_to_cart']);
-Route::delete('/cart-items/cancel', [CartController::class, 'cancel_cart']);
+Route::prefix("/cart-items")->group(function () {
+    Route::get('/', [CartController::class, 'cart_items']);
+    Route::post('/add-to-cart', [CartController::class, 'add_item_to_cart']);
+    Route::post('/add-multiple-items-to-cart', [CartController::class, 'add_multiple_items_to_cart']);
+    Route::delete('/cancel', [CartController::class, 'cancel_cart']);
+    Route::delete('/remove-item', [CartController::class, 'remove_single_item_from_cart']);
+});
 Route::get('/colors', [SettingsController::class, 'get_colors']);
 Route::get('reviews/product/{product}', [ReviewController::class, 'productReviews']);
 //Route::get('/products/{slug}', [ProductController::class, 'show']);
