@@ -169,17 +169,17 @@ trait ProductsTrait
             if ($discount->type === 'fixed') {
                 $totalDiscount = $discount->value;
                 $finalPrice = max(0, $price - $totalDiscount);
-                $percentage = $price > 0 ? round(($totalDiscount / $price) * 100) : null;
+                $percentage = $price > 0 ? round(($totalDiscount / $price) * 100, 2) : null;
             } elseif ($discount->type === 'percentage') {
                 $percentage = $discount->value;
-                $totalDiscount = round(($percentage / 100) * $price);
+                $totalDiscount = round(($percentage / 100) * $price, 2);
                 $finalPrice = max(0, $price - $totalDiscount);
             }
             $model->old_price = $price;
             $model->discount_id = $discount->id;
         } elseif ($oldPrice && $oldPrice > $price) {
             $totalDiscount = $oldPrice - $price;
-            $percentage = $oldPrice > 0 ? round(($totalDiscount / $oldPrice) * 100) : null;
+            $percentage = $oldPrice > 0 ? round(($totalDiscount / $oldPrice) * 100, 2) : null;
             // setting null to discount_id if discount is null
             $model->discount_id = null;
         } else {
