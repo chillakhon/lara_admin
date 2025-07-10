@@ -90,6 +90,72 @@ class CartController extends Controller
         return response()->json(['success' => true, 'message' => 'Item added to cart.']);
     }
 
+
+    public function remove_single_item_from_cart(Request $request)
+    {
+        $validated = $request->validate([
+            'product_id' => 'required|integer|exists:products,id',
+            'product_variant_id' => 'nullable|integer|exists:product_variants,id',
+        ]);
+
+        $client = auth('sanctum')->user();
+
+        if (!$client || $client instanceof \App\Models\User) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Клиент должен быть экземпляром модели Client, а не User.',
+            ]);
+        }
+
+        $cart = Cart::where('client_id', $client->id)
+            ->whereNull('status')
+            ->first();
+
+        if (!$cart) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Активная корзина не найдена.',
+            ]);
+        }
+
+        $itemQuery = $cart->items()
+            ->where('product_id', $validated['product_id']);
+
+        if (is_null($validated['product_variant_id'])) {
+            $itemQuery->whereNull('product_variant_id');
+        } else {
+            $itemQuery->where('product_variant_id', $validated['product_variant_id']);
+        }
+
+        $item = $itemQuery->first();
+
+        // if (!$item) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Товар не найден в корзине.',
+        //     ]);
+        // }
+
+        if ($item) {
+            $item->delete();
+        }
+
+        $cart->update([
+            'total' => $cart->items()->sum('total'),
+            'total_original' => $cart->items()->sum('total_original'),
+            'total_discount' => $cart->items()->sum('total_discount'),
+        ]);
+
+        if ($cart->items()->count() === 0) {
+            $cart->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Товар успешно удалён из корзины.',
+        ]);
+    }
+
     public function cancel_cart(Request $request)
     {
         $user = auth('sanctum')->user();
