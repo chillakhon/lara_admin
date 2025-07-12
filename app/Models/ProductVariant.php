@@ -152,4 +152,9 @@ class ProductVariant extends Model
     {
         return $this->discountable?->discount;
     }
+
+    public function table_color()
+    {
+        return $this->belongsTo(Color::class, 'color_id');
+    }
 }

@@ -107,7 +107,7 @@ class MoySkladHelperService
         $objects = [
             ["name" => "Размер", "type" => "string"],
             ["name" => "Цвет", "type" => "string"],
-            ["name" => "Test", "type" => "string"]
+            // ["name" => "Test", "type" => "string"]
         ];
 
         $all_characteristics = $this->get_characteristics();
