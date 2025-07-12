@@ -3,6 +3,7 @@
 namespace App\Services\MoySklad;
 
 use App\Http\Controllers\Api\Admin\MoySkladController;
+use App\Models\Color;
 use App\Models\DeliveryServiceSetting;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -125,6 +126,12 @@ class ProductsAndVariantsSyncWithMoySkladService
     {
         $characteristic = collect($data->characteristics ?? [])
             ->firstWhere('name', 'Размер');
+        $colorCharacteristic = collect($data->characteristics ?? [])
+            ->firstWhere('name', 'Цвет');
+
+        $color_name = $colorCharacteristic?->value ?? '';
+        $findColorFromTable = Color::where('name', 'like', "%{$color_name}%")->first();
+
         $variant_name = $characteristic?->value ?? '';
 
         $slug = Str::slug($variant_name);
@@ -137,6 +144,7 @@ class ProductsAndVariantsSyncWithMoySkladService
         $attributes = [
             'uuid' => $data->id,
             'product_id' => $product->id,
+            'color_id' => $findColorFromTable?->id,
             'name' => $variant_name,
             'unit_id' => $product->default_unit_id,
             'sku' => $slug,

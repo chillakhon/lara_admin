@@ -67,11 +67,16 @@ class ProductVariantService
         ];
 
         $sizeId = $moySkladHelperService->ensureCharacteristic('Размер', 'string');
+        $colorId = $moySkladHelperService->ensureCharacteristic('Цвет', 'string');
 
         $msModification->characteristics = [
             [
                 "id" => "{$sizeId}",
                 "value" => $productVariant->name,
+            ],
+            [
+                "id" => "{$colorId}",
+                "value" => $productVariant->table_color?->name ?? '',
             ],
         ];
 
@@ -116,11 +121,16 @@ class ProductVariantService
         // ];
 
         $sizeId = $moySkladHelperService->ensureCharacteristic('Размер', 'string');
+        $colorId = $moySkladHelperService->ensureCharacteristic('Цвет', 'string');
 
         $msModification->characteristics = [
             [
                 "id" => "{$sizeId}",
                 "value" => $productVariant->name,
+            ],
+            [
+                "id" => "{$colorId}",
+                "value" => $productVariant->table_color?->name ?? '',
             ],
         ];
 
@@ -160,6 +170,7 @@ class ProductVariantService
         $currency = $moySkladHelperService->get_currencies();
         $priceType = $moySkladHelperService->get_price_types()[0];
         $sizeId = $moySkladHelperService->ensureCharacteristic('Размер', 'string');
+        $colorId = $moySkladHelperService->ensureCharacteristic('Цвет', 'string');
 
         foreach ($productVariants as $key => $variant) {
             $existingVariant = ProductVariant::find($variant->id);
@@ -181,7 +192,11 @@ class ProductVariantService
                     [
                         'id' => (string) $sizeId,
                         'value' => $variant->name,
-                    ]
+                    ],
+                    [
+                        'id' => (string) $colorId,
+                        'value' => $existingVariant->table_color?->name ?? '',
+                    ],
                 ],
             ];
 
