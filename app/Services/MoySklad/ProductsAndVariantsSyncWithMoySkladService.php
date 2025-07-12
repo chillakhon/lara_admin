@@ -130,7 +130,10 @@ class ProductsAndVariantsSyncWithMoySkladService
             ->firstWhere('name', 'Цвет');
 
         $color_name = $colorCharacteristic?->value ?? '';
-        $findColorFromTable = Color::where('name', 'like', "%{$color_name}%")->first();
+        $findColorFromTable = Color::where(function ($sql) use ($color_name) {
+            $sql->where('name', 'like', "%{$color_name}%")
+                ->orWhere('normalized_name', 'like', "%{$color_name}%");
+        })->first();
 
         $variant_name = $characteristic?->value ?? '';
 
