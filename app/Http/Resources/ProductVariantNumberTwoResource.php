@@ -25,9 +25,7 @@ class ProductVariantNumberTwoResource extends JsonResource
             'price' => $this->price,
             'old_price' => $this->old_price,
             'cost_price' => $this->cost_price,
-            $this->mergeWhen($isAdmin, [
-                'stock_quantity' => $this->inventory_balance,
-            ]),
+            'stock_quantity' => $this->inventory_balance,
             // 'stock_quantity' => $this->inventory_balance,
             // 'additional_cost' => $this->additional_cost,
             'type' => $this->type,

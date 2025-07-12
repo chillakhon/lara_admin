@@ -34,9 +34,7 @@ class ProductNumberTwoResouce extends JsonResource
             // 'deleted_at' => $this->deleted_at,
             'price' => $this->price,
             'old_price' => $this->old_price,
-            $this->mergeWhen($isAdmin, [
-                'stock_quantity' => $this->inventory_balance,
-            ]),
+            'stock_quantity' => $this->inventory_balance,
             'cost_price' => $this->cost_price,
             // 'currency' => $this->currency,
             // 'stock_quantity' => $this->stock_quantity,
