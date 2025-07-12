@@ -57,7 +57,7 @@ class ProductNumberTwoResouce extends JsonResource
             // 'image_path' => $this->image_path,
             'main_image' => $this->main_image ? new ImageResource($this->main_image) : null,
             'images' => ImageResource::collection($this->images ?? []),
-            'colors' => ColorResource::collection($this->colors ?? []),
+            // 'colors' => ColorResource::collection($this->colors ?? []),
             'variants' => ProductVariantNumberTwoResource::collection($this->variants ?? []),
             'default_unit' => $this->defaultUnit ? new UnitResource($this->defaultUnit) : null,
             // 'discountable' => new DiscountableResource($this->whenLoaded('discountable')),
