@@ -101,8 +101,8 @@ class ProductNumberTwoResouce extends JsonResource
             'images' => ImageResource::collection($this->images ?? []),
             // 'colors' => ColorResource::collection($this->colors ?? []),
             $this->mergeWhen(!$isAdmin, [
-                'variants_qty_by_size' => $qty_stock_by_color_and_size->unique()->values(),
-                'sizes' => $sizes->unique()->values(),
+                'variants_qty_by_size_and_color' => $qty_stock_by_color_and_size->unique()->values(),
+                'variants' => $sizes->unique()->values(),
                 'colors' => $colors->unique()->values(),
             ]),
             $this->mergeWhen($isAdmin, [
