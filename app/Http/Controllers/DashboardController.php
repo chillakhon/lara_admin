@@ -28,8 +28,7 @@ class DashboardController extends Controller
             'average_order' => Order::whereBetween('created_at', [$thirtyDaysAgo, $now])
                 ->where('status', '!=', 'cancelled')
                 ->avg('total_amount') ?? 0,
-                
-            'new_clients' => Client::whereBetween('created_at', [$thirtyDaysAgo, $now])
+            'new_clients' => Client::whereNull('deleted_at')->whereBetween('created_at', [$thirtyDaysAgo, $now])
                 ->count(),
         ];
 

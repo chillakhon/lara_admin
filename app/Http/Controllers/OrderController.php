@@ -24,9 +24,9 @@ class OrderController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
-                    ->orWhereHas('client.user.profile', function($q) use ($search) {
+                    ->orWhereHas('client.user.profile', function ($q) use ($search) {
                         $q->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%");
                     });
@@ -35,7 +35,7 @@ class OrderController extends Controller
 
         $orders = $query->latest()
             ->paginate(15)
-            ->through(function($order) {
+            ->through(function ($order) {
                 return [
                     'id' => $order->id,
                     'order_number' => $order->order_number,
@@ -51,7 +51,7 @@ class OrderController extends Controller
                         'email' => $order->client->user->email,
                         'phone' => $order->client->phone,
                     ] : null,
-                    'items' => $order->items->map(function($item) {
+                    'items' => $order->items->map(function ($item) {
                         return [
                             'id' => $item->id,
                             'product' => [
@@ -69,8 +69,9 @@ class OrderController extends Controller
 
         // Получаем список клиентов для формы создания заказа
         $clients = Client::with('user.profile')
+            ->whereNull('deleted_at')
             ->get()
-            ->map(function($client) {
+            ->map(function ($client) {
                 return [
                     'id' => $client->id,
                     'full_name' => $client->user->profile->full_name,
@@ -139,7 +140,7 @@ class OrderController extends Controller
             'items.productVariant',
             'history.user'
         ]);
-        
+
         return Inertia::render('Dashboard/Orders/Show', [
             'order' => [
                 'id' => $order->id,
@@ -156,7 +157,7 @@ class OrderController extends Controller
                     'email' => $order->client->user->email,
                     'phone' => $order->client->phone,
                 ] : null,
-                'items' => $order->items->map(function($item) {
+                'items' => $order->items->map(function ($item) {
                     return [
                         'id' => $item->id,
                         'product' => [
@@ -169,7 +170,7 @@ class OrderController extends Controller
                         'price' => $item->price,
                     ];
                 }),
-                'history' => $order->history->map(function($record) {
+                'history' => $order->history->map(function ($record) {
                     return [
                         'id' => $record->id,
                         'status' => $record->status,

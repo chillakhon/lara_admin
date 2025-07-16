@@ -283,7 +283,7 @@ class ProductController extends Controller
                     $cleanVariantData['width'] = $product->width;
                     $cleanVariantData['height'] = $product->height;
                     $cleanVariantData['colors'] = $validated['colors'] ?? []; // product's colors
-                    $cleanVariantData['sku'] = Str::slug($variantData['name']);
+                    $cleanVariantData['sku'] = Str::slug($variantData['name']) . '-' . $product->id;
                     // temp value for syncing with MoySklad
                     $cleanVariantData['code'] = (string) rand(1000000000, 9999999999);
                     $cleanVariantData['created_at'] = now();
@@ -515,7 +515,14 @@ class ProductController extends Controller
                 } else {
                     // temp value for syncing with MoySklad
                     $cleanVariantData['code'] = (string) rand(1000000000, 9999999999);
-                    $cleanVariantData['sku'] = Str::slug($variantData['name']);
+                    $baseSku = Str::slug($variantData['name']);
+                    $sku = $baseSku . '-' . $product->id;
+
+                    // если даже такое sku уже есть — добавим рандом
+                    if (ProductVariant::where('sku', $sku)->exists()) {
+                        $sku .= '-' . Str::random(4);
+                    }
+                    $cleanVariantData['sku'] = $sku;
                     $variant = ProductVariant::create($cleanVariantData);
                     // -1 means that its creating for the first time and you have to put null instead
                     $variant->colors()->attach($variant_colors_ids);

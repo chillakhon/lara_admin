@@ -40,7 +40,7 @@ class OrderController extends Controller
             return response()->json(['error' => 'Пользователь не авторизован'], 401);
         }
 
-        $client = Client::where('user_id', $user->id)->first();
+        $client = Client::where('user_id', $user->id)->whereNull('deleted_at')->first();
 
         if (!$client) {
             return response()->json(['error' => 'Клиент не найден!'], 404);
@@ -137,6 +137,7 @@ class OrderController extends Controller
             'orders' => $orders,
             'filters' => $request->only(['status', 'search']),
             'clients' => Client::with('user.profile')
+                ->whereNull('deleted_at')
                 ->get()
                 ->map(function ($client) {
                     return [

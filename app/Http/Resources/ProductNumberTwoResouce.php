@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Str;
 
 class ProductNumberTwoResouce extends JsonResource
 {
@@ -15,6 +16,49 @@ class ProductNumberTwoResouce extends JsonResource
     public function toArray(Request $request): array
     {
         $isAdmin = $request->boolean('admin', false);
+        $colors = collect();
+        $sizes = collect();
+        $available_variants = collect();
+
+        if (!$isAdmin) {
+            $collectedVariants = $this->variants ?? collect();
+
+
+            $collectedVariants->map(function ($variant) use (&$colors, &$sizes, &$available_variants) {
+                $size = null;
+                $color = null;
+                if (Str::contains($variant->name, '-')) {
+                    $segments = explode('-', $variant->name);
+                    $size = trim(end($segments));
+                }
+
+                if ($size) {
+                    $sizes->push([
+                        'product_variant_id' => $variant->id,
+                        'size' => $size,
+                    ]);
+                }
+
+                if ($variant->color_id) {
+                    $color = [
+                        'id' => $variant->color_id,
+                        'name' => $variant->table_color ? $variant->table_color->name : null,
+                        'code' => $variant->table_color ? $variant->table_color->code : null,
+                    ];
+                }
+
+                if ($color) {
+                    $colors->push($color);
+                }
+
+                $available_variants->push([
+                    'color_id' => $variant->color_id,
+                    'size' => $size,
+                    'quantity' => $variant->inventory_balance,
+                ]);
+
+            });
+        }
 
         return [
             // Your custom structure based on the JSON you shared
@@ -56,7 +100,14 @@ class ProductNumberTwoResouce extends JsonResource
             'main_image' => $this->main_image ? new ImageResource($this->main_image) : null,
             'images' => ImageResource::collection($this->images ?? []),
             // 'colors' => ColorResource::collection($this->colors ?? []),
-            'variants' => ProductVariantNumberTwoResource::collection($this->variants ?? []),
+            $this->mergeWhen(!$isAdmin, [
+                'available_variants' => $available_variants,
+                'variants' => $sizes->unique()->values(),
+                'colors' => $colors->unique()->values(),
+            ]),
+            $this->mergeWhen($isAdmin, [
+                'variants' => ProductVariantNumberTwoResource::collection($this->variants ?? [])
+            ]),
             'default_unit' => $this->defaultUnit ? new UnitResource($this->defaultUnit) : null,
             // 'discountable' => new DiscountableResource($this->whenLoaded('discountable')),
         ];

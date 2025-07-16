@@ -17,6 +17,7 @@ class ClientController extends Controller
     {
         $query = Client::with(['user.profile', 'level'])
             ->withCount('orders')
+            ->whereNull('deleted_at')
             ->when($request->search, function($query, $search) {
                 $query->where(function($q) use ($search) {
                     $q->whereHas('user.profile', function($q) use ($search) {

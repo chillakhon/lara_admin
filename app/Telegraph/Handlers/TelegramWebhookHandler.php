@@ -43,7 +43,7 @@ class TelegramWebhookHandler extends WebhookHandler
             $user_name .= $client_profile->last_name;
         }
         if (empty($user_name)) {
-            $client = Client::where('id', $client_profile->client_id)->first();
+            $client = Client::where('id', $client_profile->client_id)->whereNull('deleted_at')->first();
             $user_name = $client->email;
         }
 
@@ -87,7 +87,7 @@ class TelegramWebhookHandler extends WebhookHandler
                 return;
             }
             // Поиск пользователя по email
-            $client = Client::where('email', $email)->first();
+            $client = Client::where('email', $email)->whereNull('deleted_at')->first();
 
             if ($client) {
                 $client_profile = $this->check_users_with_same_email($client);
@@ -137,7 +137,7 @@ class TelegramWebhookHandler extends WebhookHandler
             return;
         }
 
-        $client = Client::where('id', $client_profile->client_id)->first();
+        $client = Client::where('id', $client_profile->client_id)->whereNull('deleted_at')->first();
 
         if (!$client) {
             $this->start();

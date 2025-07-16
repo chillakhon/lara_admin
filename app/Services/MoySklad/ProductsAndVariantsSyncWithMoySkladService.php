@@ -138,9 +138,10 @@ class ProductsAndVariantsSyncWithMoySkladService
         $variant_name = $characteristic?->value ?? '';
 
         $slug = Str::slug($variant_name);
-        $variant = ProductVariant::where('uuid', $data->id)->first()
-            ?? ProductVariant::where('sku', $slug)->where('product_id', $product->id)->first();
+        $sku = $slug . '-' . $product->id;
 
+        $variant = ProductVariant::where('uuid', $data->id)->first()
+            ?? ProductVariant::where('sku', $sku)->where('product_id', $product->id)->first();
 
         $stockQty = $stock[$data->id]['stock'] ?? 0;
 
@@ -150,7 +151,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             'color_id' => $findColorFromTable?->id,
             'name' => $variant_name,
             'unit_id' => $product->default_unit_id,
-            'sku' => $slug,
+            'sku' => $sku,
             'barcode' => $data->barcodes[0]->ean13 ?? null,
             'price' => ($data->salePrices[0]->value ?? 0) / 100,
             'cost_price' => ($data->buyPrice->value ?? 0) / 100,

@@ -107,7 +107,7 @@ class RegisteredUserController extends Controller
             'password' => 'required|string'
         ]);
 
-        $client = Client::where('email', $validation['email'])->first();
+        $client = Client::where('email', $validation['email'])->whereNull('deleted_at')->first();
 
         if ($client) {
             return response()->json([
