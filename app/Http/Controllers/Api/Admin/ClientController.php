@@ -21,6 +21,7 @@ class ClientController extends Controller
     public function index(Request $request)
     {
         $query = Client::with(['level'])
+            ->whereNull('deleted_at')
             ->withCount('orders')
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {

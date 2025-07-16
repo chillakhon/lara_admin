@@ -101,7 +101,7 @@ class AuthenticatedSessionController extends Controller
                 'email' => 'required|string',
             ]);
 
-            $client = Client::where('email', $validation['email'])->first();
+            $client = Client::where('email', $validation['email'])->whereNull('deleted_at')->first();
 
             if (!$client) {
                 $client = Client::create([
@@ -145,7 +145,7 @@ class AuthenticatedSessionController extends Controller
             'verification_code' => 'required|string',
         ]);
 
-        $client = Client::where('email', $validation['email'])->first();
+        $client = Client::where('email', $validation['email'])->whereNull('deleted_at')->first();
 
         if (!$client) {
             return response()->json([

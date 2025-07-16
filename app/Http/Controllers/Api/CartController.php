@@ -16,7 +16,7 @@ class CartController extends Controller
 
     public function store(Request $request)
     {
-        $client = Client::where('tg_id', '=', $request->id)->first();
+        $client = Client::where('tg_id', '=', $request->id)->whereNull('deleted_at')->first();
         Cart::create(
             [
                 'client_id' => $client->id,
@@ -28,7 +28,7 @@ class CartController extends Controller
     public function update(Request $request)
     {
 
-        $client = Client::where('tg_id', $request->id)->first();
+        $client = Client::where('tg_id', $request->id)->whereNull('deleted_at')->first();
 
         if (!$client) {
             return response()->json(['error' => 'Client not found'], 404);

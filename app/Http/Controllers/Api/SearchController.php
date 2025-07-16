@@ -38,6 +38,7 @@ class SearchController extends Controller
 
             'clients' => \App\Models\Client::query()
                 ->join('users', 'clients.user_id', '=', 'users.id')
+                ->whereNull('clients.deleted_at')
                 ->where(function ($q) use ($query) {
                     $q->where('clients.first_name', 'like', "%{$query}%")
                         ->orWhere('clients.last_name', 'like', "%{$query}%");

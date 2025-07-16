@@ -18,13 +18,13 @@ class ProductNumberTwoResouce extends JsonResource
         $isAdmin = $request->boolean('admin', false);
         $colors = collect();
         $sizes = collect();
-        $qty_stock_by_color_and_size = collect();
+        $available_variants = collect();
 
         if (!$isAdmin) {
             $collectedVariants = $this->variants ?? collect();
 
 
-            $collectedVariants->map(function ($variant) use (&$colors, &$sizes, &$qty_stock_by_color_and_size) {
+            $collectedVariants->map(function ($variant) use (&$colors, &$sizes, &$available_variants) {
                 $size = null;
                 $color = null;
                 if (Str::contains($variant->name, '-')) {
@@ -51,7 +51,7 @@ class ProductNumberTwoResouce extends JsonResource
                     $colors->push($color);
                 }
 
-                $qty_stock_by_color_and_size->push([
+                $available_variants->push([
                     'color_id' => $variant->color_id,
                     'size' => $size,
                     'quantity' => $variant->inventory_balance,
@@ -101,7 +101,7 @@ class ProductNumberTwoResouce extends JsonResource
             'images' => ImageResource::collection($this->images ?? []),
             // 'colors' => ColorResource::collection($this->colors ?? []),
             $this->mergeWhen(!$isAdmin, [
-                'variants_qty_by_size_and_color' => $qty_stock_by_color_and_size->unique()->values(),
+                'available_variants' => $available_variants,
                 'variants' => $sizes->unique()->values(),
                 'colors' => $colors->unique()->values(),
             ]),

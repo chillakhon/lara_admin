@@ -122,14 +122,14 @@ class LeadController extends Controller
     private function findOrInitializeClient(array $data)
     {
         if (!empty($data['phone'])) {
-            $client = Client::where('phone', $data['phone'])->first();
+            $client = Client::where('phone', $data['phone'])->whereNull('deleted_at')->first();
             if ($client) return $client;
         }
 
         if (!empty($data['email'])) {
             $client = Client::whereHas('user', function($q) use ($data) {
                 $q->where('email', $data['email']);
-            })->first();
+            })->whereNull('deleted_at')->first();
             if ($client) return $client;
         }
 
