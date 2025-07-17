@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Admin\DeliveryRateController;
 use App\Http\Controllers\Api\Admin\DeliveryZoneController;
 use App\Http\Controllers\Api\Admin\DiscountAnalyticsController;
 use App\Http\Controllers\Api\Admin\DiscountController;
+use App\Http\Controllers\Api\Admin\FavoriteController;
 use App\Http\Controllers\Api\Admin\FinancialAnalyticsController;
 use App\Http\Controllers\Api\Admin\InventoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
@@ -101,6 +102,12 @@ Route::prefix('reviews')->group(function () {
     });
     // Route::get('/shipments', [ShipmentController::class, 'userShipments'])
     //     ->name('shipments.index');
+});
+
+Route::middleware('auth:sanctum')->prefix('favorites')->group(function () {
+    Route::post('/sync', [FavoriteController::class, 'sync']);
+    Route::post('/add', [FavoriteController::class, 'toggle']);
+    Route::get('/', [FavoriteController::class, 'favorites']);
 });
 
 Route::prefix('delivery')->name('delivery.')->group(function () {
