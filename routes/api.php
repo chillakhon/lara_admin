@@ -106,7 +106,7 @@ Route::prefix('reviews')->group(function () {
 
 Route::middleware('auth:sanctum')->prefix('favorites')->group(function () {
     Route::post('/sync', [FavoriteController::class, 'sync']);
-    Route::post('/toggle', [FavoriteController::class, 'toggle']);
+    Route::post('/add', [FavoriteController::class, 'toggle']);
     Route::get('/', [FavoriteController::class, 'favorites']);
 });
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\FavoriteResource;
 use App\Models\Favorite;
 use Illuminate\Http\Request;
 
@@ -25,7 +26,7 @@ class FavoriteController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $favorites,
+            'data' => FavoriteResource::collection($favorites),
         ]);
     }
 
