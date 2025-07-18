@@ -38,7 +38,7 @@ class ProductVariantNumberTwoResource extends JsonResource
             'discount_percentage' => (float) $this->discount_percentage,
             'total_discount' => (float) $this->total_discount,
             'unit' => $this->unit ? new UnitResource($this->unit) : null,
-            'color' => $this->table_color ? null : $this->table_color,
+            'color' => $this->table_color ? $this->table_color : null,
             // 'colors' => ColorResource::collection($this->colors ?? []),
             'main_image' => $this->main_image ? new ImageResource($this->main_image) : null,
             'images' => ImageResource::collection($this->images ?? []),
