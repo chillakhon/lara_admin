@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\DeliveryMethod;
+use App\Models\DeliveryMethodByCountry;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\Delivery\CdekDeliveryService;
@@ -18,19 +19,35 @@ class DeliveryMethodController extends Controller
 
     public function index(Request $request)
     {
-
         $request->validate([
             'city_name' => 'required|string',
             'items' => 'required|array',
             'delivery_address' => "required|string"
         ]);
 
+        $delivery_methods_by_counties = DeliveryMethodByCountry
+            ::join('delivery_methods', 'delivery_methods_by_countries.delivery_method_id', 'delivery_methods.id')
+            ->join('country', 'delivery_methods_by_countries.country_id', 'country.id')
+            ->where('country.code', $request->get('country_code'))
+            ->select('country.code as country_code', 'delivery_methods.code as delivery_type_code')
+            ->get();
+
+
+        if ($delivery_methods_by_counties->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'К сожалению, доставка в эту страну не осуществляется.',
+            ], 400);
+        }
+
+        // these constants are used to filter delivery methods
+        // just to understand how to work with DELIVERY_COMPANY
+        // I will add more delivery companies later
         $cdek_pickup = "cdek_pickup";
         $cdek_courier = "cdek_courier";
-        $main_delivery_methods_code = [$cdek_pickup, $cdek_courier];
 
         $delivery_methods = DeliveryMethod
-            ::whereIn('code', $main_delivery_methods_code)
+            ::whereIn('code', $delivery_methods_by_counties->pluck('delivery_type_code'))
             ->orderBy('id', 'asc')
             ->select(['id', 'name', 'code as delivery_type_code', 'description'])
             ->get();
@@ -86,6 +103,22 @@ class DeliveryMethodController extends Controller
             'data' => $solved_methods,
             'meta' => [
                 'total_methods' => $solved_methods->count(),
+            ]
+        ]);
+    }
+
+
+    public function get_all_delivery_methods(Request $request)
+    {
+        $delivery_methods = DeliveryMethod::query()
+            ->orderBy('id', 'asc')
+            ->select(['id', 'name', 'code as delivery_type_code', 'description'])
+            ->get();
+
+        return response()->json([
+            'data' => $delivery_methods,
+            'meta' => [
+                'total_methods' => $delivery_methods->count(),
             ]
         ]);
     }

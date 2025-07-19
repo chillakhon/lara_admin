@@ -79,7 +79,9 @@ class ProductNumberTwoResouce extends JsonResource
             'price' => (float) $this->price,
             'old_price' => (float) $this->old_price,
             'stock_quantity' => (float) $this->inventory_balance,
-            'cost_price' => (float) $this->cost_price,
+            $this->mergeWhen($isAdmin, [
+                 'cost_price' => (float) $this->cost_price,
+            ]),
             // 'currency' => $this->currency,
             // 'stock_quantity' => $this->stock_quantity,
             // 'min_order_quantity' => $this->min_order_quantity,
