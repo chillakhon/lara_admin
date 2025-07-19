@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Admin\ClientController;
 use App\Http\Controllers\Api\Admin\ClientLevelController;
 use App\Http\Controllers\Api\Admin\CostCategoryController;
 use App\Http\Controllers\Api\Admin\CountriesController;
+use App\Http\Controllers\Api\Admin\DeliveryCountryController;
 use App\Http\Controllers\Api\Admin\DeliveryMethodController;
 use App\Http\Controllers\Api\Admin\DeliveryRateController;
 use App\Http\Controllers\Api\Admin\DeliveryZoneController;
@@ -538,10 +539,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::prefix('delivery')->name('delivery.')->group(function () {
             // Методы доставки
             Route::get('/methods', [DeliveryMethodController::class, 'index'])->name('methods.index');
+            Route::get('/methods/admin', [DeliveryMethodController::class, 'get_all_delivery_methods'])->name('methods.index');
             Route::get('/methods/{method}', [DeliveryMethodController::class, 'show'])->name('methods.show');
             Route::post('/methods', [DeliveryMethodController::class, 'store'])->name('methods.store');
             Route::put('/methods/{method}', [DeliveryMethodController::class, 'update'])->name('methods.update');
             Route::delete('/methods/{method}', [DeliveryMethodController::class, 'destroy'])->name('methods.destroy');
+
+            Route::post('/methods/countries/{method}', [DeliveryCountryController::class, 'assignCountries']);
             //
 //            // Зоны доставки
             Route::get('/methods/{method}/zones', [DeliveryZoneController::class, 'index'])->name('zones.index');
