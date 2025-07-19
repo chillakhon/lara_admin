@@ -18,7 +18,6 @@ class DeliveryMethodController extends Controller
 
     public function index(Request $request)
     {
-
         $request->validate([
             'city_name' => 'required|string',
             'items' => 'required|array',
