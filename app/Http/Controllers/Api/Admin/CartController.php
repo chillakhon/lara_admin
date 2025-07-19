@@ -196,15 +196,31 @@ class CartController extends Controller
     // That is why if you are authenticated do not forget to send your token in headers!!!!
     public function cart_items(Request $request)
     {
-        $validated = $request->validate([
-            'items' => 'required|array'
-        ]);
 
         $user = auth('sanctum')->user();
 
+        if ($user instanceof \App\Models\User) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Клиент должен быть экземпляром модели Client, а не User.',
+            ]);
+        }
+
+        // means cart is not finished yet
+        $cart = Cart::where('client_id', $user->id)->whereNull('status')->first();
+
+        if (!$cart) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Активная корзина не найдена.',
+            ]);
+        }
+
+        $found_cart_items = $cart->items()->get();
+
         $found_items = [];
 
-        foreach ($validated['items'] as $item) {
+        foreach ($found_cart_items as $item) {
             if (!is_null($item['product_variant_id'])) {
                 $product_variant = ProductVariant
                     ::join('products', 'product_variants.product_id', 'products.id')
@@ -223,21 +239,21 @@ class CartController extends Controller
 
                 if ($product_variant) {
 
-                    $has_color = true;
-                    if (!is_null($item['color_id'])) {
-                        $find_color = DB::table('colorables')
-                            ->where('colorable_type', ProductVariant::class)
-                            ->where('colorable_id', $item['product_variant_id'])
-                            ->where('color_id', $item['color_id'])
-                            ->first();
-                        if (!$find_color) {
-                            $has_color = false;
-                        }
-                    }
+                    // $has_color = true;
+                    // if (!is_null($item['color_id'])) {
+                    //     $find_color = DB::table('colorables')
+                    //         ->where('colorable_type', ProductVariant::class)
+                    //         ->where('colorable_id', $item['product_variant_id'])
+                    //         ->where('color_id', $item['color_id'])
+                    //         ->first();
+                    //     if (!$find_color) {
+                    //         $has_color = false;
+                    //     }
+                    // }
 
-                    if ($has_color) {
-                        $found_items[] = $this->get_product_variants_fields($product_variant, $item);
-                    }
+                    // if ($has_color) {
+                    $found_items[] = $this->get_product_variants_fields($product_variant, $item);
+                    // }
                 }
 
             } else if (!is_null($item['product_id'])) {
@@ -252,26 +268,26 @@ class CartController extends Controller
                     ->where('is_active', true)
                     ->first();
                 if ($product) {
-                    $has_color = true;
-                    if (!is_null($item['color_id'])) {
-                        $find_color = DB::table('colorables')
-                            ->where('colorable_type', Product::class)
-                            ->where('colorable_id', $item['product_id'])
-                            ->where('color_id', $item['color_id'])
-                            ->first();
-                        if (!$find_color) {
-                            $has_color = false;
-                        }
-                    }
+                    // $has_color = true;
+                    // if (!is_null($item['color_id'])) {
+                    //     $find_color = DB::table('colorables')
+                    //         ->where('colorable_type', Product::class)
+                    //         ->where('colorable_id', $item['product_id'])
+                    //         ->where('color_id', $item['color_id'])
+                    //         ->first();
+                    //     if (!$find_color) {
+                    //         $has_color = false;
+                    //     }
+                    // }
 
-                    if ($has_color) {
-                        $found_items[] = $this->get_product_fields($product, $item);
-                    }
+                    // if ($has_color) {
+                    $found_items[] = $this->get_product_fields($product, $item);
+                    // }
                 }
             }
         }
 
-        $this->sync($user, $found_items, true, true);
+        // $this->sync($user, $found_items, true, true);
 
         return response()->json([
             'success' => true,
