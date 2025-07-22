@@ -65,6 +65,9 @@ class Client extends Model
         return $this->belongsTo(ClientLevel::class, 'client_level_id');
     }
 
+
+
+
     /**
      * Get the orders for the client.
      */

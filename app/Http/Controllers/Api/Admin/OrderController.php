@@ -67,6 +67,10 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
+
+
+        return Order::get();
+
         $query = Order::with([
             'client.user.profile',
             // 'items.product',
@@ -75,6 +79,9 @@ class OrderController extends Controller
             // 'deliveryDate',
             // 'deliveryTarget'
         ]);
+
+
+//        logger($query);
 
         if ($request->has('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
@@ -135,23 +142,23 @@ class OrderController extends Controller
 
         return response()->json([
             'orders' => $orders,
-            'filters' => $request->only(['status', 'search']),
-            'clients' => Client::with('user.profile')
-                ->whereNull('deleted_at')
-                ->get()
-                ->map(function ($client) {
-                    return [
-                        // 'id' => $client->id,
-                        'full_name' => $client->user->profile->full_name,
-                        // 'email' => $client->user->email,
-                        // 'phone' => $client->phone,
-                    ];
-                }),
+//            'filters' => $request->only(['status', 'search']),
+//            'clients' => Client::with('profile')
+//                ->whereNull('deleted_at')
+//                ->get()
+//                ->map(function ($client) {
+//                    return [
+//                        // 'id' => $client->id,
+//                        'full_name' => $client->user->profile->full_name,
+//                        // 'email' => $client->user->email,
+//                        // 'phone' => $client->phone,
+//                    ];
+//                }),
             /*'products' => Product::with(['variants'])
                 ->where('is_active', true)
                 ->get(),*/
-            'statuses' => Order::STATUSES,
-            'paymentStatuses' => Order::PAYMENT_STATUSES,
+//            'statuses' => Order::STATUSES,
+//            'paymentStatuses' => Order::PAYMENT_STATUSES,
         ]);
     }
 

@@ -6,7 +6,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class DiscountResource extends JsonResource
 {
-    public function toArray($request)
+    public function toArray($request, $getFullObjProduct = false)
     {
         return [
             'id' => $this->id,
@@ -19,11 +19,11 @@ class DiscountResource extends JsonResource
             'priority' => $this->priority,
             'conditions' => $this->conditions,
             'discount_type' => $this->discount_type,
-            'products' => ProductResource::collection($this->whenLoaded('products')),
+//            'products' => ProductResource::collection($this->whenLoaded('products')),
             // 'product_variants' => ProductVariantResource::collection($this->whenLoaded('')),
             'categories' => CategoryResource::collection($this->whenLoaded('categories')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at
         ];
     }
-} 
+}

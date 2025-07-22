@@ -52,6 +52,7 @@ use App\Http\Controllers\Api\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\LeadController;
+
 //use App\Http\Controllers\Api\Admin\LeadTypeController;
 use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\PromoCodeController;
@@ -385,7 +386,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 //            Route::get('/history', [ProductionController::class, 'history'])->name('history');
         });
         //        // Orders
-        Route::prefix('orders')->name('orders.')->middleware(['role:super-admin,admin,manager', 'permission:orders.view,orders.manage'])->group(function () {
+        Route::prefix('orders')->name('orders.')->group(function () {
             Route::get('/', [OrderController::class, 'index'])->name('orders.index');  // Путь будет /api/orders
             // Route::post('/', [OrderController::class, 'store'])->name('orders.store');  // Путь будет /api/orders
             Route::get('/stats', [OrderStatsController::class, 'stats'])->name('orders.stats');
@@ -422,8 +423,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             });
 
             // Управление ролями и разрешениями (только для супер-админа)
-            Route::middleware(['role:super-admin'])->prefix('/roles')->group(function () {
-                // Route::resource('roles', RoleController::class);
+            Route::prefix('/roles')->group(function () {
+//                 Route::resource('roles', RoleController::class);
                 // Route::resource('permissions', PermissionController::class);
                 // Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
                 //     ->name('roles.updatePermissions');
@@ -483,7 +484,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
         // Для удаления уровня клиента
         Route::delete('client-levels/{clientLevel}', [ClientLevelController::class, 'destroy'])->name('client-levels.destroy');
-
 
 
         //        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');

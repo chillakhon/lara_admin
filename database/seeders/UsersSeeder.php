@@ -51,25 +51,34 @@ class UsersSeeder extends Seeder
             ['name' => 'Создание пользователей', 'slug' => 'users.create'],
             ['name' => 'Редактирование пользователей', 'slug' => 'users.edit'],
             ['name' => 'Удаление пользователей', 'slug' => 'users.delete'],
-            
+
             // Роли и разрешения
             ['name' => 'Управление ролями', 'slug' => 'roles.manage'],
             ['name' => 'Управление разрешениями', 'slug' => 'permissions.manage'],
-            
+
             // Заказы
             ['name' => 'Просмотр заказов', 'slug' => 'orders.view'],
             ['name' => 'Управление заказами', 'slug' => 'orders.manage'],
-            
+
             // Продукты
             ['name' => 'Просмотр продуктов', 'slug' => 'products.view'],
             ['name' => 'Управление продуктами', 'slug' => 'products.manage'],
-            
+
             // Клиенты
             ['name' => 'Просмотр клиентов', 'slug' => 'clients.view'],
             ['name' => 'Управление клиентами', 'slug' => 'clients.manage'],
-            
+
             // Настройки
             ['name' => 'Управление настройками', 'slug' => 'settings.manage'],
+
+
+            ['name' => 'Управление пользователями', 'slug' => 'users.manage'],
+
+            ['name' => 'Управление клиентами (альтернативное)', 'slug' => 'clients.manage_alt'],
+
+            ['name' => 'Просмотр отчетов', 'slug' => 'reports.view'],
+
+
         ];
 
         foreach ($permissions as $permission) {
@@ -108,7 +117,7 @@ class UsersSeeder extends Seeder
                 UserProfile::factory()->create([
                     'user_id' => $user->id
                 ]);
-                
+
                 // Создаем запись клиента
                 // Client::factory()->create([
                 //     'user_id' => $user->id
