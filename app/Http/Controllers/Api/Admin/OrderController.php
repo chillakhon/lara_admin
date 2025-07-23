@@ -69,7 +69,7 @@ class OrderController extends Controller
     {
 
 
-        return Order::get();
+//        return Order::get();
 
         $query = Order::with([
             'client.user.profile',
