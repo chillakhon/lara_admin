@@ -233,7 +233,7 @@ class OrderController extends Controller
             'items.*.discount_id' => 'nullable|exists:discounts,id',
             'notes' => 'nullable|string',
             'delivery_address' => 'nullable|string',
-            'delivery_method_id' => 'required|exists:delivery_methods,id',
+            'delivery_method_id' => 'nullable|exists:delivery_methods,id', // required
             'delivery_zone_id' => 'nullable|exists:delivery_zones,id',
             'data' => 'nullable|string',
             // 'delivery_data' => 'required|array',
@@ -287,7 +287,7 @@ class OrderController extends Controller
             'status' => 'new',
             'payment_status' => 'pending',
             'notes' => $validated['notes'] ?? null,
-            'delivery_method_id' => $validated['delivery_method_id'],
+            // 'delivery_method_id' => $validated['delivery_method_id'],
             'delivery_zone_id' => $validated['delivery_zone_id'] ?? null,
             'data' => $validated['data'] ?? null,
         ]);
