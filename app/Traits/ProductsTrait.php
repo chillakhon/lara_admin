@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Traits;
 
 use App\Models\InventoryBalance;
@@ -78,7 +79,6 @@ trait ProductsTrait
                     });
                 });
             })
-
             ->latest();
 
 
@@ -88,6 +88,15 @@ trait ProductsTrait
 
         if ($request->get('product_id')) {
             $products->where('id', $request->get('product_id'));
+        }
+
+
+        if ($request->filled('price_after')) {
+            $products->where('price', '>=', (float)$request->input('price_after'));
+        }
+
+        if ($request->filled('price_before')) {
+            $products->where('price', '<=', (float)$request->input('price_before'));
         }
 
         return $products;

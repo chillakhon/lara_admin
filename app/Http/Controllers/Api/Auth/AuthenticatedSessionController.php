@@ -25,40 +25,6 @@ class AuthenticatedSessionController extends Controller
 {
 
     use HelperTrait;
-    /**
-     * Handle an incoming authentication request.
-     *
-     * @OA\Post(
-     *     path="/api/login",
-     *     summary="Authenticate a user",
-     *     tags={"Authentication"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"email", "password"},
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *             @OA\Property(property="password", type="string", format="password", example="password")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Authenticated successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Authenticated successfully"),
-     *             @OA\Property(property="user", type="object", ref="#/components/schemas/User"),
-     *             @OA\Property(property="token", type="string", example="1|abcdef123456")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Invalid credentials",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="The provided credentials are incorrect.")
-     *         )
-     *     )
-     * )
-     */
-
 
     // for admin login
     public function admin_login(LoginRequest $request): JsonResponse
@@ -145,7 +111,9 @@ class AuthenticatedSessionController extends Controller
             'verification_code' => 'required|string',
         ]);
 
-        $client = Client::where('email', $validation['email'])->whereNull('deleted_at')->first();
+        $client = Client::where('email', $validation['email'])->whereNull('deleted_at')
+            ->first();
+
 
         if (!$client) {
             return response()->json([
@@ -161,10 +129,15 @@ class AuthenticatedSessionController extends Controller
             ], 401);
         }
 
+
         $client->verified_at = now();
         $client->save();
 
         $token = $client->createToken('authToken')->plainTextToken;
+
+
+        $client->load('profile');
+
 
         Notification::route('mail', $client->email)->notify(new WelcomeNotification(
             $client->email,
@@ -187,30 +160,7 @@ class AuthenticatedSessionController extends Controller
         ]);
     }
 
-    /**
-     * Destroy an authenticated session.
-     *
-     * @OA\Post(
-     *     path="/api/logout",
-     *     summary="Logout a user",
-     *     tags={"Authentication"},
-     *     security={{"bearerAuth": {}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Logged out successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Logged out successfully")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthenticated",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
-     *         )
-     *     )
-     * )
-     */
+
     public function destroy(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();

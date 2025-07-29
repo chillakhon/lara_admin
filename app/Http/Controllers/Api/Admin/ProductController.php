@@ -27,6 +27,7 @@ use Log;
 class ProductController extends Controller
 {
     use HelperTrait, ImageTrait, ProductsTrait;
+
     protected $materialService;
 
     public function __construct(MaterialService $materialService)
@@ -78,6 +79,7 @@ class ProductController extends Controller
 
             // return response()->json($products);
             return ProductNumberTwoResouce::collection($products);
+
         } catch (Exception $e) {
             return response()->json([
                 'error' => $e->getMessage(),
@@ -129,7 +131,7 @@ class ProductController extends Controller
         // TODO: logic for getting product's prices history
         if ($request->boolean('is_variant', false)) {
             $variant_price_history = PriceHistory
-                ::where('item_type', ProductVariant::class, )
+                ::where('item_type', ProductVariant::class)
                 ->where('item_id', $request->get('id'))
                 ->whereNull("deleted_at")
                 ->orderBy('created_at', 'desc')
@@ -285,7 +287,7 @@ class ProductController extends Controller
                     $cleanVariantData['colors'] = $validated['colors'] ?? []; // product's colors
                     $cleanVariantData['sku'] = Str::slug($variantData['name']) . '-' . $product->id;
                     // temp value for syncing with MoySklad
-                    $cleanVariantData['code'] = (string) rand(1000000000, 9999999999);
+                    $cleanVariantData['code'] = (string)rand(1000000000, 9999999999);
                     $cleanVariantData['created_at'] = now();
 
                     $created_variant = ProductVariant::create($cleanVariantData);
@@ -514,7 +516,7 @@ class ProductController extends Controller
                     // $moyskadController->update_modification($variant);
                 } else {
                     // temp value for syncing with MoySklad
-                    $cleanVariantData['code'] = (string) rand(1000000000, 9999999999);
+                    $cleanVariantData['code'] = (string)rand(1000000000, 9999999999);
                     $baseSku = Str::slug($variantData['name']);
                     $sku = $baseSku . '-' . $product->id;
 
@@ -598,8 +600,9 @@ class ProductController extends Controller
 
     private function update_product_images(
         Request $request,
-        $product
-    ) {
+                $product
+    )
+    {
 
         // previois saved images of the products
         $existingImages = $request->get('images', []); // e.g., ["image_12_123456.jpg"]
@@ -621,7 +624,7 @@ class ProductController extends Controller
             }
             $normalizedPath = str_replace('.', '_', $image->path);
             $key = "product_image_path_" . $normalizedPath;
-            $position = (int) $request->get($key);
+            $position = (int)$request->get($key);
 
             $image->update([
                 'order' => $position,
@@ -632,7 +635,7 @@ class ProductController extends Controller
         if ($request->hasFile('product_images')) {
             foreach ($request->file('product_images') as $key => $productImage) {
                 $key = "product_image_file_" . $key;
-                $position = (int) $request->get($key);
+                $position = (int)$request->get($key);
                 $this->save_images($productImage, Product::class, $product->id, $position);
             }
         }
@@ -659,7 +662,7 @@ class ProductController extends Controller
             }
             $normalizedPath = str_replace('.', '_', $image->path);
             $key = "variant_" . $uuid . "_image_path_" . $normalizedPath;
-            $position = (int) $request->get($key);
+            $position = (int)$request->get($key);
 
             $image->update([
                 'order' => $position,
@@ -670,7 +673,7 @@ class ProductController extends Controller
         if ($request->hasFile("variant_images_" . $uuid)) {
             foreach ($request->file("variant_images_" . $uuid) as $key => $variantImage) {
                 $key = "variant_" . $uuid . "_image_file_" . $key;
-                $position = (int) $request->get($key);
+                $position = (int)$request->get($key);
                 $this->save_images(
                     $variantImage,
                     ProductVariant::class,
