@@ -166,6 +166,8 @@ class OrderController extends Controller
     {
         $validated = $this->validateOrderData($request);
 
+
+//        return $validated;
         DB::beginTransaction();
 
         try {
@@ -192,10 +194,18 @@ class OrderController extends Controller
 
             $order = $this->createOrder($validated, $client->id);
 
+
+//            return $order;
+
+
             $result = $this->processOrderItems($order, $validated['items']);
+
+
+//            return 34234;
             $totalDiscountAmount = $result['total_discount'];
             $orderTotalBefore = $result['order_total'];
 
+//            return
             if ($promo) {
                 $promoDiscount = $this->applyPromoCodeToOrder($order, $promo, $orderTotalBefore, $totalDiscountAmount);
                 $totalDiscountAmount += $promoDiscount;
@@ -206,7 +216,9 @@ class OrderController extends Controller
                 $order->updateTotalAmount();
             }
 
-            $this->createShipmentForOrder($order, $validated);
+
+//            return 234;
+//            return $this->createShipmentForOrder($order, $validated);
 
             $this->sendNotifications($client, $order);
 
@@ -383,6 +395,7 @@ class OrderController extends Controller
     {
         $deliveryMethodId = $validated['delivery_method_id'];
         $deliveryData = $validated;//json_decode($validated['data'] ?? '{}', true);
+
 
         $shipmentData = [
             'order_id' => $order->id,
