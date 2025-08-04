@@ -104,71 +104,6 @@ class ProductImageController extends Controller
     }
 
 
-
-
-
-
-    /**
-     * Загружает одно или несколько изображений для продукта и привязывает их к вариантам.
-     *
-     * @param Request $request
-     * @param Product $product
-     * @return \Illuminate\Http\JsonResponse
-     */
-    /**
-     * @OA\Post(
-     *     path="/api/products/{product}/images",
-     *     summary="Загружает изображения для продукта и привязывает их к вариантам",
-     *     tags={"Product Images"},
-     *     @OA\Parameter(
-     *         name="product",
-     *         in="path",
-     *         description="ID продукта",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\MediaType(
-     *             mediaType="multipart/form-data",
-     *             @OA\Schema(
-     *                 required={"images", "variants"},
-     *                 @OA\Property(
-     *                     property="images[]",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="string",
-     *                         format="binary",
-     *                         description="Файл изображения"
-     *                     ),
-     *                     description="Массив изображений"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="variants",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="integer"
-     *                     ),
-     *                     description="Массив ID вариантов продукта, к которым будет привязано изображение"
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Изображения успешно загружены",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Images uploaded successfully."),
-     *             @OA\Property(
-     *                 property="images",
-     *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/Image")
-     *             )
-     *         )
-     *     )
-     * )
-     */
-
     public function store(Request $request, Product $product)
     {
         $validated = $request->validate([
@@ -235,50 +170,6 @@ class ProductImageController extends Controller
         ]);
     }
 
-    /**
-     * Удаляет изображение для конкретного варианта продукта.
-     *
-     * @param Product $product
-     * @param Image $image
-     * @param int $variantId
-     * @return \Illuminate\Http\JsonResponse
-     */
-    /**
-     * @OA\Delete(
-     *     path="/api/products/{product}/images/{image}/{variant}",
-     *     summary="Удаляет изображение для указанного варианта продукта",
-     *     tags={"Product Images"},
-     *     @OA\Parameter(
-     *         name="product",
-     *         in="path",
-     *         description="ID продукта",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Parameter(
-     *         name="image",
-     *         in="path",
-     *         description="ID изображения",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Parameter(
-     *         name="variant",
-     *         in="path",
-     *         description="ID варианта продукта, к которому привязано изображение",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Изображение успешно удалено",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Image deleted successfully.")
-     *         )
-     *     )
-     * )
-     */
-
     public function destroy(Product $product, Image $image, $variantId)
     {
         // Отсоединяем изображение для указанного варианта
@@ -311,57 +202,6 @@ class ProductImageController extends Controller
             'message' => 'Image deleted successfully.'
         ], 200);
     }
-
-    /**
-     * Устанавливает выбранное изображение в качестве главного для определенного варианта.
-     *
-     * @param Request $request
-     * @param Product $product
-     * @param Image $image
-     * @return \Illuminate\Http\JsonResponse
-     */
-    /**
-     * @OA\Patch(
-     *     path="/api/products/{product}/images/{image}/{variant}/main",
-     *     summary="Устанавливает изображение как главное для указанного варианта продукта",
-     *     tags={"Product Images"},
-     *     @OA\Parameter(
-     *         name="product",
-     *         in="path",
-     *         description="ID продукта",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Parameter(
-     *         name="image",
-     *         in="path",
-     *         description="ID изображения",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Parameter(
-     *         name="variant",
-     *         in="path",
-     *         description="ID варианта продукта (из URL)",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"variant_id"},
-     *             @OA\Property(property="variant_id", type="integer", example=1, description="ID варианта продукта для установки главного изображения")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Главное изображение успешно установлено",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Main image set successfully.")
-     *         )
-     *     )
-     * )
-     */
 
     public function setMain(Request $request, Product $product, Image $image)
     {

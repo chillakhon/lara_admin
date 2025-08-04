@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Discount;
+use App\Models\Lead;
 use App\Models\Order;
 use App\Models\Client;
 use App\Models\OrderDiscount;
@@ -25,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\Rule;
 
 
 class OrderController extends Controller
@@ -69,10 +71,12 @@ class OrderController extends Controller
     {
 
 
-//        return Order::get();
+        $perPage = (int)$request->input('per_page', 15);
+        $page = $request->input('page', 1);
+
 
         $query = Order::with([
-            'client.user.profile',
+            'client.profile',
             // 'items.product',
             // 'items.productVariant',
             'deliveryMethod',
@@ -81,29 +85,36 @@ class OrderController extends Controller
         ]);
 
 
-//        logger($query);
-
-        if ($request->has('status') && $request->status !== 'all') {
+        if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
-        if ($request->has('search')) {
+        if ($request->input('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('order_number', 'like', "%{$search}%")
-                    ->orWhereHas('client.user.profile', function ($q) use ($search) {
+                $q->where('id', 'like', "%{$search}%")
+                    ->orWhereHas('client.profile', function ($q) use ($search) {
                         $q->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%");
                     });
             });
         }
 
+
+        if ($request->filled('date_from') && $request->filled('date_to')) {
+            $query->whereBetween('created_at', [
+                $request->input('date_from'),
+                $request->input('date_to'),
+            ]);
+        }
+
+
         $orders = $query->latest()
-            ->paginate(15)
-            ->map(function ($order) {
+            ->paginate($perPage, ['*'], 'page', $page)
+            ->through(function ($order) {
                 return [
                     'id' => $order->id,
-                    'order_number' => $order->order_number,
+//                    'order_number' => $order->order_number,
                     'status' => $order->status,
                     'payment_status' => $order->payment_status,
                     'is_paid' => $order->payment_status === 'paid',
@@ -113,7 +124,7 @@ class OrderController extends Controller
                     'created_at' => $order->created_at->format('d.m.Y H:i'),
                     'client' => $order->client ? [
                         'id' => $order->client->id,
-                        'full_name' => $order->client->user->profile->full_name,
+                        'full_name' => $order->client?->profile->full_name,
                         // 'email' => $order->client->user->email,
                         // 'phone' => $order->client->phone,
                     ] : null,
@@ -140,26 +151,7 @@ class OrderController extends Controller
                 ];
             });
 
-        return response()->json([
-            'orders' => $orders,
-//            'filters' => $request->only(['status', 'search']),
-//            'clients' => Client::with('profile')
-//                ->whereNull('deleted_at')
-//                ->get()
-//                ->map(function ($client) {
-//                    return [
-//                        // 'id' => $client->id,
-//                        'full_name' => $client->user->profile->full_name,
-//                        // 'email' => $client->user->email,
-//                        // 'phone' => $client->phone,
-//                    ];
-//                }),
-            /*'products' => Product::with(['variants'])
-                ->where('is_active', true)
-                ->get(),*/
-//            'statuses' => Order::STATUSES,
-//            'paymentStatuses' => Order::PAYMENT_STATUSES,
-        ]);
+        return response()->json($orders);
     }
 
     public function store(Request $request)
@@ -167,7 +159,6 @@ class OrderController extends Controller
         $validated = $this->validateOrderData($request);
 
 
-//        return $validated;
         DB::beginTransaction();
 
         try {
@@ -195,17 +186,12 @@ class OrderController extends Controller
             $order = $this->createOrder($validated, $client->id);
 
 
-//            return $order;
-
-
             $result = $this->processOrderItems($order, $validated['items']);
 
 
-//            return 34234;
             $totalDiscountAmount = $result['total_discount'];
             $orderTotalBefore = $result['order_total'];
 
-//            return
             if ($promo) {
                 $promoDiscount = $this->applyPromoCodeToOrder($order, $promo, $orderTotalBefore, $totalDiscountAmount);
                 $totalDiscountAmount += $promoDiscount;
@@ -216,9 +202,6 @@ class OrderController extends Controller
                 $order->updateTotalAmount();
             }
 
-
-//            return 234;
-//            return $this->createShipmentForOrder($order, $validated);
 
             $this->sendNotifications($client, $order);
 
@@ -520,7 +503,7 @@ class OrderController extends Controller
     {
         try {
             $order->load([
-                'client.user.profile',
+                'client.profile',
                 'items.product',
                 'items.productVariant',
                 'history.user',
@@ -550,8 +533,8 @@ class OrderController extends Controller
                 // Информация о клиенте
                 'client' => $order->client ? [
                     'id' => $order->client->id,
-                    'full_name' => $order->client->user->profile->full_name,
-                    'email' => $order->client->user->email,
+                    'full_name' => $order->client->profile->full_name,
+                    'email' => $order->client->email,
                     'phone' => $order->client->phone,
                     'address' => $order->client->address // добавлено
                 ] : null,
@@ -614,8 +597,18 @@ class OrderController extends Controller
     {
         try {
             $validated = $request->validate([
-                'status' => 'required|string|in:new,processing,completed,cancelled',
-                'payment_status' => 'required|string|in:pending,paid,failed,refunded',
+                'status' => [
+                    'required',
+                    'string',
+                    Rule::in(Lead::getStatusValues()),
+                ],
+
+                'payment_status' => [
+                    'required',
+                    'string',
+                    Rule::in(Lead::getPaymentStatusValues()),
+                ],
+
                 'notes' => 'nullable|string',
                 'delivery_date' => 'nullable|date_format:Y-m-d\TH:i:s\Z', // Валидация для даты доставки
                 'delivery_method_id' => 'nullable|exists:delivery_methods,id',
@@ -625,8 +618,8 @@ class OrderController extends Controller
                 'status' => $validated['status'],
                 'payment_status' => $validated['payment_status'],
                 'notes' => $validated['notes'],
-                'delivery_date' => $validated['delivery_date'], // Добавляем дату доставки,
-                'delivery_method_id' => $validated['delivery_method_id'] ?? null, // Обновляем delivery_method_id
+//                'delivery_date' => $validated['delivery_date'], // Добавляем дату доставки,
+//                'delivery_method_id' => $validated['delivery_method_id'] ?? null, // Обновляем delivery_method_id
             ]);
 
             // Добавляем запись в историю
@@ -651,6 +644,8 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Ошибка сервера: ' . $e->getMessage()], 500);
         }
+
+
     }
 
 
