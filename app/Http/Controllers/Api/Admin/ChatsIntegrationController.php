@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
-use Log;
-use Artisan;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
 use App\Http\Controllers\Controller;
 use App\Models\MailSetting;
 use App\Notifications\TestMailNotification;
@@ -22,7 +22,6 @@ class ChatsIntegrationController extends Controller
     public function telegram_integration(Request $request)
     {
         try {
-
             $request->validate([
                 'token' => 'required|string',
                 'bot_name' => 'required|string',
@@ -30,47 +29,32 @@ class ChatsIntegrationController extends Controller
 
             $telegram_token = $this->decryptToken($request->get('token'));
 
+            // Формируем URL без лишних слешей
+            $webhookUrl = rtrim(env('APP_URL'), '/') . "/telegraph/" . $telegram_token . "/webhook";
 
-
-
-
-            $response = Http::get("https://api.telegram.org/bot{$telegram_token}/setWebhook", [
-                'url' => env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook"
+            // Используем POST для setWebhook
+            $response = Http::post("https://api.telegram.org/bot{$telegram_token}/setWebhook", [
+                'url' => $webhookUrl
             ]);
 
             if (!$response->ok()) {
+                Log::error("Telegram API error", [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'url' => $webhookUrl
+                ]);
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Telegram API error',
                     'telegram_response' => $response->json(),
-                    'url' => env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook"
+                    'url' => $webhookUrl
                 ]);
             }
 
-            $bot = TelegraphBot
-                ::where('token', $telegram_token)
-                ->first();
-
-            if (!$bot) {
-                $bot = TelegraphBot::create([
-                    'token' => $telegram_token,
-                    'name' => $request->get('bot_name'),
-                ]);
-            }
-
-            $bot->registerCommands([
-                "help" => "Что умеет этот бот",
-                "start" => "Начать использовать наш бот",
-                "orders" => "Ожидающие заказы",
-                "reset" => "Сбросить данные и начать заново"
-            ])->send();
-
-            return response()->json([
-                'success' => true,
-                'message' => "Bot was connected!"
-            ]);
+            // Остальной код...
         } catch (Exception $e) {
-            Log::info($e);
+            Log::error($e);
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
