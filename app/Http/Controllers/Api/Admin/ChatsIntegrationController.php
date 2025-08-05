@@ -38,12 +38,6 @@ class ChatsIntegrationController extends Controller
             ]);
 
             if (!$response->ok()) {
-                Log::error("Telegram API error", [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'url' => $webhookUrl
-                ]);
-
                 return response()->json([
                     'success' => false,
                     'message' => 'Telegram API error',
