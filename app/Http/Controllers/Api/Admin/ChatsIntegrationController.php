@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use Log;
+use Artisan;
 use App\Http\Controllers\Controller;
 use App\Models\MailSetting;
 use App\Notifications\TestMailNotification;
 use App\Traits\HelperTrait;
-use Artisan;
 use DefStudio\Telegraph\Models\TelegraphBot;
 use Exception;
-use Http;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Notification;
-use Log;
+use Illuminate\Support\Facades\Http;
+
 
 class ChatsIntegrationController extends Controller
 {
     use HelperTrait;
+
     public function telegram_integration(Request $request)
     {
         try {
@@ -30,6 +30,10 @@ class ChatsIntegrationController extends Controller
 
             $telegram_token = $this->decryptToken($request->get('token'));
 
+
+
+
+
             $response = Http::get("https://api.telegram.org/bot{$telegram_token}/setWebhook", [
                 'url' => env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook"
             ]);
@@ -39,6 +43,7 @@ class ChatsIntegrationController extends Controller
                     'success' => false,
                     'message' => 'Telegram API error',
                     'telegram_response' => $response->json(),
+                    'url' => env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook"
                 ]);
             }
 
