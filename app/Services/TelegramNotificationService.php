@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ContactRequest;
 use App\Models\OrderPayment;
 use App\Models\UserProfile;
 use DefStudio\Telegraph\Facades\Telegraph;
@@ -115,4 +116,55 @@ class TelegramNotificationService
 
         return $message;
     }
+
+
+    public function sendContactRequestNotificationToClient(ContactRequest $contactRequest, UserProfile $profile): void
+    {
+
+        if (!$profile->telegram_user_id) {
+            Log::error("Client {$profile->client_id} does not have an associated TelegraphChat.");
+            return;
+        }
+
+        $message = $this->buildContactRequestMessage($contactRequest);
+
+        try {
+            Telegraph::chat($profile->telegram_user_id)->message($message)->send();
+        } catch (\Exception $e) {
+            Log::error("Failed to send notification to client {$profile->client_id}: " . $e->getMessage());
+        }
+
+    }
+
+
+
+
+    private function buildContactRequestMessage(ContactRequest $contactRequest): string
+    {
+        return "Здравствуйте, {$contactRequest->name}!\n"
+            . "Спасибо за вашу заявку. Вот её детали:\n\n"
+            . "Email: {$contactRequest->email}\n"
+            . "Телефон: {$contactRequest->phone}\n"
+            . "Сообщение: {$contactRequest->message}\n"
+//            . "Источник: {$contactRequest->source}\n"
+//            . "Статус: {$contactRequest->status}\n\n"
+            . "Скоро с вами свяжется наш менеджер.";
+    }
+
+
+    private function buildContactRequestMessageForManager(ContactRequest $contactRequest): string
+    {
+        return "Новая заявка от клиента:\n"
+            . "Имя: {$contactRequest->name}\n"
+            . "Email: {$contactRequest->email}\n"
+            . "Телефон: {$contactRequest->phone}\n"
+            . "Сообщение: {$contactRequest->message}\n"
+            . "Источник: {$contactRequest->source}\n"
+            . "Статус: {$contactRequest->status}";
+    }
+
+
+
+
+
 }

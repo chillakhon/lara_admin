@@ -35,6 +35,12 @@ class Order extends Model
         ['value' => self::STATUS_RETURNED, 'label' => 'Возврат'],
     ];
 
+
+    public static function getStatusValues(): array
+    {
+        return array_column(self::STATUSES, 'value');
+    }
+
     const PAYMENT_STATUS_PENDING = 'pending';
     const PAYMENT_STATUS_PAID = 'paid';
     const PAYMENT_STATUS_FAILED = 'failed';
@@ -46,6 +52,14 @@ class Order extends Model
         ['value' => 'failed', 'label' => 'Ошибка оплаты'],
         ['value' => 'refunded', 'label' => 'Возврат'],
     ];
+
+
+    public static function getPaymentStatusValues(): array
+    {
+        return array_column(self::PAYMENT_STATUSES, 'value');
+    }
+
+
 
     // protected $fillable = [
     //     'order_number',
@@ -101,6 +115,7 @@ class Order extends Model
     {
         return $this->hasOne(DeliveryDate::class);
     }
+
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
@@ -132,7 +147,6 @@ class Order extends Model
     }
 
 
-
     public function promoCode()
     {
         return $this->belongsTo(PromoCode::class);
@@ -151,6 +165,7 @@ class Order extends Model
             self::STATUS_RETURNED => 'Возврат', // Добавлено
         ];
     }
+
     public static function getPaymentStatuses(): array
     {
         return [
@@ -160,6 +175,7 @@ class Order extends Model
             self::PAYMENT_STATUS_REFUNDED => 'Возврат',
         ];
     }
+
 
     public function updatePaymentStatus(string $status, ?string $paymentId = null)
     {

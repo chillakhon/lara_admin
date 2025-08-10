@@ -22,9 +22,9 @@ class ConversationController extends Controller
             ->orderBy('last_message_at', 'desc')
             ->paginate(20);
 
-        return Inertia::render('Dashboard/Conversations/Index', [
-            'conversations' => $conversations
-        ]);
+//        return Inertia::render('Dashboard/Conversations/Index', [
+//            'conversations' => $conversations
+//        ]);
     }
 
     public function show(Conversation $conversation)
@@ -78,4 +78,4 @@ class ConversationController extends Controller
 
         return back();
     }
-} 
+}

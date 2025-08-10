@@ -1,0 +1,250 @@
+<?php
+
+namespace App\Http\Controllers\Api\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\User;
+use App\Services\Messaging\ConversationService;
+use Illuminate\Http\Request;
+
+class ConversationController extends Controller
+{
+    protected $conversationService;
+
+    public function __construct(ConversationService $conversationService)
+    {
+        $this->conversationService = $conversationService;
+    }
+
+    // Список чатов (пагинация)
+    public function index(Request $request)
+    {
+        // Опциональный параметр фильтрации
+        $validated = $request->validate([
+            'per_page' => 'nullable|integer|min:1',
+            'source'   => 'nullable|in:telegram,whatsapp,web_chat',
+        ]);
+
+        // Базовый запрос с нужными связями
+        $query = Conversation::with(['lastMessage', 'client.profile', 'assignedUser'])
+            ->orderBy('last_message_at', 'desc');
+
+        // Если пришёл source — добавляем where-условие
+        if (! empty($validated['source'])) {
+            $query->where('source', $validated['source']);
+        }
+
+        // Пагинация
+        $perPage = $validated['per_page'] ?? 20;
+        $conversations = $query->paginate($perPage);
+
+        return response()->json([
+            'data' => $conversations
+        ]);
+    }
+
+
+    // Получение конкретного чата + сообщений и связей
+    public function show(Conversation $conversation)
+    {
+        $conversation->load([
+            'messages.attachments',
+            'client.profile',
+            'assignedUser',
+            'participants.user'
+        ]);
+
+        // Отмечаем как прочитанные только сообщения от клиента
+        $this->conversationService->markAsRead($conversation);
+
+        return response()->json([
+            'data' => $conversation
+        ]);
+    }
+
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'client_id' => 'required|exists:clients,id',
+            'source' => 'nullable|string',
+            'external_id' => 'nullable|string',
+            'content' => 'required|string',
+            'attachments' => 'nullable|array',
+        ]);
+
+//        return 4646;
+
+        // 1) создаём сам разговор
+        $conversation = $this->conversationService->createConversation(
+            $validated['source'] ?? 'web_chat',
+            $validated['external_id'] ?? '',
+            $validated['client_id']
+        );
+
+
+//        return $conversation;
+
+        // 2) сразу добавляем первое сообщение
+        $message = $this->conversationService->addMessage($conversation, [
+            'direction' => 'incoming',
+            'content' => $validated['content'],
+            'attachments' => $validated['attachments'] ?? [],
+        ]);
+
+        // 3) вернуть разговор с вложениями сообщений
+        $conversation->load('messages.attachments');
+
+        return response()->json([
+            'message' => 'Conversation started successfully.',
+            'conversation' => $conversation,
+            'firstMessage' => $message,
+        ], 201);
+    }
+
+
+    public function showForClient(Conversation $conversation)
+    {
+        // 1) Грузим только то, что нужно клиенту
+        $conversation->load([
+            'messages.attachments',
+            'client.profile',
+        ]);
+
+        // 2) Отмечаем все исходящие (от менеджера) сообщения как доставленные/read
+        $conversation->messages()
+            ->where('direction', Message::DIRECTION_OUTGOING)
+            ->whereIn('status', [
+                Message::STATUS_SENT,
+                Message::STATUS_DELIVERED,
+            ])
+            ->update(['status' => Message::STATUS_READ]);
+
+        return response()->json([
+            'data' => $conversation
+        ]);
+    }
+
+
+    public function getOrCreateForClient(Request $request)
+    {
+        $data = $request->validate([
+            'client_id' => 'required|exists:clients,id',
+            'source' => 'nullable|in:telegram,whatsapp,web_chat',
+//            'external_id' => 'nullable|string',
+        ]);
+
+        $conversation = Conversation::firstOrCreate(
+            [
+                'client_id' => $data['client_id'],
+                'source' => $data['source'] ?? 'web_chat',
+//                'external_id' => $data['external_id'] ?? '',
+            ],
+            [
+                'status' => 'active',
+                'last_message_at' => now(),
+                'unread_messages_count' => 0,
+            ]
+        );
+
+        $conversation->load([
+            'messages.attachments',
+            'lastMessage',
+            'client.profile',
+            'assignedUser',
+            'participants.user'
+        ]);
+
+        return response()->json([
+            'conversation' => $conversation
+        ]);
+    }
+
+
+    // Ответить на сообщение
+    public function reply(Request $request, Conversation $conversation)
+    {
+        $validated = $request->validate([
+            'content' => 'required|string',
+            'attachments' => 'nullable|array',
+        ]);
+
+        // 1) Добавляем исходящее сообщение
+        $message = $this->conversationService->addMessage($conversation, [
+            'direction' => Message::DIRECTION_OUTGOING,
+            'content' => $validated['content'],
+            'attachments' => $validated['attachments'] ?? [],
+            'status' => Message::STATUS_SENT,
+        ]);
+
+        // 2) Обновляем время последнего сообщения
+        $conversation->update([
+            'last_message_at' => now(),
+            // 3) Сбрасываем счётчик непрочитанных входящих
+            'unread_messages_count' => 0,
+        ]);
+
+        return response()->json([
+            'message' => 'Reply sent successfully.',
+            'data' => $message,
+        ], 201);
+    }
+
+
+    public function incoming(Request $request, Conversation $conversation)
+    {
+        $validated = $request->validate([
+            'content' => 'required|string',
+            'attachments' => 'nullable|array',
+        ]);
+
+        $message = $this->conversationService->addMessage($conversation, [
+            'direction' => Message::DIRECTION_INCOMING,
+            'content' => $validated['content'],
+            'attachments' => $validated['attachments'] ?? [],
+            'status' => Message::STATUS_SENT,
+        ]);
+
+        // Обновляем счетчик и время
+//        $conversation->update([
+//            'last_message_at'       => now(),
+//            'unread_messages_count' => $conversation->unread_messages_count + 1,
+//        ]);
+
+        return response()->json([
+            'message' => 'Incoming message saved.',
+            'data' => $message,
+            'unread_count' => $conversation->unread_messages_count,
+        ], 201);
+    }
+
+
+    // Закрыть чат
+    public function close(Conversation $conversation)
+    {
+        $this->conversationService->closeConversation($conversation);
+
+        return response()->json([
+            'message' => 'Conversation closed.'
+        ], 200);
+    }
+
+    // Назначить оператора (менеджера)
+    public function assign(Request $request, Conversation $conversation)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id'
+        ]);
+
+        $user = User::findOrFail($validated['user_id']);
+
+        $this->conversationService->assignManager($conversation, $user);
+
+        return response()->json([
+            'message' => 'Conversation assigned to user.',
+            'assigned_user' => $user
+        ], 200);
+    }
+}

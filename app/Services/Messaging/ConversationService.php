@@ -21,24 +21,26 @@ class ConversationService
 
     public function createConversation(string $source, string $externalId, ?int $clientId = null): Conversation
     {
+
+//        return 44;
+
         return DB::transaction(function () use ($source, $externalId, $clientId) {
             // Проверяем существование клиента
             if ($clientId && !Client::find($clientId)) {
                 throw new \InvalidArgumentException("Client not found: {$clientId}");
             }
 
-            $conversation = Conversation::create([
+
+            // Автоматическое назначение менеджера
+//            $this->assignManager($conversation);
+
+            return Conversation::create([
                 'source' => $source,
                 'external_id' => $externalId,
                 'client_id' => $clientId,
                 'status' => 'new',
                 'last_message_at' => now(),
             ]);
-
-            // Автоматическое назначение менеджера
-            $this->assignManager($conversation);
-
-            return $conversation;
         });
     }
 
@@ -115,13 +117,16 @@ class ConversationService
 
     public function markAsRead(Conversation $conversation): void
     {
+        // Сбрасываем счётчик непрочитанных входящих
         $conversation->update([
             'unread_messages_count' => 0
         ]);
 
+        // Помечаем как read только входящие сообщения
         $conversation->messages()
-            ->where('status', '!=', 'read')
-            ->update(['status' => 'read']);
+            ->where('direction', Message::DIRECTION_INCOMING)
+            ->where('status', '!=', Message::STATUS_READ)
+            ->update(['status' => Message::STATUS_READ]);
     }
 
     public function assignManager(Conversation $conversation, ?User $manager = null): void
@@ -137,7 +142,7 @@ class ConversationService
 
         if ($manager) {
             $conversation->update(['assigned_to' => $manager->id]);
-            
+
             $conversation->participants()->create([
                 'user_id' => $manager->id,
                 'role' => 'manager',
@@ -149,9 +154,9 @@ class ConversationService
     public function closeConversation(Conversation $conversation): void
     {
         $conversation->update(['status' => 'closed']);
-        
+
         $conversation->participants()
             ->whereNull('left_at')
             ->update(['left_at' => now()]);
     }
-} 
+}

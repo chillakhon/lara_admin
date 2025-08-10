@@ -4,49 +4,63 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Validation\ValidationException;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Показать инструкцию по логину (для API).
      */
-    public function create(): Response
+    public function create(): JsonResponse
     {
-        return Inertia::render('Auth/Login', [
-            'canResetPassword' => Route::has('password.request'),
-            'status' => session('status'),
-        ]);
+        return response()->json([
+            'message' => 'Для входа отправьте POST-запрос на /api/login с полями email и password'
+        ], 200);
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Обработка аутентификации.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request): JsonResponse
     {
-        $request->authenticate();
+        // В LoginRequest уже выполнена валидация
+        if (! Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+            throw ValidationException::withMessages([
+                'email' => __('auth.failed'),
+            ]);
+        }
 
+        // Если используете сессии (stateful):
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Или, если вы переходите на токен-базированную аутентификацию (например, Sanctum):
+        // $token = Auth::user()->createToken('api')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Успешная аутентификация',
+            'user'    => Auth::user(),
+            // 'token'   => $token,
+        ], 200);
     }
 
     /**
-     * Destroy an authenticated session.
+     * Выход из сессии / аннулирование токена.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request): JsonResponse
     {
+        // При сессиях
         Auth::guard('web')->logout();
-
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // При токенах (если используете Sanctum)
+        // $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'message' => 'Вы успешно вышли'
+        ], 200);
     }
 }

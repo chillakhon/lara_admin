@@ -90,7 +90,7 @@ class TelegramWebhookHandler extends WebhookHandler
             $client = Client::where('email', $email)->whereNull('deleted_at')->first();
 
             if ($client) {
-                $client_profile = $this->check_users_with_same_email($client);
+                $client_profile = $this->check_client_with_same_email($client);
 
                 if (!$client_profile) {
                     $client_profile = UserProfile::create([

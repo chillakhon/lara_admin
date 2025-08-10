@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\Admin\CDEKController;
 use App\Http\Controllers\Api\Admin\ChatsIntegrationController;
 use App\Http\Controllers\Api\Admin\ClientController;
 use App\Http\Controllers\Api\Admin\ClientLevelController;
+use App\Http\Controllers\Api\Admin\ContactRequestController;
+use App\Http\Controllers\Api\Admin\ConversationController;
 use App\Http\Controllers\Api\Admin\CostCategoryController;
 use App\Http\Controllers\Api\Admin\CountriesController;
 use App\Http\Controllers\Api\Admin\DeliveryCountryController;
@@ -62,15 +64,23 @@ use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/admin-user', [AuthenticatedSessionController::class, 'get_admin_user'])->middleware('auth:sanctum');
+Route::get('/admin-user', [AuthenticatedSessionController::class, 'get_admin_user'])
+    ->middleware('auth:sanctum');
 
 //Route::get('products/{product}/images-path', [ProductImageController::class, 'index']);
 Route::get('/products/{product}/image', [ProductImageController::class, 'getProductImage']);
 Route::get('/product/image/{name}', [ProductImageController::class, 'getProductImageByName']);
 Route::get('/products/{product}/main-image', [ProductImageController::class, 'getMainProductImage']);
 
+
+//contact-requests_public
+Route::post('/contact-requests', [ContactRequestController::class, 'store']);
+
+
 //client - admin
 Route::get('/products', [ProductController::class, 'index']);
+
+
 // clients
 Route::prefix("/cart-items")->group(function () {
     Route::get('/', [CartController::class, 'cart_items']);
@@ -79,8 +89,12 @@ Route::prefix("/cart-items")->group(function () {
     Route::delete('/cancel', [CartController::class, 'cancel_cart']);
     Route::delete('/remove-item', [CartController::class, 'remove_single_item_from_cart']);
 });
+
 Route::get('/colors', [SettingsController::class, 'get_colors']);
 Route::get('reviews/product/{product}', [ReviewController::class, 'productReviews']);
+
+Route::post('/conversations', [ConversationController::class, 'store']);
+
 //Route::get('/products/{slug}', [ProductController::class, 'show']);
 
 //Route::get('/categories', [CategoryController::class, 'index']);
@@ -146,8 +160,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy']);
 });
 
+
 //Route::post('/ssss', [ProductController::class, 'store']);
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+
+
+    Route::prefix("/contact-requests")->group(function () {
+        Route::get('/', [ContactRequestController::class, 'index']);
+        Route::get('/count', [ContactRequestController::class, 'count']);
+        Route::get('/{contact_request}', [ContactRequestController::class, 'show']);
+        Route::patch('/{contact_request}', [ContactRequestController::class, 'update']);
+        Route::delete('/{contact_request}', [ContactRequestController::class, 'destroy']);
+    });
+
 
     Route::get('/promo-codes/validate', [PromoCodeController::class, 'validate'])->name('api.promo-codes.validate');
 
@@ -167,6 +192,42 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
             Route::get('/tariffs', [CDEKController::class, '']);
         });
     });
+
+
+//    Route::post('/conversations', [ConversationController::class, 'store']);
+
+
+    Route::prefix('/conversations')->group(function () {
+
+
+        //for client web
+        Route::get('/client', [ConversationController::class, 'getOrCreateForClient']);
+        Route::get('/{conversation}/view', [ConversationController::class, 'showForClient']);
+        Route::post('/{conversation}/incoming', [ConversationController::class, 'incoming']);
+
+
+        //for admin_panel
+        // Создать новый чат + первое сообщение
+        Route::post('/', [ConversationController::class, 'store']);
+
+        // Получить список всех разговоров (чатов)
+        Route::get('/', [ConversationController::class, 'index']);
+
+        // Получить подробную информацию о конкретном разговоре по его ID, включая сообщения и участников
+        Route::get('/{conversation}', [ConversationController::class, 'show']);
+
+        // Отправить новое сообщение (ответ) в конкретный разговор
+        Route::post('/{conversation}/reply', [ConversationController::class, 'reply']);
+
+        // Закрыть разговор (пометить его как завершённый)
+        Route::post('/{conversation}/close', [ConversationController::class, 'close']);
+
+        // Назначить ответственного пользователя (оператора) на разговор
+        Route::post('/{conversation}/assign', [ConversationController::class, 'assign']);
+
+
+    });
+
 
     Route::prefix('/orders')->group(function () {
         Route::post('/', [OrderController::class, 'store']);
@@ -204,6 +265,7 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 // return $whatsapp->sendTextMessage($to, $message)->json();
             });
         });
+
 
         // Categories
         Route::group(['prefix' => 'categories', 'as' => 'categories.'], function () {
@@ -593,14 +655,8 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
                 ->middleware('permission:settings.manage')
                 ->name('update');
         });
-        // Conversations routes
-//        Route::group(['prefix' => 'conversations', 'as' => 'conversations.'], function () {
-//            Route::get('/', [ConversationController::class, 'index'])->name('index');
-//            Route::get('/{conversation}', [ConversationController::class, 'show'])->name('show');
-//            Route::post('/{conversation}/reply', [ConversationController::class, 'reply'])->name('reply');
-//            Route::post('/{conversation}/close', [ConversationController::class, 'close'])->name('close');
-//            Route::post('/{conversation}/assign', [ConversationController::class, 'assign'])->name('assign');
-//        });
+
+
         Route::prefix('/third-party-integrations')->group(function () {
             Route::prefix('/chats')->group(function () {
                 Route::post('/telegram', [ChatsIntegrationController::class, 'telegram_integration']);

@@ -13,10 +13,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use App\Models\ClientLevel;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+
 
 class ClientController extends Controller
 {
     use ClientControllerTrait;
+
 
     public function index(Request $request)
     {
@@ -99,74 +103,92 @@ class ClientController extends Controller
         ]);
     }
 
+
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8',
-            'phone' => 'nullable|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'level_id' => 'nullable|exists:client_levels,id',
-            'bonus_balance' => 'nullable|numeric|min:0',
-        ]);
+        try {
+            // Валидация с использованием трейта
+            $validated = $this->validateClientData($request->all());
+            $this->checkExistingClientData($validated);
 
-        $client = DB::transaction(function () use ($validated) {
-            $client = Client::create([
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-            ]);
+            // Создание клиента в транзакции
+            $client = DB::transaction(function () use ($validated) {
+                $client = Client::create([
+                    'email' => $validated['email'],
+                    'password' => Hash::make($validated['password']),
+                ]);
 
-            $client->profile()->create([
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
-                'phone' => $validated['phone'],
-                'address' => $validated['address'],
-            ]);
+                $client->profile()->create([
+                    'first_name' => $validated['first_name'],
+                    'last_name' => $validated['last_name'],
+                    'phone' => $validated['phone'],
+                    'address' => $validated['address'],
+                    'level_id' => $validated['level_id'] ?? null,
+                    'bonus_balance' => $validated['bonus_balance'] ?? 0,
+                ]);
 
-            // $clientRole = Role::where('slug', 'client')->first();
-            // $user->roles()->attach($clientRole);
+                return $client->load('profile');
+            });
 
-            return $client->load('profile');
-        });
+            return response()->json([
+                'message' => 'Клиент успешно создан',
+                'client' => $client
+            ], 201);
 
-        return response()->json([
-            'message' => 'Клиент успешно создан',
-            'client' => $client
-        ], 201);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Ошибка при создании клиента',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
+
 
     public function update(Request $request, Client $client)
     {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $client->user_id,
-            'phone' => 'nullable|string|max:255',
-            'address' => 'nullable|string|max:255',
-        ]);
+        try {
+            // Валидация с использованием трейта
+            $validated = $this->validateClientData($request->all(), $client);
+            $this->checkExistingClientData($validated, $client);
 
-        DB::transaction(function () use ($validated, $client) {
-            // 1) Обновляем профиль
-            $client->profile()->update([
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
-                'phone' => $validated['phone'],
-                'address' => $validated['address'],
+            DB::transaction(function () use ($validated, $client) {
+                // Обновляем профиль
+                $client->profile()->update([
+                    'first_name' => $validated['first_name'],
+                    'last_name' => $validated['last_name'],
+                    'phone' => $validated['phone'],
+                    'address' => $validated['address'],
+                    'level_id' => $validated['level_id'] ?? null,
+                    'bonus_balance' => $validated['bonus_balance'] ?? $client->profile->bonus_balance,
+                ]);
+
+                // Обновляем почту пользователя
+                $client->update([
+                    'email' => $validated['email'],
+                ]);
+            });
+
+            return response()->json([
+                'message' => 'Клиент успешно обновлён',
+                'client' => $client->fresh()->load('profile'),
             ]);
 
-
-            // 3) Обновляем почту пользователя
-            $client->update([
-                'email' => $validated['email'],
-            ]);
-        });
-
-        return response()->json([
-            'message' => 'Клиент успешно обновлён',
-            'client' => $client->fresh()->load('profile'),
-        ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Ошибка при обновлении клиента',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
 

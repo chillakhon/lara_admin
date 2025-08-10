@@ -22,19 +22,17 @@ class ChatsIntegrationController extends Controller
     public function telegram_integration(Request $request)
     {
         try {
+
             $request->validate([
                 'token' => 'required|string',
                 'bot_name' => 'required|string',
             ]);
 
             $telegram_token = $this->decryptToken($request->get('token'));
+//            $telegram_token = $request->get('token');
 
-            // Формируем URL без лишних слешей
-            $webhookUrl = rtrim(env('APP_URL'), '/') . "/telegraph/" . $telegram_token . "/webhook";
-
-            // Используем POST для setWebhook
-            $response = Http::post("https://api.telegram.org/bot{$telegram_token}/setWebhook", [
-                'url' => $webhookUrl
+            $response = Http::get("https://api.telegram.org/bot{$telegram_token}/setWebhook", [
+                'url' => env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook"
             ]);
 
             if (!$response->ok()) {
@@ -42,13 +40,34 @@ class ChatsIntegrationController extends Controller
                     'success' => false,
                     'message' => 'Telegram API error',
                     'telegram_response' => $response->json(),
-                    'url' => $webhookUrl
                 ]);
             }
 
-            // Остальной код...
+            $bot = TelegraphBot
+                ::where('token', $telegram_token)
+                ->first();
+
+            if (!$bot) {
+                $bot = TelegraphBot::create([
+                    'token' => $telegram_token,
+                    'name' => $request->get('bot_name'),
+                ]);
+            }
+
+            $bot->registerCommands([
+                "help" => "Что умеет этот бот",
+                "start" => "Начать использовать наш бот",
+                "orders" => "Ожидающие заказы",
+                "reset" => "Сбросить данные и начать заново"
+            ])->send();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Bot was connected!"
+            ]);
+
         } catch (Exception $e) {
-            Log::error($e);
+            Log::info($e);
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

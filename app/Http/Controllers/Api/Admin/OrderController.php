@@ -600,13 +600,13 @@ class OrderController extends Controller
                 'status' => [
                     'required',
                     'string',
-                    Rule::in(Lead::getStatusValues()),
+                    Rule::in(Order::getStatusValues()),
                 ],
 
                 'payment_status' => [
                     'required',
                     'string',
-                    Rule::in(Lead::getPaymentStatusValues()),
+                    Rule::in(Order::getPaymentStatusValues()),
                 ],
 
                 'notes' => 'nullable|string',
@@ -632,6 +632,7 @@ class OrderController extends Controller
 
             return response()->json([
                 'message' => 'Заказ успешно обновлен',
+                'success' => true,
                 'order' => [
                     'id' => $order->id,
                     'status' => $order->status,
