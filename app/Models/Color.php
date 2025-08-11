@@ -27,4 +27,11 @@ class Color extends Model
     {
         return $this->morphedByMany(ProductVariant::class, 'colorable');
     }
+
+    public function productVariants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+
 }

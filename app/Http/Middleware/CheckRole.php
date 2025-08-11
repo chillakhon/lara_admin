@@ -9,35 +9,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
 {
+    // CheckRole.php
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
         if (!$request->user()) {
-            Log::info('Access denied: No authenticated user');
-
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Unauthenticated.'], 401);
-            }
-
-            return redirect()->route('login');
+            return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
-        Log::info('User: ' . $request->user()->id);
-        Log::info('Required roles: ' . implode(', ', $roles));
-
-        if ($request->user()->hasAnyRole($roles)) {
-            Log::info('Access granted');
-            return $next($request);
-        }
-
-        Log::info('Access denied: Missing required roles');
-
-        if ($request->expectsJson()) {
+        if (!$request->user()->hasAnyRole($roles)) {
             return response()->json([
-                'message' => 'У вас нет необходимых ролей для доступа к этой странице.'
+                'message' => 'У вас нет необходимых ролей для этого действия.'
             ], 403);
         }
 
-        return redirect()->route('dashboard')
-            ->with('error', 'У вас нет необходимых ролей для доступа к этой странице.');
+        return $next($request);
     }
 }

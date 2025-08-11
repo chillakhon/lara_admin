@@ -248,6 +248,7 @@ class ClientController extends Controller
 
         $client = $request->user();
 
+
         if (!$client) {
             return response()->json(['success' => false, 'message' => "Пользователь не найден"]);
         }
@@ -265,6 +266,7 @@ class ClientController extends Controller
                     'phone' => $request->phone,
                     'address' => $request->address,
                     'birthday' => $request->birthday,
+                    'delivery_address' => $request->delivery_address,
                 ]);
             } else {
                 $client->profile()->updateOrCreate(
@@ -275,6 +277,7 @@ class ClientController extends Controller
                         'phone' => $request->phone,
                         'address' => $request->address,
                         'birthday' => $request->birthday,
+                        'delivery_address' => $request->delivery_address,
                     ]
                 );
             }

@@ -15,6 +15,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Log;
 use function PHPUnit\Framework\isInstanceOf;
 
 
@@ -81,6 +82,55 @@ class ReviewController extends Controller
             'prev_page_url' => $reviews->previousPageUrl(),
         ]);
     }
+
+
+    public function getMainPageReviews(Request $request)
+    {
+        // Запрос отзывов с нужными связями, исключая client.user
+        $reviewsQuery = Review::query()
+            ->with([
+                'attributes',
+                'responses' => function ($query) {
+                    $query->with('user')
+                        ->orderBy('created_at', 'asc')
+                        ->whereNull('deleted_at');
+                },
+                'reviewable',
+                'images',
+                'client.profile', // только client
+            ]);
+
+        // Получаем id последних отзывов по уникальным reviewable_type и reviewable_id
+        $latestReviews = $reviewsQuery
+            ->selectRaw('MAX(id) as id')
+            ->groupBy('reviewable_type', 'reviewable_id')
+            ->pluck('id')
+            ->toArray();
+
+        // Выбираем случайные 10 или меньше, если меньше доступно
+        $randomIds = collect($latestReviews)->random(min(10, count($latestReviews)))->toArray();
+
+        // Получаем сами отзывы с отношениями по выбранным id
+        $reviews = Review::with([
+            'attributes',
+            'responses' => function ($query) {
+                $query->with('user')
+                    ->orderBy('created_at', 'asc')
+                    ->whereNull('deleted_at');
+            },
+            'reviewable',
+            'images',
+            'client.profile',
+        ])
+            ->whereIn('id', $randomIds)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => ReviewResource::collection($reviews),
+        ]);
+    }
+
 
     public function attributes(Request $request)
     {

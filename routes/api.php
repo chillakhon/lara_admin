@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Admin\CDEKController;
 use App\Http\Controllers\Api\Admin\ChatsIntegrationController;
 use App\Http\Controllers\Api\Admin\ClientController;
 use App\Http\Controllers\Api\Admin\ClientLevelController;
+use App\Http\Controllers\Api\Admin\ColorController;
 use App\Http\Controllers\Api\Admin\ContactRequestController;
 use App\Http\Controllers\Api\Admin\ConversationController;
 use App\Http\Controllers\Api\Admin\CostCategoryController;
@@ -60,6 +61,7 @@ use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\PromoCodeController;
 use App\Http\Controllers\Api\Admin\ReviewController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\Admin\SlideController;
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -76,6 +78,9 @@ Route::get('/products/{product}/main-image', [ProductImageController::class, 'ge
 //contact-requests_public
 Route::post('/contact-requests', [ContactRequestController::class, 'store']);
 
+//slide public
+Route::get('get_slides', [SlideController::class, 'getSlidesForFrontend']);
+Route::get('slides/getImage', [SlideController::class, 'getSlideImage']);
 
 //client - admin
 Route::get('/products', [ProductController::class, 'index']);
@@ -90,7 +95,11 @@ Route::prefix("/cart-items")->group(function () {
     Route::delete('/remove-item', [CartController::class, 'remove_single_item_from_cart']);
 });
 
-Route::get('/colors', [SettingsController::class, 'get_colors']);
+
+//colors
+Route::get('/colors', [ColorController::class, 'index']);
+Route::get('/colors/used-in-catalog', [ColorController::class, 'get_colors']);
+
 Route::get('reviews/product/{product}', [ReviewController::class, 'productReviews']);
 
 Route::post('/conversations', [ConversationController::class, 'store']);
@@ -107,6 +116,7 @@ Route::prefix('leads')->group(function () {
 
 Route::prefix('reviews')->group(function () {
     Route::get('/', [ReviewController::class, 'index']);
+    Route::get('/home-random', [ReviewController::class, 'getMainPageReviews']);
     Route::get('/attributes', [ReviewController::class, 'attributes']);
 
     Route::middleware('auth:sanctum')->group(function () {
@@ -162,7 +172,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 //Route::post('/ssss', [ProductController::class, 'store']);
-Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
 
 
     Route::prefix("/contact-requests")->group(function () {
@@ -171,6 +181,25 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::get('/{contact_request}', [ContactRequestController::class, 'show']);
         Route::patch('/{contact_request}', [ContactRequestController::class, 'update']);
         Route::delete('/{contact_request}', [ContactRequestController::class, 'destroy']);
+    });
+
+
+    Route::prefix('/slides')->group(function () {
+        // список слайдов (публично или под auth — см. примечание)
+        Route::get('/', [SlideController::class, 'index']);
+
+        // создать слайд (multipart: файл + поля)
+        Route::post('/', [SlideController::class, 'store']);
+
+        // получить один слайд
+        Route::get('/{slide}', [SlideController::class, 'show']);
+
+        // обновить слайд (PATCH — частичное, PUT — полное)
+        Route::patch('/{slide}', [SlideController::class, 'update']);
+        Route::put('/{slide}', [SlideController::class, 'update']);
+
+        // удалить
+        Route::delete('/{slide}', [SlideController::class, 'destroy']);
     });
 
 

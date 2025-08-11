@@ -24,7 +24,7 @@ class ReviewResource extends JsonResource
             'client' => $this->when($this->client, function () {
                 return [
                     'id' => $this->client->id,
-                    'name' => $this->client->full_name,
+                    'name' => trim(($this->client->profile?->first_name ?? '') . ' ' . ($this->client->profile?->last_name ?? '')),
                     'email' => $this->client->email, // Добавляем email клиента
                     'avatar' => $this->client->avatar_url,
                 ];
