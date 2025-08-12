@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\Admin\ProductImageController;
 use App\Http\Controllers\Api\Admin\ProductionBatchController;
 use App\Http\Controllers\Api\Admin\ProductionController;
 use App\Http\Controllers\Api\Admin\ProductVariantController;
+use App\Http\Controllers\Api\Admin\PromoCodeClientController;
 use App\Http\Controllers\Api\Admin\RecipeController;
 use App\Http\Controllers\Api\Admin\RoleController;
 use App\Http\Controllers\Api\Admin\SettingsController;
@@ -81,6 +82,8 @@ Route::post('/contact-requests', [ContactRequestController::class, 'store']);
 //slide public
 Route::get('get_slides', [SlideController::class, 'getSlidesForFrontend']);
 Route::get('slides/getImage', [SlideController::class, 'getSlideImage']);
+//getImagePromoCode
+Route::get('promo-code/getImage', [PromoCodeController::class, 'getImage']);
 
 //client - admin
 Route::get('/products', [ProductController::class, 'index']);
@@ -203,7 +206,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
 
-    Route::get('/promo-codes/validate', [PromoCodeController::class, 'validate'])->name('api.promo-codes.validate');
+    Route::get('/promo-codes/validate', [PromoCodeController::class, 'validate']);
 
 
     Route::prefix('/countries')->group(function () {
@@ -427,20 +430,33 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::put('/{client}', [ClientController::class, 'update'])->name('update');
             Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
         });
-        //
-//        Route::group(['prefix' => 'orders', 'as' => 'orders.'], function () {
-//            Route::get('/', [OrderController::class, 'index'])->name('index');
-//            Route::put('/{order}', [OrderController::class, 'update'])->name('update');
-//            Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
-//        });
-        Route::group(['prefix' => 'promo-codes', 'as' => 'promo-codes.'], function () {
-            Route::get('/', [PromoCodeController::class, 'index'])->name('index');
-            Route::post('/', [PromoCodeController::class, 'store'])->name('store');
-            Route::put('/{promoCode}', [PromoCodeController::class, 'update'])->name('update');
-            Route::delete('/{promoCode}', [PromoCodeController::class, 'destroy'])->name('destroy');
-            // Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usage'])->name('usage');
+
+
+        Route::group(['prefix' => 'promo-codes'], function () {
+            Route::get('/', [PromoCodeController::class, 'index']);
+            Route::post('/', [PromoCodeController::class, 'store']);
+            Route::put('/{promoCode}', [PromoCodeController::class, 'update']);
+            Route::delete('/{promoCode}', [PromoCodeController::class, 'destroy']);
+//             Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usages'])->name('usage');
         });
-        //
+
+
+        Route::group(['prefix' => 'promo-code-clients'], function () {
+
+            Route::get('', [PromoCodeClientController::class, 'index']);
+
+            // Создать новую связь
+            Route::post('', [PromoCodeClientController::class, 'store']);
+
+            // Показать конкретную связь
+            Route::get('/{promoCodeClient}', [PromoCodeClientController::class, 'show']);
+
+            // Удалить связь
+            Route::delete('/{promoCodeClient}', [PromoCodeClientController::class, 'destroy']);
+
+        });
+
+
         // Инвентарь
         Route::prefix('inventory')->name('inventory.')->group(function () {
             Route::get('/', [InventoryController::class, 'index'])->name('index');

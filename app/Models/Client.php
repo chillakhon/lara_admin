@@ -66,8 +66,6 @@ class Client extends Model
     }
 
 
-
-
     /**
      * Get the orders for the client.
      */
@@ -109,4 +107,11 @@ class Client extends Model
     {
         return false;
     }
+
+
+    public function promoCodes()
+    {
+        return $this->belongsToMany(PromoCode::class, 'promo_code_client');
+    }
+
 }

@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Permission;
 use App\Models\User;
 use App\Models\UserPermission;
+use App\Notifications\LoginNotification;
 use App\Notifications\MailNotification;
 use App\Notifications\WelcomeNotification;
 use App\Traits\HelperTrait;
@@ -105,15 +106,14 @@ class AuthenticatedSessionController extends Controller
 
     public function check_verification(Request $request)
     {
-
         $validation = $request->validate([
             'email' => "required|string",
             'verification_code' => 'required|string',
         ]);
 
-        $client = Client::where('email', $validation['email'])->whereNull('deleted_at')
+        $client = Client::where('email', $validation['email'])
+            ->whereNull('deleted_at')
             ->first();
-
 
         if (!$client) {
             return response()->json([
@@ -129,21 +129,32 @@ class AuthenticatedSessionController extends Controller
             ], 401);
         }
 
+        // Проверка — это первый вход?
+        $isFirstLogin = is_null($client->verified_at);
 
+        // Обновляем время верификации
         $client->verified_at = now();
         $client->save();
 
+        // Создаем токен
         $token = $client->createToken('authToken')->plainTextToken;
 
-
+        // Подгружаем профиль
         $client->load('profile');
 
-
-        Notification::route('mail', $client->email)->notify(new WelcomeNotification(
-            $client->email,
-        ));
+        // Отправляем нужное письмо
+        if ($isFirstLogin) {
+            Notification::route('mail', $client->email)->notify(
+                new WelcomeNotification($client->email)
+            );
+        } else {
+            Notification::route('mail', $client->email)->notify(
+                new LoginNotification($client->email)
+            );
+        }
 
         return response()->json([
+            'success' => true,
             'message' => 'Вход успешно выполнен.',
             'user' => $client,
             'token' => $token,
