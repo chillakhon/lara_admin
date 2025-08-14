@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+
 
 class UserController extends Controller
 {
@@ -70,7 +72,6 @@ class UserController extends Controller
             'filters' => $request->only(['search', 'role', 'status']),
         ]);
     }
-
 
 
     public function indexDeleted(Request $request): \Illuminate\Http\JsonResponse
@@ -249,10 +250,11 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
-            'birthday' => 'required|date',
+            'birthday' => 'nullable|date',
             'last_name' => 'nullable|string|max:255',
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255|unique:users,email,' . $request->user()->id,
         ]);
 
         if ($validator->fails()) {
@@ -268,6 +270,12 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
+            // Если email передан и он отличается от текущего — обновляем
+            if ($request->filled('email') && $request->email !== $user->email) {
+                $user->email = $request->email;
+                $user->save();
+            }
+
             $check_for_client_with_same_email = Client::whereNull('deleted_at')
                 ->where('email', $user->email)
                 ->first();
@@ -275,9 +283,7 @@ class UserController extends Controller
             $user_profile = null;
 
             if ($check_for_client_with_same_email) {
-                $user_profile = UserProfile
-                    ::where('client_id', $check_for_client_with_same_email->id)
-                    ->first();
+                $user_profile = UserProfile::where('client_id', $check_for_client_with_same_email->id)->first();
             }
 
             if ($user_profile) {
@@ -291,8 +297,8 @@ class UserController extends Controller
                 ]);
             } else {
                 $user->profile()->updateOrCreate(
-                    ['user_id' => $user->id], // condition
-                    [                          // values to update
+                    ['user_id' => $user->id],
+                    [
                         'first_name' => $request->first_name,
                         'last_name' => $request->last_name,
                         'phone' => $request->phone,
@@ -316,6 +322,133 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+
+    public function update_profile_image(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => "Пользователь не найден"], 404);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $profile = $user->profile; // может быть null
+
+            // Удалим старое изображение, если есть
+            if ($profile && $profile->image && Storage::disk('public')->exists($profile->image)) {
+                Storage::disk('public')->delete($profile->image);
+            }
+
+            $imagePath = $request->file('image')->store('user_profiles', 'public');
+
+            // Если профиля нет — создаём минимальный профиль с image
+            if ($profile) {
+                $profile->update(['image' => $imagePath]);
+            } else {
+                $user->profile()->create([
+                    'user_id' => $user->id,
+                    'first_name' => '',
+                    'last_name' => '',
+                    'image' => $imagePath,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Аватар обновлён',
+                'user' => $user->load('profile'),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Ошибка при обновлении аватара',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+// ...
+
+    public function getProfileImage(Request $request)
+    {
+        // Можно передать либо path, либо user_id (user_id имеет приоритет)
+        $userId = $request->get('user_id');
+        $path = $request->get('path');
+
+        // Если передан user_id — попробуем получить image из профиля
+        if ($userId) {
+            $user = User::with('profile')->find($userId);
+            if ($user && $user->profile && !empty($user->profile->image)) {
+                $path = $user->profile->image;
+            }
+        } else {
+            // Если авторизован и не передан user_id, можно по умолчанию вернуть текущего пользователя
+            if (!$path && $request->user()) {
+                $profile = $request->user()->profile;
+                if ($profile && !empty($profile->image)) {
+                    $path = $profile->image;
+                }
+            }
+        }
+
+        // Если пути нет — возвращаем дефолтную картинку
+        if (!$path) {
+            $default = public_path('images/default-avatar.png'); // убедись, что файл есть
+            return response()->file($default, [
+                'Cache-Control' => 'public, max-age=3600, must-revalidate'
+            ]);
+        }
+
+        // Безопасность: запретим попытки directory traversal
+        if (strpos($path, '..') !== false) {
+            return response()->json(['message' => 'Invalid path'], 400);
+        }
+
+        // Нормализуем путь: допустимы варианты "user_profiles/xxx.jpg" или просто "xxx.jpg"
+        $path = ltrim($path, '/');
+
+        // Если в базе случайно попал полный URL — попробуем извлечь только имя/путь после "user_profiles"
+        // (не обязателен, но помогает если в DB есть Storage::url(...))
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            // попытаемся найти подстроку 'user_profiles' и взять остаток
+            $pos = strpos($path, 'user_profiles/');
+            if ($pos !== false) {
+                $path = substr($path, $pos);
+            } else {
+                // если это внешний URL — редиректим на него (опционально) или возвращаем дефолт
+                return redirect($path);
+            }
+        }
+
+        // Компонуем полный путь к файлу в storage/app/public
+        $filePath = storage_path('app/public/' . $path);
+
+        if (!file_exists($filePath) || !is_file($filePath)) {
+            // fallback на дефолт
+            $default = public_path('images/default-avatar.png');
+            return response()->file($default, [
+                'Cache-Control' => 'public, max-age=3600, must-revalidate'
+            ]);
+        }
+
+        // Вернём файл с заголовками кеширования
+        return response()->file($filePath, [
+            'Cache-Control' => 'public, max-age=3600, must-revalidate'
+        ]);
+    }
+
 
     public function destroy(User $user)
     {
@@ -419,7 +552,6 @@ class UserController extends Controller
             ], 500);
         }
     }
-
 
 
     public function updateRoles(Request $request, User $user)

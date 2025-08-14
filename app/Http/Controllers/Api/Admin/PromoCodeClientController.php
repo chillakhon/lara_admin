@@ -71,6 +71,112 @@ class PromoCodeClientController extends Controller
         ]);
     }
 
+
+    public function getAvailablePromoCodes(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'client_id' => 'required|exists:clients,id',
+        ]);
+
+        $clientId = $validated['client_id'];
+
+        // Получаем активные промокоды, доступные для клиента
+        $query = PromoCode::where('is_active', true)
+            ->where(function ($q) {
+                // Проверка срока действия
+                $q->where('expires_at', '>', now())
+                    ->orWhereNull('expires_at');
+            })
+            ->where(function ($q) {
+                // Проверка даты начала
+                $q->where('starts_at', '<=', now())
+                    ->orWhereNull('starts_at');
+            })
+            ->where(function ($q) use ($clientId) {
+                // Промокоды без привязки к клиентам (общие для всех)
+                // ИЛИ промокоды, привязанные к данному клиенту
+                $q->whereDoesntHave('clients')
+                    ->orWhereHas('clients', function ($subQ) use ($clientId) {
+                        $subQ->where('client_id', $clientId);
+                    });
+            });
+
+        // Исключаем уже использованные промокоды этим клиентом
+        $query->whereDoesntHave('usages', function ($q) use ($clientId) {
+            $q->where('client_id', $clientId);
+        });
+
+        // Проверяем лимит использований через подсчет записей в usages
+        $query->where(function ($q) {
+            $q->whereNull('max_uses')
+                ->orWhere(function ($subQ) {
+                    $subQ->whereRaw('(SELECT COUNT(*) FROM promo_code_usages WHERE promo_code_usages.promo_code_id = promo_codes.id AND promo_code_usages.deleted_at IS NULL) < max_uses');
+                });
+        });
+
+        // Поиск по коду промокода (если нужно)
+        if ($request->filled('search')) {
+            $query->where('code', 'like', '%' . $request->search . '%');
+        }
+
+        // Фильтр по типу скидки
+        if ($request->filled('discount_type')) {
+            $query->where('discount_type', $request->discount_type);
+        }
+
+        // Сортировка (по умолчанию по дате создания)
+        $sortField = $request->get('sort_by', 'created_at');
+        $sortDirection = $request->get('sort_direction', 'desc');
+
+        // Разрешенные поля для сортировки
+        $allowedSortFields = ['created_at', 'expires_at', 'discount_amount', 'code'];
+        if (in_array($sortField, $allowedSortFields)) {
+            $query->orderBy($sortField, $sortDirection);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Получаем промокоды (убираем total_uses из выборки)
+        $promoCodes = $query->get([
+            'id',
+            'code',
+            'description',
+            'image',
+            'discount_amount',
+            'discount_type',
+            'expires_at',
+            'max_uses'
+        ]);
+
+        // Добавляем дополнительную информацию для каждого промокода
+        $promoCodes->each(function ($promoCode) {
+
+            // Считаем количество использований и оставшиеся использования
+            if ($promoCode->max_uses) {
+                $usedCount = $promoCode->usages()->count();
+                $promoCode->used_count = $usedCount;
+                $promoCode->remaining_uses = max(0, $promoCode->max_uses - $usedCount);
+            } else {
+                $promoCode->used_count = $promoCode->usages()->count();
+                $promoCode->remaining_uses = null; // Безлимитный
+            }
+
+            // Добавляем информацию о том, истекает ли скоро промокод
+            $promoCode->expires_soon = $promoCode->expires_at
+                ? $promoCode->expires_at->diffInDays(now()) <= 7
+                : false;
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Доступные промокоды получены',
+            'data' => $promoCodes,
+            'total' => $promoCodes->count(),
+            'client_id' => $clientId,
+        ]);
+    }
+
+
     /**
      * Создать новую связь промокода с клиентом
      */

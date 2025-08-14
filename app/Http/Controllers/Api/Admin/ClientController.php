@@ -55,7 +55,7 @@ class ClientController extends Controller
                 $query->latest();
             });
 
-        $clients = $query->paginate(10)
+        $clients = $query->paginate($request->get('per_page'), 10)
             ->through(function ($client) {
                 return [
                     'id' => $client->id,

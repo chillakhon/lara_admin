@@ -79,9 +79,11 @@ Route::get('/products/{product}/main-image', [ProductImageController::class, 'ge
 //contact-requests_public
 Route::post('/contact-requests', [ContactRequestController::class, 'store']);
 
-//slide public
+//forImages
 Route::get('get_slides', [SlideController::class, 'getSlidesForFrontend']);
 Route::get('slides/getImage', [SlideController::class, 'getSlideImage']);
+Route::get('/users/get-profile/image', [UserController::class, 'getProfileImage']);
+
 //getImagePromoCode
 Route::get('promo-code/getImage', [PromoCodeController::class, 'getImage']);
 
@@ -178,6 +180,11 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum'])->group(function () {
 
 
+    //updateUserProfile
+    Route::put('users/update-profile/{user}', [UserController::class, 'update_profile']);
+    Route::post('/users/update-profile/image', [UserController::class, 'update_profile_image']);
+
+
     Route::prefix("/contact-requests")->group(function () {
         Route::get('/', [ContactRequestController::class, 'index']);
         Route::get('/count', [ContactRequestController::class, 'count']);
@@ -230,13 +237,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 
     Route::prefix('/conversations')->group(function () {
-
-
         //for client web
         Route::get('/client', [ConversationController::class, 'getOrCreateForClient']);
         Route::get('/{conversation}/view', [ConversationController::class, 'showForClient']);
         Route::post('/{conversation}/incoming', [ConversationController::class, 'incoming']);
-
 
         //for admin_panel
         // Создать новый чат + первое сообщение
@@ -256,7 +260,29 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         // Назначить ответственного пользователя (оператора) на разговор
         Route::post('/{conversation}/assign', [ConversationController::class, 'assign']);
+    });
 
+
+    Route::group(['prefix' => 'promo-codes'], function () {
+        Route::get('/', [PromoCodeController::class, 'index']);
+        Route::post('/', [PromoCodeController::class, 'store']);
+        Route::put('/{promoCode}', [PromoCodeController::class, 'update']);
+        Route::delete('/{promoCode}', [PromoCodeController::class, 'destroy']);
+//             Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usages'])->name('usage');
+    });
+
+
+    Route::group(['prefix' => 'promo-code-clients'], function () {
+
+        Route::get('/available-promo-codes', [PromoCodeClientController::class, 'getAvailablePromoCodes']);
+
+        Route::get('', [PromoCodeClientController::class, 'index']);
+        // Создать новую связь
+        Route::post('', [PromoCodeClientController::class, 'store']);
+        // Показать конкретную связь
+        Route::get('/{promoCodeClient}', [PromoCodeClientController::class, 'show']);
+        // Удалить связь
+        Route::delete('/{promoCodeClient}', [PromoCodeClientController::class, 'destroy']);
 
     });
 
@@ -432,31 +458,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         });
 
 
-        Route::group(['prefix' => 'promo-codes'], function () {
-            Route::get('/', [PromoCodeController::class, 'index']);
-            Route::post('/', [PromoCodeController::class, 'store']);
-            Route::put('/{promoCode}', [PromoCodeController::class, 'update']);
-            Route::delete('/{promoCode}', [PromoCodeController::class, 'destroy']);
-//             Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usages'])->name('usage');
-        });
-
-
-        Route::group(['prefix' => 'promo-code-clients'], function () {
-
-            Route::get('', [PromoCodeClientController::class, 'index']);
-
-            // Создать новую связь
-            Route::post('', [PromoCodeClientController::class, 'store']);
-
-            // Показать конкретную связь
-            Route::get('/{promoCodeClient}', [PromoCodeClientController::class, 'show']);
-
-            // Удалить связь
-            Route::delete('/{promoCodeClient}', [PromoCodeClientController::class, 'destroy']);
-
-        });
-
-
         // Инвентарь
         Route::prefix('inventory')->name('inventory.')->group(function () {
             Route::get('/', [InventoryController::class, 'index'])->name('index');
@@ -510,7 +511,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::middleware(['role:super-admin,admin'])->group(function () {
             // Управление пользователями
             Route::prefix('users')->name('users.')->group(function () {
-                Route::put('/update-profile/{user}', [UserController::class, 'update_profile']);
                 Route::get('/', [UserController::class, 'index'])
                     ->middleware('permission:users.view')
                     ->name('index');

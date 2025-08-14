@@ -67,6 +67,8 @@ class ConversationController extends Controller
 
     public function store(Request $request)
     {
+
+
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
             'source' => 'nullable|string',
