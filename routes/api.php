@@ -298,102 +298,101 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/update-profile', [ClientController::class, 'update_profile']);
     });
 
-    Route::middleware(['role:super-admin,admin,manager'])->group(function () {
-        Route::prefix('/carts')->group(function () {
-            Route::get('/', [CartController::class, 'carts']);
-            Route::get('/analytics', [CartAnalyticsController::class, 'cartAnalytics']);
+    Route::prefix('/carts')->group(function () {
+        Route::get('/', [CartController::class, 'carts']);
+        Route::get('/analytics', [CartAnalyticsController::class, 'cartAnalytics']);
+    });
+
+    // Financial info api
+    Route::prefix('/analytics')->group(function () {
+        Route::get('/financial-summary-sales', [FinancialAnalyticsController::class, 'financialSummarySales']);
+        Route::get('/financial-summary-orders', [FinancialAnalyticsController::class, 'financialSummaryOrders']);
+        Route::get('/combined/analytics', [FinancialAnalyticsController::class, 'combined_analytics']);
+        Route::get('/discounts/analytics', [DiscountAnalyticsController::class, 'index']);
+        Route::get('/report/dashboard', [FinancialAnalyticsController::class, 'report_dashboard']);
+        Route::get('/products/income', [FinancialAnalyticsController::class, 'income_by_products']);
+        Route::get('/chart', [FinancialAnalyticsController::class, 'weeklyAmount']);
+    });
+
+    Route::prefix('/whatsapp')->group(function () {
+        Route::get('/send-message', function (WhatsappService $whatsapp) {
+            $to = '992915172589'; // Например: 79876543210
+            // $message = "Вы оформили заказ *№{{1}}* от *{{2}}* на сумму *{{3}}*.\n Мы уже начали обработку. Ожидайте, пожалуйста, подтверждение.\n С уважением, команда *Again*!";
+            return $whatsapp->payment_notification($to, 1, "10-10-25 10:00", 99.99)->json();
+            // return $whatsapp->sendTextMessage($to, $message)->json();
         });
-
-        // Financial info api
-        Route::prefix('/analytics')->group(function () {
-            Route::get('/financial-summary-sales', [FinancialAnalyticsController::class, 'financialSummarySales']);
-            Route::get('/financial-summary-orders', [FinancialAnalyticsController::class, 'financialSummaryOrders']);
-            Route::get('/combined/analytics', [FinancialAnalyticsController::class, 'combined_analytics']);
-            Route::get('/discounts/analytics', [DiscountAnalyticsController::class, 'index']);
-            Route::get('/report/dashboard', [FinancialAnalyticsController::class, 'report_dashboard']);
-            Route::get('/products/income', [FinancialAnalyticsController::class, 'income_by_products']);
-            Route::get('/chart', [FinancialAnalyticsController::class, 'weeklyAmount']);
-        });
-
-        Route::prefix('/whatsapp')->group(function () {
-            Route::get('/send-message', function (WhatsappService $whatsapp) {
-                $to = '992915172589'; // Например: 79876543210
-                // $message = "Вы оформили заказ *№{{1}}* от *{{2}}* на сумму *{{3}}*.\n Мы уже начали обработку. Ожидайте, пожалуйста, подтверждение.\n С уважением, команда *Again*!";
-                return $whatsapp->payment_notification($to, 1, "10-10-25 10:00", 99.99)->json();
-                // return $whatsapp->sendTextMessage($to, $message)->json();
-            });
-        });
+    });
 
 
-        // Categories
-        Route::group(['prefix' => 'categories', 'as' => 'categories.'], function () {
-            Route::get('/', [CategoryController::class, 'index']);
-            Route::get('/products', [CategoryController::class, 'get_products_of_category']);
-            Route::post('/', [CategoryController::class, 'store']);
-            Route::put('/{category}', [CategoryController::class, 'update']);
-            Route::delete('/{category}', [CategoryController::class, 'destroy']);
-        });
-        // Units
-        Route::group(['prefix' => 'units', 'as' => 'units.'], function () {
-            Route::get('/', [UnitController::class, 'index']);
-        });
+    // Categories
+    Route::group(['prefix' => 'categories', 'as' => 'categories.'], function () {
+        Route::get('/', [CategoryController::class, 'index']);
+        Route::get('/products', [CategoryController::class, 'get_products_of_category']);
+        Route::post('/', [CategoryController::class, 'store']);
+        Route::put('/{category}', [CategoryController::class, 'update']);
+        Route::delete('/{category}', [CategoryController::class, 'destroy']);
+    });
+    // Units
+    Route::group(['prefix' => 'units', 'as' => 'units.'], function () {
+        Route::get('/', [UnitController::class, 'index']);
+    });
 
-        //         Options
-        Route::group(['prefix' => 'options', 'as' => 'options.'], function () {
-            Route::get('/', [OptionController::class, 'index']);
-            Route::post('/', [OptionController::class, 'store']);
-            Route::put('/{option}', [OptionController::class, 'update']);
-            Route::delete('/{option}', [OptionController::class, 'destroy']);
-        });
+    //         Options
+    Route::group(['prefix' => 'options', 'as' => 'options.'], function () {
+        Route::get('/', [OptionController::class, 'index']);
+        Route::post('/', [OptionController::class, 'store']);
+        Route::put('/{option}', [OptionController::class, 'update']);
+        Route::delete('/{option}', [OptionController::class, 'destroy']);
+    });
 
-        // Materials
-        Route::group(['prefix' => 'materials', 'as' => 'materials.'], function () {
-            Route::get('/', [MaterialController::class, 'index']);
-            Route::get('/{material}', [MaterialController::class, 'show']);
-            Route::post('/', [MaterialController::class, 'store']);
-            Route::put('/{material}', [MaterialController::class, 'update']);
-            Route::delete('/{material}', [MaterialController::class, 'destroy']);
-            Route::post('/{material}/add-stock', [MaterialController::class, 'addStock']);
-            Route::post('/{material}/remove-stock', [MaterialController::class, 'removeStock']);
-        });
+    // Materials
+    Route::group(['prefix' => 'materials', 'as' => 'materials.'], function () {
+        Route::get('/', [MaterialController::class, 'index']);
+        Route::get('/{material}', [MaterialController::class, 'show']);
+        Route::post('/', [MaterialController::class, 'store']);
+        Route::put('/{material}', [MaterialController::class, 'update']);
+        Route::delete('/{material}', [MaterialController::class, 'destroy']);
+        Route::post('/{material}/add-stock', [MaterialController::class, 'addStock']);
+        Route::post('/{material}/remove-stock', [MaterialController::class, 'removeStock']);
+    });
 
-        //        // Products
-        Route::group(['prefix' => 'products', 'as' => 'products.'/*, 'middleware' => ['permission:products.view,products.manage']*/], function () {
-            // Route::get('/', [ProductController::class, 'index']);
-            Route::post('/', [ProductController::class, 'store']);
+    //        // Products
+    Route::group(['prefix' => 'products', 'as' => 'products.'/*, 'middleware' => ['permission:products.view,products.manage']*/], function () {
+        // Route::get('/', [ProductController::class, 'index']);
+        Route::post('/', [ProductController::class, 'store']);
 
-            Route::get('/{product}', [ProductController::class, 'show']);
-            Route::post('/update/{product}', [ProductController::class, 'update']);
+        Route::get('/{product}', [ProductController::class, 'show']);
+        Route::post('/update/{product}', [ProductController::class, 'update']);
 
-            // enhances-dev branch
-            Route::get('/price/history', [ProductController::class, 'price_history']);
-            Route::get('/{product}/warehouse/history', [ProductController::class, 'warehouse_history']);
+        // enhances-dev branch
+        Route::get('/price/history', [ProductController::class, 'price_history']);
+        Route::get('/{product}/warehouse/history', [ProductController::class, 'warehouse_history']);
 
-            //
-            Route::delete('/{product}', [ProductController::class, 'destroy']);
-            Route::put('/restore/product', [ProductController::class, 'restoreProduct']);
-            Route::post('/{product}/components', [ProductController::class, 'addComponent']);
-            Route::delete('/{product}/components/{component}', [ProductController::class, 'removeComponent']);
-            Route::get('/{product}/calculate-cost', [ProductController::class, 'calculateCost']);
+        //
+        Route::delete('/{product}', [ProductController::class, 'destroy']);
+        Route::put('/restore/product', [ProductController::class, 'restoreProduct']);
+        Route::post('/{product}/components', [ProductController::class, 'addComponent']);
+        Route::delete('/{product}/components/{component}', [ProductController::class, 'removeComponent']);
+        Route::get('/{product}/calculate-cost', [ProductController::class, 'calculateCost']);
 
-            // variants
-            Route::post('/{product}/variants', [ProductVariantController::class, 'store']);
-            Route::put('/variants/{variant}', [ProductVariantController::class, 'update']);
-            Route::delete('/{product}/variants/{variant}', [ProductVariantController::class, 'destroy']);
-            Route::post('/{product}/variants/generate', [ProductController::class, 'generateVariants']);
+        // variants
+        Route::post('/{product}/variants', [ProductVariantController::class, 'store']);
+        Route::put('/variants/{variant}', [ProductVariantController::class, 'update']);
+        Route::delete('/{product}/variants/{variant}', [ProductVariantController::class, 'destroy']);
+        Route::post('/{product}/variants/generate', [ProductController::class, 'generateVariants']);
 
 
-            // images
-            Route::post('/{product}/images', [ProductImageController::class, 'store']);
-            Route::delete('/{product}/images/{image}/{variant}', [ProductImageController::class, 'destroy']);
-            Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
+        // images
+        Route::post('/{product}/images', [ProductImageController::class, 'store']);
+        Route::delete('/{product}/images/{image}/{variant}', [ProductImageController::class, 'destroy']);
+        Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
 
-            Route::delete('/{product}/images/{image}', [ProductImageController::class, 'deleteImg']);
-            // Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
+        Route::delete('/{product}/images/{image}', [ProductImageController::class, 'deleteImg']);
+        // Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
 
-            Route::post('/{product}/variants/{variant}/images', [ProductVariantController::class, 'addImages']);
-            Route::delete('/{product}/variants/{variant}/images/{image}', [ProductVariantController::class, 'destroyImage']);
-            //            Route::post('/{product}/options/attach', [ProductController::class, 'attachOptions']);
+        Route::post('/{product}/variants/{variant}/images', [ProductVariantController::class, 'addImages']);
+        Route::delete('/{product}/variants/{variant}/images/{image}', [ProductVariantController::class, 'destroyImage']);
+        //            Route::post('/{product}/options/attach', [ProductController::class, 'attachOptions']);
 //            Route::post('/{product}/variants/bulk-update', [ProductVariantController::class, 'bulkUpdate'])
 //                ->name('variants.bulk-update');
 //            //Options
@@ -403,9 +402,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 //                ->name('options.update');
 //            Route::delete('/{product}/options/{option}', [ProductController::class, 'destroyOption'])
 //                ->name('options.destroy');
-            //
-        });
         //
+    });
+    //
 //        // Product Variants
 //        Route::prefix('product-variants')->name('product-variants.')->group(function () {
 //            Route::get('/{variant}/recipes', [ProductVariantController::class, 'recipes'])
@@ -417,132 +416,122 @@ Route::middleware(['auth:sanctum'])->group(function () {
 //        });
 //
 //
-        // Route::apiResource('discounts', DiscountController::class);
-        Route::group(['prefix' => 'discounts', 'as' => 'discounts.'], function () {
-            Route::get('/', [DiscountController::class, 'index']);
-            Route::post('/', [DiscountController::class, 'store']);
-            Route::put('/{discount}', [DiscountController::class, 'update']);
-            Route::delete('/{discount}', [DiscountController::class, 'destroy']);
-        });
-        //        Route::post('discounts/{discount}/attach-products', [DiscountController::class, 'attachProducts'])
+    // Route::apiResource('discounts', DiscountController::class);
+    Route::group(['prefix' => 'discounts', 'as' => 'discounts.'], function () {
+        Route::get('/', [DiscountController::class, 'index']);
+        Route::post('/', [DiscountController::class, 'store']);
+        Route::put('/{discount}', [DiscountController::class, 'update']);
+        Route::delete('/{discount}', [DiscountController::class, 'destroy']);
+    });
+    //        Route::post('discounts/{discount}/attach-products', [DiscountController::class, 'attachProducts'])
 //            ->name('discounts.attach-products');
 //        Route::post('discounts/{discount}/attach-variants', [DiscountController::class, 'attachVariants'])
 //            ->name('discounts.attach-variants');
 //
-        Route::group(['prefix' => 'recipes', 'as' => 'recipes.'], function () {
-            Route::get('/', [RecipeController::class, 'index']);
-            Route::post('/', [RecipeController::class, 'store']);
-            // Route::get('/{recipe}', [RecipeController::class, 'show']);
-            Route::put('/{recipe}', [RecipeController::class, 'update']);
-            Route::delete('/{recipe}', [RecipeController::class, 'destroy']);
+    Route::group(['prefix' => 'recipes', 'as' => 'recipes.'], function () {
+        Route::get('/', [RecipeController::class, 'index']);
+        Route::post('/', [RecipeController::class, 'store']);
+        // Route::get('/{recipe}', [RecipeController::class, 'show']);
+        Route::put('/{recipe}', [RecipeController::class, 'update']);
+        Route::delete('/{recipe}', [RecipeController::class, 'destroy']);
 
-            //            Route::post('/estimate-cost', [RecipeController::class, 'estimateCost'])
+        //            Route::post('/estimate-cost', [RecipeController::class, 'estimateCost'])
 //                ->name('estimate-cost');
 //            Route::post('/{recipe}/cost-rates', [RecipeController::class, 'storeCostRates'])
 //                ->name('cost-rates.store');
 //
 //            Route::post('/{recipe}/duplicate', [RecipeController::class, 'duplicate'])->name('duplicate');
 //            Route::get('/{recipe}/compare/{otherRecipe}', [RecipeController::class, 'compare'])->name('compare');
-        });
+    });
 
-        //         Cost Categories
-        Route::get('/cost-categories', [CostCategoryController::class, 'index']);
-        //
-        Route::group(['prefix' => 'clients',], function () {
-            Route::get('/', [ClientController::class, 'index'])->name('index');
-            Route::get('/{client}', [ClientController::class, 'show'])->name('show');
-            Route::post('/', [ClientController::class, 'store'])->name('store');
-            //            Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
-            Route::put('/{client}', [ClientController::class, 'update'])->name('update');
-            Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
-        });
+    //         Cost Categories
+    Route::get('/cost-categories', [CostCategoryController::class, 'index']);
+    //
+    Route::group(['prefix' => 'clients',], function () {
+        Route::get('/', [ClientController::class, 'index']);
+        Route::get('/{client}', [ClientController::class, 'show'])->name('show');
+        Route::post('/', [ClientController::class, 'store'])->name('store');
+        //            Route::get('/{client}/edit', [ClientController::class, 'edit'])->name('edit');
+        Route::put('/{client}', [ClientController::class, 'update'])->name('update');
+        Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
+    });
 
 
-        // Инвентарь
-        Route::prefix('inventory')->name('inventory.')->group(function () {
-            Route::get('/', [InventoryController::class, 'index'])->name('index');
-            Route::post('/add', [InventoryController::class, 'addStock'])->name('add');
-            Route::post('/remove', [InventoryController::class, 'removeStock'])->name('remove');
-            Route::get('/transactions', [InventoryController::class, 'transactions'])->name('transactions');
-            Route::get('/stock', [InventoryController::class, 'getStock'])->name('stock');
-            Route::get('/transactions/history', [InventoryController::class, 'getTransactionHistory'])->name('transactions.history');
-            //            Route::get('/component-usage', [InventoryController::class, 'componentUsage'])
+    // Инвентарь
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+        Route::get('/', [InventoryController::class, 'index'])->name('index');
+        Route::post('/add', [InventoryController::class, 'addStock'])->name('add');
+        Route::post('/remove', [InventoryController::class, 'removeStock'])->name('remove');
+        Route::get('/transactions', [InventoryController::class, 'transactions'])->name('transactions');
+        Route::get('/stock', [InventoryController::class, 'getStock'])->name('stock');
+        Route::get('/transactions/history', [InventoryController::class, 'getTransactionHistory'])->name('transactions.history');
+        //            Route::get('/component-usage', [InventoryController::class, 'componentUsage'])
 //                ->name('component-usage');
 //            Route::post('/reserve-components', [InventoryController::class, 'reserveComponents'])
 //                ->name('reserve-components');
 //            Route::post('/release-reservation/{reservation}', [InventoryController::class, 'releaseReservation'])
 //                ->name('release-reservation');
-        });
-        //
+    });
+    //
 //        // Производство
-        Route::prefix('production')->name('production.')->group(function () {
-            Route::get('/', [ProductionController::class, 'index']);
-            // Start production
-            Route::post('/create-batch', [ProductionController::class, 'store']);
-            Route::put('/update-batch', [ProductionController::class, 'update']);
-            // Route::get('/create/{recipe}', [ProductionController::class, 'create'])->name('create');
-            //            Route::get('/batches/{batch}', [ProductionController::class, 'show'])->name('show');
-            // Route::post('/batches/{batch}/start', [ProductionController::class, 'start'])->name('start');
-            Route::put('/batches/complete', [ProductionController::class, 'complete'])->name('complete');
-            Route::put('/batches/cancel', [ProductionController::class, 'cancel'])->name('cancel');
-            Route::put('/batches/cancel/all-batch', [ProductionController::class, 'cancelAll']);
-            //            Route::post('/batches/{batch}/add-costs', [ProductionController::class, 'addCosts'])->name('addCosts');
+    Route::prefix('production')->name('production.')->group(function () {
+        Route::get('/', [ProductionController::class, 'index']);
+        // Start production
+        Route::post('/create-batch', [ProductionController::class, 'store']);
+        Route::put('/update-batch', [ProductionController::class, 'update']);
+        // Route::get('/create/{recipe}', [ProductionController::class, 'create'])->name('create');
+        //            Route::get('/batches/{batch}', [ProductionController::class, 'show'])->name('show');
+        // Route::post('/batches/{batch}/start', [ProductionController::class, 'start'])->name('start');
+        Route::put('/batches/complete', [ProductionController::class, 'complete'])->name('complete');
+        Route::put('/batches/cancel', [ProductionController::class, 'cancel'])->name('cancel');
+        Route::put('/batches/cancel/all-batch', [ProductionController::class, 'cancelAll']);
+        //            Route::post('/batches/{batch}/add-costs', [ProductionController::class, 'addCosts'])->name('addCosts');
 
-            // Статистика и отчеты
+        // Статистика и отчеты
 //            Route::get('/statistics', [ProductionController::class, 'statistics'])->name('statistics');
 //            Route::get('/pending', [ProductionController::class, 'pending'])->name('pending');
 //            Route::get('/history', [ProductionController::class, 'history'])->name('history');
-        });
-        //        // Orders
-        Route::prefix('orders')->name('orders.')->group(function () {
-            Route::get('/', [OrderController::class, 'index'])->name('orders.index');  // Путь будет /api/orders
-            // Route::post('/', [OrderController::class, 'store'])->name('orders.store');  // Путь будет /api/orders
-            Route::get('/stats', [OrderStatsController::class, 'stats'])->name('orders.stats');
-            Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');  // Путь будет /api/orders/{order}
-            Route::put('/{order}', [OrderController::class, 'update'])->name('orders.update');  // Путь будет /api/orders/{order}
-            Route::delete('/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');  // Путь будет /api/orders/{order}
-            // Дополнительные действия с заказами
-            Route::put('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');  // Путь будет /api/orders/{order}/status
-            Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');  // Путь будет /api/orders/{order}/items
-            Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');  // Путь будет /api/orders/{order}/items/{item}
-        });
+    });
+    //        // Orders
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [OrderController::class, 'index'])->name('orders.index');  // Путь будет /api/orders
+        // Route::post('/', [OrderController::class, 'store'])->name('orders.store');  // Путь будет /api/orders
+        Route::get('/stats', [OrderStatsController::class, 'stats'])->name('orders.stats');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');  // Путь будет /api/orders/{order}
+        Route::put('/{order}', [OrderController::class, 'update'])->name('orders.update');  // Путь будет /api/orders/{order}
+        Route::delete('/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');  // Путь будет /api/orders/{order}
+        // Дополнительные действия с заказами
+        Route::put('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');  // Путь будет /api/orders/{order}/status
+        Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');  // Путь будет /api/orders/{order}/items
+        Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');  // Путь будет /api/orders/{order}/items/{item}
+    });
 
-        // Маршруты, доступные только администраторам
-        Route::middleware(['role:super-admin,admin'])->group(function () {
-            // Управление пользователями
-            Route::prefix('users')->name('users.')->group(function () {
-                Route::get('/', [UserController::class, 'index'])
-                    ->middleware('permission:users.view')
-                    ->name('index');
-                Route::post('/', [UserController::class, 'store'])
-                    ->middleware('permission:users.create')
-                    ->name('store');
-                Route::put('/{user}', [UserController::class, 'update'])
-                    ->middleware('permission:users.edit')
-                    ->name('update');
-                Route::delete('/{user}', [UserController::class, 'destroy'])
-                    ->middleware('permission:users.delete')
-                    ->name('destroy');
-                Route::put('/{user}/update-password', [UserController::class, 'updatePassword']);
-                Route::get('/deleted', [UserController::class, 'indexDeleted']);
-                Route::get('/{id}/restore', [UserController::class, 'restore']);
-                Route::delete('{id}/forceDestroy', [UserController::class, 'forceDestroy']);
-            });
+    // Маршруты, доступные только администраторам
+    // Управление пользователями
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [UserController::class, 'index']);
+        Route::post('/', [UserController::class, 'store']);
+        Route::put('/{user}', [UserController::class, 'update']);
+        Route::delete('/{user}', [UserController::class, 'destroy']);
+        Route::put('/{user}/update-password', [UserController::class, 'updatePassword']);
+        Route::get('/deleted', [UserController::class, 'indexDeleted']);
+        Route::get('/{id}/restore', [UserController::class, 'restore']);
+        Route::delete('{id}/forceDestroy', [UserController::class, 'forceDestroy']);
+    });
 
-            // Управление ролями и разрешениями (только для супер-админа)
-            Route::prefix('/roles')->group(function () {
+    // Управление ролями и разрешениями (только для супер-админа)
+    Route::prefix('/roles')->group(function () {
 //                 Route::resource('roles', RoleController::class);
-                // Route::resource('permissions', PermissionController::class);
-                // Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
-                //     ->name('roles.updatePermissions');
-                Route::get('/with-permissions', [RoleController::class, 'index']);
-                Route::get('/', [RoleController::class, 'all_roles']);
-                Route::get('/permissions', [RoleController::class, 'all_permissions']);
-                Route::post('/', [RoleController::class, 'store']);
-                Route::put('/{role}', [RoleController::class, 'update']);
-            });
-        });
-        //
+        // Route::resource('permissions', PermissionController::class);
+        // Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
+        //     ->name('roles.updatePermissions');
+        Route::get('/with-permissions', [RoleController::class, 'index']);
+        Route::get('/', [RoleController::class, 'all_roles']);
+        Route::get('/permissions', [RoleController::class, 'all_permissions']);
+        Route::post('/', [RoleController::class, 'store']);
+        Route::put('/{role}', [RoleController::class, 'update']);
+    });
+    //
 //        // Content Management Routes
 //        Route::prefix('content')->name('content.')->group(function () {
 //
@@ -578,154 +567,153 @@ Route::middleware(['auth:sanctum'])->group(function () {
 //            // Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
 //        });
 //
-        // Для получения всех уровней клиентов
-        Route::get('client-levels', [ClientLevelController::class, 'index'])->name('client-levels.index');
+    // Для получения всех уровней клиентов
+    Route::get('client-levels', [ClientLevelController::class, 'index'])->name('client-levels.index');
 
-        // Для создания нового уровня клиента
-        Route::post('client-levels', [ClientLevelController::class, 'store'])->name('client-levels.store');
+    // Для создания нового уровня клиента
+    Route::post('client-levels', [ClientLevelController::class, 'store'])->name('client-levels.store');
 
-        // Для получения конкретного уровня клиента по ID
+    // Для получения конкретного уровня клиента по ID
 
-        // Для обновления уровня клиента
-        Route::put('client-levels/{clientLevel}', [ClientLevelController::class, 'update'])->name('client-levels.update');
+    // Для обновления уровня клиента
+    Route::put('client-levels/{clientLevel}', [ClientLevelController::class, 'update'])->name('client-levels.update');
 
-        // Для удаления уровня клиента
-        Route::delete('client-levels/{clientLevel}', [ClientLevelController::class, 'destroy'])->name('client-levels.destroy');
+    // Для удаления уровня клиента
+    Route::delete('client-levels/{clientLevel}', [ClientLevelController::class, 'destroy'])->name('client-levels.destroy');
 
 
-        //        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
+    //        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
 //        Route::put('/leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
 //        Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
 //        Route::post('/leads/create-client', [LeadController::class, 'createClient'])->name('leads.create-client');
 
-        //
+    //
 //        // Задачи
-        Route::prefix('tasks')->name('tasks.')->group(function () {
-            Route::get('/', [TaskController::class, 'index'])->name('index');
-            Route::post('/', [TaskController::class, 'store'])->name('store');
-            Route::put('/{task}', [TaskController::class, 'update'])->name('update');
-            Route::delete('/{task}', [TaskController::class, 'destroy'])->name('destroy');
+    Route::prefix('tasks')->name('tasks.')->group(function () {
+        Route::get('/', [TaskController::class, 'index']);
+        Route::post('/', [TaskController::class, 'store']);
+        Route::put('/{task}', [TaskController::class, 'update']);
+        Route::delete('/{task}', [TaskController::class, 'destroy']);
 
-            // Комментарии к задачам
-            Route::post('/{task}/comments', [TaskCommentController::class, 'store'])->name('comments.store');
-            Route::put('/{task}/comments/{comment}', [TaskCommentController::class, 'update'])->name('comments.update');
-            Route::delete('/{task}/comments/{comment}', [TaskCommentController::class, 'destroy'])->name('comments.destroy');
+        // Комментарии к задачам
+//            Route::post('/{task}/comments', [TaskCommentController::class, 'store'])->name('comments.store');
+//            Route::put('/{task}/comments/{comment}', [TaskCommentController::class, 'update'])->name('comments.update');
+//            Route::delete('/{task}/comments/{comment}', [TaskCommentController::class, 'destroy'])->name('comments.destroy');
+//
+//            // Вложения к задачам
+//            Route::post('/{task}/attachments', [TaskAttachmentController::class, 'store'])->name('attachments.store');
+//            Route::delete('/{task}/attachments/{attachment}', [TaskAttachmentController::class, 'destroy'])->name('attachments.destroy');
+//            Route::get('/{task}/attachments/{attachment}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
+    });
 
-            // Вложения к задачам
-            Route::post('/{task}/attachments', [TaskAttachmentController::class, 'store'])->name('attachments.store');
-            Route::delete('/{task}/attachments/{attachment}', [TaskAttachmentController::class, 'destroy'])->name('attachments.destroy');
-            Route::get('/{task}/attachments/{attachment}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
-        });
+    // Статусы задач
+    Route::prefix('task-statuses')->group(function () {
+        Route::get('/', [TaskStatusController::class, 'index']);
+        Route::post('/', [TaskStatusController::class, 'store']);
+        Route::put('/{status}', [TaskStatusController::class, 'update']);
+        Route::delete('/{status}', [TaskStatusController::class, 'destroy']);
+        Route::post('/reorder', [TaskStatusController::class, 'reorder']);
+    });
 
-        // Статусы задач
-        Route::prefix('task-statuses')->name('task-statuses.')->group(function () {
-            Route::get('/', [TaskStatusController::class, 'index'])->name('index');
-            Route::post('/', [TaskStatusController::class, 'store'])->name('store');
-            Route::put('/{status}', [TaskStatusController::class, 'update'])->name('update');
-            Route::delete('/{status}', [TaskStatusController::class, 'destroy'])->name('destroy');
-            Route::post('/reorder', [TaskStatusController::class, 'reorder'])->name('reorder');
-        });
+    // приоритеты задач
+    Route::prefix('task-priorities')->group(function () {
+        Route::get('/', [TaskPriorityController::class, 'index']);
+        Route::post('/', [TaskPriorityController::class, 'store'])->name('store');
+        Route::put('/{priority}', [TaskPriorityController::class, 'update'])->name('update');
+        Route::delete('/{priority}', [TaskPriorityController::class, 'destroy'])->name('destroy');
+    });
 
-        // приоритеты задач
-        Route::prefix('task-priorities')->name('task-priorities.')->group(function () {
-            Route::get('/', [TaskPriorityController::class, 'index'])->name('index');
-            Route::post('/', [TaskPriorityController::class, 'store'])->name('store');
-            Route::put('/{priority}', [TaskPriorityController::class, 'update'])->name('update');
-            Route::delete('/{priority}', [TaskPriorityController::class, 'destroy'])->name('destroy');
-        });
+    // Метки задач
+    Route::prefix('task-labels')->group(function () {
+        Route::get('/', [TaskLabelController::class, 'index']);
+        Route::post('/', [TaskLabelController::class, 'store']);
+        Route::put('/{label}', [TaskLabelController::class, 'update']);
+        Route::delete('/{label}', [TaskLabelController::class, 'destroy']);
+    });
 
-        // Метки задач
-        Route::prefix('task-labels')->name('task-labels.')->group(function () {
-            Route::get('/', [TaskLabelController::class, 'index'])->name('index');
-            Route::post('/', [TaskLabelController::class, 'store'])->name('store');
-            Route::put('/{label}', [TaskLabelController::class, 'update'])->name('update');
-            Route::delete('/{label}', [TaskLabelController::class, 'destroy'])->name('destroy');
-        });
+    // Маршруты для управления доставкой
+    Route::prefix('delivery')->name('delivery.')->group(function () {
+        // Методы доставки
+        Route::get('/methods', [DeliveryMethodController::class, 'index'])->name('methods.index');
+        Route::get('/methods/admin', [DeliveryMethodController::class, 'get_all_delivery_methods'])->name('methods.index');
+        Route::get('/methods/{method}', [DeliveryMethodController::class, 'show'])->name('methods.show');
+        Route::post('/methods', [DeliveryMethodController::class, 'store'])->name('methods.store');
+        Route::put('/methods/{method}', [DeliveryMethodController::class, 'update'])->name('methods.update');
+        Route::delete('/methods/{method}', [DeliveryMethodController::class, 'destroy'])->name('methods.destroy');
 
-        // Маршруты для управления доставкой
-        Route::prefix('delivery')->name('delivery.')->group(function () {
-            // Методы доставки
-            Route::get('/methods', [DeliveryMethodController::class, 'index'])->name('methods.index');
-            Route::get('/methods/admin', [DeliveryMethodController::class, 'get_all_delivery_methods'])->name('methods.index');
-            Route::get('/methods/{method}', [DeliveryMethodController::class, 'show'])->name('methods.show');
-            Route::post('/methods', [DeliveryMethodController::class, 'store'])->name('methods.store');
-            Route::put('/methods/{method}', [DeliveryMethodController::class, 'update'])->name('methods.update');
-            Route::delete('/methods/{method}', [DeliveryMethodController::class, 'destroy'])->name('methods.destroy');
-
-            Route::post('/methods/countries/{method}', [DeliveryCountryController::class, 'assignCountries']);
-            //
-//            // Зоны доставки
-            Route::get('/methods/{method}/zones', [DeliveryZoneController::class, 'index'])->name('zones.index');
-            Route::post('/methods/{method}/zones', [DeliveryZoneController::class, 'store'])->name('zones.store');
-            Route::put('/zones/{zone}', [DeliveryZoneController::class, 'update'])->name('zones.update');
-            Route::delete('/zones/{zone}', [DeliveryZoneController::class, 'destroy'])->name('zones.destroy');
-
-            // Тарифы доставки
-            Route::get('/zones/{zone}/rates', [DeliveryRateController::class, 'index'])->name('rates.index');
-            Route::post('/zones/{zone}/rates', [DeliveryRateController::class, 'store'])->name('rates.store');
-            Route::put('/rates/{rate}', [DeliveryRateController::class, 'update'])->name('rates.update');
-            Route::delete('/rates/{rate}', [DeliveryRateController::class, 'destroy'])->name('rates.destroy');
-
-            // Отправления
-            Route::get('/shipments', [ShipmentController::class, 'index'])->name('shipments.index');
-            Route::put('/shipments/{shipment}', [ShipmentController::class, 'update'])->name('shipments.update');
-            Route::get('/shipments/{shipment}/print-label', [ShipmentController::class, 'printLabel'])->name('shipments.print-label');
-            Route::post('/shipments/{shipment}/cancel', [ShipmentController::class, 'cancel'])->name('shipments.cancel');
-        });
+        Route::post('/methods/countries/{method}', [DeliveryCountryController::class, 'assignCountries']);
         //
-        Route::group(['prefix' => 'settings', 'as' => 'settings.'], function () {
-            Route::get('/general', [SettingsController::class, 'general'])->name('general');
-            Route::post('/general', [SettingsController::class, 'updateGeneral']);
+//            // Зоны доставки
+        Route::get('/methods/{method}/zones', [DeliveryZoneController::class, 'index'])->name('zones.index');
+        Route::post('/methods/{method}/zones', [DeliveryZoneController::class, 'store'])->name('zones.store');
+        Route::put('/zones/{zone}', [DeliveryZoneController::class, 'update'])->name('zones.update');
+        Route::delete('/zones/{zone}', [DeliveryZoneController::class, 'destroy'])->name('zones.destroy');
 
-            Route::get('/integrations', [SettingsController::class, 'integrations'])->name('integrations');
-            Route::post('/integrations', [SettingsController::class, 'updateIntegrations']);
+        // Тарифы доставки
+        Route::get('/zones/{zone}/rates', [DeliveryRateController::class, 'index'])->name('rates.index');
+        Route::post('/zones/{zone}/rates', [DeliveryRateController::class, 'store'])->name('rates.store');
+        Route::put('/rates/{rate}', [DeliveryRateController::class, 'update'])->name('rates.update');
+        Route::delete('/rates/{rate}', [DeliveryRateController::class, 'destroy'])->name('rates.destroy');
 
-            Route::get('/api-keys', [SettingsController::class, 'apiKeys'])->name('api-keys');
-            Route::post('/api-keys', [SettingsController::class, 'updateApiKeys']);
-            Route::delete('/api-keys/{key}', [SettingsController::class, 'deleteApiKey']);
+        // Отправления
+        Route::get('/shipments', [ShipmentController::class, 'index'])->name('shipments.index');
+        Route::put('/shipments/{shipment}', [ShipmentController::class, 'update'])->name('shipments.update');
+        Route::get('/shipments/{shipment}/print-label', [ShipmentController::class, 'printLabel'])->name('shipments.print-label');
+        Route::post('/shipments/{shipment}/cancel', [ShipmentController::class, 'cancel'])->name('shipments.cancel');
+    });
+    //
+    Route::group(['prefix' => 'settings', 'as' => 'settings.'], function () {
+        Route::get('/general', [SettingsController::class, 'general'])->name('general');
+        Route::post('/general', [SettingsController::class, 'updateGeneral']);
 
-            Route::get('/notifications', [SettingsController::class, 'notifications'])->name('notifications');
-            Route::post('/notifications', [SettingsController::class, 'updateNotifications']);
+        Route::get('/integrations', [SettingsController::class, 'integrations'])->name('integrations');
+        Route::post('/integrations', [SettingsController::class, 'updateIntegrations']);
 
-            Route::get('/payment', [SettingsController::class, 'payment'])->name('payment');
-            Route::post('/payment', [SettingsController::class, 'updatePayment'])->name('payment.update');
+        Route::get('/api-keys', [SettingsController::class, 'apiKeys'])->name('api-keys');
+        Route::post('/api-keys', [SettingsController::class, 'updateApiKeys']);
+        Route::delete('/api-keys/{key}', [SettingsController::class, 'deleteApiKey']);
 
-            Route::get('/delivery', [SettingsController::class, 'delivery'])->name('delivery');
-            Route::post('/delivery', [SettingsController::class, 'updateDelivery'])->name('delivery.update');
+        Route::get('/notifications', [SettingsController::class, 'notifications'])->name('notifications');
+        Route::post('/notifications', [SettingsController::class, 'updateNotifications']);
 
-            Route::get('/{type}', [SettingsController::class, 'show'])
-                ->middleware('permission:settings.manage')
-                ->name('show');
-            Route::post('/{type}', [SettingsController::class, 'update'])
-                ->middleware('permission:settings.manage')
-                ->name('update');
+        Route::get('/payment', [SettingsController::class, 'payment'])->name('payment');
+        Route::post('/payment', [SettingsController::class, 'updatePayment'])->name('payment.update');
+
+        Route::get('/delivery', [SettingsController::class, 'delivery'])->name('delivery');
+        Route::post('/delivery', [SettingsController::class, 'updateDelivery'])->name('delivery.update');
+
+        Route::get('/{type}', [SettingsController::class, 'show'])
+            ->middleware('permission:settings.manage')
+            ->name('show');
+        Route::post('/{type}', [SettingsController::class, 'update'])
+            ->middleware('permission:settings.manage')
+            ->name('update');
+    });
+
+
+    Route::prefix('/third-party-integrations')->group(function () {
+        Route::prefix('/chats')->group(function () {
+            Route::post('/telegram', [ChatsIntegrationController::class, 'telegram_integration']);
         });
-
-
-        Route::prefix('/third-party-integrations')->group(function () {
-            Route::prefix('/chats')->group(function () {
-                Route::post('/telegram', [ChatsIntegrationController::class, 'telegram_integration']);
-            });
-            Route::prefix('/mail')->group(function () {
-                Route::post('/configuration', [ChatsIntegrationController::class, 'updateMailSettings']);
-                Route::get('/test', [ChatsIntegrationController::class, 'test_mail']);
-            });
-            Route::prefix('/cdek')->group(function () {
-                Route::post('/settings', [CDEKController::class, 'update_cdek_settings']);
-            });
-            Route::prefix('/moysklad')->group(function () {
-                Route::post('/settings', [MoySkladController::class, 'update_moy_sklad_settings']);
-                Route::get('/products', [MoySkladController::class, 'get_products']);
-                Route::get('/products/variants', [MoySkladController::class, 'get_product_variants']);
-                Route::get('/products/stock', [MoySkladController::class, 'get_products_stock']);
-                Route::get('/products/sync', [MoySkladController::class, 'sync_products']);
-                Route::get('/currencies', [MoySkladController::class, 'get_currencies']);
-                Route::get('/priceTypes', [MoySkladController::class, 'get_price_types']);
-                Route::get('/units', [MoySkladController::class, 'get_units']);
-                Route::get('/characteristics', [MoySkladController::class, 'get_characteristics']);
-                //
-                Route::get('/report/dashboard', [MoySkladController::class, 'report_dashboard']);
-            });
+        Route::prefix('/mail')->group(function () {
+            Route::post('/configuration', [ChatsIntegrationController::class, 'updateMailSettings']);
+            Route::get('/test', [ChatsIntegrationController::class, 'test_mail']);
+        });
+        Route::prefix('/cdek')->group(function () {
+            Route::post('/settings', [CDEKController::class, 'update_cdek_settings']);
+        });
+        Route::prefix('/moysklad')->group(function () {
+            Route::post('/settings', [MoySkladController::class, 'update_moy_sklad_settings']);
+            Route::get('/products', [MoySkladController::class, 'get_products']);
+            Route::get('/products/variants', [MoySkladController::class, 'get_product_variants']);
+            Route::get('/products/stock', [MoySkladController::class, 'get_products_stock']);
+            Route::get('/products/sync', [MoySkladController::class, 'sync_products']);
+            Route::get('/currencies', [MoySkladController::class, 'get_currencies']);
+            Route::get('/priceTypes', [MoySkladController::class, 'get_price_types']);
+            Route::get('/units', [MoySkladController::class, 'get_units']);
+            Route::get('/characteristics', [MoySkladController::class, 'get_characteristics']);
+            //
+            Route::get('/report/dashboard', [MoySkladController::class, 'report_dashboard']);
         });
     });
 });

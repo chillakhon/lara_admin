@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Traits;
 
 use App\Models\Role;
@@ -18,7 +19,7 @@ trait ReviewTrait
             $reviewableMorphMap[Product::class] = ['images']; // or any relations
         }
 
-        // if any other models were morphed with Review model 
+        // if any other models were morphed with Review model
         // if ($request->service_id) {
         //     $reviewableMorphMap[Service::class] = ['provider']; // relations
         // }
@@ -43,12 +44,24 @@ trait ReviewTrait
                 ->where('reviewable_id', $request->get('product_id'));
         }
 
+
         if ($request->get('search')) {
             $search_value = $request->get('search');
             $reviews->where(function ($query) use ($search_value) {
-                $query->where('content', "LIKE", "%{$search_value}%");
+                $query->where('content', "LIKE", "%{$search_value}%")
+                    ->orWhereHas('reviewable', function ($productQuery) use ($search_value) {
+                        $productQuery->where('reviewable_type', Product::class)
+                            ->where('name', 'LIKE', "%{$search_value}%");
+                    });
             });
         }
+
+//        if ($request->get('search')) {
+//            $search_value = $request->get('search');
+//            $reviews->where(function ($query) use ($search_value) {
+//                $query->where('content', "LIKE", "%{$search_value}%");
+//            });
+//        }
 
         // published should be true by default, then admin
         // can change that from admin panel

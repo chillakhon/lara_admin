@@ -9,51 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-/**
- * @OA\Schema(
- *     schema="Task",
- *     type="object",
- *     @OA\Property(property="id", type="integer", format="int64", example=1),
- *     @OA\Property(property="title", type="string", example="Исправить баг в API"),
- *     @OA\Property(property="description", type="string", nullable=true, example="Не работает эндпоинт /tasks/create"),
- *     @OA\Property(
- *         property="status",
- *         ref="#/components/schemas/TaskStatus"
- *     ),
- *     @OA\Property(
- *         property="priority",
- *         ref="#/components/schemas/TaskPriority"
- *     ),
- *     @OA\Property(
- *         property="creator",
- *         ref="#/components/schemas/User"
- *     ),
- *     @OA\Property(
- *         property="assignee",
- *         ref="#/components/schemas/User",
- *         nullable=true
- *     ),
- *     @OA\Property(property="parent_id", type="integer", format="int64", nullable=true),
- *     @OA\Property(property="due_date", type="string", format="date-time", nullable=true, example="2024-12-31T23:59:59Z"),
- *     @OA\Property(property="started_at", type="string", format="date-time", nullable=true),
- *     @OA\Property(property="completed_at", type="string", format="date-time", nullable=true),
- *     @OA\Property(property="estimated_time", type="integer", example=120),
- *     @OA\Property(property="spent_time", type="integer", example=0),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T00:00:00Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time"),
- *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true),
- *     @OA\Property(
- *         property="labels",
- *         type="array",
- *         @OA\Items(ref="#/components/schemas/TaskLabel")
- *     ),
- *     @OA\Property(
- *         property="comments",
- *         type="array",
- *         @OA\Items(ref="#/components/schemas/TaskComment")
- *     )
- * )
- */
+
 class Task extends Model
 {
     use HasFactory, SoftDeletes;

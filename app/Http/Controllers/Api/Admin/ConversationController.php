@@ -132,17 +132,24 @@ class ConversationController extends Controller
 
     public function getOrCreateForClient(Request $request)
     {
+
+
+//        return 45;
+
         $data = $request->validate([
-            'client_id' => 'required|exists:clients,id',
+            'client_id' => 'nullable|exists:clients,id',
             'source' => 'nullable|in:telegram,whatsapp,web_chat',
-//            'external_id' => 'nullable|string',
+            'external_id' => 'nullable|string',
         ]);
 
+
+
+//        return 455;
         $conversation = Conversation::firstOrCreate(
             [
                 'client_id' => $data['client_id'],
                 'source' => $data['source'] ?? 'web_chat',
-//                'external_id' => $data['external_id'] ?? '',
+                'external_id' => $data['external_id'] ?? '',
             ],
             [
                 'status' => 'active',
@@ -197,6 +204,9 @@ class ConversationController extends Controller
 
     public function incoming(Request $request, Conversation $conversation)
     {
+
+
+
         $validated = $request->validate([
             'content' => 'required|string',
             'attachments' => 'nullable|array',

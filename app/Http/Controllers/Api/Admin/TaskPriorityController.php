@@ -25,17 +25,23 @@ class TaskPriorityController extends Controller
             ]);
         }
 
-        if (!$user->hasAnyRole(['admin', 'super-admin', 'manager'])) {
-            return response()->json([
-                'success' => false,
-                'message' => "Sorry, you dont have specific permission to continue"
-            ]);
+//        if (!$user->hasAnyRole(['admin', 'super-admin', 'manager'])) {
+//            return response()->json([
+//                'success' => false,
+//                'message' => "Sorry, you dont have specific permission to continue"
+//            ]);
+//        }
+//
+
+
+        $query = TaskPriority::query();
+        if ($search = $request->query('search')) {
+            $query->where('name', 'like', "%{$search}%");
         }
 
-        // $this->authorize('manage-tasks');
 
         return response()->json([
-            'priorities' => TaskPriority::orderBy('level')->get()
+            'priorities' => $query->orderBy('level')->get()
         ]);
     }
 

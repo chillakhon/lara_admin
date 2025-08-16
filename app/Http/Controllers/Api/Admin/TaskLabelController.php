@@ -13,14 +13,23 @@ class TaskLabelController extends Controller
 {
     use AuthorizesRequests, ValidatesRequests;
 
-    public function index()
+    public function index(Request $request)
     {
-        $this->authorize('manage-tasks');
+        $query = TaskLabel::query();
+
+        // Получаем параметр search из запроса
+        if ($search = $request->query('search')) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        // Считаем количество задач для каждой метки
+        $labels = $query->withCount('tasks')->get();
 
         return response()->json([
-            'labels' => TaskLabel::withCount('tasks')->get()
+            'labels' => $labels
         ]);
     }
+
 
     public function store(Request $request)
     {
@@ -64,7 +73,6 @@ class TaskLabelController extends Controller
 
     public function destroy(TaskLabel $label)
     {
-        $this->authorize('manage-tasks');
 
         $label->tasks()->detach(); // Удаляем связи с задачами
         $label->delete();

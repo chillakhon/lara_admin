@@ -17,7 +17,6 @@ class TaskStatusController extends Controller
 
     public function index(Request $request)
     {
-
         $user = $request->user();
 
         if (!$user) {
@@ -27,19 +26,17 @@ class TaskStatusController extends Controller
             ]);
         }
 
-        if (!$user->hasAnyRole(['admin', 'super-admin', 'manager'])) {
-            return response()->json([
-                'success' => false,
-                'message' => "Sorry, you dont have specific permission to continue"
-            ]);
+        $query = TaskStatus::query();
+
+        if ($search = $request->query('search')) {
+            $query->where('name', 'like', "%{$search}%");
         }
 
-        // $this->authorize('manage-tasks');
-
         return response()->json([
-            'statuses' => TaskStatus::orderBy('order')->get()
+            'statuses' => $query->orderBy('order')->get()
         ]);
     }
+
 
     public function store(Request $request)
     {

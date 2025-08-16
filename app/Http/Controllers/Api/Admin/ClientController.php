@@ -77,29 +77,9 @@ class ClientController extends Controller
             })
             ->withQueryString();
 
-        $levels = ClientLevel::orderBy('name')->get();
-
-        $statuses = [
-            ['value' => '', 'label' => 'Все статусы'],
-            ['value' => 'active', 'label' => 'Активные'],
-            ['value' => 'inactive', 'label' => 'Неактивные'],
-        ];
-
-        $sortOptions = [
-            ['value' => 'created_at,desc', 'label' => 'Дата регистрации (сначала новые)'],
-            ['value' => 'created_at,asc', 'label' => 'Дата регистрации (сначала старые)'],
-            ['value' => 'bonus_balance,desc', 'label' => 'Бонусный баланс (по убыванию)'],
-            ['value' => 'bonus_balance,asc', 'label' => 'Бонусный баланс (по возрастанию)'],
-            ['value' => 'orders_count,desc', 'label' => 'Количество заказов (по убыванию)'],
-            ['value' => 'orders_count,asc', 'label' => 'Количество заказов (по возрастанию)'],
-        ];
 
         return response()->json([
             'clients' => $clients,
-            //            'levels' => $levels,
-//            'statuses' => $statuses,
-//            'sortOptions' => $sortOptions,
-//            'filters' => $request->only(['search', 'level', 'status', 'sort']),
         ]);
     }
 
