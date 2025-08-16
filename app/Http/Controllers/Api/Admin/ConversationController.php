@@ -24,7 +24,7 @@ class ConversationController extends Controller
         // Опциональный параметр фильтрации
         $validated = $request->validate([
             'per_page' => 'nullable|integer|min:1',
-            'source'   => 'nullable|in:telegram,whatsapp,web_chat',
+            'source' => 'nullable|in:telegram,whatsapp,web_chat',
         ]);
 
         // Базовый запрос с нужными связями
@@ -32,7 +32,7 @@ class ConversationController extends Controller
             ->orderBy('last_message_at', 'desc');
 
         // Если пришёл source — добавляем where-условие
-        if (! empty($validated['source'])) {
+        if (!empty($validated['source'])) {
             $query->where('source', $validated['source']);
         }
 
@@ -40,6 +40,8 @@ class ConversationController extends Controller
         $perPage = $validated['per_page'] ?? 20;
         $conversations = $query->paginate($perPage);
 
+
+//        sleep(2);
         return response()->json([
             'data' => $conversations
         ]);
@@ -143,7 +145,6 @@ class ConversationController extends Controller
         ]);
 
 
-
 //        return 455;
         $conversation = Conversation::firstOrCreate(
             [
@@ -204,7 +205,6 @@ class ConversationController extends Controller
 
     public function incoming(Request $request, Conversation $conversation)
     {
-
 
 
         $validated = $request->validate([
