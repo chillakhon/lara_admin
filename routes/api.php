@@ -598,7 +598,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         Route::post('/{task}/complete', [TaskController::class, 'complete']);
 
-
         // Комментарии к задачам
 //            Route::post('/{task}/comments', [TaskCommentController::class, 'store'])->name('comments.store');
 //            Route::put('/{task}/comments/{comment}', [TaskCommentController::class, 'update'])->name('comments.update');

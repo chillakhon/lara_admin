@@ -38,11 +38,12 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
+
         if (!$user) {
             return response()->json(['error' => 'Пользователь не авторизован'], 401);
         }
 
-        $client = Client::where('user_id', $user->id)->whereNull('deleted_at')->first();
+        $client = Client::where('id', $user->id)->whereNull('deleted_at')->first();
 
         if (!$client) {
             return response()->json(['error' => 'Клиент не найден!'], 404);
