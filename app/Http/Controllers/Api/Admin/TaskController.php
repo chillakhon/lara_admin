@@ -16,19 +16,19 @@ class TaskController extends Controller
     public function index()
     {
         $filters = [
-            'search' => request('search', ''),
-            'status' => request('status', ''),
+            'search'   => request('search', ''),
+            'status'   => request('status', ''),
             'priority' => request('priority', ''),
             'assignee' => request('assignee', ''),
-            'label' => request('label', ''),
-            'dueDate' => request('dueDate', '')
+            'label'    => request('label', ''),
+            'dueDate'  => request('dueDate', '')
         ];
 
-        // Получаем параметры пагинации
+        // Параметры пагинации
         $perPage = request('per_page', 15);
-        $page = request('page', 1);
+        $page    = request('page', 1);
 
-        // Создаем запрос с отношениями
+        // Базовый запрос
         $query = Task::with([
             'status',
             'priority',
@@ -38,7 +38,7 @@ class TaskController extends Controller
             'comments.user.profile'
         ]);
 
-        // Применяем фильтры
+        // Фильтры
         if (!empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('title', 'like', '%' . $filters['search'] . '%')
@@ -68,58 +68,58 @@ class TaskController extends Controller
             $query->whereDate('due_date', $filters['dueDate']);
         }
 
-        // Применяем пагинацию
+        // Пагинация
         $tasks = $query->paginate($perPage, ['*'], 'page', $page);
 
-        // Получаем пользователей, исключая клиентов
+        // Список пользователей
         $users = User::with('profile')
             ->get()
             ->map(function ($user) {
                 return [
-                    'id' => $user->id,
+                    'id'    => $user->id,
                     'email' => $user->email,
-                    'name' => $user->profile->full_name,
+                    'name'  => data_get($user, 'profile.full_name'), // безопасно
                 ];
             });
 
         return response()->json([
             'tasks' => $tasks->getCollection()->map(function ($task) {
                 return [
-                    'id' => $task->id,
-                    'title' => $task->title,
-                    'description' => $task->description,
-                    'status' => $task->status,
-                    'status_id' => $task->status_id,
-                    'priority' => $task->priority,
-                    'priority_id' => $task->priority_id,
-                    'started_at' => $task->started_at,
-                    'completed_at' => $task->completed_at,
-                    'spent_time' => $task->spent_time,
-                    'creator' => $task->creator ? [
-                        'id' => $task->creator->id,
-                        'name' => $task->creator->profile->full_name,
-                        'email' => $task->creator->email,
-                        'profile' => $task->creator->profile,
+                    'id'             => $task->id,
+                    'title'          => $task->title,
+                    'description'    => $task->description,
+                    'status'         => $task->status,
+                    'status_id'      => $task->status_id,
+                    'priority'       => $task->priority,
+                    'priority_id'    => $task->priority_id,
+                    'started_at'     => $task->started_at,
+                    'completed_at'   => $task->completed_at,
+                    'spent_time'     => $task->spent_time,
+                    'creator'        => $task->creator ? [
+                        'id'     => $task->creator->id,
+                        'name'   => data_get($task, 'creator.profile.full_name'),
+                        'email'  => $task->creator->email,
+                        'profile'=> $task->creator->profile,
                     ] : null,
-                    'creator_id' => $task->creator_id,
-                    'assignee' => $task->assignee ? [
-                        'id' => $task->assignee->id,
-                        'name' => $task->assignee->profile->full_name,
+                    'creator_id'     => $task->creator_id,
+                    'assignee'       => $task->assignee ? [
+                        'id'    => $task->assignee->id,
+                        'name'  => data_get($task, 'assignee.profile.full_name'),
                         'email' => $task->assignee->email,
                     ] : null,
-                    'assignee_id' => $task->assignee_id,
-                    'labels' => $task->labels,
-                    'due_date' => $task->due_date,
+                    'assignee_id'    => $task->assignee_id,
+                    'labels'         => $task->labels,
+                    'due_date'       => $task->due_date,
                     'estimated_time' => $task->estimated_time,
-                    'created_at' => $task->created_at,
-                    'comments' => $task->comments->map(function ($comment) {
+                    'created_at'     => $task->created_at,
+                    'comments'       => $task->comments->map(function ($comment) {
                         return [
-                            'id' => $comment->id,
+                            'id'      => $comment->id,
                             'content' => $comment->content,
-                            'user' => [
-                                'id' => $comment->user->id,
-                                'name' => $comment->user->profile->full_name,
-                                'email' => $comment->user->email,
+                            'user'    => [
+                                'id'    => $comment->user?->id,
+                                'name'  => data_get($comment, 'user.profile.full_name'),
+                                'email' => $comment->user?->email,
                             ],
                             'created_at' => $comment->created_at,
                         ];
@@ -127,21 +127,22 @@ class TaskController extends Controller
                 ];
             }),
 
-            'statuses' => TaskStatus::orderBy('order')->get(),
+            'statuses'   => TaskStatus::orderBy('order')->get(),
             'priorities' => TaskPriority::orderBy('level')->get(),
-            'labels' => TaskLabel::get(),
-            'users' => $users,
-            'filters' => $filters,
-            'meta' => [
+            'labels'     => TaskLabel::get(),
+            'users'      => $users,
+            'filters'    => $filters,
+            'meta'       => [
                 'current_page' => $tasks->currentPage(),
-                'last_page' => $tasks->lastPage(),
-                'per_page' => $tasks->perPage(),
-                'total' => $tasks->total(),
-                'from' => $tasks->firstItem(),
-                'to' => $tasks->lastItem(),
+                'last_page'    => $tasks->lastPage(),
+                'per_page'     => $tasks->perPage(),
+                'total'        => $tasks->total(),
+                'from'         => $tasks->firstItem(),
+                'to'           => $tasks->lastItem(),
             ],
         ]);
     }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
