@@ -595,6 +595,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{task}', [TaskController::class, 'update']);
         Route::delete('/{task}', [TaskController::class, 'destroy']);
 
+
+        Route::post('/{task}/complete', [TaskController::class, 'complete']);
+
+
         // Комментарии к задачам
 //            Route::post('/{task}/comments', [TaskCommentController::class, 'store'])->name('comments.store');
 //            Route::put('/{task}/comments/{comment}', [TaskCommentController::class, 'update'])->name('comments.update');
@@ -605,6 +609,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 //            Route::delete('/{task}/attachments/{attachment}', [TaskAttachmentController::class, 'destroy'])->name('attachments.destroy');
 //            Route::get('/{task}/attachments/{attachment}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
     });
+
 
     // Статусы задач
     Route::prefix('task-statuses')->group(function () {

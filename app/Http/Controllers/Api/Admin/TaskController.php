@@ -10,23 +10,24 @@ use App\Models\TaskStatus;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class TaskController extends Controller
 {
     public function index()
     {
         $filters = [
-            'search'   => request('search', ''),
-            'status'   => request('status', ''),
+            'search' => request('search', ''),
+            'status' => request('status', ''),
             'priority' => request('priority', ''),
             'assignee' => request('assignee', ''),
-            'label'    => request('label', ''),
-            'dueDate'  => request('dueDate', '')
+            'label' => request('label', ''),
+            'dueDate' => request('dueDate', '')
         ];
 
         // Параметры пагинации
         $perPage = request('per_page', 15);
-        $page    = request('page', 1);
+        $page = request('page', 1);
 
         // Базовый запрос
         $query = Task::with([
@@ -36,7 +37,7 @@ class TaskController extends Controller
             'assignee.profile',
             'labels',
             'comments.user.profile'
-        ]);
+        ])->latest();
 
         // Фильтры
         if (!empty($filters['search'])) {
@@ -76,49 +77,49 @@ class TaskController extends Controller
             ->get()
             ->map(function ($user) {
                 return [
-                    'id'    => $user->id,
+                    'id' => $user->id,
                     'email' => $user->email,
-                    'name'  => data_get($user, 'profile.full_name'), // безопасно
+                    'name' => data_get($user, 'profile.full_name'), // безопасно
                 ];
             });
 
         return response()->json([
             'tasks' => $tasks->getCollection()->map(function ($task) {
                 return [
-                    'id'             => $task->id,
-                    'title'          => $task->title,
-                    'description'    => $task->description,
-                    'status'         => $task->status,
-                    'status_id'      => $task->status_id,
-                    'priority'       => $task->priority,
-                    'priority_id'    => $task->priority_id,
-                    'started_at'     => $task->started_at,
-                    'completed_at'   => $task->completed_at,
-                    'spent_time'     => $task->spent_time,
-                    'creator'        => $task->creator ? [
-                        'id'     => $task->creator->id,
-                        'name'   => data_get($task, 'creator.profile.full_name'),
-                        'email'  => $task->creator->email,
-                        'profile'=> $task->creator->profile,
+                    'id' => $task->id,
+                    'title' => $task->title,
+                    'description' => $task->description,
+                    'status' => $task->status,
+                    'status_id' => $task->status_id,
+                    'priority' => $task->priority,
+                    'priority_id' => $task->priority_id,
+                    'started_at' => $task->started_at,
+                    'completed_at' => $task->completed_at,
+                    'spent_time' => $task->spent_time,
+                    'creator' => $task->creator ? [
+                        'id' => $task->creator->id,
+                        'name' => data_get($task, 'creator.profile.full_name'),
+                        'email' => $task->creator->email,
+                        'profile' => $task->creator->profile,
                     ] : null,
-                    'creator_id'     => $task->creator_id,
-                    'assignee'       => $task->assignee ? [
-                        'id'    => $task->assignee->id,
-                        'name'  => data_get($task, 'assignee.profile.full_name'),
+                    'creator_id' => $task->creator_id,
+                    'assignee' => $task->assignee ? [
+                        'id' => $task->assignee->id,
+                        'name' => data_get($task, 'assignee.profile.full_name'),
                         'email' => $task->assignee->email,
                     ] : null,
-                    'assignee_id'    => $task->assignee_id,
-                    'labels'         => $task->labels,
-                    'due_date'       => $task->due_date,
+                    'assignee_id' => $task->assignee_id,
+                    'labels' => $task->labels,
+                    'due_date' => $task->due_date,
                     'estimated_time' => $task->estimated_time,
-                    'created_at'     => $task->created_at,
-                    'comments'       => $task->comments->map(function ($comment) {
+                    'created_at' => $task->created_at,
+                    'comments' => $task->comments->map(function ($comment) {
                         return [
-                            'id'      => $comment->id,
+                            'id' => $comment->id,
                             'content' => $comment->content,
-                            'user'    => [
-                                'id'    => $comment->user?->id,
-                                'name'  => data_get($comment, 'user.profile.full_name'),
+                            'user' => [
+                                'id' => $comment->user?->id,
+                                'name' => data_get($comment, 'user.profile.full_name'),
                                 'email' => $comment->user?->email,
                             ],
                             'created_at' => $comment->created_at,
@@ -127,18 +128,18 @@ class TaskController extends Controller
                 ];
             }),
 
-            'statuses'   => TaskStatus::orderBy('order')->get(),
+            'statuses' => TaskStatus::orderBy('order')->get(),
             'priorities' => TaskPriority::orderBy('level')->get(),
-            'labels'     => TaskLabel::get(),
-            'users'      => $users,
-            'filters'    => $filters,
-            'meta'       => [
+            'labels' => TaskLabel::get(),
+            'users' => $users,
+            'filters' => $filters,
+            'meta' => [
                 'current_page' => $tasks->currentPage(),
-                'last_page'    => $tasks->lastPage(),
-                'per_page'     => $tasks->perPage(),
-                'total'        => $tasks->total(),
-                'from'         => $tasks->firstItem(),
-                'to'           => $tasks->lastItem(),
+                'last_page' => $tasks->lastPage(),
+                'per_page' => $tasks->perPage(),
+                'total' => $tasks->total(),
+                'from' => $tasks->firstItem(),
+                'to' => $tasks->lastItem(),
             ],
         ]);
     }
@@ -211,6 +212,41 @@ class TaskController extends Controller
             'task' => $task,
         ], 200);
     }
+
+
+    public function complete(Task $task)
+    {
+        // Находим или создаём статус "Завершено"
+        $status = TaskStatus::firstOrCreate(
+            ['name' => 'Завершено'],
+            [
+                'slug'     => Str::slug('Завершено'), // обязательное поле
+                'order'    => 99,
+                'color'    => '#22c55e',             // можно дефолтный цвет
+                'is_default' => false,
+            ]
+        );
+
+
+        $task->status_id = $status->id;
+        $task->completed_at = now();
+        $task->save();
+
+        $task->load([
+            'status',
+            'priority',
+            'creator.profile',
+            'assignee.profile',
+            'labels',
+            'comments.user.profile'
+        ]);
+
+        return response()->json([
+            'message' => 'Задача завершена',
+            'task' => $task,
+        ], 200);
+    }
+
 
     /**
      * Remove the specified task.
