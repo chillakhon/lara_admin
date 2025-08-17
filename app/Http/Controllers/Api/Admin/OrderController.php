@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Helpers\PaginationHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Discount;
 use App\Models\Lead;
@@ -38,7 +39,6 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-
         if (!$user) {
             return response()->json(['error' => 'Пользователь не авторизован'], 401);
         }
@@ -49,24 +49,27 @@ class OrderController extends Controller
             return response()->json(['error' => 'Клиент не найден!'], 404);
         }
 
+        $perPage = $request->query('per_page', 10);
+
         $orders = Order::with([
             'items.product',
             'items.productVariant',
             'items.color' => function ($sql) {
                 $sql->select(['id', 'name', 'code']);
             },
-            // 'payments',
             'deliveryMethod',
             'deliveryTarget',
         ])
             ->where('client_id', $client->id)
             ->orderByDesc('created_at')
-            ->paginate(10);
+            ->paginate($perPage);
 
         return response()->json([
-            'orders' => $orders
+            'orders' => $orders->items(), // только список заказов
+            'pagination' => PaginationHelper::format($orders)
         ]);
     }
+
 
     public function index(Request $request)
     {
