@@ -102,49 +102,32 @@ trait ProductsTrait
         return $products;
     }
 
-    public function solve_products_inventory($products = [], $product_stock_sklad = [])
+    public function solve_products_inventory($products = [], $product_stock_sklad = [], $isAdmin = false)
     {
-        // In MoySklad, each modification (variant) can have its own stock quantity,
-        // and the main product can also have its own stock.
-        // Therefore, to get the total available stock, we need to sum both.
         foreach ($products as &$product) {
-            // $product->inventory_balance = 0.0;
-            $product->inventory_balance = $product_stock_sklad[$product->uuid]['stock'] ?? 0.0;
+            if ($isAdmin && isset($product_stock_sklad[$product->uuid])) {
+                // Если админ — берём "живые" остатки из MoySklad
+                $product->inventory_balance = $product_stock_sklad[$product->uuid]['stock'] ?? 0.0;
+            } else {
+                // Если клиент — показываем данные из БД
+                $product->inventory_balance = $product->stock_quantity ?? 0.0;
+            }
 
             if (!empty($product['variants'])) {
                 foreach ($product['variants'] as &$variant) {
-                    $variant_total_qty = $product_stock_sklad[$variant->uuid]['stock'] ?? 0.0;
+                    if ($isAdmin && isset($product_stock_sklad[$variant->uuid])) {
+                        $variant_total_qty = $product_stock_sklad[$variant->uuid]['stock'] ?? 0.0;
+                    } else {
+                        $variant_total_qty = $variant->stock_quantity ?? 0.0;
+                    }
+
                     $variant->inventory_balance = $variant_total_qty;
                     $product->inventory_balance += $variant_total_qty;
                 }
             }
-            // else {
-            //     $product->inventory_balance = $inventory_balances[$product->uuid]['stock'] ?? 0.0;
-            // }
         }
-
-        // $inventory_balances = InventoryBalance::get()
-        //     ->keyBy(function ($item) {
-        //         return $this->get_type_by_model($item->item_type) . '_' . $item->item_id;
-        //     });
-
-        // foreach ($products as &$product) {
-        //     $productKey = "Product_{$product->id}";
-
-        //     $product->inventory_balance = 0.0;
-
-        //     if (!empty($product['variants'])) {
-        //         foreach ($product['variants'] as &$variant) {
-        //             $variantKey = "ProductVariant_{$variant->id}";
-        //             $variant_total_qty = $inventory_balances[$variantKey]['total_quantity'] ?? 0.0;
-        //             $variant->inventory_balance = $variant_total_qty;
-        //             $product->inventory_balance += $variant_total_qty;
-        //         }
-        //     } else {
-        //         $product->inventory_balance = $inventory_balances[$productKey]['total_quantity'] ?? 0.0;
-        //     }
-        // }
     }
+
 
 
     // FOR SOLVING DISCOUNTS

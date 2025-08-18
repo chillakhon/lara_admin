@@ -40,12 +40,14 @@ class ProductController extends Controller
 
 
         try {
-            $product_stock_sklad = [];
 
-//            if ($request->boolean('admin', false)) {
-            $moySkaldController = new MoySkladController();
-            $product_stock_sklad = $moySkaldController->get_products_stock();
-//            }
+            $isAdmin = $request->boolean('admin', false);
+
+            $product_stock_sklad = [];
+            if ($isAdmin) {
+                $moySkaldController = new MoySkladController();
+                $product_stock_sklad = $moySkaldController->get_products_stock();
+            }
 
 
             // could not solve the problem with .inventoryBalance relation
@@ -62,7 +64,7 @@ class ProductController extends Controller
                 }
 
 
-                $this->solve_products_inventory([$products], $product_stock_sklad);
+                $this->solve_products_inventory([$products], $product_stock_sklad, $isAdmin);
                 $this->applyDiscountToProduct($products);
 
                 return new ProductNumberTwoResouce($products);
@@ -74,11 +76,11 @@ class ProductController extends Controller
                     unset($product->images);
                     return $product;
                 });
-                $this->solve_products_inventory($products, $product_stock_sklad);
+                $this->solve_products_inventory($products, $product_stock_sklad, $isAdmin);
                 $this->applyDiscountsToCollection($products->getCollection());
             } else {
                 $products = $products->get();
-                $this->solve_products_inventory($products, $product_stock_sklad);
+                $this->solve_products_inventory($products, $product_stock_sklad, $isAdmin);
                 $this->applyDiscountsToCollection($products);
             }
 
