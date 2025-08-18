@@ -497,7 +497,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [OrderController::class, 'index'])->name('orders.index');  // Путь будет /api/orders
         // Route::post('/', [OrderController::class, 'store'])->name('orders.store');  // Путь будет /api/orders
         Route::get('/stats', [OrderStatsController::class, 'stats'])->name('orders.stats');
-        Route::get('/{order}', [OrderController::class, 'show'])->name('orders.show');  // Путь будет /api/orders/{order}
+        Route::get('/{order}', [OrderController::class, 'show']);  // Путь будет /api/orders/{order}
         Route::put('/{order}', [OrderController::class, 'update'])->name('orders.update');  // Путь будет /api/orders/{order}
         Route::delete('/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');  // Путь будет /api/orders/{order}
         // Дополнительные действия с заказами

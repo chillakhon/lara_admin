@@ -37,18 +37,22 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
+
+
         try {
             $product_stock_sklad = [];
 
-            if ($request->boolean('admin', false)) {
-                $moySkaldController = new MoySkladController();
-                $product_stock_sklad = $moySkaldController->get_products_stock();
-            }
+//            if ($request->boolean('admin', false)) {
+            $moySkaldController = new MoySkladController();
+            $product_stock_sklad = $moySkaldController->get_products_stock();
+//            }
+
 
             // could not solve the problem with .inventoryBalance relation
             $products = $this->products_query($request);
 
             if ($request->get('product_id')) {
+
                 $products = $products->first();
                 if (!$products) {
                     return response()->json([
@@ -56,6 +60,8 @@ class ProductController extends Controller
                         'message' => "Продукт не найден."
                     ]);
                 }
+
+
                 $this->solve_products_inventory([$products], $product_stock_sklad);
                 $this->applyDiscountToProduct($products);
 

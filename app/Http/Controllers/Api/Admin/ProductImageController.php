@@ -13,31 +13,7 @@ use Intervention\Image\ImageManager;
 
 class ProductImageController extends Controller
 {
-    /**
-     * @OA\Get(
-     *     path="/api/products/{product}/images",
-     *     summary="Получает изображения продукта",
-     *     tags={"Product Images"},
-     *     @OA\Parameter(
-     *         name="product",
-     *         in="path",
-     *         description="ID продукта",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Список изображений",
-     *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="images",
-     *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/Image")
-     *             )
-     *         )
-     *     )
-     * )
-     */
+
     public function index(Product $product)
     {
         $images = $product->images()->get();
