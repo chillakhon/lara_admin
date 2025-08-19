@@ -77,7 +77,10 @@ class ProductsAndVariantsSyncWithMoySkladService
 
     private function upsertProduct($data, array $stock, array $moyskladUnits): Product
     {
-        $slug = Str::slug($data->name ?? '');
+        $slug = $data->id
+            ? Str::slug($data->id)
+            : Str::slug(Str::random(10));
+
         $stockQty = $stock[$data->id]['stock'] ?? 0;
         $unit = $this->findLocalUnit($moyskladUnits[$data->uom->meta->href ?? null] ?? null);
 
@@ -154,6 +157,7 @@ class ProductsAndVariantsSyncWithMoySkladService
         $variant_name = $characteristic?->value ?? '';
 
         $slug = Str::slug($variant_name);
+
         $sku = $slug . '-' . $product->id;
 
         $variant = ProductVariant::where('uuid', $data->id)->first()
