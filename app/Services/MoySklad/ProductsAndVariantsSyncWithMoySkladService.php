@@ -18,6 +18,12 @@ class ProductsAndVariantsSyncWithMoySkladService
     private string $token;
     private string $baseURL = "https://api.moysklad.ru/api/remap/1.2";
 
+    // Константы для ограничений значений
+    private const MAX_WEIGHT = 99999.99; // Максимальный вес в кг
+    private const MAX_PRICE = 999999999.99; // Максимальная цена
+    private const MAX_STOCK = 2147483647; // Максимальное количество для INT
+    private const MIN_VALUE = 0; // Минимальное значение
+
     public function __construct()
     {
         $settings = DeliveryServiceSetting::where('service_name', 'moysklad')->first();
@@ -45,10 +51,16 @@ class ProductsAndVariantsSyncWithMoySkladService
         $syncedUUIDs = [];
 
         foreach ($products as $productData) {
-            $product = $this->upsertProduct($productData, $stock, $moyskladUnits);
-            $syncedUUIDs[] = $productData->id;
+            try {
+                $product = $this->upsertProduct($productData, $stock, $moyskladUnits);
+                $syncedUUIDs[] = $productData->id;
 
-            $this->syncVariantsForProduct($product, $stock, $productData, $variantsGrouped);
+                $this->syncVariantsForProduct($product, $stock, $productData, $variantsGrouped);
+            } catch (Exception $e) {
+                // Логирование ошибки для конкретного продукта
+                \Log::error("Ошибка синхронизации продукта {$productData->id}: " . $e->getMessage());
+                continue; // Продолжаем обработку других продуктов
+            }
         }
 
         $this->removeDeletedProducts($syncedUUIDs);
@@ -63,8 +75,9 @@ class ProductsAndVariantsSyncWithMoySkladService
 
     private function findLocalUnit($msUnit): ?Unit
     {
-        if (!$msUnit)
+        if (!$msUnit) {
             return null;
+        }
 
         $msName = mb_strtolower($msUnit->name ?? '');
         $msDescription = mb_strtolower($msUnit->description ?? '');
@@ -75,52 +88,140 @@ class ProductsAndVariantsSyncWithMoySkladService
         })->first();
     }
 
+    /**
+     * Нормализует числовое значение в допустимых пределах
+     */
+    private function normalizeNumericValue($value, $max = null, $min = self::MIN_VALUE, $decimals = 2): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        $numericValue = is_numeric($value) ? (float)$value : 0.0;
+
+        if ($max !== null && $numericValue > $max) {
+            $numericValue = $max;
+        }
+
+        if ($numericValue < $min) {
+            $numericValue = $min;
+        }
+
+        return round($numericValue, $decimals);
+    }
+
+    /**
+     * Нормализует целое число в допустимых пределах
+     */
+    private function normalizeIntValue($value, $max = self::MAX_STOCK, $min = self::MIN_VALUE): int
+    {
+        if ($value === null || $value === '') {
+            return 0;
+        }
+
+        $intValue = is_numeric($value) ? (int)$value : 0;
+
+        if ($intValue > $max) {
+            $intValue = $max;
+        }
+
+        if ($intValue < $min) {
+            $intValue = $min;
+        }
+
+        return $intValue;
+    }
+
+    /**
+     * Безопасно извлекает и нормализует вес
+     */
+    private function extractWeight($data): float
+    {
+        $weight = $data->weight ?? 0;
+
+        // Если вес в граммах, конвертируем в килограммы
+        if ($weight > 1000) {
+            $weight = $weight / 1000;
+        }
+
+        return $this->normalizeNumericValue($weight, self::MAX_WEIGHT);
+    }
+
+    /**
+     * Безопасно извлекает цену
+     */
+    private function extractPrice($priceData): float
+    {
+        if (empty($priceData) || !is_array($priceData)) {
+            return 0.0;
+        }
+
+        $price = ($priceData[0]->value ?? 0) / 100;
+        return $this->normalizeNumericValue($price, self::MAX_PRICE);
+    }
+
+    /**
+     * Безопасно извлекает стоимость
+     */
+    private function extractCostPrice($buyPrice): float
+    {
+        $cost = ($buyPrice->value ?? 0) / 100;
+        return $this->normalizeNumericValue($cost, self::MAX_PRICE);
+    }
+
     private function upsertProduct($data, array $stock, array $moyskladUnits): Product
     {
-        $slug = $data->id
-            ? Str::slug($data->id)
-            : Str::slug(Str::random(10));
-
-        $stockQty = $stock[$data->id]['stock'] ?? 0;
+        $slug = Str::slug($data->id ?? '');
+        $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
         $unit = $this->findLocalUnit($moyskladUnits[$data->uom->meta->href ?? null] ?? null);
 
-        $product = Product::where('uuid', $data->id)->first()
-            ?? Product::where('slug', $slug)->first();
+        // Сначала ищем по UUID, потом по slug
+        $product = Product::where('uuid', $data->id)->first();
+
+        if (!$product) {
+            $product = Product::where('slug', $slug)->first();
+        }
 
         $attributes = [
             'uuid' => $data->id,
-            'name' => $data->name ?? '',
+            'name' => mb_substr($data->name ?? '', 0, 255), // Ограничиваем длину
             'description' => $data->description ?? null,
             'default_unit_id' => $unit?->id,
             'slug' => $slug,
-            'price' => ($data->salePrices[0]->value ?? 0) / 100,
-            'cost_price' => ($data->buyPrice->value ?? 0) / 100,
+            'price' => $this->extractPrice($data->salePrices ?? []),
+            'cost_price' => $this->extractCostPrice($data->buyPrice ?? (object)['value' => 0]),
             'barcode' => $this->extractBarcode($data),
-            'code' => $data->code ?? null,
+            'code' => mb_substr($data->code ?? '', 0, 100), // Ограничиваем длину кода
             'stock_quantity' => $stockQty,
             'sku' => $slug,
-            'weight' => $data->weight ?? 0,
+            'weight' => $this->extractWeight($data),
             'currency' => 'RUB',
-            'has_variants' => $data->variantsCount > 0,
+            'has_variants' => ($data->variantsCount ?? 0) > 0,
         ];
 
-        return $product ? tap($product)->update($attributes) : Product::create($attributes);
+        if ($product) {
+            $product->update($attributes);
+            return $product;
+        }
+
+        return Product::create($attributes);
     }
 
     private function extractBarcode($data): ?string
     {
         if (!empty($data->barcodes) && is_array($data->barcodes)) {
             $first = $data->barcodes[0];
-            // проверяем все возможные ключи
-            return $first->ean13
+            // Проверяем все возможные ключи и ограничиваем длину
+            $barcode = $first->ean13
                 ?? $first->ean8
                 ?? $first->code128
                 ?? $first->gtin
                 ?? null;
+
+            return $barcode ? mb_substr($barcode, 0, 50) : null;
         }
         return null;
     }
-
 
     private function syncVariantsForProduct(Product $product, array $stock, $productData, $variantsGrouped): void
     {
@@ -129,10 +230,16 @@ class ProductsAndVariantsSyncWithMoySkladService
         $updateCreatedVariantsIds = [];
 
         foreach ($variantDataList as $variantData) {
-            $variantLocal = $this->upsertVariant($product, $stock, $variantData, $productData);
-            $updateCreatedVariantsIds[] = $variantLocal->id;
+            try {
+                $variantLocal = $this->upsertVariant($product, $stock, $variantData, $productData);
+                $updateCreatedVariantsIds[] = $variantLocal->id;
+            } catch (Exception $e) {
+                \Log::error("Ошибка синхронизации варианта продукта {$product->id}: " . $e->getMessage());
+                continue;
+            }
         }
 
+        // Удаляем варианты, которых больше нет в МойСклад
         ProductVariant::where('product_id', $product->id)
             ->whereNotIn('id', $updateCreatedVariantsIds)
             ->each(function ($variant) {
@@ -154,16 +261,26 @@ class ProductsAndVariantsSyncWithMoySkladService
                 ->orWhere('normalized_name', 'like', "%{$color_name}%");
         })->first();
 
-        $variant_name = $characteristic?->value ?? '';
-
+        $variant_name = mb_substr($characteristic?->value ?? '', 0, 255);
         $slug = Str::slug($variant_name);
-
         $sku = $slug . '-' . $product->id;
 
-        $variant = ProductVariant::where('uuid', $data->id)->first()
-            ?? ProductVariant::where('sku', $sku)->where('product_id', $product->id)->first();
+        // Сначала ищем по UUID, потом по SKU
+        $variant = ProductVariant::where('uuid', $data->id)->first();
 
-        $stockQty = $stock[$data->id]['stock'] ?? 0;
+        if (!$variant) {
+            $variant = ProductVariant::where('sku', $sku)
+                ->where('product_id', $product->id)
+                ->first();
+        }
+
+        $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
+
+        // Безопасное извлечение баркода из варианта
+        $variantBarcode = null;
+        if (!empty($data->barcodes) && is_array($data->barcodes)) {
+            $variantBarcode = mb_substr($data->barcodes[0]->ean13 ?? '', 0, 50);
+        }
 
         $attributes = [
             'uuid' => $data->id,
@@ -172,12 +289,12 @@ class ProductsAndVariantsSyncWithMoySkladService
             'name' => $variant_name,
             'unit_id' => $product->default_unit_id,
             'sku' => $sku,
-            'barcode' => $data->barcodes[0]->ean13 ?? null,
-            'code' => $data->code ?? null,
-            'price' => ($data->salePrices[0]->value ?? 0) / 100,
-            'cost_price' => ($data->buyPrice->value ?? 0) / 100,
+            'barcode' => $variantBarcode,
+            'code' => mb_substr($data->code ?? '', 0, 100),
+            'price' => $this->extractPrice($data->salePrices ?? []),
+            'cost_price' => $this->extractCostPrice($data->buyPrice ?? (object)['value' => 0]),
             'stock' => $stockQty,
-            'weight' => $productData->weight ?? 0,
+            'weight' => $this->extractWeight($productData),
             'type' => 'simple',
             'is_active' => true,
         ];
@@ -192,7 +309,9 @@ class ProductsAndVariantsSyncWithMoySkladService
 
     private function removeDeletedProducts(array $syncedUUIDs): void
     {
-        Product::whereNotNull('uuid')->whereNotIn('uuid', $syncedUUIDs)->delete();
+        Product::whereNotNull('uuid')
+            ->whereNotIn('uuid', $syncedUUIDs)
+            ->delete();
     }
 
     private function syncLocalUnsyncedProducts(MoySkladController $controller): void
@@ -200,34 +319,39 @@ class ProductsAndVariantsSyncWithMoySkladService
         $unsynced = Product::whereNull('uuid')->get();
 
         foreach ($unsynced as $product) {
-            $msProduct = $controller->check_product_for_existence($product->uuid)
-                ? $controller->update_product($product)
-                : $controller->create_product($product);
+            try {
+                $msProduct = $controller->check_product_for_existence($product->uuid)
+                    ? $controller->update_product($product)
+                    : $controller->create_product($product);
 
-            if ($msProduct) {
-                $product->update(['uuid' => $msProduct->id]);
+                if ($msProduct) {
+                    $product->update(['uuid' => $msProduct->id]);
 
-                $variants = ProductVariant::where('product_id', $product->id)->get();
-
-                foreach ($variants as $variant) {
-                    if (!$variant->code) {
-                        $variant->update([
-                            'code' => (string)rand(1000000000, 9999999999),
-                        ]);
-                    }
-                }
-
-                if ($variants->count() > 0) {
-                    $remoteVariants = $controller->mass_variant_creation_and_update($variants, $msProduct);
+                    $variants = ProductVariant::where('product_id', $product->id)->get();
 
                     foreach ($variants as $variant) {
-                        if (isset($remoteVariants[$variant->code])) {
+                        if (!$variant->code) {
                             $variant->update([
-                                'uuid' => $remoteVariants[$variant->code],
+                                'code' => (string)rand(1000000000, 9999999999),
                             ]);
                         }
                     }
+
+                    if ($variants->count() > 0) {
+                        $remoteVariants = $controller->mass_variant_creation_and_update($variants, $msProduct);
+
+                        foreach ($variants as $variant) {
+                            if (isset($remoteVariants[$variant->code])) {
+                                $variant->update([
+                                    'uuid' => $remoteVariants[$variant->code],
+                                ]);
+                            }
+                        }
+                    }
                 }
+            } catch (Exception $e) {
+                \Log::error("Ошибка синхронизации локального продукта {$product->id}: " . $e->getMessage());
+                continue;
             }
         }
     }

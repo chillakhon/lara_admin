@@ -16,48 +16,6 @@ use Spatie\MediaLibrary\HasMedia;
 // Добавляем интерфейс HasMedia
 use Illuminate\Support\Str;
 
-/**
- * @OA\Schema(
- *     schema="Product",
- *     type="object",
- *     @OA\Property(property="id", type="integer"),
- *     @OA\Property(property="name", type="string"),
- *     @OA\Property(property="slug", type="string"),
- *     @OA\Property(property="description", type="string", nullable=true),
- *     @OA\Property(
- *         property="type",
- *         type="string",
- *         enum={"simple", "manufactured", "composite"}
- *     ),
- *     @OA\Property(property="default_unit_id", type="integer", nullable=true),
- *     @OA\Property(property="is_active", type="boolean"),
- *     @OA\Property(property="has_variants", type="boolean"),
- *     @OA\Property(property="allow_preorder", type="boolean"),
- *     @OA\Property(property="after_purchase_processing_time", type="integer"),
- *     @OA\Property(property="price", type="number", format="float", nullable=true),
- *     @OA\Property(property="cost_price", type="number", format="float", nullable=true),
- *     @OA\Property(property="stock_quantity", type="integer", example=0),
- *     @OA\Property(property="min_order_quantity", type="integer", example=1),
- *     @OA\Property(property="max_order_quantity", type="integer", nullable=true),
- *     @OA\Property(property="is_featured", type="boolean", default=false),
- *     @OA\Property(property="is_new", type="boolean", default=false),
- *     @OA\Property(property="discount_price", type="number", format="float", nullable=true),
- *     @OA\Property(property="sku", type="string", nullable=true),
- *     @OA\Property(property="currency", type="string", nullable=true),
- *     @OA\Property(property="barcode", type="string", nullable=true),
- *     @OA\Property(property="weight", type="number", format="float", nullable=true),
- *     @OA\Property(property="length", type="number", format="float", nullable=true),
- *     @OA\Property(property="width", type="number", format="float", nullable=true),
- *     @OA\Property(property="height", type="number", format="float", nullable=true),
- *     @OA\Property(property="created_at", type="string", format="date-time"),
- *     @OA\Property(property="updated_at", type="string", format="date-time"),
- *     @OA\Property(
- *         property="categories",
- *         type="array",
- *         @OA\Items(ref="#/components/schemas/Category")
- *     )
- * )
- */
 class Product extends Model implements HasMedia
 {
     use HasFactory, SoftDeletes, InteractsWithMedia;
@@ -86,7 +44,7 @@ class Product extends Model implements HasMedia
         'width',
         'height',
         'currency',
-
+        'uuid',
     ];
 
     protected $guarded = ["id"];

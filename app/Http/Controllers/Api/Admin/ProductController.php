@@ -586,17 +586,7 @@ class ProductController extends Controller
             // that is why if something goes wrong we will delete only created variants
             $moyskadController->mass_variant_deletion($createdVariantsIds);
 
-            // NOTE!!! I want to recreate delete variants in server but it's becoming
-            // impossible
-            // if $product_variant_for_deletion_ids is not empty
-            // and the code of deletion reached specific place (means that it was deleting but something went wrong)
-            // then this code should work
-            // becuase there will be cases that $product_variant_for_deletion_ids is not empty
-            // but code was not reached specific place, it will create - created products once again (maybe creation throws an error).
-            // when "catch" statement works
-            // if ($product_variant_for_deletion_ids && $productVariantDeletionReached) {
 
-            // }
             return response()->json([
                 "error_line" => $e->getLine(),
                 'message' => 'Failed to update product',
