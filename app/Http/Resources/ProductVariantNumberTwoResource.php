@@ -21,6 +21,7 @@ class ProductVariantNumberTwoResource extends JsonResource
             'product_id' => $this->product_id,
             'name' => $this->name,
             'sku' => $this->sku,
+            'code' => $this->code,
             'barcode' => $this->barcode,
             'price' => (float) $this->price,
             'old_price' => (float) $this->old_price,

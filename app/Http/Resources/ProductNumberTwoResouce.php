@@ -65,6 +65,7 @@ class ProductNumberTwoResouce extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'code' => $this->code,
             'description' => $this->description,
             'type' => $this->type,
             'default_unit_id' => $this->default_unit_id,

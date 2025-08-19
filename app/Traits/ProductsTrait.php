@@ -45,6 +45,7 @@ trait ProductsTrait
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhere('barcode', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%")
                     ->orWhereHas('categories', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     })
