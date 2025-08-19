@@ -44,6 +44,7 @@ trait ProductsTrait
             ->when($request->get('search'), function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%")
                     ->orWhereHas('categories', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     })
@@ -127,7 +128,6 @@ trait ProductsTrait
             }
         }
     }
-
 
 
     // FOR SOLVING DISCOUNTS

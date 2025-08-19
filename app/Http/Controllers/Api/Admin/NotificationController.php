@@ -1,0 +1,59 @@
+<?php
+
+// app/Http/Controllers/NotificationController.php
+namespace App\Http\Controllers\Api\Admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Order;
+use App\Models\Task;
+use App\Models\Review;
+
+class NotificationController extends Controller
+{
+    public function counter(Request $request)
+    {
+        $lastOrders = $request->query('last_updated_orders');
+        $lastTasks = $request->query('last_updated_tasks');
+        $lastReviews = $request->query('last_updated_reviews');
+
+        // Если ни одного параметра не передано — возвращаем нули (как раньше).
+        if (!$lastOrders && !$lastTasks && !$lastReviews) {
+            return response()->json([
+                'status' => true,
+                'data' => [
+                    'orders' => 0,
+                    'tasks' => 0,
+                    'reviews' => 0,
+                    'orders_new_since' => 0,
+                ],
+                'total' => 0,
+                'hasUpdates' => false,
+            ]);
+        }
+
+
+        // Текущее общее количество заказов со статусом 'new'
+        $ordersNew = Order::where('status', 'new')->count();
+
+
+        // Считаем только те, что переданы (для остальных — 0)
+        $orders = $lastOrders ? Order::where('created_at', '>', $lastOrders)->count() : 0;
+        $tasks = $lastTasks ? Task::where('created_at', '>', $lastTasks)->count() : 0;
+        $reviews = $lastReviews ? Review::where('created_at', '>', $lastReviews)->count() : 0;
+
+        $total = $orders + $tasks + $reviews;
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'orders' => $orders,
+                'tasks' => $tasks,
+                'reviews' => $reviews,
+                'orders_new_since' => $ordersNew,
+            ],
+            'total' => $total,
+            'hasUpdates' => $total > 0,
+        ]);
+    }
+}

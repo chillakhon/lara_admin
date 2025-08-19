@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\Admin\FinancialAnalyticsController;
 use App\Http\Controllers\Api\Admin\InventoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\MoySkladController;
+use App\Http\Controllers\Api\Admin\NotificationController;
 use App\Http\Controllers\Api\Admin\OptionController;
 use App\Http\Controllers\Api\Admin\OrderStatsController;
 use App\Http\Controllers\Api\Admin\PermissionController;
@@ -178,6 +179,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 //Route::post('/ssss', [ProductController::class, 'store']);
 Route::middleware(['auth:sanctum'])->group(function () {
+
+
+    //notification
+    Route::get('/notifications/counter', [NotificationController::class, 'counter']);
 
 
     //updateUserProfile
