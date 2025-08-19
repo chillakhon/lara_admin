@@ -92,7 +92,8 @@ class ProductsAndVariantsSyncWithMoySkladService
             'slug' => $slug,
             'price' => ($data->salePrices[0]->value ?? 0) / 100,
             'cost_price' => ($data->buyPrice->value ?? 0) / 100,
-            'barcode' => $data->barcodes[0]->ean13 ?? null,
+            'barcode' => $this->extractBarcode($data),
+            'code' => $data->code ?? null,
             'stock_quantity' => $stockQty,
             'sku' => $slug,
             'weight' => $data->weight ?? 0,
@@ -102,6 +103,21 @@ class ProductsAndVariantsSyncWithMoySkladService
 
         return $product ? tap($product)->update($attributes) : Product::create($attributes);
     }
+
+    private function extractBarcode($data): ?string
+    {
+        if (!empty($data->barcodes) && is_array($data->barcodes)) {
+            $first = $data->barcodes[0];
+            // проверяем все возможные ключи
+            return $first->ean13
+                ?? $first->ean8
+                ?? $first->code128
+                ?? $first->gtin
+                ?? null;
+        }
+        return null;
+    }
+
 
     private function syncVariantsForProduct(Product $product, array $stock, $productData, $variantsGrouped): void
     {
@@ -153,6 +169,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             'unit_id' => $product->default_unit_id,
             'sku' => $sku,
             'barcode' => $data->barcodes[0]->ean13 ?? null,
+            'code' => $data->code ?? null,
             'price' => ($data->salePrices[0]->value ?? 0) / 100,
             'cost_price' => ($data->buyPrice->value ?? 0) / 100,
             'stock' => $stockQty,
@@ -191,7 +208,7 @@ class ProductsAndVariantsSyncWithMoySkladService
                 foreach ($variants as $variant) {
                     if (!$variant->code) {
                         $variant->update([
-                            'code' => (string) rand(1000000000, 9999999999),
+                            'code' => (string)rand(1000000000, 9999999999),
                         ]);
                     }
                 }

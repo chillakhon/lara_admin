@@ -62,30 +62,32 @@ class Product extends Model implements HasMedia
 {
     use HasFactory, SoftDeletes, InteractsWithMedia;
 
-     protected $fillable = [
-         'name',
-         'slug',
-         'description',
-         'type',
-         'default_unit_id',
-         'is_active',
-         'has_variants',
-         'price',
-         'cost_price',
-         'stock_quantity',
-         'min_order_quantity',
-         'max_order_quantity',
-         'is_featured',
-         'is_new',
-         'discount_price',
-         'sku',
-         'barcode',
-         'weight',
-         'length',
-         'width',
-         'height',
-         'currency',
-     ];
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+        'type',
+        'default_unit_id',
+        'is_active',
+        'has_variants',
+        'price',
+        'cost_price',
+        'stock_quantity',
+        'min_order_quantity',
+        'max_order_quantity',
+        'is_featured',
+        'is_new',
+        'discount_price',
+        'sku',
+        'barcode',
+        'code',
+        'weight',
+        'length',
+        'width',
+        'height',
+        'currency',
+
+    ];
 
     protected $guarded = ["id"];
 
