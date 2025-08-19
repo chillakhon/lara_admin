@@ -191,7 +191,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             'price' => $this->extractPrice($data->salePrices ?? []),
             'cost_price' => $this->extractCostPrice($data->buyPrice ?? (object)['value' => 0]),
             'barcode' => $this->extractBarcode($data),
-            'code' => mb_substr($data->code ?? '', 0, 100), // Ограничиваем длину кода
+            'code' => $data->code ?? null, // Сохраняем код точно как в МойСклад
             'stock_quantity' => $stockQty,
             'sku' => $slug,
             'weight' => $this->extractWeight($data),
@@ -211,14 +211,12 @@ class ProductsAndVariantsSyncWithMoySkladService
     {
         if (!empty($data->barcodes) && is_array($data->barcodes)) {
             $first = $data->barcodes[0];
-            // Проверяем все возможные ключи и ограничиваем длину
-            $barcode = $first->ean13
+            // Сохраняем баркод точно как в МойСклад
+            return $first->ean13
                 ?? $first->ean8
                 ?? $first->code128
                 ?? $first->gtin
                 ?? null;
-
-            return $barcode ? mb_substr($barcode, 0, 50) : null;
         }
         return null;
     }
@@ -276,10 +274,10 @@ class ProductsAndVariantsSyncWithMoySkladService
 
         $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
 
-        // Безопасное извлечение баркода из варианта
+        // Безопасное извлечение баркода из варианта (сохраняем точно как в МойСклад)
         $variantBarcode = null;
         if (!empty($data->barcodes) && is_array($data->barcodes)) {
-            $variantBarcode = mb_substr($data->barcodes[0]->ean13 ?? '', 0, 50);
+            $variantBarcode = $data->barcodes[0]->ean13 ?? null;
         }
 
         $attributes = [
@@ -290,7 +288,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             'unit_id' => $product->default_unit_id,
             'sku' => $sku,
             'barcode' => $variantBarcode,
-            'code' => mb_substr($data->code ?? '', 0, 100),
+            'code' => $data->code ?? null, // Сохраняем код точно как в МойСклад
             'price' => $this->extractPrice($data->salePrices ?? []),
             'cost_price' => $this->extractCostPrice($data->buyPrice ?? (object)['value' => 0]),
             'stock' => $stockQty,
