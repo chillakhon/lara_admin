@@ -244,8 +244,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('/conversations')->group(function () {
         //for client web
         Route::get('/client', [ConversationController::class, 'getOrCreateForClient']);
-        Route::get('/{conversation}/view', [ConversationController::class, 'showForClient']);
-        Route::post('/{conversation}/incoming', [ConversationController::class, 'incoming']);
+        Route::get('/view', [ConversationController::class, 'showForClient']);
+        Route::post('/incoming', [ConversationController::class, 'incomingForClient']);
 
         //for admin_panel
         // Создать новый чат + первое сообщение

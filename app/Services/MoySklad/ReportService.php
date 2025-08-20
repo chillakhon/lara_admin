@@ -33,8 +33,7 @@ class ReportService
 
     public function report_dashboard($type)
     {
-        // https://api.moysklad.ru/api/remap/1.2/report/dashboard/day
-        // or -> week, month
+
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->token,
             'Accept-Encoding' => 'gzip',
@@ -85,28 +84,7 @@ class ReportService
                     $totalProfit += (float) ($item['profit'] ?? 0);
                     $totalRevenue += (float) ($item['sellSum'] ?? 0);
                     $totalCost += (float) ($item['sellCostSum'] ?? 0);
-                    // $assortment = $item['assortment'] ?? [];
-                    // $uom = $assortment['uom']['name'] ?? null;
 
-                    // $allProductsProfit[] = [
-                    //     'name' => $assortment['name'] ?? '',
-                    //     'code' => $assortment['code'] ?? '',
-                    //     'type' => $assortment['meta']['type'] ?? '', // product | service | bundle
-                    //     'unit' => $uom,
-
-                    //     'sell_quantity' => (float) ($item['sellQuantity'] ?? 0),
-                    //     'sell_price' => (float) ($item['sellPrice'] ?? 0),
-                    //     'sell_sum' => (float) ($item['sellSum'] ?? 0),
-                    //     'sell_cost_sum' => (float) ($item['sellCostSum'] ?? 0),
-
-                    //     'return_quantity' => (float) ($item['returnQuantity'] ?? 0),
-                    //     'return_sum' => (float) ($item['returnSum'] ?? 0),
-                    //     'return_cost_sum' => (float) ($item['returnCostSum'] ?? 0),
-
-                    //     'profit' => (float) ($item['profit'] ?? 0),
-                    //     'margin' => (float) ($item['margin'] ?? 0),
-                    //     'sales_margin' => (float) ($item['salesMargin'] ?? 0),
-                    // ];
                 }
 
                 $received = count($data['rows']);
@@ -176,11 +154,13 @@ class ReportService
             $totalSum += $item['sum'];
 
             $series[] = [
-                'date' => $item['date'],
+                // Берем только дату (без времени)
+                'date' => Carbon::parse($item['date'])->format('Y-m-d'),
                 'quantity' => $item['quantity'],
                 'sum' => $item['sum'],
             ];
         }
+
 
         return [
             'total_quantity' => $totalQuantity,
@@ -229,7 +209,7 @@ class ReportService
             $totalQuantity += $item['quantity'];
             $totalSum += $item['sum'];
             $series[] = [
-                'date' => $item['date'],
+                'date' => Carbon::parse($item['date'])->format('Y-m-d'),
                 'quantity' => $item['quantity'],
                 'sum' => $item['sum'],
             ];

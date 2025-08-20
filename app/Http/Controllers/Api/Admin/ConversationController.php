@@ -109,15 +109,39 @@ class ConversationController extends Controller
     }
 
 
-    public function showForClient(Conversation $conversation)
+    public function showForClient(Request $request)
     {
-        // 1) Грузим только то, что нужно клиенту
+        $data = $request->validate([
+            'client_id' => 'nullable|exists:clients,id',
+            'external_id' => 'nullable|string',
+            'source' => 'nullable|in:telegram,whatsapp,web_chat',
+        ]);
+
+        // Ищем разговор
+        $conversation = Conversation::query()
+            ->when($data['client_id'] ?? null, function ($q, $clientId) {
+                $q->where('client_id', $clientId);
+            })
+            ->when($data['external_id'] ?? null, function ($q, $externalId) use ($data) {
+                $q->where('external_id', $externalId)
+                    ->when($data['source'] ?? null, fn($qq) => $qq->where('source', $data['source']));
+            })
+            ->first();
+
+        if (!$conversation) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Диалог не найден'
+            ], 404);
+        }
+
+        // Загружаем нужные связи
         $conversation->load([
             'messages.attachments',
             'client.profile',
         ]);
 
-        // 2) Отмечаем все исходящие (от менеджера) сообщения как доставленные/read
+        // Обновляем статусы исходящих сообщений (как прочитанные)
         $conversation->messages()
             ->where('direction', Message::DIRECTION_OUTGOING)
             ->whereIn('status', [
@@ -127,6 +151,7 @@ class ConversationController extends Controller
             ->update(['status' => Message::STATUS_READ]);
 
         return response()->json([
+            'success' => true,
             'data' => $conversation
         ]);
     }
@@ -203,6 +228,51 @@ class ConversationController extends Controller
     }
 
 
+
+
+    public function incomingForClient(Request $request)
+    {
+        $validated = $request->validate([
+            'client_id'   => 'nullable|exists:clients,id',
+            'external_id' => 'nullable|string',
+            'source'      => 'nullable|in:telegram,whatsapp,web_chat',
+            'content'     => 'required|string',
+            'attachments' => 'nullable|array',
+        ]);
+
+        // Ищем разговор
+        $conversation = Conversation::query()
+            ->when($validated['client_id'] ?? null, function ($q, $clientId) {
+                $q->where('client_id', $clientId);
+            })
+            ->when($validated['external_id'] ?? null, function ($q, $externalId) use ($validated) {
+                $q->where('external_id', $externalId)
+                    ->when($validated['source'] ?? null, fn($qq) => $qq->where('source', $validated['source']));
+            })
+            ->first();
+
+        if (!$conversation) {
+            return response()->json([
+                'error' => 'Диалог не найден'
+            ], 404);
+        }
+
+        // Добавляем сообщение через сервис
+        $message = $this->conversationService->addMessage($conversation, [
+            'direction'   => Message::DIRECTION_INCOMING,
+            'content'     => $validated['content'],
+            'attachments' => $validated['attachments'] ?? [],
+            'status'      => Message::STATUS_SENT,
+        ]);
+
+        return response()->json([
+            'message'      => 'Входящее сообщение сохранено.',
+            'data'         => $message,
+            'unread_count' => $conversation->unread_messages_count,
+        ], 201);
+    }
+
+
     public function incoming(Request $request, Conversation $conversation)
     {
 
@@ -219,11 +289,6 @@ class ConversationController extends Controller
             'status' => Message::STATUS_SENT,
         ]);
 
-        // Обновляем счетчик и время
-//        $conversation->update([
-//            'last_message_at'       => now(),
-//            'unread_messages_count' => $conversation->unread_messages_count + 1,
-//        ]);
 
         return response()->json([
             'message' => 'Incoming message saved.',
