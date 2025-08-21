@@ -165,6 +165,12 @@ class PromoCodeClientController extends Controller
             $promoCode->expires_soon = $promoCode->expires_at
                 ? $promoCode->expires_at->diffInDays(now()) <= 7
                 : false;
+
+            $promoCode->image_url = $promoCode->image
+                ? asset('storage/' . $promoCode->image)
+                : null;
+
+//            unset($promoCode->image);
         });
 
         return response()->json([

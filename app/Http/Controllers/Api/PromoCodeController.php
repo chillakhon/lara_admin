@@ -11,6 +11,7 @@ class PromoCodeController extends Controller
 {
     public function index(Request $request)
     {
+//        return 2342;
         $query = PromoCode::query();
 
         // Поиск по коду промокода

@@ -68,14 +68,15 @@ trait ClientControllerTrait
                     ->ignore($client ? $client->profile->id : null, 'id')
             ],
             'address' => 'nullable|string|max:255',
-            'level_id' => 'nullable|exists:client_levels,id',
-            'bonus_balance' => 'nullable|numeric|min:0',
+            'birthday' => 'nullable|date',
+//            'level_id' => 'nullable|exists:client_levels,id',
+//            'bonus_balance' => 'nullable|numeric|min:0',
         ];
 
         // Добавляем правило для пароля только при создании
-        if (is_null($client)) {
-            $rules['password'] = 'required|string|min:8';
-        }
+//        if (is_null($client)) {
+//            $rules['password'] = 'required|string|min:8';
+//        }
 
         return validator($data, $rules, [
             'email.unique' => 'Пользователь с таким email уже существует.',

@@ -22,7 +22,8 @@ class TaskController extends Controller
             'priority' => request('priority', ''),
             'assignee' => request('assignee', ''),
             'label' => request('label', ''),
-            'dueDate' => request('dueDate', '')
+            'dueDate' => request('dueDate', ''),
+            'overdue' => filter_var(request('overdue', false), FILTER_VALIDATE_BOOLEAN),
         ];
 
         // Параметры пагинации
@@ -69,6 +70,12 @@ class TaskController extends Controller
             $query->whereDate('due_date', $filters['dueDate']);
         }
 
+
+        if ($filters['overdue']) {
+            $query->where('due_date', '<', now())
+                ->whereNull('completed_at');
+        }
+
         // Пагинация
         $tasks = $query->paginate($perPage, ['*'], 'page', $page);
 
@@ -99,14 +106,15 @@ class TaskController extends Controller
                     'creator' => $task->creator ? [
                         'id' => $task->creator->id,
                         'name' => data_get($task, 'creator.profile.full_name'),
-                        'email' => $task->creator->email,
-                        'profile' => $task->creator->profile,
+                        'email' => $task->creator?->email,
+                        'profile' => $task->creator?->profile,
                     ] : null,
                     'creator_id' => $task->creator_id,
                     'assignee' => $task->assignee ? [
                         'id' => $task->assignee->id,
                         'name' => data_get($task, 'assignee.profile.full_name'),
-                        'email' => $task->assignee->email,
+                        'email' => $task->assignee?->email,
+                        'profile' => $task->assignee?->profile,
                     ] : null,
                     'assignee_id' => $task->assignee_id,
                     'labels' => $task->labels,
@@ -220,9 +228,9 @@ class TaskController extends Controller
         $status = TaskStatus::firstOrCreate(
             ['name' => 'Завершено'],
             [
-                'slug'     => Str::slug('Завершено'), // обязательное поле
-                'order'    => 99,
-                'color'    => '#22c55e',             // можно дефолтный цвет
+                'slug' => Str::slug('Завершено'), // обязательное поле
+                'order' => 99,
+                'color' => '#22c55e',             // можно дефолтный цвет
                 'is_default' => false,
             ]
         );

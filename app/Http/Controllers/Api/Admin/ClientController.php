@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\UserProfile;
 use App\Traits\ClientControllerTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,7 @@ use App\Models\ClientLevel;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Rakit\Validation\Rules\Date;
 
 
 class ClientController extends Controller
@@ -65,6 +67,7 @@ class ClientController extends Controller
                         'first_name' => $client?->profile?->first_name,
                         'last_name' => $client?->profile?->last_name,
                         'full_name' => $client?->profile?->full_name,
+                        'birthday' => $client?->profile?->birthday,
                         'phone' => $client?->profile?->phone,
                     ],
                     'phone' => $client?->profile?->phone,
@@ -86,6 +89,7 @@ class ClientController extends Controller
 
     public function store(Request $request)
     {
+
         try {
             // Валидация с использованием трейта
             $validated = $this->validateClientData($request->all());
@@ -95,7 +99,7 @@ class ClientController extends Controller
             $client = DB::transaction(function () use ($validated) {
                 $client = Client::create([
                     'email' => $validated['email'],
-                    'password' => Hash::make($validated['password']),
+//                    'password' => Hash::make($validated['password']),
                 ]);
 
                 $client->profile()->create([
@@ -104,7 +108,7 @@ class ClientController extends Controller
                     'phone' => $validated['phone'],
                     'address' => $validated['address'],
                     'level_id' => $validated['level_id'] ?? null,
-                    'bonus_balance' => $validated['bonus_balance'] ?? 0,
+                    'birthday' => $validated['birthday'] ? Carbon::parse($validated['birthday'])->format('Y-m-d') : null,
                 ]);
 
                 return $client->load('profile');
@@ -138,13 +142,14 @@ class ClientController extends Controller
 
             DB::transaction(function () use ($validated, $client) {
                 // Обновляем профиль
+
+
                 $client->profile()->update([
                     'first_name' => $validated['first_name'],
                     'last_name' => $validated['last_name'],
                     'phone' => $validated['phone'],
                     'address' => $validated['address'],
-                    'level_id' => $validated['level_id'] ?? null,
-                    'bonus_balance' => $validated['bonus_balance'] ?? $client->profile->bonus_balance,
+                    'birthday' => $validated['birthday'] ? Carbon::parse($validated['birthday'])->format('Y-m-d') : null,
                 ]);
 
                 // Обновляем почту пользователя
