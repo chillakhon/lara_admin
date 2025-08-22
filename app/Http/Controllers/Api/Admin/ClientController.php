@@ -37,6 +37,7 @@ class ClientController extends Controller
                     })->orWhere('email', 'like', "%{$search}%");
                 });
             })
+
             ->when($request->level, function ($query, $level) {
                 $query->where('client_level_id', $level);
             })
