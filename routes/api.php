@@ -708,6 +708,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         });
         Route::prefix('/mail')->group(function () {
             Route::post('/configuration', [ChatsIntegrationController::class, 'updateMailSettings']);
+            Route::post('/getMailSettings', [ChatsIntegrationController::class, 'getMailSettings']);
             Route::get('/test', [ChatsIntegrationController::class, 'test_mail']);
         });
         Route::prefix('/cdek')->group(function () {

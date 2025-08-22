@@ -77,6 +77,33 @@ class ChatsIntegrationController extends Controller
     }
 
 
+    public function getMailSettings()
+    {
+        try {
+            $setting = MailSetting::first();
+
+            if (!$setting) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mail settings not found.',
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $setting,
+            ]);
+        } catch (Exception $e) {
+            Log::error($e);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'line' => $e->getLine(),
+            ]);
+        }
+    }
+
+
     public function updateMailSettings(Request $request)
     {
         $request->validate([
