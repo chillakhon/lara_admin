@@ -69,6 +69,7 @@ class ClientController extends Controller
                         'full_name' => $client?->profile?->full_name,
                         'birthday' => $client?->profile?->birthday,
                         'phone' => $client?->profile?->phone,
+                        'address' => $client?->profile?->address,
                     ],
                     'phone' => $client?->profile?->phone,
                     'address' => $client?->profile?->address,
