@@ -6,7 +6,7 @@ export default {
     darkMode: "class",
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
-        './storage/framework/views/*.php',
+        './storage/framework/views/*MessageSent.php',
         './resources/views/**/*.blade.php',
         './resources/js/**/*.vue',
         "./node_modules/flowbite/**/*.js"

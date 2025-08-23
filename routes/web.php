@@ -1,5 +1,4 @@
 <?php
-//
 //use App\Http\Controllers\CategoryController;
 //use App\Http\Controllers\ClientController;
 //use App\Http\Controllers\CostCategoryController;

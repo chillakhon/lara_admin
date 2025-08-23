@@ -145,7 +145,7 @@ return [
             ],
 
             /**
-             * pattern: string       $pattern File pattern(s) to scan (default: *.php) .
+             * pattern: string       $pattern File pattern(s) to scan (default: *MessageSent.php) .
              *
              * @see \OpenApi\scan
              */

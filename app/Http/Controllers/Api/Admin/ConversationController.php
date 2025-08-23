@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\User;
 use App\Services\Messaging\ConversationService;
 use Illuminate\Http\Request;
+use Psy\Readline\Hoa\Event;
 
 class ConversationController extends Controller
 {
@@ -264,6 +265,7 @@ class ConversationController extends Controller
             'attachments' => $validated['attachments'] ?? [],
             'status'      => Message::STATUS_SENT,
         ]);
+
 
         return response()->json([
             'message'      => 'Входящее сообщение сохранено.',

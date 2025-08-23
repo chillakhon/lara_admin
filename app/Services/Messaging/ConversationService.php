@@ -59,6 +59,7 @@ class ConversationService
                 'source_data' => $messageData['source_data'] ?? null,
             ]);
 
+
             // Создание вложений
             if (!empty($messageData['attachments'])) {
                 foreach ($messageData['attachments'] as $attachment) {
@@ -96,6 +97,17 @@ class ConversationService
             if ($conversation->status === 'new') {
                 $conversation->update(['status' => 'active']);
             }
+
+
+            try {
+                event(new \App\Events\MessageCreated($message));
+            } catch (\Exception $e) {
+                Log::warning('MessageCreated broadcast failed, but message saved:', [
+                    'message_id' => $message->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+
 
             return $message;
         });

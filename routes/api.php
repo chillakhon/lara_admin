@@ -68,6 +68,10 @@ use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+
+// routes/api.php
+
+
 Route::get('/admin-user', [AuthenticatedSessionController::class, 'get_admin_user'])
     ->middleware('auth:sanctum');
 
