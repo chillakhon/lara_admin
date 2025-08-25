@@ -305,6 +305,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::prefix('/clients')->group(function () {
         Route::put('/update-profile', [ClientController::class, 'update_profile']);
+        Route::put('/update-delivery-address', [ClientController::class, 'update_delivery_address']);
     });
 
     Route::prefix('/carts')->group(function () {

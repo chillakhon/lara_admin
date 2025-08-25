@@ -37,7 +37,6 @@ class ClientController extends Controller
                     })->orWhere('email', 'like', "%{$search}%");
                 });
             })
-
             ->when($request->level, function ($query, $level) {
                 $query->where('client_level_id', $level);
             })
@@ -88,6 +87,68 @@ class ClientController extends Controller
         ]);
     }
 
+
+    public function update_delivery_address(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'delivery_country_id' => 'nullable|integer|exists:country,id',
+            'delivery_city_id' => 'nullable|integer|exists:city,id',
+            'delivery_postal_code' => 'nullable|string|max:20',
+            'delivery_address' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $client = $request->user();
+
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => "Пользователь не найден"
+            ], 404);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $profile = $client->profile;
+
+            // Данные для обновления
+            $deliveryData = $request->only([
+                'delivery_country_id',
+                'delivery_city_id',
+                'delivery_postal_code',
+                'delivery_address',
+            ]);
+
+            if ($profile) {
+                $profile->update($deliveryData);
+            } else {
+                $client->profile()->create($deliveryData);
+            }
+
+            DB::commit();
+
+            // Загружаем профиль со связанными данными
+            $client->load([
+                'profile.Country',
+                'profile.City'
+            ]);
+
+            return response()->json([
+                'message' => 'Адрес доставки обновлён',
+                'user' => $client,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Ошибка при обновлении адреса доставки',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
     public function store(Request $request)
     {
@@ -222,9 +283,9 @@ class ClientController extends Controller
     public function update_profile(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'birthday' => 'required|date',
+            'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
+            'birthday' => 'nullable|date',
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:255',
         ]);
@@ -253,7 +314,6 @@ class ClientController extends Controller
                     'phone' => $request->phone,
                     'address' => $request->address,
                     'birthday' => $request->birthday,
-                    'delivery_address' => $request->delivery_address,
                 ]);
             } else {
                 $client->profile()->updateOrCreate(
@@ -264,7 +324,6 @@ class ClientController extends Controller
                         'phone' => $request->phone,
                         'address' => $request->address,
                         'birthday' => $request->birthday,
-                        'delivery_address' => $request->delivery_address,
                     ]
                 );
             }

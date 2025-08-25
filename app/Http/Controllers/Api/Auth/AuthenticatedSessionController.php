@@ -167,7 +167,7 @@ class AuthenticatedSessionController extends Controller
 
         return response()->json([
             'success' => true,
-            'user' => $user->load(['profile'])
+            'user' => $user->load(['profile.city', 'profile.country']),
         ]);
     }
 

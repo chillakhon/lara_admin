@@ -69,24 +69,24 @@ trait ProductsTrait
                     });
                 });
             })
-
-
-            // searhcin by color id
-//            ->when($request->get('color_id'), function ($query, $color_id) {
-//                $query->whereHas('colors', function ($sql) use ($color_id) {
-//                    $sql->where('colors.id', $color_id);
-//                })->orWhereHas('variants', function ($sql) use ($color_id) {
-//                    $sql->whereHas('colors', function ($sql2) use ($color_id) {
-//                        $sql2->where('colors.id', $color_id);
-//                    });
-//                });
-//            })
-
             ->when($request->get('color_id'), function ($query, $color_id) {
                 $query->whereHas('variants', function ($q) use ($color_id) {
                     $q->whereNull('deleted_at')
                         ->where('color_id', $color_id); // фильтр прямо по variant.color_id
                 });
+            })
+            ->when($request->filled('in_stock'), function ($query) use ($request) {
+                if ($request->boolean('in_stock')) {
+                    $query->where(function ($q) {
+                        $q->whereHas('variants', fn($qv) => $qv->where('stock_quantity', '>', 0))
+                            ->orWhere('stock_quantity', '>', 0);
+                    });
+                } else {
+                    $query->where(function ($q) {
+                        $q->whereHas('variants', fn($qv) => $qv->where('stock_quantity', '<=', 0))
+                            ->orWhere('stock_quantity', '<=', 0);
+                    });
+                }
             })
             ->latest();
 

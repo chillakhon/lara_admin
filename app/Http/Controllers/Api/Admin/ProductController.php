@@ -39,6 +39,9 @@ class ProductController extends Controller
     {
 
 
+//        return 454;
+
+
         try {
 
             $isAdmin = $request->boolean('admin', false);
@@ -48,7 +51,6 @@ class ProductController extends Controller
                 $moySkaldController = new MoySkladController();
                 $product_stock_sklad = $moySkaldController->get_products_stock();
             }
-
 
             // could not solve the problem with .inventoryBalance relation
             $products = $this->products_query($request);

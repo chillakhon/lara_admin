@@ -16,7 +16,7 @@ class UserProfile extends Model
     //     'phone',
     //     'address',
     // ];
-    
+
     protected $guarded = ["id"];
 
     public function user()
@@ -24,8 +24,20 @@ class UserProfile extends Model
         return $this->belongsTo(User::class);
     }
 
+
+    public function Country()
+    {
+        return $this->belongsTo(Country::class, 'delivery_country_id');
+    }
+
+    // Связь с City
+    public function City()
+    {
+        return $this->belongsTo(City::class, 'delivery_city_id');
+    }
+
     public function getFullNameAttribute()
     {
         return "{$this->first_name} {$this->last_name}";
     }
-} 
+}
