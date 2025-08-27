@@ -72,6 +72,10 @@ use Illuminate\Support\Facades\Route;
 // routes/api.php
 
 
+Route::get('telegraph/{token}/webhook', function ($token) {
+    return response()->json(['status' => 'ok'], 200);
+});
+
 Route::get('/admin-user', [AuthenticatedSessionController::class, 'get_admin_user'])
     ->middleware('auth:sanctum');
 
@@ -707,9 +711,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
 
-    Route::get('telegraph/{token}/webhook', function ($token) {
-        return response()->json(['status' => 'ok'], 200);
-    });
+
 
     Route::prefix('/third-party-integrations')->group(function () {
         Route::prefix('/chats')->group(function () {
