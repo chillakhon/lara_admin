@@ -31,9 +31,6 @@ class ChatsIntegrationController extends Controller
             $telegram_token = $this->decryptToken($request->get('token'));
 
 
-
-//            return env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook";
-
             $response = Http::get("https://api.telegram.org/bot{$telegram_token}/setWebhook", [
                 'url' => env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook"
             ]);
