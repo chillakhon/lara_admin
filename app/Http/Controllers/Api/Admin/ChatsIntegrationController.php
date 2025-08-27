@@ -29,11 +29,11 @@ class ChatsIntegrationController extends Controller
             ]);
 
             $telegram_token = $this->decryptToken($request->get('token'));
-//            $telegram_token = $request->get('token');
 
             $response = Http::get("https://api.telegram.org/bot{$telegram_token}/setWebhook", [
                 'url' => env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook"
             ]);
+
 
             if (!$response->ok()) {
                 return response()->json([
