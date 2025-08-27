@@ -29,8 +29,14 @@ class ChatsIntegrationController extends Controller
                 'bot_name' => 'required|string',
             ]);
 
+
+
             $telegram_token = $this->decryptToken($request->get('token'));
             $webhook_url = env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook";
+
+            Log::info("Raw token from request: " . $request->get('token'));
+            Log::info("Decrypted token: " . $telegram_token);
+
 
             Log::info("APP_URL: " . env('APP_URL'));
             Log::info("Generated webhook URL: " . $webhook_url);
