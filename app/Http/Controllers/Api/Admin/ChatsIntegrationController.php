@@ -32,7 +32,7 @@ class ChatsIntegrationController extends Controller
 
 
 
-            return env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook";
+//            return env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook";
 
             $response = Http::get("https://api.telegram.org/bot{$telegram_token}/setWebhook", [
                 'url' => env('APP_URL') . "/telegraph/" . $telegram_token . "/webhook"
