@@ -707,10 +707,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
 
+    Route::get('telegraph/{token}/webhook', function ($token) {
+        return response()->json(['status' => 'ok'], 200);
+    });
+
     Route::prefix('/third-party-integrations')->group(function () {
         Route::prefix('/chats')->group(function () {
             Route::post('/telegram', [ChatsIntegrationController::class, 'telegram_integration']);
         });
+
+
         Route::prefix('/mail')->group(function () {
             Route::post('/configuration', [ChatsIntegrationController::class, 'updateMailSettings']);
             Route::post('/getMailSettings', [ChatsIntegrationController::class, 'getMailSettings']);
