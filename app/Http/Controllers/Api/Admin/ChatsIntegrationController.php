@@ -58,7 +58,7 @@ class ChatsIntegrationController extends Controller
             $bot->registerCommands([
                 "help" => "Что умеет этот бот",
                 "start" => "Начать использовать наш бот",
-                "orders" => "Ожидающие заказы",
+                "orders" => "Заказы",
                 "reset" => "Сбросить данные и начать заново"
             ])->send();
 

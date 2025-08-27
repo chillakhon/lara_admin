@@ -47,7 +47,7 @@ class TelegramWebhookHandler extends WebhookHandler
             $user_name = $client->email;
         }
 
-        $chat->message("Привет, {$user_name}! Мы успешно нашли ваш аккаунт. Напишите команду */orders*, чтобы посмотреть свои ожидающие заказы.")->send();
+        $chat->message("Привет, {$user_name}! Мы успешно нашли ваш аккаунт. Напишите команду */orders*, чтобы посмотреть свои Заказы.")->send();
     }
 
 
@@ -109,7 +109,7 @@ class TelegramWebhookHandler extends WebhookHandler
 
                 cache()->forget("awaiting_email_$telegramId");
 
-                $this->reply("Спасибо! Ваш аккаунт успешно привязан к Telegram. Напишите команду */orders*, чтобы посмотреть свои ожидающие заказы.");
+                $this->reply("Спасибо! Ваш аккаунт успешно привязан к Telegram. Напишите команду */orders*, чтобы посмотреть свои Заказы.");
             } else {
                 cache()->forget("awaiting_email_$telegramId");
                 $this->reply("Пользователь с таким email не найден. Пожалуйста, сначала зарегистрируйтесь на нашем сайте.");
