@@ -30,4 +30,13 @@ class SlideRequest extends FormRequest
             'is_active' => 'nullable|boolean',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'image.max' => 'Файл изображения не должен превышать 10 мегабайт.',
+            'image.image' => 'Загруженный файл должен быть изображением.',
+        ];
+    }
+
 }
