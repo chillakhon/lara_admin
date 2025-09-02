@@ -579,7 +579,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Product updated successfully',
+                'message' => 'Товар успешно обновлён',
                 'product' => $product
             ], 200);
 
@@ -591,7 +591,7 @@ class ProductController extends Controller
 
             return response()->json([
                 "error_line" => $e->getLine(),
-                'message' => 'Failed to update product',
+                'message' => 'Не удалось обновить товар',
                 'error' => $e->getMessage(),
             ], 500);
         }
