@@ -69,6 +69,9 @@ class CountriesController extends Controller
             $cities->where("region.id", $request->input('region_id'));
         }
 
+
+        $cities->orderBy('city.name', 'asc');
+
         $cities = $cities->get();
 
         return response()->json([
