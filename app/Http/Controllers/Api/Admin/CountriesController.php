@@ -50,14 +50,17 @@ class CountriesController extends Controller
 
     public function cities(Request $request)
     {
-        $cities = City
-            ::leftJoin('region', 'city.region_id', 'region.id')
+        $cities = City::leftJoin('region', 'city.region_id', 'region.id')
             ->leftJoin('country', 'region.country_id', 'country.id')
             ->select('city.*', 'region.name as region_name');
 
-        $cities->where("country.id", $request->get('country_id', 0));
+        // Если передан country_id, фильтруем по стране
+        if ($request->filled('country_id')) {
+            $cities->where("country.id", $request->get('country_id'));
+        }
 
-        if ($request->get('name')) {
+        // Поиск по названию города или региона
+        if ($request->filled('name')) {
             $name = $request->get('name');
             $cities->where(function ($query) use ($name) {
                 $query->where('city.name', 'like', "%{$name}%")
@@ -65,9 +68,13 @@ class CountriesController extends Controller
             });
         }
 
+        // Фильтр по региону
         if ($request->filled('region_id')) {
             $cities->where("region.id", $request->input('region_id'));
         }
+
+        // Сортировка по алфавиту (название города)
+        $cities->orderBy('city.name', 'asc');
 
         $cities = $cities->get();
 

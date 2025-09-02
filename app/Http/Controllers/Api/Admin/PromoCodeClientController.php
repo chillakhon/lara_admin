@@ -170,7 +170,6 @@ class PromoCodeClientController extends Controller
                 ? asset('storage/' . $promoCode->image)
                 : null;
 
-//            unset($promoCode->image);
         });
 
         return response()->json([
