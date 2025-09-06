@@ -88,6 +88,9 @@ trait ProductsTrait
                     });
                 }
             })
+            ->when(!$request->boolean('admin', false), function ($query) {
+                $query->where('is_active', true);
+            })
             ->latest();
 
 

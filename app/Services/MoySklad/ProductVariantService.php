@@ -37,9 +37,10 @@ class ProductVariantService
 
 
     public function create_modification(
-        ProductVariant $productVariant,
+        ProductVariant                                       $productVariant,
         \Evgeek\Moysklad\Api\Record\Objects\Entities\Product $produt
-    ) {
+    )
+    {
         $moySkladHelperService = new MoySkladHelperService();
         $code = rand(1000000000, 9999999999);
 
@@ -161,7 +162,8 @@ class ProductVariantService
     public function mass_variant_creation_and_update(
         $productVariants,
         \Evgeek\Moysklad\Api\Record\Objects\Entities\Product $product
-    ) {
+    )
+    {
         $modifications = [];
         $moySkladHelperService = new MoySkladHelperService();
 
@@ -175,6 +177,26 @@ class ProductVariantService
         foreach ($productVariants as $key => $variant) {
             $existingVariant = ProductVariant::find($variant->id);
 
+            $colorValue = $existingVariant->table_color?->name ?? '';
+
+
+
+
+
+            $characteristics = [
+                [
+                    'id' => (string)$sizeId,
+                    'value' => $variant->name,
+                ],
+            ];
+
+            if ($colorId && $existingVariant->table_color?->name) {
+                $characteristics[] = [
+                    'id' => (string)$colorId,
+                    'value' => $existingVariant->table_color->name,
+                ];
+            }
+
             $data = [
                 'name' => $variant->name,
                 'description' => $variant->description ?? '',
@@ -186,19 +208,36 @@ class ProductVariantService
                     ]
                 ],
                 'buyPrice' => [
-                    'value' => ($variant->cost_price ?? 0) * 100, // копейки
+                    'value' => ($variant->cost_price ?? 0) * 100,
                 ],
-                'characteristics' => [
-                    [
-                        'id' => (string) $sizeId,
-                        'value' => $variant->name,
-                    ],
-                    [
-                        'id' => (string) $colorId,
-                        'value' => $existingVariant->table_color?->name ?? '',
-                    ],
-                ],
+                'characteristics' => $characteristics,
             ];
+
+
+//            $data = [
+//                'name' => $variant->name,
+//                'description' => $variant->description ?? '',
+//                'salePrices' => [
+//                    [
+//                        'value' => ($variant->price ?? 0) * 100,
+//                        'currency' => $currency,
+//                        'priceType' => $priceType,
+//                    ]
+//                ],
+//                'buyPrice' => [
+//                    'value' => ($variant->cost_price ?? 0) * 100, // копейки
+//                ],
+//                'characteristics' => [
+//                    [
+//                        'id' => (string)$sizeId,
+//                        'value' => $variant->name,
+//                    ],
+//                    [
+//                        'id' => $colorId ? (string)$colorId : '', // пустая строка вместо null
+//                        'value' => $colorValue,                  // пустая строка если цвета нет
+//                    ],
+//                ],
+//            ];
 
             $codeAndIds[$existingVariant->code] = $existingVariant?->uuid;
 
@@ -211,7 +250,7 @@ class ProductVariantService
                 ];
             } else {
                 if (!$existingVariant->code) {
-                    $existingVariant->code = (string) rand(1000000000, 9999999999);
+                    $existingVariant->code = (string)rand(1000000000, 9999999999);
                     $existingVariant->save();
                 }
                 $data['code'] = $existingVariant->code;
@@ -235,7 +274,7 @@ class ProductVariantService
 
         if ($coming_json) {
             foreach ($coming_json as $key => $jsonData) {
-                $code = (string) $jsonData['code'];
+                $code = (string)$jsonData['code'];
                 if (array_key_exists($code, $codeAndIds)) {
                     $codeAndIds[$code] = $jsonData['id'];
                 }

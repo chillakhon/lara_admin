@@ -38,10 +38,6 @@ class ProductController extends Controller
     public function index(Request $request)
     {
 
-
-//        return 454;
-
-
         try {
 
             $isAdmin = $request->boolean('admin', false);
@@ -54,6 +50,7 @@ class ProductController extends Controller
 
             // could not solve the problem with .inventoryBalance relation
             $products = $this->products_query($request);
+
 
             if ($request->get('product_id')) {
 
@@ -423,15 +420,19 @@ class ProductController extends Controller
 
         $moyskadController = new MoySkladController();
         $msProduct = null;
+        // this is for local data after creation
         $createdVariants = [];
+
+        // this is for moysklad data that comes after creation
         $createdVariantsIds = [];
         $product_variant_for_deletion_ids = [];
+        // $productVariantDeletionReached = false;
 
         try {
             $product = Product::where('id', $id)->firstOrFail();
+
             $prev_price = $product->price;
 
-            // Update product
             $product->update(array_merge(
                 $validated,
                 [
@@ -442,28 +443,21 @@ class ProductController extends Controller
             ));
 
             $this->price_history_create($request, $prev_price, $product);
+
             $this->update_product_images($request, $product);
 
             $colorIds = collect($validated['colors'] ?? [])->pluck('id');
+
             $product->colors()->sync($colorIds);
+
             $product->refresh();
 
-            // Update MoySklad product
-            try {
-                $msProduct = $moyskadController->update_product($product);
-                Log::info("Product updated in MoySklad successfully", ['product_id' => $product->id]);
-            } catch (Exception $e) {
-                Log::error("Failed to update product in MoySklad", [
-                    'product_id' => $product->id,
-                    'error' => $e->getMessage(),
-                    'line' => $e->getLine()
-                ]);
-                throw new Exception("MoySklad product update failed: " . $e->getMessage());
-            }
+            $msProduct = $moyskadController->update_product($product);
 
-            // Handle variants deletion
+            // Handle variants
             $incomingVariantIds = collect($validated['variants'] ?? [])->pluck('id')->filter()->toArray();
 
+            // Delete removed variants
             $prod_variant_check = ProductVariant::where('product_id', $product->id);
             if (!empty($incomingVariantIds)) {
                 $prod_variant_check->whereNotIn('id', $incomingVariantIds);
@@ -471,131 +465,114 @@ class ProductController extends Controller
 
             $product_variant_for_deletion_ids = (clone $prod_variant_check)
                 ->withTrashed()
-                ->pluck('uuid')
-                ->filter() // Remove null values
-                ->toArray();
+                ->pluck('uuid')->toArray();
 
-            Log::info("Variants to delete", ['uuids' => $product_variant_for_deletion_ids]);
+            Log::info("test all ids", $product_variant_for_deletion_ids);
 
-            // Delete variants locally
-            $prod_variant_check->get()->each(function ($variant) {
-                // Delete variant images
-                $variantImages = ImageModel::where('item_type', ProductVariant::class)
-                    ->where('item_id', $variant->id)
-                    ->get();
+            $prod_variant_check = $prod_variant_check->get()
+                ->each(function ($variant) {
+                    $variantImages = ImageModel::where('item_type', ProductVariant::class)
+                        ->where('item_id', $variant->id)
+                        ->get();
 
-                foreach ($variantImages as $image) {
-                    foreach (['original', 'lg', 'md', 'sm'] as $size) {
-                        $path = storage_path("app/public/products/{$size}_{$image->path}");
-                        if (File::exists($path)) {
-                            File::delete($path);
+                    foreach ($variantImages as $image) {
+                        foreach (['original', 'lg', 'md', 'sm'] as $size) {
+                            $path = storage_path("app/public/products/{$size}_{$image->path}");
+                            if (File::exists($path)) {
+                                File::delete($path);
+                            }
                         }
+                        $image->delete();
                     }
-                    $image->delete();
-                }
 
-                $variant->colors()->detach();
-                $variant->update(['sku' => null]);
-                $variant->delete();
-            });
+                    $variant->colors()->detach();
+                    $variant->update([
+                        'sku' => null,
+                    ]);
+                    $variant->delete();
+                });
 
-            // Process variants
+            // Add or update variants
             foreach (($validated['variants'] ?? []) as $variantData) {
                 $uuid = $variantData['local_uuid'] ?? null;
 
                 if (!$uuid) {
-                    Log::warning("Skipping variant without local_uuid", ['variant_data' => $variantData]);
                     continue;
                 }
 
                 $cleanVariantData = Arr::except($variantData, ['local_uuid', 'id']);
+                // setting the values of product's weight, length, width, height
                 $cleanVariantData['product_id'] = $product->id;
                 $cleanVariantData['weight'] = $product->weight;
                 $cleanVariantData['length'] = $product->length;
                 $cleanVariantData['width'] = $product->width;
                 $cleanVariantData['height'] = $product->height;
                 $cleanVariantData['colors'] = $validated['colors'] ?? [];
-
                 $variant_colors_ids = collect($cleanVariantData['colors'] ?? [])->pluck('id');
 
                 if (!empty($variantData['id'])) {
-                    // Update existing variant
                     $variant = ProductVariant::where('id', $variantData['id'])->firstOrFail();
                     $previous_price = $variant->price;
                     $cleanVariantData = Arr::except($cleanVariantData, ['sku']);
-
                     $variant->update($cleanVariantData);
                     $variant->colors()->sync($variant_colors_ids);
                     $this->price_history_create($request, $previous_price, null, $variant);
                     $createdVariants[] = $variant;
+                    // $value = $variant->refresh();
+                    // if modification updates or failes it's not so serious
+                    // $moyskadController->update_modification($variant);
                 } else {
-                    // Create new variant
+                    // temp value for syncing with MoySklad
                     $cleanVariantData['code'] = (string)rand(1000000000, 9999999999);
                     $baseSku = Str::slug($variantData['name']);
                     $sku = $baseSku . '-' . $product->id;
 
+                    // если даже такое sku уже есть — добавим рандом
                     if (ProductVariant::where('sku', $sku)->exists()) {
                         $sku .= '-' . Str::random(4);
                     }
-
                     $cleanVariantData['sku'] = $sku;
                     $variant = ProductVariant::create($cleanVariantData);
+                    // -1 means that its creating for the first time and you have to put null instead
                     $variant->colors()->attach($variant_colors_ids);
                     $this->price_history_create($request, -1, null, $variant);
                     $variant = $variant->refresh();
                     $createdVariants[] = $variant;
+                    // but it's serious when modification creates in moySklad
+                    // something goes wrong in php code
+                    // $msProductVariant = $moyskadController->create_modification($variant, $msProduct);
+                    // $createdVariantsIds[] = $msProductVariant->id;
                 }
 
                 $this->update_variant_images($request, $variant, $uuid);
             }
 
-            // Mass update/create variants in MoySklad
+
+
             if ($createdVariants) {
-                try {
-                    Log::info("Sending variants to MoySklad", [
-                        'count' => count($createdVariants),
-                        'variants' => $createdVariants->pluck(['id', 'name', 'price'])
-                    ]);
+                $massCreatedModifications = $moyskadController->mass_variant_creation_and_update(
+                    $createdVariants,
+                    $msProduct,
+                );
 
-                    $massCreatedModifications = $moyskadController->mass_variant_creation_and_update(
-                        $createdVariants,
-                        $msProduct,
-                    );
 
-                    // Update local variants with UUIDs
-                    foreach ($createdVariants as $cv) {
-                        if (array_key_exists($cv->code, $massCreatedModifications)) {
-                            $cv->update([
-                                'uuid' => $massCreatedModifications[$cv->code],
-                            ]);
-                            $createdVariantsIds[] = $massCreatedModifications[$cv->code];
-                        }
+                // update local variants after mass creation with uuid
+                foreach ($createdVariants as $key => $cv) {
+                    if (array_key_exists($cv->code, $massCreatedModifications)) {
+                        $cv->update([
+                            'uuid' => $massCreatedModifications[$cv->code],
+                        ]);
+                        $createdVariantsIds[] = $massCreatedModifications[$cv->code];
                     }
-
-                    Log::info("Variants updated with MoySklad UUIDs", ['count' => count($createdVariantsIds)]);
-
-                } catch (Exception $e) {
-                    Log::error("Failed to create/update variants in MoySklad", [
-                        'error' => $e->getMessage(),
-                        'line' => $e->getLine(),
-                        'variants_count' => count($createdVariants)
-                    ]);
-                    throw new Exception("MoySklad variants update failed: " . $e->getMessage());
                 }
             }
-
-            // Delete variants from MoySklad
+            // if everything goes perfect
+            // we will delete all deleted variants from moysklad too
+            // BUT! remember if there is any supplier invoice that were made for
+            // specific variant or product you cant delete that
             if ($product_variant_for_deletion_ids) {
-                try {
-                    $moyskadController->mass_variant_deletion($product_variant_for_deletion_ids);
-                    Log::info("Variants deleted from MoySklad", ['count' => count($product_variant_for_deletion_ids)]);
-                } catch (Exception $e) {
-                    Log::error("Failed to delete variants from MoySklad", [
-                        'error' => $e->getMessage(),
-                        'uuids' => $product_variant_for_deletion_ids
-                    ]);
-                    // Don't throw here - deletion failures shouldn't break the entire update
-                }
+                // $productVariantDeletionReached = true;
+                $moyskadController->mass_variant_deletion($product_variant_for_deletion_ids);
             }
 
             DB::commit();
@@ -608,37 +585,18 @@ class ProductController extends Controller
 
         } catch (Exception $e) {
             DB::rollBack();
+            // that is why if something goes wrong we will delete only created variants
+            $moyskadController->mass_variant_deletion($createdVariantsIds);
 
-            // Clean up any created variants in MoySklad
-            if (!empty($createdVariantsIds)) {
-                try {
-                    $moyskadController->mass_variant_deletion($createdVariantsIds);
-                    Log::info("Cleaned up variants after error", ['uuids' => $createdVariantsIds]);
-                } catch (Exception $cleanupError) {
-                    Log::error("Failed to cleanup variants", ['error' => $cleanupError->getMessage()]);
-                }
-            }
-
-            Log::error("Product update failed", [
-                'product_id' => $id,
-                'error' => $e->getMessage(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile(),
-                'trace' => $e->getTraceAsString()
-            ]);
 
             return response()->json([
                 "error_line" => $e->getLine(),
                 'message' => 'Не удалось обновить товар',
                 'error' => $e->getMessage(),
-                'debug_info' => [
-                    'variants_processed' => count($createdVariants ?? []),
-                    'variants_to_delete' => count($product_variant_for_deletion_ids ?? []),
-                    'moysklad_product_updated' => isset($msProduct)
-                ]
             ], 500);
         }
     }
+
 
     private function update_product_images(
         Request $request,
