@@ -93,7 +93,6 @@ trait ProductsTrait
             })
             ->latest();
 
-
         if ($request->get('type', 'simple')) {
             $products->where('type', $request->get('type', 'simple'));
         }
