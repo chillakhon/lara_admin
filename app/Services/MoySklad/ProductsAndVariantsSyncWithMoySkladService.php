@@ -312,7 +312,7 @@ class ProductsAndVariantsSyncWithMoySkladService
 
             if ($variant) {
 
-                $variant->update(['deleted_at' => null]);
+                ProductVariant::withTrashed()->where('id', $variant->id)->restore();
                 $variant->update($attributes);
                 return $variant;
             }
