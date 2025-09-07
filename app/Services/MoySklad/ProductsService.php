@@ -60,7 +60,9 @@ class ProductsService
             throw new Exception('Не удалось получить валюту из МойСклад.');
         }
 
-        $foundUnit = $moySkladHelperService->get_units($product->defaultUnit->name ?? null);
+        $unitName = $product->defaultUnit->name ?? 'шт';
+        $foundUnit = $moySkladHelperService->get_units($unitName);
+
         if (!$foundUnit || empty($foundUnit->meta)) {
             throw new Exception("Не удалось найти единицу измерения '{$product->defaultUnit?->name}' в МойСклад.");
         }
