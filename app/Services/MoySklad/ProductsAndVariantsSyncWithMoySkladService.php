@@ -282,9 +282,9 @@ class ProductsAndVariantsSyncWithMoySkladService
 
 
             \Illuminate\Support\Facades\Log::info('test', [
-                'product_id' => $product->id,
-                'variant_name' => $variant_name,
-                'variant_sku' => $variant->sku,
+//                'product_id' => $product->id,
+//                'variant_name' => $variant_name,
+//                'variant_sku' => $variant->sku,
             ]);
 
             $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
