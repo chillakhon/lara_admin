@@ -397,7 +397,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             } catch (Exception $e) {
                 \Log::error("Ошибка синхронизации локального продукта {$product->id}: " . $e->getMessage(), [
                     'getLine' => $e->getLine(),
-                    'getTraceAsString' => $e->getTraceAsString(),
+//                    'getTraceAsString' => $e->getTraceAsString(),
                 ]);
                 continue;
             }
