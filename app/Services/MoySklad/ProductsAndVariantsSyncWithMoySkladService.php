@@ -301,7 +301,7 @@ class ProductsAndVariantsSyncWithMoySkladService
                 'color_id' => $findColorFromTable?->id,
                 'name' => $variant_name,
                 'unit_id' => $product->default_unit_id,
-                'sku' => $sku,
+//                'sku' => $sku,
                 'barcode' => $variantBarcode,
                 'code' => $data->code ?? null, // Сохраняем код точно как в МойСклад
                 'price' => $this->extractPrice($data->salePrices ?? []),
@@ -310,6 +310,7 @@ class ProductsAndVariantsSyncWithMoySkladService
                 'weight' => $this->extractWeight($productData),
                 'type' => 'simple',
                 'is_active' => true,
+                'deleted_at' => null,
             ];
 
             if ($variant) {
@@ -317,6 +318,7 @@ class ProductsAndVariantsSyncWithMoySkladService
 //                ProductVariant::withTrashed()->where('id', $variant->id)->restore();
                 unset($attributes['uuid']);
                 $variant->update($attributes);
+
                 return $variant;
             }
 
