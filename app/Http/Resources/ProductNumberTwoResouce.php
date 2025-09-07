@@ -29,7 +29,7 @@ class ProductNumberTwoResouce extends JsonResource
                 $size = null;
                 $color = null;
 
-                \Illuminate\Support\Facades\Log::info('variant: ',  $variant);
+//                \Illuminate\Support\Facades\Log::info('variant: ',  $variant);
                 if (Str::contains($variant->name, '-')) {
                     $segments = explode('-', $variant->name);
                     $size = trim(end($segments));
