@@ -176,6 +176,8 @@ class ProductsAndVariantsSyncWithMoySkladService
         $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
         $unit = $this->findLocalUnit($moyskladUnits[$data->uom->meta->href ?? null] ?? null);
 
+        $barcode = $this->extractBarcode($data);
+
         // Сначала ищем по UUID, потом по slug
         $product = Product::withTrashed()
             ->where('uuid', $data->id)
@@ -183,7 +185,10 @@ class ProductsAndVariantsSyncWithMoySkladService
 
         if (!$product) {
             $product = Product::withTrashed()
-                ->where('slug', $slug)
+                ->where(function ($query) use ($slug, $barcode) {
+                    $query->where('slug', $slug)
+                        ->orWhere('barcode', $barcode);
+                })
                 ->first();
         }
 
@@ -195,7 +200,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             'slug' => $slug,
             'price' => $this->extractPrice($data->salePrices ?? []),
             'cost_price' => $this->extractCostPrice($data->buyPrice ?? (object)['value' => 0]),
-            'barcode' => $this->extractBarcode($data),
+            'barcode' => $barcode,
             'code' => $data->code ?? null, // Сохраняем код точно как в МойСклад
             'stock_quantity' => $stockQty,
 //            'sku' => $slug,
@@ -210,6 +215,11 @@ class ProductsAndVariantsSyncWithMoySkladService
             $product->update($attributes);
             return $product;
         }
+
+
+//        $product = Product::withTrashed()
+//            ->where('barcode', $this->extractBarcode($data))
+//            ->update([]);
 
         return Product::create($attributes);
     }
