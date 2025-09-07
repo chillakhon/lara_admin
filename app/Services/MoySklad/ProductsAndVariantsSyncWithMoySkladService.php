@@ -268,15 +268,14 @@ class ProductsAndVariantsSyncWithMoySkladService
             $sku = $slug . '-' . $product->id;
 
             // Сначала ищем по UUID, потом по SKU
-            $variant = ProductVariant::where('uuid', $data->id)
-//                ->whereNull('deleted_at')
+            $variant = ProductVariant::withTrashed()
+                ->where('uuid', $data->id)
                 ->first();
 
-
             if (!$variant) {
-                $variant = ProductVariant::where('sku', $sku)
+                $variant = ProductVariant::withTrashed()
+                    ->where('sku', $sku)
                     ->where('product_id', $product->id)
-//                    ->whereNull('deleted_at')
                     ->first();
             }
 
