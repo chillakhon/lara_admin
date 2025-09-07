@@ -62,9 +62,8 @@ class ProductsService
 
         $foundUnit = $moySkladHelperService->get_units($product->defaultUnit->name ?? null);
         if (!$foundUnit || empty($foundUnit->meta)) {
-            throw new Exception("Не удалось найти единицу измерения '{$product->defaultUnit->name}' в МойСклад.");
+            throw new Exception("Не удалось найти единицу измерения '{$product->defaultUnit?->name}' в МойСклад.");
         }
-
 
         $code = rand(1000000000, 9999999999);
 
