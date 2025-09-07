@@ -177,10 +177,14 @@ class ProductsAndVariantsSyncWithMoySkladService
         $unit = $this->findLocalUnit($moyskladUnits[$data->uom->meta->href ?? null] ?? null);
 
         // Сначала ищем по UUID, потом по slug
-        $product = Product::where('uuid', $data->id)->first();
+        $product = Product::withTrashed()
+            ->where('uuid', $data->id)
+            ->first();
 
         if (!$product) {
-            $product = Product::where('slug', $slug)->first();
+            $product = Product::withTrashed()
+                ->where('slug', $slug)
+                ->first();
         }
 
         $attributes = [
@@ -198,9 +202,11 @@ class ProductsAndVariantsSyncWithMoySkladService
             'weight' => $this->extractWeight($data),
             'currency' => 'RUB',
             'has_variants' => ($data->variantsCount ?? 0) > 0,
+            'deleted_at' => null,
         ];
 
         if ($product) {
+            unset($attributes['uuid']);
             $product->update($attributes);
             return $product;
         }
