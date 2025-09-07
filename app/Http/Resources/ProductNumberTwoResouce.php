@@ -56,7 +56,7 @@ class ProductNumberTwoResouce extends JsonResource
 
                 $available_variants->push([
                     'color_id' => $variant->color_id,
-                    'size' => $size,
+                    'size' => $variant->name,
                     'quantity' => $variant->stock,
                 ]);
 
