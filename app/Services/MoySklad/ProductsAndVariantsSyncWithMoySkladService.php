@@ -11,6 +11,7 @@ use App\Models\Unit;
 use Evgeek\Moysklad\MoySklad;
 use Illuminate\Support\Str;
 use Exception;
+use Laravel\Reverb\Loggers\Log;
 
 class ProductsAndVariantsSyncWithMoySkladService
 {
@@ -248,6 +249,8 @@ class ProductsAndVariantsSyncWithMoySkladService
 
     private function upsertVariant(Product $product, array $stock, $data, $productData): ProductVariant
     {
+
+
         $characteristic = collect($data->characteristics ?? [])
             ->firstWhere('name', 'Размер');
         $colorCharacteristic = collect($data->characteristics ?? [])
@@ -266,11 +269,19 @@ class ProductsAndVariantsSyncWithMoySkladService
         // Сначала ищем по UUID, потом по SKU
         $variant = ProductVariant::where('uuid', $data->id)->first();
 
+
         if (!$variant) {
             $variant = ProductVariant::where('sku', $sku)
                 ->where('product_id', $product->id)
                 ->first();
         }
+
+
+        \Illuminate\Support\Facades\Log::info('test', [
+            'product_id' => $product->id,
+            'variant_name' => $variant_name,
+            'variant_sku' => $variant->sku,
+        ]);
 
         $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
 
