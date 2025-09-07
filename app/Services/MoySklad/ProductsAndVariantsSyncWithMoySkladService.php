@@ -278,6 +278,8 @@ class ProductsAndVariantsSyncWithMoySkladService
             }
 
 
+            $variant->update(['deleted_at' => null]);
+
             \Illuminate\Support\Facades\Log::info('test', [
                 'product_id' => $product->id,
                 'variant_name' => $variant_name,
