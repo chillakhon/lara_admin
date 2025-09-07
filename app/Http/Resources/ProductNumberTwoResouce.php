@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Laravel\Reverb\Loggers\Log;
 use Str;
 
 class ProductNumberTwoResouce extends JsonResource
@@ -27,6 +28,8 @@ class ProductNumberTwoResouce extends JsonResource
             $collectedVariants->map(function ($variant) use (&$colors, &$sizes, &$available_variants) {
                 $size = null;
                 $color = null;
+
+                \Illuminate\Support\Facades\Log::info('variant: ',  $variant);
                 if (Str::contains($variant->name, '-')) {
                     $segments = explode('-', $variant->name);
                     $size = trim(end($segments));
@@ -54,7 +57,7 @@ class ProductNumberTwoResouce extends JsonResource
                 $available_variants->push([
                     'color_id' => $variant->color_id,
                     'size' => $size,
-                    'quantity' => $variant->inventory_balance,
+                    'quantity' => $variant->stock,
                 ]);
 
             });

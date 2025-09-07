@@ -84,7 +84,6 @@ class ProductController extends Controller
             }
 
 
-            // return response()->json($products);
             return ProductNumberTwoResouce::collection($products);
 
         } catch (Exception $e) {
