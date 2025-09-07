@@ -68,7 +68,7 @@ class ProductsService
 
         $code = rand(1000000000, 9999999999);
 
-        $msProduct->name = $product->name;
+        $msProduct->name = $product?->name;
         $msProduct->code = "{$code}";// $product->slug ?? ($product->sku ?? null);
         $msProduct->description = $product->description ?? '';
         $msProduct->weight = $metrics['weight'];
@@ -125,7 +125,7 @@ class ProductsService
 
         // $code = rand(1000000000, 9999999999);
 
-        $msProduct->name = $product->name;
+        $msProduct->name = $product?->name;
         // $msProduct->code = "{$code}";// $product->slug ?? ($product->sku ?? null);
         $msProduct->description = $product->description ?? '';
         $msProduct->weight = $metrics['weight'];
