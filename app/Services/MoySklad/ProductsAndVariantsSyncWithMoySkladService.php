@@ -194,7 +194,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             'barcode' => $this->extractBarcode($data),
             'code' => $data->code ?? null, // Сохраняем код точно как в МойСклад
             'stock_quantity' => $stockQty,
-            'sku' => $slug,
+//            'sku' => $slug,
             'weight' => $this->extractWeight($data),
             'currency' => 'RUB',
             'has_variants' => ($data->variantsCount ?? 0) > 0,
