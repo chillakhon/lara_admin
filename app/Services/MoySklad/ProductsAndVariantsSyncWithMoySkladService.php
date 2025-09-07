@@ -268,15 +268,17 @@ class ProductsAndVariantsSyncWithMoySkladService
             $sku = $slug . '-' . $product->id;
 
             // Сначала ищем по UUID, потом по SKU
-            $variant = ProductVariant::where('uuid', $data->id)->first();
+            $variant = ProductVariant::where('uuid', $data->id)
+//                ->whereNull('deleted_at')
+                ->first();
 
 
             if (!$variant) {
                 $variant = ProductVariant::where('sku', $sku)
                     ->where('product_id', $product->id)
+//                    ->whereNull('deleted_at')
                     ->first();
             }
-
 
 
             \Illuminate\Support\Facades\Log::info('test', [
@@ -312,7 +314,8 @@ class ProductsAndVariantsSyncWithMoySkladService
 
             if ($variant) {
 
-                ProductVariant::withTrashed()->where('id', $variant->id)->restore();
+//                ProductVariant::withTrashed()->where('id', $variant->id)->restore();
+                unset($attributes['uuid']);
                 $variant->update($attributes);
                 return $variant;
             }
