@@ -247,73 +247,86 @@ class ProductsAndVariantsSyncWithMoySkladService
             });
     }
 
-    private function upsertVariant(Product $product, array $stock, $data, $productData): ProductVariant
+    private function upsertVariant(Product $product, array $stock, $data, $productData)
     {
 
 
-        $characteristic = collect($data->characteristics ?? [])
-            ->firstWhere('name', 'Размер');
-        $colorCharacteristic = collect($data->characteristics ?? [])
-            ->firstWhere('name', 'Цвет');
+        try {
+            $characteristic = collect($data->characteristics ?? [])
+                ->firstWhere('name', 'Размер');
+            $colorCharacteristic = collect($data->characteristics ?? [])
+                ->firstWhere('name', 'Цвет');
 
-        $color_name = $colorCharacteristic?->value ?? '';
-        $findColorFromTable = Color::where(function ($sql) use ($color_name) {
-            $sql->where('name', 'like', "%{$color_name}%")
-                ->orWhere('normalized_name', 'like', "%{$color_name}%");
-        })->first();
+            $color_name = $colorCharacteristic?->value ?? '';
+            $findColorFromTable = Color::where(function ($sql) use ($color_name) {
+                $sql->where('name', 'like', "%{$color_name}%")
+                    ->orWhere('normalized_name', 'like', "%{$color_name}%");
+            })->first();
 
-        $variant_name = mb_substr($characteristic?->value ?? '', 0, 255);
-        $slug = Str::slug($variant_name);
-        $sku = $slug . '-' . $product->id;
+            $variant_name = mb_substr($characteristic?->value ?? '', 0, 255);
+            $slug = Str::slug($variant_name);
+            $sku = $slug . '-' . $product->id;
 
-        // Сначала ищем по UUID, потом по SKU
-        $variant = ProductVariant::where('uuid', $data->id)->first();
+            // Сначала ищем по UUID, потом по SKU
+            $variant = ProductVariant::where('uuid', $data->id)->first();
 
 
-        if (!$variant) {
-            $variant = ProductVariant::where('sku', $sku)
-                ->where('product_id', $product->id)
-                ->first();
+            if (!$variant) {
+                $variant = ProductVariant::where('sku', $sku)
+                    ->where('product_id', $product->id)
+                    ->first();
+            }
+
+
+            \Illuminate\Support\Facades\Log::info('test', [
+                'product_id' => $product->id,
+                'variant_name' => $variant_name,
+                'variant_sku' => $variant->sku,
+            ]);
+
+            $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
+
+            // Безопасное извлечение баркода из варианта (сохраняем точно как в МойСклад)
+            $variantBarcode = null;
+            if (!empty($data->barcodes) && is_array($data->barcodes)) {
+                $variantBarcode = $data->barcodes[0]->ean13 ?? null;
+            }
+
+            $attributes = [
+                'uuid' => $data->id,
+                'product_id' => $product->id,
+                'color_id' => $findColorFromTable?->id,
+                'name' => $variant_name,
+                'unit_id' => $product->default_unit_id,
+                'sku' => $sku,
+                'barcode' => $variantBarcode,
+                'code' => $data->code ?? null, // Сохраняем код точно как в МойСклад
+                'price' => $this->extractPrice($data->salePrices ?? []),
+                'cost_price' => $this->extractCostPrice($data->buyPrice ?? (object)['value' => 0]),
+                'stock' => $stockQty,
+                'weight' => $this->extractWeight($productData),
+                'type' => 'simple',
+                'is_active' => true,
+            ];
+
+            if ($variant) {
+                $variant->update($attributes);
+                return $variant;
+            }
+
+            return ProductVariant::create($attributes);
+
+        } catch (Exception $e) {
+
+            \Illuminate\Support\Facades\Log::error('catch', [
+                'getLine' => $e->getLine(),
+                'getTraceAsString' => $e->getTraceAsString(),
+                'getMessage' => $e->getMessage(),
+            ]);
+
+
         }
 
-
-        \Illuminate\Support\Facades\Log::info('test', [
-            'product_id' => $product->id,
-            'variant_name' => $variant_name,
-            'variant_sku' => $variant->sku,
-        ]);
-
-        $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
-
-        // Безопасное извлечение баркода из варианта (сохраняем точно как в МойСклад)
-        $variantBarcode = null;
-        if (!empty($data->barcodes) && is_array($data->barcodes)) {
-            $variantBarcode = $data->barcodes[0]->ean13 ?? null;
-        }
-
-        $attributes = [
-            'uuid' => $data->id,
-            'product_id' => $product->id,
-            'color_id' => $findColorFromTable?->id,
-            'name' => $variant_name,
-            'unit_id' => $product->default_unit_id,
-            'sku' => $sku,
-            'barcode' => $variantBarcode,
-            'code' => $data->code ?? null, // Сохраняем код точно как в МойСклад
-            'price' => $this->extractPrice($data->salePrices ?? []),
-            'cost_price' => $this->extractCostPrice($data->buyPrice ?? (object)['value' => 0]),
-            'stock' => $stockQty,
-            'weight' => $this->extractWeight($productData),
-            'type' => 'simple',
-            'is_active' => true,
-        ];
-
-        if ($variant) {
-            $variant->update($attributes);
-            return $variant;
-        }
-
-        return ProductVariant::create($attributes);
     }
 
     private function removeDeletedProducts(array $syncedUUIDs): void
