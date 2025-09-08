@@ -296,12 +296,6 @@ class ProductsAndVariantsSyncWithMoySkladService
             }
 
 
-            \Illuminate\Support\Facades\Log::info('test', [
-//                'product_id' => $product->id,
-//                'variant_name' => $variant_name,
-//                'variant_sku' => $variant->sku,
-            ]);
-
             $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
 
             // Безопасное извлечение баркода из варианта (сохраняем точно как в МойСклад)
@@ -330,12 +324,15 @@ class ProductsAndVariantsSyncWithMoySkladService
 
             if ($variant) {
 
-//                ProductVariant::withTrashed()->where('id', $variant->id)->restore();
                 unset($attributes['uuid']);
                 $variant->update($attributes);
 
                 return $variant;
             }
+
+
+            $totalStock = ProductVariant::where('product_id', $product->id)->sum('stock');
+            $product->update(['stock_quantity' => $totalStock]);
 
             return ProductVariant::create($attributes);
 
