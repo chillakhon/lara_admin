@@ -60,6 +60,7 @@ class ProductNumberTwoResouce extends JsonResource
                     'color_id' => $variant->color_id,
                     'size' => $variant->name,
                     'quantity' => $variant->stock,
+                    'price' => $variant->price,
                     'images' => $variant->images ? ImageResource::collection($variant->images) : null,
                 ]);
 
