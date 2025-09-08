@@ -173,7 +173,9 @@ class ProductsAndVariantsSyncWithMoySkladService
     private function upsertProduct($data, array $stock, array $moyskladUnits): Product
     {
         $slug = Str::slug($data->id ?? '');
+
         $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
+
         $unit = $this->findLocalUnit($moyskladUnits[$data->uom->meta->href ?? null] ?? null);
 
         $barcode = $this->extractBarcode($data);
@@ -261,6 +263,24 @@ class ProductsAndVariantsSyncWithMoySkladService
                 $variant->update(['sku' => null]);
                 $variant->delete();
             });
+
+
+        $existingVariantsCount = ProductVariant::where('product_id', $product->id)
+            ->whereNull('deleted_at')
+            ->count();
+
+
+
+        if ($existingVariantsCount > 0) {
+            $totalStock = ProductVariant::where('product_id', $product->id)
+                ->whereNull('deleted_at')
+                ->sum('stock');
+
+            // Обновляем поле stock_quantity у продукта
+            $product->update(['stock_quantity' => (int)$totalStock]);
+        }
+
+
     }
 
     private function upsertVariant(Product $product, array $stock, $data, $productData)
@@ -330,9 +350,6 @@ class ProductsAndVariantsSyncWithMoySkladService
                 return $variant;
             }
 
-
-            $totalStock = ProductVariant::where('product_id', $product->id)->sum('stock');
-            $product->update(['stock_quantity' => $totalStock]);
 
             return ProductVariant::create($attributes);
 

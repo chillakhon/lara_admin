@@ -68,7 +68,7 @@ class CategoryController extends Controller
         }
 
         return response()->json([
-            'message' => 'Category created successfully.',
+            'message' => 'Категория успешно создана.',
             'category' => $category
         ], 201);
     }
@@ -102,7 +102,7 @@ class CategoryController extends Controller
         }
 
         return response()->json([
-            'message' => 'Category updated successfully',
+            'message' => 'Категория успешно обновлена',
             'category' => $category
         ]);
     }

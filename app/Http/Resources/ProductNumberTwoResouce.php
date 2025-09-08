@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Laravel\Reverb\Loggers\Log;
@@ -55,13 +56,19 @@ class ProductNumberTwoResouce extends JsonResource
                 }
 
                 $available_variants->push([
+                    'id' => $variant->id,
                     'color_id' => $variant->color_id,
                     'size' => $variant->name,
                     'quantity' => $variant->stock,
+                    'images' => $variant->images ? ImageResource::collection($variant->images) : null,
                 ]);
 
             });
         }
+
+        $totalStock = $isAdmin
+            ? $this->inventory_balance
+            : $this->stock_quantity;
 
         return [
             // Your custom structure based on the JSON you shared
@@ -80,11 +87,11 @@ class ProductNumberTwoResouce extends JsonResource
             // 'created_at' => $this->created_at,
             // 'updated_at' => $this->updated_at,
             // 'deleted_at' => $this->deleted_at,
-            'price' => (float) $this->price,
-            'old_price' => (float) $this->old_price,
-            'stock_quantity' => (float) $this->inventory_balance,
+            'price' => (float)$this->price,
+            'old_price' => (float)$this->old_price,
+            'stock_quantity' => (float)$totalStock,
             $this->mergeWhen($isAdmin, [
-                 'cost_price' => (float) $this->cost_price,
+                'cost_price' => (float)$this->cost_price,
             ]),
             // 'currency' => $this->currency,
             // 'stock_quantity' => $this->stock_quantity,
@@ -92,16 +99,16 @@ class ProductNumberTwoResouce extends JsonResource
             // 'max_order_quantity' => $this->max_order_quantity,
             // 'is_featured' => $this->is_featured,
             'is_new' => $this->is_new,
-            'discount_price' => (float) $this->discount_price,
-            'discount_percentage' => (float) $this->discount_percentage,
-            'total_discount' => (float) $this->total_discount,
+            'discount_price' => (float)$this->discount_price,
+            'discount_percentage' => (float)$this->discount_percentage,
+            'total_discount' => (float)$this->total_discount,
             'discount_id' => $this->discount_id,
             'sku' => $this->sku,
             'barcode' => $this->barcode,
-            'weight' => (float) $this->weight,
-            'length' => (float) $this->length,
-            'width' => (float) $this->width,
-            'height' => (float) $this->height,
+            'weight' => (float)$this->weight,
+            'length' => (float)$this->length,
+            'width' => (float)$this->width,
+            'height' => (float)$this->height,
             // 'image_path' => $this->image_path,
             'main_image' => $this->main_image ? new ImageResource($this->main_image) : null,
             'images' => ImageResource::collection($this->images ?? []),

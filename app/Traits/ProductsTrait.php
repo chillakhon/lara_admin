@@ -12,6 +12,9 @@ trait ProductsTrait
 {
     public function products_query(Request $request): Builder
     {
+
+        $isAdmin = $request->boolean('admin', false);
+
         $products = Product
             ::with([
                 'images' => function ($sql) {
@@ -88,10 +91,19 @@ trait ProductsTrait
                     });
                 }
             })
-            ->when(!$request->boolean('admin', false), function ($query) {
+            ->when(!$isAdmin, function ($query) {
                 $query->where('is_active', true);
-            })
-            ->latest();
+            });
+
+
+        if (!$isAdmin) {
+            $products
+                ->orderByRaw('CASE WHEN stock_quantity > 0 THEN 0 ELSE 1 END')
+                ->orderByRaw('CASE WHEN price > 0 THEN 0 ELSE 1 END');
+        }
+
+        $products->latest();
+
 
         if ($request->get('type', 'simple')) {
             $products->where('type', $request->get('type', 'simple'));
@@ -109,6 +121,7 @@ trait ProductsTrait
         if ($request->filled('price_before')) {
             $products->where('price', '<=', (float)$request->input('price_before'));
         }
+
 
         return $products;
     }
