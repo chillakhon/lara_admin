@@ -7,6 +7,7 @@ use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Laravel\Reverb\Loggers\Log;
 
 trait ProductsTrait
 {
@@ -85,12 +86,6 @@ trait ProductsTrait
                             ->orWhere('stock_quantity', '>', 0);
                     });
                 }
-//                else {
-//                    $query->where(function ($q) {
-//                        $q->whereHas('variants', fn($qv) => $qv->where('stock_quantity', '<=', 0))
-//                            ->orWhere('stock_quantity', '<=', 0);
-//                    });
-//                }
             })
             ->when(!$isAdmin, function ($query) {
                 $query->where('is_active', true);
@@ -139,6 +134,7 @@ trait ProductsTrait
             }
 
             if (!empty($product['variants'])) {
+
                 foreach ($product['variants'] as &$variant) {
                     if ($isAdmin && isset($product_stock_sklad[$variant->uuid])) {
                         $variant_total_qty = $product_stock_sklad[$variant->uuid]['stock'] ?? 0.0;

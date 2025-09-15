@@ -4,6 +4,8 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
+use Laravel\Reverb\Loggers\Log;
 
 class ProductVariantNumberTwoResource extends JsonResource
 {
@@ -16,6 +18,12 @@ class ProductVariantNumberTwoResource extends JsonResource
     {
         $isAdmin = $request->boolean('admin', false);
 
+
+
+        DB::table('product_variants')
+            ->where('id', $this->id)
+            ->update(['stock' => $this->inventory_balance]);
+
         return [
             'id' => $this->id,
             'product_id' => $this->product_id,
@@ -23,10 +31,10 @@ class ProductVariantNumberTwoResource extends JsonResource
             'sku' => $this->sku,
             'code' => $this->code,
             'barcode' => $this->barcode,
-            'price' => (float) $this->price,
-            'old_price' => (float) $this->old_price,
-            'cost_price' => (float) $this->cost_price,
-            'stock_quantity' => (float) $this->inventory_balance,
+            'price' => (float)$this->price,
+            'old_price' => (float)$this->old_price,
+            'cost_price' => (float)$this->cost_price,
+            'stock_quantity' => (float)$this->inventory_balance,
             // 'stock_quantity' => $this->inventory_balance,
             // 'additional_cost' => $this->additional_cost,
             'type' => $this->type,
@@ -36,8 +44,8 @@ class ProductVariantNumberTwoResource extends JsonResource
             // 'updated_at' => $this->updated_at,
             // 'deleted_at' => $this->deleted_at,
             // 'inventory_balance' => $this->inventory_balance,
-            'discount_percentage' => (float) $this->discount_percentage,
-            'total_discount' => (float) $this->total_discount,
+            'discount_percentage' => (float)$this->discount_percentage,
+            'total_discount' => (float)$this->total_discount,
             'unit' => $this->unit ? new UnitResource($this->unit) : null,
             'color' => $this->table_color ? $this->table_color : null,
             // 'colors' => ColorResource::collection($this->colors ?? []),
