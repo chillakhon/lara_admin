@@ -84,12 +84,13 @@ trait ProductsTrait
                         $q->whereHas('variants', fn($qv) => $qv->where('stock_quantity', '>', 0))
                             ->orWhere('stock_quantity', '>', 0);
                     });
-                } else {
-                    $query->where(function ($q) {
-                        $q->whereHas('variants', fn($qv) => $qv->where('stock_quantity', '<=', 0))
-                            ->orWhere('stock_quantity', '<=', 0);
-                    });
                 }
+//                else {
+//                    $query->where(function ($q) {
+//                        $q->whereHas('variants', fn($qv) => $qv->where('stock_quantity', '<=', 0))
+//                            ->orWhere('stock_quantity', '<=', 0);
+//                    });
+//                }
             })
             ->when(!$isAdmin, function ($query) {
                 $query->where('is_active', true);
