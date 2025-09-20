@@ -50,6 +50,22 @@ class ClientController extends Controller
                         break;
                 }
             })
+
+            ->when($request->birth_date_from || $request->birth_date_to, function ($query) use ($request) {
+                $query->whereHas('profile', function ($q) use ($request) {
+                    if ($request->birth_date_from && $request->birth_date_to) {
+                        // если есть обе даты — используем диапазон
+                        $q->whereBetween('birthday', [$request->birth_date_from, $request->birth_date_to]);
+                    } elseif ($request->birth_date_from) {
+                        // только с какой даты
+                        $q->where('birthday', '>=', $request->birth_date_from);
+                    } elseif ($request->birth_date_to) {
+                        // только до какой даты
+                        $q->where('birthday', '<=', $request->birth_date_to);
+                    }
+                });
+            })
+
             ->when($request->sort, function ($query, $sort) {
                 [$column, $direction] = explode(',', $sort);
                 $query->orderBy($column, $direction);
