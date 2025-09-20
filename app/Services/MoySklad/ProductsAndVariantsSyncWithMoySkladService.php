@@ -294,10 +294,15 @@ class ProductsAndVariantsSyncWithMoySkladService
                 ->firstWhere('name', 'Цвет');
 
             $color_name = $colorCharacteristic?->value ?? '';
-            $findColorFromTable = Color::where(function ($sql) use ($color_name) {
-                $sql->where('name', 'like', "%{$color_name}%")
-                    ->orWhere('normalized_name', 'like', "%{$color_name}%");
-            })->first();
+
+
+            if (!empty($color_name)) {
+                $findColorFromTable = Color::where(function ($sql) use ($color_name) {
+                    $sql->where('name', 'like', "%{$color_name}%")
+                        ->orWhere('normalized_name', 'like', "%{$color_name}%");
+                })->first();
+            }
+
 
             $variant_name = mb_substr($characteristic?->value ?? '', 0, 255);
             $slug = Str::slug($variant_name);
@@ -327,7 +332,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             $attributes = [
                 'uuid' => $data->id,
                 'product_id' => $product->id,
-                'color_id' => $findColorFromTable?->id,
+                'color_id' => $findColorFromTable?->id ?? null,
                 'name' => $variant_name,
                 'unit_id' => $product->default_unit_id,
 //                'sku' => $sku,
@@ -346,6 +351,8 @@ class ProductsAndVariantsSyncWithMoySkladService
 
                 unset($attributes['uuid']);
                 $variant->update($attributes);
+
+
 
                 return $variant;
             }

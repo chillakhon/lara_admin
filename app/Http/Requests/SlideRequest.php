@@ -22,7 +22,7 @@ class SlideRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
             'image' => 'nullable|image|max:10240', // файл: до 10MB
             'subtitle' => 'nullable|string|max:255',
             'text' => 'nullable|string',
