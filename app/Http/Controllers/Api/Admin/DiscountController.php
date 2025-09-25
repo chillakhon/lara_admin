@@ -10,7 +10,6 @@ use App\Models\CategoryProduct;
 use App\Models\Discount;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use DB;
 use Illuminate\Http\Request;
 
 class DiscountController extends Controller

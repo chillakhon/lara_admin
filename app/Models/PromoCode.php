@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class PromoCode extends Model
@@ -23,6 +24,9 @@ class PromoCode extends Model
         'max_uses',
         'total_uses',
         'is_active',
+        // добавляем новый флаг
+        'applies_to_all_products',
+        'type'
     ];
 
     protected $casts = [
@@ -32,6 +36,7 @@ class PromoCode extends Model
         'discount_amount' => 'decimal:2',
         'max_uses' => 'integer',
         'total_uses' => 'integer',
+        'applies_to_all_products' => 'boolean',
     ];
 
 //    protected $appends = [
@@ -61,10 +66,10 @@ class PromoCode extends Model
         return $this->belongsToMany(Client::class, 'promo_code_client');
     }
 
-//    public function usages()
-//    {
-//        return $this->hasMany(Order::class);
-//    }
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'promo_code_product');
+    }
 
 
     public function getImageUrlAttribute()
@@ -99,22 +104,46 @@ class PromoCode extends Model
 
     public function isAvailableForClient($clientId)
     {
-        if (!$this->isAvailable()) {
+        try {
+
+            if (!$this->isAvailable()) {
+
+                return false;
+            }
+
+            // Если промокод привязан к конкретным клиентам
+            if ($this->clients()->exists()) {
+
+                $exists = $this->clients()->where('client_id', $clientId)->exists();
+
+                return $exists;
+            }
+
+            // Если промокод уже использован этим клиентом
+            if ($this->usages()->where('client_id', $clientId)->exists()) {
+
+                return false;
+            }
+
+            return true;
+
+        } catch (\Throwable $e) {
+
             return false;
         }
-
-        // Если промокод привязан к конкретным клиентам
-        if ($this->clients()->exists()) {
-            return $this->clients()->where('client_id', $clientId)->exists();
-        }
-
-        // Если промокод уже использован этим клиентом
-        if ($this->usages()->where('client_id', $clientId)->exists()) {
-            return false;
-        }
-
-        return true;
     }
+
+
+
+    public function isApplicableToProduct($productId): bool
+    {
+        if ($this->applies_to_all_products) {
+            return true;
+        }
+
+        return $this->products()->where('product_id', $productId)->exists();
+    }
+
 
 
     /**
@@ -128,8 +157,6 @@ class PromoCode extends Model
 
         return min($this->discount_amount, $amount);
     }
-
-
 
 
 }

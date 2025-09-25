@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\PromoCode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PromoCodeController extends Controller
 {
@@ -58,6 +59,10 @@ class PromoCodeController extends Controller
             'is_active' => 'boolean',
             'client_ids' => 'nullable|array',
             'client_ids.*' => 'exists:clients,id',
+            'applies_to_all_products' => 'boolean',
+            'product_ids' => 'nullable|array',
+            'product_ids.*' => 'exists:products,id',
+            'type' => 'nullable|in:all,specific',
         ]);
 
         // Обработка загрузки изображения
@@ -73,6 +78,9 @@ class PromoCodeController extends Controller
             $promo->clients()->attach($validated['client_ids']);
         }
 
+        if (!empty($validated['product_ids'])) {
+            $promo->products()->sync($validated['product_ids']);
+        }
         // Загружаем промокод с клиентами для ответа
         $promo->load('clients');
 
@@ -97,6 +105,10 @@ class PromoCodeController extends Controller
             'is_active' => 'boolean',
             'client_ids' => 'nullable|array',
             'client_ids.*' => 'exists:clients,id',
+            'applies_to_all_products' => 'boolean',
+            'product_ids' => 'nullable|array',
+            'product_ids.*' => 'exists:products,id',
+            'type' => 'nullable|in:all,specific',
         ]);
 
         // Обработка загрузки изображения
@@ -115,6 +127,11 @@ class PromoCodeController extends Controller
         // Обновляем клиентов
         if (isset($validated['client_ids'])) {
             $promoCode->clients()->sync($validated['client_ids']);
+        }
+
+
+        if (!empty($validated['product_ids'])) {
+            $promoCode->products()->sync($validated['product_ids']);
         }
 
         // Загружаем промокод с клиентами для ответа
@@ -148,6 +165,7 @@ class PromoCodeController extends Controller
         $request->validate([
             'code' => 'required|string',
             'client_id' => 'nullable|exists:clients,id',
+            'product_id' => 'nullable|exists:products,id',
             // 'amount' => 'required|numeric|min:0'
         ]);
 
@@ -182,11 +200,20 @@ class PromoCodeController extends Controller
             })
             ->first();
 
+
         if (!$promoCode) {
             return response()->json([
                 'message' => 'Промокод не найден или истек срок его действия'
             ], 404);
         }
+
+
+        if (!$promoCode->isAvailableForClient($client->id)) {
+            return response()->json([
+                'message' => 'Промокод недоступен для этого клиента или уже использован'
+            ], 400);
+        }
+
 
         if ($promoCode->max_uses && $promoCode->total_uses >= $promoCode->max_uses) {
             return response()->json([
@@ -200,13 +227,24 @@ class PromoCodeController extends Controller
             ], 400);
         }
 
+
+        if ($request->filled('product_id')) {
+
+            if ($promoCode->type == 'specific') {
+                $applies = $promoCode->products()->where('product_id', $request->product_id)->exists();
+                if (!$applies) {
+                    return response()->json([
+                        'message' => 'Этот промокод не применяется к выбранному товару'
+                    ], 400);
+                }
+            }
+        }
+
         return response()->json([
             'message' => "Купон доступен для использования.",
             'promo_code' => $promoCode,
         ]);
     }
-
-
 
 
     public function getImage(Request $request)

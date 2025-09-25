@@ -33,10 +33,12 @@ use App\Http\Controllers\Api\Admin\ProductionBatchController;
 use App\Http\Controllers\Api\Admin\ProductionController;
 use App\Http\Controllers\Api\Admin\ProductVariantController;
 use App\Http\Controllers\Api\Admin\PromoCodeClientController;
+use App\Http\Controllers\Api\Admin\PromoCodeProductController;
 use App\Http\Controllers\Api\Admin\RecipeController;
 use App\Http\Controllers\Api\Admin\RoleController;
 use App\Http\Controllers\Api\Admin\SettingsController;
 use App\Http\Controllers\Api\Admin\ShipmentController;
+use App\Http\Controllers\Api\Admin\SimpleProductController;
 use App\Http\Controllers\Api\Admin\TaskAttachmentController;
 use App\Http\Controllers\Api\Admin\TaskCommentController;
 use App\Http\Controllers\Api\Admin\TaskController;
@@ -70,7 +72,6 @@ use Illuminate\Support\Facades\Route;
 
 
 // routes/api.php
-
 
 
 Route::get('/admin-user', [AuthenticatedSessionController::class, 'get_admin_user'])
@@ -297,6 +298,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
 
+    Route::group(['prefix' => 'promo-code-products'], function () {
+        Route::get('', [PromoCodeProductController::class, 'index']);
+        Route::get('/products/{promoCodeId}', [PromoCodeProductController::class, 'getProductsByPromoCode']);
+        Route::post('', [PromoCodeProductController::class, 'store']);
+        Route::get('/{promoCodeProduct}', [PromoCodeProductController::class, 'show']);
+        Route::put('/{promoCodeProduct}', [PromoCodeProductController::class, 'update']);
+        Route::delete('/{promoCodeProduct}', [PromoCodeProductController::class, 'destroy']);
+    });
+
+
     Route::prefix('/orders')->group(function () {
         Route::post('/', [OrderController::class, 'store']);
         Route::get('/delivery-methods', [DeliveryMethodController::class, 'index']);
@@ -369,7 +380,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     //        // Products
     Route::group(['prefix' => 'products', 'as' => 'products.'/*, 'middleware' => ['permission:products.view,products.manage']*/], function () {
-        // Route::get('/', [ProductController::class, 'index']);
+
+//        Route::get('/', [ProductController::class, 'index']);
+
+        Route::get('/simple', [SimpleProductController::class, 'index']);
+
         Route::post('/', [ProductController::class, 'store']);
 
         Route::get('/{product}', [ProductController::class, 'show']);
@@ -706,8 +721,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
             ->middleware('permission:settings.manage')
             ->name('update');
     });
-
-
 
 
     Route::prefix('/third-party-integrations')->group(function () {
