@@ -86,31 +86,7 @@ class ReviewController extends Controller
 
     public function getMainPageReviews(Request $request)
     {
-        // Запрос отзывов с нужными связями, исключая client.user
-        $reviewsQuery = Review::query()
-            ->with([
-                'attributes',
-                'responses' => function ($query) {
-                    $query->with('user')
-                        ->orderBy('created_at', 'asc')
-                        ->whereNull('deleted_at');
-                },
-                'reviewable',
-                'images',
-                'client.profile', // только client
-            ]);
-
-        // Получаем id последних отзывов по уникальным reviewable_type и reviewable_id
-        $latestReviews = $reviewsQuery
-            ->selectRaw('MAX(id) as id')
-            ->groupBy('reviewable_type', 'reviewable_id')
-            ->pluck('id')
-            ->toArray();
-
-        // Выбираем случайные 10 или меньше, если меньше доступно
-        $randomIds = collect($latestReviews)->random(min(10, count($latestReviews)))->toArray();
-
-        // Получаем сами отзывы с отношениями по выбранным id
+        // Загружаем последние 10 отзывов с нужными связями
         $reviews = Review::with([
             'attributes',
             'responses' => function ($query) {
@@ -122,7 +98,8 @@ class ReviewController extends Controller
             'images',
             'client.profile',
         ])
-            ->whereIn('id', $randomIds)
+            ->orderByDesc('created_at') // ⬅️ показываем самые новые
+            ->take(10) // ⬅️ максимум 10
             ->get();
 
         return response()->json([
@@ -130,6 +107,7 @@ class ReviewController extends Controller
             'data' => ReviewResource::collection($reviews),
         ]);
     }
+
 
 
     public function attributes(Request $request)
