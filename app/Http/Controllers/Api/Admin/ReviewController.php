@@ -98,6 +98,7 @@ class ReviewController extends Controller
             'images',
             'client.profile',
         ])
+            ->where('status', 'published')
             ->orderByDesc('created_at') // ⬅️ показываем самые новые
             ->take(10) // ⬅️ максимум 10
             ->get();
@@ -107,7 +108,6 @@ class ReviewController extends Controller
             'data' => ReviewResource::collection($reviews),
         ]);
     }
-
 
 
     public function attributes(Request $request)
