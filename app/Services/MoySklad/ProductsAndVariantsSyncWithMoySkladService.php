@@ -270,7 +270,6 @@ class ProductsAndVariantsSyncWithMoySkladService
             ->count();
 
 
-
         if ($existingVariantsCount > 0) {
             $totalStock = ProductVariant::where('product_id', $product->id)
                 ->whereNull('deleted_at')
@@ -304,6 +303,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             }
 
 
+
             $variant_name = mb_substr($characteristic?->value ?? '', 0, 255);
             $slug = Str::slug($variant_name);
             $sku = $slug . '-' . $product->id;
@@ -313,12 +313,12 @@ class ProductsAndVariantsSyncWithMoySkladService
                 ->where('uuid', $data->id)
                 ->first();
 
-            if (!$variant) {
-                $variant = ProductVariant::withTrashed()
-                    ->where('sku', $sku)
-                    ->where('product_id', $product->id)
-                    ->first();
-            }
+//            if (!$variant) {
+//                $variant = ProductVariant::withTrashed()
+//                    ->where('sku', $sku)
+//                    ->where('product_id', $product->id)
+//                    ->first();
+//            }
 
 
             $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
@@ -351,7 +351,6 @@ class ProductsAndVariantsSyncWithMoySkladService
 
                 unset($attributes['uuid']);
                 $variant->update($attributes);
-
 
 
                 return $variant;

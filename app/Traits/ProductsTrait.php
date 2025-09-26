@@ -108,6 +108,9 @@ trait ProductsTrait
         if ($request->get('product_id')) {
             $products->where('id', $request->get('product_id'));
         }
+        if ($request->get('is_active')) {
+            $products->where('is_active', $request->get('is_active'));
+        }
 
 
         if ($request->filled('price_after')) {
