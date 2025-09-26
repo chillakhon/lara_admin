@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\MaterialService;
 use App\Services\MoySklad\MoySkladHelperService;
+use App\Services\ProductService;
 use App\Traits\HelperTrait;
 use App\Traits\ImageTrait;
 use App\Traits\ProductsTrait;
@@ -29,10 +30,12 @@ class ProductController extends Controller
     use HelperTrait, ImageTrait, ProductsTrait;
 
     protected $materialService;
+    protected ProductService $productService;
 
-    public function __construct(MaterialService $materialService)
+    public function __construct(MaterialService $materialService, ProductService $productService)
     {
         $this->materialService = $materialService;
+        $this->productService = $productService;
     }
 
     public function index(Request $request)
@@ -547,7 +550,6 @@ class ProductController extends Controller
             }
 
 
-
             if ($createdVariants) {
                 $massCreatedModifications = $moyskadController->mass_variant_creation_and_update(
                     $createdVariants,
@@ -822,5 +824,39 @@ class ProductController extends Controller
             'cost' => $cost
         ], 200);
     }
+
+
+    public function bulkActivate(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:products,id',
+        ]);
+
+        $this->productService->setActive($validated['ids'], true);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Выбранные товары и их варианты активированы',
+            'ids' => $validated['ids'],
+        ]);
+    }
+
+    public function bulkDeactivate(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:products,id',
+        ]);
+
+        $this->productService->setActive($validated['ids'], false);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Выбранные товары и их варианты деактивированы',
+            'ids' => $validated['ids'],
+        ]);
+    }
+
 
 }

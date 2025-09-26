@@ -383,6 +383,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 //        Route::get('/', [ProductController::class, 'index']);
 
+
+        Route::post('/bulk-activate', [ProductController::class, 'bulkActivate']);
+        Route::post('/bulk-deactivate', [ProductController::class, 'bulkDeactivate']);
+
+
         Route::get('/simple', [SimpleProductController::class, 'index']);
 
         Route::post('/', [ProductController::class, 'store']);
