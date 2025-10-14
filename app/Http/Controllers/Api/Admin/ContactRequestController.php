@@ -7,8 +7,11 @@ use App\Http\Requests\StoreContactRequest;
 use App\Models\Client;
 use App\Models\ContactRequest;
 use App\Models\UserProfile;
+use App\Notifications\NewContactRequestNotification;
+use App\Services\ContactRequest\ContactRequestService;
 use App\Services\TelegramNotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 
 class ContactRequestController extends Controller
 {
@@ -45,13 +48,16 @@ class ContactRequestController extends Controller
     }
 
 
-    public function store(StoreContactRequest $request)
+    public function store(StoreContactRequest $request, ContactRequestService $service)
     {
         $data = $request->validated();
         $data['ip'] = $request->ip();
         $data['user_agent'] = $request->userAgent();
 
         $contactRequest = ContactRequest::create($data);
+
+        $service->handleNewContactRequest($contactRequest);
+
 
         if (!empty($data['client_id'])) {
             $this->sendNotificationsToTelegram($contactRequest, $data['client_id']);
@@ -74,6 +80,9 @@ class ContactRequestController extends Controller
             $telegramService->sendContactRequestNotificationToClient($contactRequest, $profile);
         }
     }
+
+
+
 
 
     public function show(ContactRequest $contact_request)

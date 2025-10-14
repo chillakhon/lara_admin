@@ -303,6 +303,11 @@ class ProductsAndVariantsSyncWithMoySkladService
             }
 
 
+//            if ($product->id == 236) {
+//                \Illuminate\Support\Facades\Log::debug([
+//                    'varinats' => $data->characteristics ?? [],
+//                ]);
+//            }
 
             $variant_name = mb_substr($characteristic?->value ?? '', 0, 255);
             $slug = Str::slug($variant_name);

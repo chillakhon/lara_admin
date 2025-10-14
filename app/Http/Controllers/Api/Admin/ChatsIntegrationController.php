@@ -115,6 +115,7 @@ class ChatsIntegrationController extends Controller
             'password' => 'required|string',
             'encryption' => 'nullable|string',
             'from_address' => 'nullable|email',
+            'notification_email' => 'nullable|email',
         ]);
 
         $data = $request->only([
@@ -125,6 +126,7 @@ class ChatsIntegrationController extends Controller
             'password',
             'encryption',
             'from_address',
+            'notification_email',
         ]);
 
         // Apply defaults if missing
