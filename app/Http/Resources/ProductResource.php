@@ -130,7 +130,7 @@ class ProductResource extends JsonResource
                             'final' => max($finalPrice, 0),
                             'has_discount' => $finalPrice < $originalPrice
                         ],
-                        'stock' => $variant->stock,
+                        'stock_quantity' => $variant->stock_quantity,
                         'unit' => $variant->unit->name ?? null,
                         'option_values' => $variant->optionValues->map(function ($optionValue) {
                             return [

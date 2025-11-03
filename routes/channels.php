@@ -7,8 +7,8 @@ Broadcast::channel('conversation.{conversationId}', function ($user, $conversati
 
     Log::info('Auth attempt for channel', [
         'conversation_id' => $conversationId,
-        'user' => $user ? $user->only(['id','email']) : null,
-        'is_authenticated' => (bool) $user,
+        'user' => $user ? $user->only(['id', 'email']) : null,
+        'is_authenticated' => (bool)$user,
     ]);
 
     if (!$user) {
@@ -21,4 +21,14 @@ Broadcast::channel('conversation.{conversationId}', function ($user, $conversati
     return true;
 
 
+});
+
+
+Broadcast::channel('admin.notifications', function ($user) {
+
+    if (!$user) {
+        return false;
+    }
+
+    return true;
 });

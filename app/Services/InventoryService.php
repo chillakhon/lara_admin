@@ -37,7 +37,7 @@ class InventoryService
                     'cost_price' => $cost_price,
                     'old_price' => $old_price,
                     'barcode' => $barcode,
-                    'stock' => $quantity, // temporary
+                    'stock_quantity' => $quantity, // temporary
                 ];
 
                 $data = array_filter($data, function ($value) {

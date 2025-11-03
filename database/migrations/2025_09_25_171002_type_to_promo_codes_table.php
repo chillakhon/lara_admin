@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::table('promo_codes', function (Blueprint $table) {
             $table->enum('type', ['all', 'specific'])
                 ->nullable()
-                ->default(null)
+
                 ->after('is_active')
                 ->comment('Определяет область применения промокода: all - на все товары, specific - только на выбранные');
         });

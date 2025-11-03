@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Models\InventoryBalance;
 use App\Models\Product;
+use App\Models\PromoCode;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -11,10 +12,15 @@ use Laravel\Reverb\Loggers\Log;
 
 trait ProductsTrait
 {
+
+
     public function products_query(Request $request): Builder
     {
 
         $isAdmin = $request->boolean('admin', false);
+
+        $sortBy = $request->get('sort_by', false);
+        $sortOrder = $request->get('sort_order', 'asc');
 
         $products = Product
             ::with([
@@ -89,6 +95,10 @@ trait ProductsTrait
             })
             ->when(!$isAdmin, function ($query) {
                 $query->where('is_active', true);
+            })
+            ->when($sortBy, function ($query) use ($sortBy, $sortOrder) {
+
+                $query->orderBy($sortBy ?? 'id', $sortOrder ?? 'asc');
             });
 
 
@@ -120,7 +130,11 @@ trait ProductsTrait
         if ($request->filled('price_before')) {
             $products->where('price', '<=', (float)$request->input('price_before'));
         }
-
+//
+//
+//        if ($request->filled('sort_by')) {
+//            $products->orderBy($request->get('sort_by'), $request->get('sort_order', 'asc'));
+//        }
 
         return $products;
     }
@@ -159,16 +173,40 @@ trait ProductsTrait
         foreach ($products as $product) {
             $this->applyDiscountToProduct($product);
 
-            if ($product->relationLoaded('variants')) {
-                foreach ($product->variants as $variant) {
-                    $this->applyDiscountToProduct($variant);
+
+            if ($products)
+
+                if ($product->relationLoaded('variants')) {
+                    foreach ($product->variants as $variant) {
+                        $this->applyDiscountToProduct($variant);
+                    }
                 }
-            }
+
         }
     }
 
     public function applyDiscountToProduct($model): void
     {
+
+
+        if ($model->name === 'Подарочный сертификат') {
+            $model->discount_id = null;
+            $model->discount_percentage = null;
+            $model->total_discount = null;
+            return;
+        }
+
+        if ($model->product_id) {
+            $parentProduct = Product::find($model->product_id);
+            if ($parentProduct && $parentProduct->name === 'Подарочный сертификат') {
+                $model->discount_id = null;
+                $model->discount_percentage = null;
+                $model->total_discount = null;
+                return;
+            }
+        }
+
+
         // Support both Product and ProductVariant
         $price = $model->price;
         $oldPrice = $model->old_price;
@@ -229,4 +267,100 @@ trait ProductsTrait
             'volume' => round($volumeInM3, 6),
         ];
     }
+
+
+    ////new
+
+    public function applyPromoCodeToCollection(Collection $products, ?PromoCode $promoCode = null): void
+    {
+        if (!$promoCode || !$promoCode->isAvailable()) {
+            return;
+        }
+
+        foreach ($products as $product) {
+            // Проверяем, применим ли промокод к этому продукту
+            if (!$promoCode->isApplicableToProduct($product->id)) {
+                continue;
+            }
+
+            // Исключаем подарочные сертификаты
+            if ($product->name === 'Подарочный сертификат') {
+                continue;
+            }
+
+            $this->applyPromoCodeToProduct($product, $promoCode);
+
+            // Применяем к вариантам
+            if ($product->relationLoaded('variants')) {
+                foreach ($product->variants as $variant) {
+                    // Проверяем родителя варианта
+                    if ($variant->product_id) {
+                        $parentProduct = $variant->relationLoaded('product')
+                            ? $variant->product
+                            : Product::find($variant->product_id);
+
+                        if ($parentProduct && $parentProduct->name === 'Подарочный сертификат') {
+                            continue;
+                        }
+                    }
+
+                    // Исключаем варианты с именем подарочного сертификата
+                    if ($variant->name === 'Подарочный сертификат') {
+                        continue;
+                    }
+
+                    $this->applyPromoCodeToProduct($variant, $promoCode);
+                }
+            }
+        }
+    }
+
+
+    public function applyPromoCodeToProduct($model, PromoCode $promoCode): void
+    {
+        // Определяем, есть ли у товара скидка
+        $hasDiscount = $model->discount_id || ($model->old_price && $model->old_price > $model->price);
+
+        // Проверяем, можно ли применить промокод
+        if (!$promoCode->canApplyToProductWithDiscount($hasDiscount)) {
+            $model->promo_code_applicable = false;
+            return;
+        }
+
+        // Получаем оригинальную и текущую цену
+        $originalPrice = $model->old_price && $model->old_price > $model->price
+            ? $model->old_price
+            : $model->price;
+
+        $currentPrice = $model->price;
+
+        // Рассчитываем итоговую цену с промокодом
+        $result = $promoCode->calculateFinalPrice($originalPrice, $currentPrice, $hasDiscount);
+
+        // Сохраняем информацию о промокоде
+        $model->promo_code_id = $promoCode->id;
+        $model->promo_code_discount = $result['promo_discount'];
+        $model->price_with_promo = $result['final_price'];
+        $model->promo_code_applicable = true;
+
+        // Если промокод заменяет скидку, сохраняем старую цену
+        if ($promoCode->discount_behavior === PromoCode::DISCOUNT_BEHAVIOR_REPLACE && $hasDiscount) {
+            $model->original_discount_replaced = true;
+            $model->price_before_promo = $currentPrice;
+        }
+    }
+
+
+    public function applyDiscountsAndPromoCode(Collection $products, ?PromoCode $promoCode = null): void
+    {
+        // Сначала применяем обычные скидки
+        $this->applyDiscountsToCollection($products);
+
+        // Затем применяем промокод
+        if ($promoCode) {
+            $this->applyPromoCodeToCollection($products, $promoCode);
+        }
+    }
+
+
 }

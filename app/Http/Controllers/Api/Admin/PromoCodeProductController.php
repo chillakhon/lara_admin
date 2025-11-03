@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PromoCodeProduct;
 use Illuminate\Http\Request;
+use Laravel\Reverb\Loggers\Log;
 
 class PromoCodeProductController extends Controller
 {
@@ -19,15 +20,32 @@ class PromoCodeProductController extends Controller
     }
 
 
-
-
-    public function getProductsByPromoCode(string $promoCodeId)
+    public function getProductsByPromoCode(Request $request, string $promoCodeId)
     {
-        // Получаем продукты по промокоду
-        $products = PromoCodeProduct::with('product')
+        $withVariants = $request->boolean('withVariants');
+
+        $promoProducts = PromoCodeProduct::with(['product', 'productVariant'])
             ->where('promo_code_id', $promoCodeId)
-            ->get()
-            ->pluck('product'); // вытаскиваем продукты из связей
+            ->get();
+
+        if ($withVariants) {
+            $products = $promoProducts
+                ->groupBy('product_id')
+                ->map(function ($items) {
+                    $product = $items->first()->product;
+
+                    $variants = $items->map(fn($item) => $item->productVariant)
+                        ->filter()
+                        ->values();
+
+                    $product->variants = $variants;
+
+                    return $product;
+                })->values();
+        } else {
+            $products = $promoProducts->pluck('product')->unique('id')->values();
+        }
+
 
         return response()->json([
             'success' => true,

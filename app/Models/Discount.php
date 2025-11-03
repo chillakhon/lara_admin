@@ -52,4 +52,5 @@ class Discount extends Model
     {
         return $this->morphedByMany(Category::class, 'discountable');
     }
+
 }

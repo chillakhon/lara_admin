@@ -13,7 +13,7 @@ class ProductVariantResource extends JsonResource
             'name' => $this->name,
             'article' => $this->article,
             'price' => $this->price,
-            'stock' => $this->stock,
+            'stock_quantity' => $this->stock_quantity,
             'size' => $this->whenLoaded('size', function () {
                 return [
                     'id' => $this->product->size->id,

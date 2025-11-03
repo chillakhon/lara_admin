@@ -30,7 +30,6 @@ class ProductNumberTwoResouce extends JsonResource
                 $size = null;
                 $color = null;
 
-//                \Illuminate\Support\Facades\Log::info('variant: ',  $variant);
                 if (Str::contains($variant->name, '-')) {
                     $segments = explode('-', $variant->name);
                     $size = trim(end($segments));
@@ -59,7 +58,7 @@ class ProductNumberTwoResouce extends JsonResource
                     'id' => $variant->id,
                     'color_id' => $variant->color_id,
                     'size' => $variant->name,
-                    'quantity' => $variant->stock,
+                    'quantity' => $variant->stock_quantity,
                     'price' => $variant->price,
                     'images' => $variant->images ? ImageResource::collection($variant->images) : null,
                 ]);
@@ -71,10 +70,15 @@ class ProductNumberTwoResouce extends JsonResource
             ? $this->inventory_balance
             : $this->stock_quantity;
 
+
+
+
         return [
             // Your custom structure based on the JSON you shared
             'id' => $this->id,
             'name' => $this->name,
+            'marketplace_links' => $this->marketplace_links ? json_decode($this->marketplace_links, true) : null,
+            'display_order' => (int)$this->display_order,
             'slug' => $this->slug,
             'code' => $this->code,
             'description' => $this->description,

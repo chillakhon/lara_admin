@@ -5,6 +5,7 @@ namespace App\Services\Messaging;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Messaging\Adapters\VKAdapter;
 use Illuminate\Support\Facades\DB;
 use App\Services\Messaging\Adapters\TelegramAdapter;
 use App\Models\Client;
@@ -13,16 +14,24 @@ use Illuminate\Support\Facades\Log;
 class ConversationService
 {
     protected $telegramAdapter;
+    protected $vkAdapter;
 
     public function __construct(TelegramAdapter $telegramAdapter)
     {
         $this->telegramAdapter = $telegramAdapter;
+
+        try {
+            $this->vkAdapter = new VKAdapter();
+        } catch (\Exception $e) {
+            Log::warning("VKAdapter not available: " . $e->getMessage());
+            $this->vkAdapter = null;
+        }
+
     }
 
     public function createConversation(string $source, string $externalId, ?int $clientId = null): Conversation
     {
 
-//        return 44;
 
         return DB::transaction(function () use ($source, $externalId, $clientId) {
             // Проверяем существование клиента
@@ -30,9 +39,6 @@ class ConversationService
                 throw new \InvalidArgumentException("Client not found: {$clientId}");
             }
 
-
-            // Автоматическое назначение менеджера
-//            $this->assignManager($conversation);
 
             return Conversation::create([
                 'source' => $source,
@@ -73,25 +79,28 @@ class ConversationService
                 'unread_messages_count' => DB::raw('unread_messages_count + 1'),
             ]);
 
-            // Отправка через адаптер
-            if ($messageData['direction'] === 'outgoing' && $conversation->source === 'telegram') {
-                try {
+            // Отправка через адаптер в зависимости от источника
+            if ($messageData['direction'] === 'outgoing') {
+                $sent = false;
+
+                if ($conversation->source === 'telegram') {
                     $sent = $this->telegramAdapter->sendMessage(
                         $conversation->external_id,
                         $messageData['content'],
                         $messageData['attachments'] ?? []
                     );
-
-                    $message->update([
-                        'status' => $sent ? 'sent' : 'failed'
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Failed to send message:', [
-                        'conversation_id' => $conversation->id,
-                        'error' => $e->getMessage()
-                    ]);
-                    $message->update(['status' => 'failed']);
+                } elseif ($conversation->source === 'vk' && $this->vkAdapter) {
+                    $sent = $this->vkAdapter->sendMessage(
+                        $conversation->external_id,
+                        $messageData['content'],
+                        $messageData['attachments'] ?? []
+                    );
                 }
+
+                $message->update([
+                    'status' => $sent ? 'sent' : 'failed'
+                ]);
+
             }
 
             if ($conversation->status === 'new') {

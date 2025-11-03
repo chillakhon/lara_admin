@@ -45,6 +45,8 @@ class Product extends Model implements HasMedia
         'height',
         'currency',
         'uuid',
+        'marketplace_links',
+        'display_order',
     ];
 
     protected $guarded = ["id"];
@@ -61,6 +63,8 @@ class Product extends Model implements HasMedia
         'length' => 'decimal:2',
         'width' => 'decimal:2',
         'height' => 'decimal:2',
+        'marketplace_links' => 'array',
+        'display_order' => 'integer',
     ];
 
     protected static function boot()
@@ -313,4 +317,52 @@ class Product extends Model implements HasMedia
     {
         return $this->discountable?->discount;
     }
+
+    public function discounts(): MorphToMany
+    {
+        return $this->morphToMany(Discount::class, 'discountable');
+    }
+
+    public function getActiveDiscountAttribute()
+    {
+        return $this->discounts()
+            ->where('is_active', true)
+            ->first();
+    }
+
+
+
+
+    public function scopeOrderedForDisplay($query)
+    {
+        return $query->where('is_active', true)
+            ->orderBy('display_order', 'asc')
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Scope для получения товаров определенного диапазона порядка
+     */
+    public function scopeInOrderRange($query, int $from, int $to)
+    {
+        return $query->whereBetween('display_order', [$from, $to]);
+    }
+
+    /**
+     * Получить позицию товара в каталоге
+     */
+    public function getDisplayPositionAttribute(): int
+    {
+        return $this->display_order;
+    }
+
+    /**
+     * Установить позицию товара (wrapper для удобства)
+     */
+    public function setDisplayOrder(int $order): self
+    {
+        $this->display_order = $order;
+        return $this;
+    }
+
 }

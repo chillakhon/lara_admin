@@ -22,7 +22,7 @@ class ProductVariantNumberTwoResource extends JsonResource
 
         DB::table('product_variants')
             ->where('id', $this->id)
-            ->update(['stock' => $this->inventory_balance]);
+            ->update(['stock_quantity' => $this->inventory_balance]);
 
         return [
             'id' => $this->id,

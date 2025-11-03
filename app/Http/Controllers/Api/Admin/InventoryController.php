@@ -279,27 +279,7 @@ class InventoryController extends Controller
         }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/inventory/stock",
-     *     summary="Получить остаток товара",
-     *     tags={"Inventory"},
-     *     @OA\Parameter(
-     *         name="item_type",
-     *         in="query",
-     *         required=true,
-     *         @OA\Schema(type="string", enum={"material", "product", "variant"})
-     *     ),
-     *     @OA\Parameter(
-     *         name="item_id",
-     *         in="query",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(response=200, description="Остаток найден"),
-     *     @OA\Response(response=404, description="Ошибка: не найдено")
-     * )
-     */
+
     public function getStock(Request $request)
     {
         $validated = $request->validate([

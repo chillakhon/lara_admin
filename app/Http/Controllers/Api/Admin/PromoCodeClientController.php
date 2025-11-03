@@ -136,7 +136,7 @@ class PromoCodeClientController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
-        // Получаем промокоды (убираем total_uses из выборки)
+        // Получаем промокоды (убираем times_uses из выборки)
         $promoCodes = $query->get([
             'id',
             'code',

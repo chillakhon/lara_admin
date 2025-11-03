@@ -13,7 +13,8 @@ class Discountable extends Model
     protected $guarded = ['id'];
 
     public function discount()
-{
-    return $this->belongsTo(Discount::class);
-}
+    {
+        return $this->belongsTo(Discount::class);
+    }
+
 }

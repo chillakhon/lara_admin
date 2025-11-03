@@ -143,70 +143,13 @@ class ProductVariantController extends Controller
         }
     }
 
-    /**
-     * @OA\Put(
-     *     path="/api/products/variants/{variant}",
-     *     summary="Update a product variant",
-     *     tags={"Product Variants"},
-     *     security={{"bearerAuth": {}}},
-     *
-     *     @OA\Parameter(
-     *         name="variant",
-     *         in="path",
-     *         description="ID of the variant",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name", "price", "stock"},
-     *             @OA\Property(property="name", type="string", example="Updated Variant Name"),
-     *             @OA\Property(property="price", type="number", format="float", example=29.99),
-     *             @OA\Property(property="stock", type="integer", example=100)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Variant updated successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Variant updated successfully"),
-     *             @OA\Property(
-     *                 property="variant",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="Updated Variant Name"),
-     *                 @OA\Property(property="price", type="number", format="float", example=29.99),
-     *                 @OA\Property(property="stock", type="integer", example=100),
-     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2023-10-10T12:00:00.000000Z"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2023-10-10T12:05:00.000000Z")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="price",
-     *                     type="array",
-     *                     @OA\Items(type="string", example="The price must be at least 0.")
-     *                 )
-     *             )
-     *         )
-     *     )
-     * )
-     */
+
     public function update(Request $request, ProductVariant $variant)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
+            'stock_quantity' => 'required|integer|min:0',
         ]);
 
         $variant->update($validated);

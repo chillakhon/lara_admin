@@ -25,7 +25,7 @@ class ConversationController extends Controller
         // Опциональный параметр фильтрации
         $validated = $request->validate([
             'per_page' => 'nullable|integer|min:1',
-            'source' => 'nullable|in:telegram,whatsapp,web_chat',
+            'source' => 'nullable|in:telegram,whatsapp,web_chat,vk',
         ]);
 
         // Базовый запрос с нужными связями
@@ -79,8 +79,6 @@ class ConversationController extends Controller
             'content' => 'required|string',
             'attachments' => 'nullable|array',
         ]);
-
-//        return 4646;
 
         // 1) создаём сам разговор
         $conversation = $this->conversationService->createConversation(

@@ -28,7 +28,7 @@ class ProductVariantFactory extends Factory
             'article' => $this->faker->unique()->ean8,
             'additional_cost' => $this->faker->randomFloat(2, 0, 5000),
             'price' => $this->faker->randomFloat(2, 1000, 50000),
-            'stock' => $this->faker->numberBetween(0, 50),
+            'stock_quantity' => $this->faker->numberBetween(0, 50),
             'product_size_id' => ProductSize::factory(),
             'color_option_value_id' => ColorOptionValue::factory(),
         ];

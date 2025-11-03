@@ -51,7 +51,6 @@ class ProductController extends Controller
                 $product_stock_sklad = $moySkaldController->get_products_stock();
             }
 
-            // could not solve the problem with .inventoryBalance relation
             $products = $this->products_query($request);
 
 
@@ -67,9 +66,11 @@ class ProductController extends Controller
 
 
                 $this->solve_products_inventory([$products], $product_stock_sklad, $isAdmin);
+
                 $this->applyDiscountToProduct($products);
 
                 return new ProductNumberTwoResouce($products);
+
             } else if ($request->boolean('paginate', true)) {
                 $products = $products->paginate($request->get('per_page') ?? 10);
 
@@ -79,7 +80,9 @@ class ProductController extends Controller
                     return $product;
                 });
                 $this->solve_products_inventory($products, $product_stock_sklad, $isAdmin);
+
                 $this->applyDiscountsToCollection($products->getCollection());
+
             } else {
                 $products = $products->get();
                 $this->solve_products_inventory($products, $product_stock_sklad, $isAdmin);
@@ -391,6 +394,7 @@ class ProductController extends Controller
             'discount_price' => 'nullable|numeric|min:0',
             'colors' => 'nullable|array',
             'variants' => 'nullable|array',
+            'marketplace_links' => 'nullable|json',
         ];
     }
 
@@ -417,6 +421,7 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $this->validate_of_product_update($request, $id);
+
 
         DB::beginTransaction();
 
@@ -448,6 +453,8 @@ class ProductController extends Controller
 
             $this->update_product_images($request, $product);
 
+
+
             $colorIds = collect($validated['colors'] ?? [])->pluck('id');
 
             $product->colors()->sync($colorIds);
@@ -469,7 +476,6 @@ class ProductController extends Controller
                 ->withTrashed()
                 ->pluck('uuid')->toArray();
 
-            Log::info("test all ids", $product_variant_for_deletion_ids);
 
             $prod_variant_check = $prod_variant_check->get()
                 ->each(function ($variant) {
@@ -520,9 +526,6 @@ class ProductController extends Controller
                     $variant->colors()->sync($variant_colors_ids);
                     $this->price_history_create($request, $previous_price, null, $variant);
                     $createdVariants[] = $variant;
-                    // $value = $variant->refresh();
-                    // if modification updates or failes it's not so serious
-                    // $moyskadController->update_modification($variant);
                 } else {
                     // temp value for syncing with MoySklad
                     $cleanVariantData['code'] = (string)rand(1000000000, 9999999999);
@@ -535,15 +538,10 @@ class ProductController extends Controller
                     }
                     $cleanVariantData['sku'] = $sku;
                     $variant = ProductVariant::create($cleanVariantData);
-                    // -1 means that its creating for the first time and you have to put null instead
                     $variant->colors()->attach($variant_colors_ids);
                     $this->price_history_create($request, -1, null, $variant);
                     $variant = $variant->refresh();
                     $createdVariants[] = $variant;
-                    // but it's serious when modification creates in moySklad
-                    // something goes wrong in php code
-                    // $msProductVariant = $moyskadController->create_modification($variant, $msProduct);
-                    // $createdVariantsIds[] = $msProductVariant->id;
                 }
 
                 $this->update_variant_images($request, $variant, $uuid);

@@ -230,59 +230,7 @@ class PromoCodeController extends Controller
     }
 
 
-    /**
-     * @OA\Get(
-     *     path="/api/promo-codes/{id}/usage",
-     *     summary="Получить статистику использования промокода",
-     *     tags={"Promo Codes"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         description="ID промокода",
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Детальная информация об использовании промокода",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="code", type="string", example="DISCOUNT2024"),
-     *             @OA\Property(property="total_uses", type="integer", example=5),
-     *             @OA\Property(
-     *                 property="usages",
-     *                 type="array",
-     *                 @OA\Items(
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=10),
-     *                     @OA\Property(
-     *                         property="order",
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1001),
-     *                         @OA\Property(property="order_number", type="string", example="ORD-20240308-XYZ")
-     *                     ),
-     *                     @OA\Property(
-     *                         property="client",
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=50),
-     *                         @OA\Property(property="name", type="string", example="Иван Иванов")
-     *                     ),
-     *                     @OA\Property(property="discount_amount", type="number", format="float", example=500.00),
-     *                     @OA\Property(property="created_at", type="string", format="date-time", example="2025-03-08T12:00:00Z")
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Промокод не найден",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Promo code not found.")
-     *         )
-     *     )
-     * )
-     */
+
     public function usage(PromoCode $promoCode)
     {
         if (!$promoCode) {
@@ -296,7 +244,7 @@ class PromoCodeController extends Controller
 
         return response()->json([
             'code' => $promoCode->code,
-            'total_uses' => $usages->count(),
+            'times_uses' => $usages->count(),
             'usages' => $usages->map(function ($usage) {
                 return [
                     'id' => $usage->id,

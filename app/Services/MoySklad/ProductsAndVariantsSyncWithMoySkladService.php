@@ -273,7 +273,7 @@ class ProductsAndVariantsSyncWithMoySkladService
         if ($existingVariantsCount > 0) {
             $totalStock = ProductVariant::where('product_id', $product->id)
                 ->whereNull('deleted_at')
-                ->sum('stock');
+                ->sum('stock_quantity');
 
             // Обновляем поле stock_quantity у продукта
             $product->update(['stock_quantity' => (int)$totalStock]);
@@ -303,11 +303,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             }
 
 
-//            if ($product->id == 236) {
-//                \Illuminate\Support\Facades\Log::debug([
-//                    'varinats' => $data->characteristics ?? [],
-//                ]);
-//            }
+
 
             $variant_name = mb_substr($characteristic?->value ?? '', 0, 255);
             $slug = Str::slug($variant_name);
@@ -317,14 +313,6 @@ class ProductsAndVariantsSyncWithMoySkladService
             $variant = ProductVariant::withTrashed()
                 ->where('uuid', $data->id)
                 ->first();
-
-//            if (!$variant) {
-//                $variant = ProductVariant::withTrashed()
-//                    ->where('sku', $sku)
-//                    ->where('product_id', $product->id)
-//                    ->first();
-//            }
-
 
             $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
 
@@ -345,7 +333,7 @@ class ProductsAndVariantsSyncWithMoySkladService
                 'code' => $data->code ?? null, // Сохраняем код точно как в МойСклад
                 'price' => $this->extractPrice($data->salePrices ?? []),
                 'cost_price' => $this->extractCostPrice($data->buyPrice ?? (object)['value' => 0]),
-                'stock' => $stockQty,
+                'stock_quantity' => $stockQty,
                 'weight' => $this->extractWeight($productData),
                 'type' => 'simple',
                 'is_active' => true,

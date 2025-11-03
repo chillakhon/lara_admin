@@ -26,14 +26,14 @@ use App\Http\Controllers\Api\Admin\MoySkladController;
 use App\Http\Controllers\Api\Admin\NotificationController;
 use App\Http\Controllers\Api\Admin\OptionController;
 use App\Http\Controllers\Api\Admin\OrderStatsController;
-use App\Http\Controllers\Api\Admin\PermissionController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\ProductImageController;
-use App\Http\Controllers\Api\Admin\ProductionBatchController;
 use App\Http\Controllers\Api\Admin\ProductionController;
+use App\Http\Controllers\Api\Admin\ProductOrderController;
 use App\Http\Controllers\Api\Admin\ProductVariantController;
 use App\Http\Controllers\Api\Admin\PromoCodeClientController;
 use App\Http\Controllers\Api\Admin\PromoCodeProductController;
+use App\Http\Controllers\Api\Admin\PromoCodeUsageController;
 use App\Http\Controllers\Api\Admin\RecipeController;
 use App\Http\Controllers\Api\Admin\RoleController;
 use App\Http\Controllers\Api\Admin\SettingsController;
@@ -46,6 +46,8 @@ use App\Http\Controllers\Api\Admin\TaskLabelController;
 use App\Http\Controllers\Api\Admin\TaskPriorityController;
 use App\Http\Controllers\Api\Admin\TaskStatusController;
 use App\Http\Controllers\Api\Admin\TelegramWebhookController;
+use App\Http\Controllers\Api\Admin\ThirdPartyIntegrations\Vk\VKWebhookController;
+use App\Http\Controllers\Api\Admin\ThirdPartyIntegrations\VKSettingsController;
 use App\Http\Controllers\Api\Admin\UnitController;
 use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Auth\AuthenticatedSessionController;
@@ -60,7 +62,6 @@ use App\Http\Controllers\Api\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\DeliveryController;
 use App\Http\Controllers\Api\LeadController;
 
-//use App\Http\Controllers\Api\Admin\LeadTypeController;
 use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\PromoCodeController;
 use App\Http\Controllers\Api\Admin\ReviewController;
@@ -71,8 +72,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
-// routes/api.php
-
+Route::prefix("/public")->group(function () {
+    Route::post('/vk/webhook', [VKWebhookController::class, 'webhook']);
+});
 
 Route::get('/admin-user', [AuthenticatedSessionController::class, 'get_admin_user'])
     ->middleware('auth:sanctum');
@@ -308,11 +310,38 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
 
+    Route::prefix('promo-code-usage')->group(function () {
+
+        // Общий список всех использований
+        Route::get('/', [PromoCodeUsageController::class, 'index']);
+
+        // Сводная статистика по всем промокодам
+        Route::get('/summary', [PromoCodeUsageController::class, 'getSummaryStatistics']);
+
+        // Статистика по конкретному промокоду
+        Route::get('/promo-code/{promoCodeId}/statistics', [PromoCodeUsageController::class, 'getPromoCodeStatistics']);
+
+        // Детальная информация по использованию промокода
+        Route::get('/promo-code/{promoCodeId}/details', [PromoCodeUsageController::class, 'getPromoCodeUsageDetails']);
+
+        // Топ клиентов по использованию промокода
+        Route::get('/promo-code/{promoCodeId}/top-clients', [PromoCodeUsageController::class, 'getTopClients']);
+
+        // Статистика по периодам
+        Route::get('/promo-code/{promoCodeId}/by-period', [PromoCodeUsageController::class, 'getUsageByPeriod']);
+
+        // Экспорт статистики в CSV
+        Route::get('/promo-code/{promoCodeId}/export', [PromoCodeUsageController::class, 'exportStatistics']);
+    });
+
+
     Route::prefix('/orders')->group(function () {
+
         Route::post('/', [OrderController::class, 'store']);
         Route::get('/delivery-methods', [DeliveryMethodController::class, 'index']);
         Route::get('/user', [OrderController::class, 'getUserOrders']);
         Route::post('/payment/{order}', [OrderController::class, 'pay']);
+
     });
 
     Route::prefix('/clients')->group(function () {
@@ -383,7 +412,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 //        Route::get('/', [ProductController::class, 'index']);
 
-
         Route::post('/bulk-activate', [ProductController::class, 'bulkActivate']);
         Route::post('/bulk-deactivate', [ProductController::class, 'bulkDeactivate']);
 
@@ -419,46 +447,37 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
 
         Route::delete('/{product}/images/{image}', [ProductImageController::class, 'deleteImg']);
-        // Route::patch('/{product}/images/{image}/{variant}/main', [ProductImageController::class, 'setMain']);
 
         Route::post('/{product}/variants/{variant}/images', [ProductVariantController::class, 'addImages']);
         Route::delete('/{product}/variants/{variant}/images/{image}', [ProductVariantController::class, 'destroyImage']);
-        //            Route::post('/{product}/options/attach', [ProductController::class, 'attachOptions']);
-//            Route::post('/{product}/variants/bulk-update', [ProductVariantController::class, 'bulkUpdate'])
-//                ->name('variants.bulk-update');
-//            //Options
-//            Route::post('/{product}/options', [ProductController::class, 'storeOption'])
-//                ->name('options.store');
-//            Route::put('/{product}/options/{option}', [ProductController::class, 'updateOption'])
-//                ->name('options.update');
-//            Route::delete('/{product}/options/{option}', [ProductController::class, 'destroyOption'])
-//                ->name('options.destroy');
-        //
+
+
+        Route::group(['prefix' => 'order', 'as' => 'order.'], function () {
+            Route::get('/list', [ProductOrderController::class, 'getOrderedProducts']);
+            // Изменить порядок конкретного товара
+            Route::post('{product}/order', [ProductOrderController::class, 'updateOrder']);
+            // Инициализировать порядок для всех товаров (только один раз!)
+            Route::post('/initialize', [ProductOrderController::class, 'initializeOrders']);
+
+            // Получить максимальный порядок
+//            Route::get('/max', [ProductOrderController::class, 'getMaxOrder']);
+            // Перестроить порядок товаров (убрать пробелы)
+//            Route::post('/rebuild', [ProductOrderController::class, 'rebuildOrders']);
+            // Пакетное обновление порядка
+//            Route::post('/bulk-update', [ProductOrderController::class, 'bulkUpdateOrders']);
+
+        });
+
+
     });
-    //
-//        // Product Variants
-//        Route::prefix('product-variants')->name('product-variants.')->group(function () {
-//            Route::get('/{variant}/recipes', [ProductVariantController::class, 'recipes'])
-//                ->name('recipes');
-//            Route::get('/{variant}/production-history', [ProductVariantController::class, 'productionHistory'])
-//                ->name('production-history');
-//            Route::get('/{variant}/stock-movements', [ProductVariantController::class, 'stockMovements'])
-//                ->name('stock-movements');
-//        });
-//
-//
-    // Route::apiResource('discounts', DiscountController::class);
+
     Route::group(['prefix' => 'discounts', 'as' => 'discounts.'], function () {
         Route::get('/', [DiscountController::class, 'index']);
         Route::post('/', [DiscountController::class, 'store']);
         Route::put('/{discount}', [DiscountController::class, 'update']);
         Route::delete('/{discount}', [DiscountController::class, 'destroy']);
     });
-    //        Route::post('discounts/{discount}/attach-products', [DiscountController::class, 'attachProducts'])
-//            ->name('discounts.attach-products');
-//        Route::post('discounts/{discount}/attach-variants', [DiscountController::class, 'attachVariants'])
-//            ->name('discounts.attach-variants');
-//
+
     Route::group(['prefix' => 'recipes', 'as' => 'recipes.'], function () {
         Route::get('/', [RecipeController::class, 'index']);
         Route::post('/', [RecipeController::class, 'store']);
@@ -466,13 +485,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{recipe}', [RecipeController::class, 'update']);
         Route::delete('/{recipe}', [RecipeController::class, 'destroy']);
 
-        //            Route::post('/estimate-cost', [RecipeController::class, 'estimateCost'])
-//                ->name('estimate-cost');
-//            Route::post('/{recipe}/cost-rates', [RecipeController::class, 'storeCostRates'])
-//                ->name('cost-rates.store');
-//
-//            Route::post('/{recipe}/duplicate', [RecipeController::class, 'duplicate'])->name('duplicate');
-//            Route::get('/{recipe}/compare/{otherRecipe}', [RecipeController::class, 'compare'])->name('compare');
+
     });
 
     //         Cost Categories
@@ -496,12 +509,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/transactions', [InventoryController::class, 'transactions'])->name('transactions');
         Route::get('/stock', [InventoryController::class, 'getStock'])->name('stock');
         Route::get('/transactions/history', [InventoryController::class, 'getTransactionHistory'])->name('transactions.history');
-        //            Route::get('/component-usage', [InventoryController::class, 'componentUsage'])
-//                ->name('component-usage');
-//            Route::post('/reserve-components', [InventoryController::class, 'reserveComponents'])
-//                ->name('reserve-components');
-//            Route::post('/release-reservation/{reservation}', [InventoryController::class, 'releaseReservation'])
-//                ->name('release-reservation');
+
     });
     //
 //        // Производство
@@ -564,42 +572,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/', [RoleController::class, 'store']);
         Route::put('/{role}', [RoleController::class, 'update']);
     });
-    //
-//        // Content Management Routes
-//        Route::prefix('content')->name('content.')->group(function () {
-//
-//            Route::get('/', [ContentController::class, 'index'])->name('index');
-//
-//            // Типы полей
-//            Route::get('/field-types', [FieldTypeController::class, 'index'])->name('field-types.index');
-//            Route::post('/field-types', [FieldTypeController::class, 'store'])->name('field-types.store');
-//            Route::put('/field-types/{fieldType}', [FieldTypeController::class, 'update'])->name('field-types.update');
-//            Route::delete('/field-types/{fieldType}', [FieldTypeController::class, 'destroy'])->name('field-types.destroy');
-//
-//            // Группы полей
-//            Route::get('/field-groups', [FieldGroupController::class, 'index'])->name('field-groups.index');
-//            Route::post('/field-groups', [FieldGroupController::class, 'store'])->name('field-groups.store');
-//            Route::put('/field-groups/{fieldGroup}', [FieldGroupController::class, 'update'])->name('field-groups.update');
-//            Route::delete('/field-groups/{fieldGroup}', [FieldGroupController::class, 'destroy'])->name('field-groups.destroy');
-//
-//            // Блоки контента
-//            Route::get('/blocks', [ContentBlockController::class, 'index'])->name('blocks.index');
-//            Route::post('/blocks', [ContentBlockController::class, 'store'])->name('blocks.store');
-//            Route::put('/blocks/{block}', [ContentBlockController::class, 'update'])->name('blocks.update');
-//            Route::delete('/blocks/{block}', [ContentBlockController::class, 'destroy'])->name('blocks.destroy');
-//
-//            // Контент страниц
-//            Route::get('/pages', [PageController::class, 'index'])->name('pages.index');
-//            Route::post('/pages', [PageController::class, 'store'])->name('pages.store');
-//            Route::put('/pages/{pageContent}', [PageController::class, 'update'])->name('pages.update');
-//            Route::delete('/pages/{pageContent}', [PageController::class, 'destroy'])->name('pages.destroy');
-//
-//            // Управление медиафайлами
-//            // Route::post('/upload-image', [MediaController::class, 'uploadImage'])->name('upload-image');
-//            // Route::post('/upload-gallery', [MediaController::class, 'uploadGallery'])->name('upload-gallery');
-//            // Route::delete('/media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
-//        });
-//
+
     // Для получения всех уровней клиентов
     Route::get('client-levels', [ClientLevelController::class, 'index'])->name('client-levels.index');
 
@@ -615,12 +588,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('client-levels/{clientLevel}', [ClientLevelController::class, 'destroy'])->name('client-levels.destroy');
 
 
-    //        Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
-//        Route::put('/leads/{lead}', [LeadController::class, 'update'])->name('leads.update');
-//        Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->name('leads.destroy');
-//        Route::post('/leads/create-client', [LeadController::class, 'createClient'])->name('leads.create-client');
-
-    //
 //        // Задачи
     Route::prefix('tasks')->name('tasks.')->group(function () {
         Route::get('/', [TaskController::class, 'index']);
@@ -631,15 +598,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         Route::post('/{task}/complete', [TaskController::class, 'complete']);
 
-        // Комментарии к задачам
-//            Route::post('/{task}/comments', [TaskCommentController::class, 'store'])->name('comments.store');
-//            Route::put('/{task}/comments/{comment}', [TaskCommentController::class, 'update'])->name('comments.update');
-//            Route::delete('/{task}/comments/{comment}', [TaskCommentController::class, 'destroy'])->name('comments.destroy');
-//
-//            // Вложения к задачам
-//            Route::post('/{task}/attachments', [TaskAttachmentController::class, 'store'])->name('attachments.store');
-//            Route::delete('/{task}/attachments/{attachment}', [TaskAttachmentController::class, 'destroy'])->name('attachments.destroy');
-//            Route::get('/{task}/attachments/{attachment}/download', [TaskAttachmentController::class, 'download'])->name('attachments.download');
+
     });
 
 
@@ -729,16 +688,28 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 
     Route::prefix('/third-party-integrations')->group(function () {
+
         Route::prefix('/chats')->group(function () {
             Route::post('/telegram', [ChatsIntegrationController::class, 'telegram_integration']);
         });
 
+        Route::prefix('/vk')->group(function () {
+            Route::post('/getVKSettings', [VKSettingsController::class, 'getVKSettings']);
+            Route::post('configuration', [VKSettingsController::class, 'configuration']);
+            Route::post('/test', [VKSettingsController::class, 'test']);
+
+
+            Route::post('/webhook', [VKWebhookController::class, 'webhook']);
+
+        });
 
         Route::prefix('/mail')->group(function () {
             Route::post('/configuration', [ChatsIntegrationController::class, 'updateMailSettings']);
             Route::post('/getMailSettings', [ChatsIntegrationController::class, 'getMailSettings']);
             Route::get('/test', [ChatsIntegrationController::class, 'test_mail']);
         });
+
+
         Route::prefix('/cdek')->group(function () {
             Route::post('/settings', [CDEKController::class, 'update_cdek_settings']);
         });

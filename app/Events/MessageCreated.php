@@ -18,12 +18,10 @@ class MessageCreated implements ShouldBroadcast
     public function __construct(Message $message)
     {
         $this->message = $message->load('attachments');
-
     }
 
     public function broadcastOn(): PrivateChannel
     {
-
         return new PrivateChannel('conversation.' . $this->message->conversation_id);
     }
 

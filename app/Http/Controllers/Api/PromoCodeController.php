@@ -5,14 +5,24 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\PromoCode;
+use App\Services\PromoCode\PromoCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class PromoCodeController extends Controller
 {
+
+    protected $promoCodeService;
+
+    public function __construct(
+        PromoCodeService $promoService
+    )
+    {
+        $this->promoCodeService = $promoService;
+    }
+
     public function index(Request $request)
     {
-//        return 2342;
         $query = PromoCode::query();
 
         // Поиск по коду промокода
@@ -53,6 +63,7 @@ class PromoCodeController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'discount_amount' => 'required|numeric|min:0',
             'discount_type' => 'required|in:percentage,fixed',
+            'discount_behavior' => 'required|in:replace,stack,skip',
             'starts_at' => 'nullable|date',
             'expires_at' => 'nullable|date|after_or_equal:starts_at',
             'max_uses' => 'nullable|integer|min:1',
@@ -60,8 +71,11 @@ class PromoCodeController extends Controller
             'client_ids' => 'nullable|array',
             'client_ids.*' => 'exists:clients,id',
             'applies_to_all_products' => 'boolean',
-            'product_ids' => 'nullable|array',
-            'product_ids.*' => 'exists:products,id',
+            'applies_to_all_clients' => 'boolean',
+
+            'products_with_variants' => 'nullable',
+
+
             'type' => 'nullable|in:all,specific',
         ]);
 
@@ -73,14 +87,30 @@ class PromoCodeController extends Controller
 
         $promo = PromoCode::create($validated);
 
+
+        if (!empty($validated['products_with_variants'])) {
+            foreach ($validated['products_with_variants'] as $productId => $variantIds) {
+                if (empty($variantIds)) {
+                    $promo->products()->attach([
+                        $productId => ['product_variant_id' => null]
+                    ]);
+                } else {
+                    foreach ($variantIds as $variantId) {
+                        $promo->products()->attach([
+                            $productId => ['product_variant_id' => $variantId]
+                        ]);
+                    }
+                }
+            }
+        }
+
+
         // Привязка к конкретным клиентам, если указаны
         if (!empty($validated['client_ids'])) {
             $promo->clients()->attach($validated['client_ids']);
         }
 
-        if (!empty($validated['product_ids'])) {
-            $promo->products()->sync($validated['product_ids']);
-        }
+
         // Загружаем промокод с клиентами для ответа
         $promo->load('clients');
 
@@ -99,6 +129,7 @@ class PromoCodeController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'discount_amount' => 'required|numeric|min:0',
             'discount_type' => 'required|in:percentage,fixed',
+            'discount_behavior' => 'required|in:replace,stack,skip',
             'starts_at' => 'nullable|date',
             'expires_at' => 'nullable|date|after_or_equal:starts_at',
             'max_uses' => 'nullable|integer|min:1',
@@ -106,8 +137,10 @@ class PromoCodeController extends Controller
             'client_ids' => 'nullable|array',
             'client_ids.*' => 'exists:clients,id',
             'applies_to_all_products' => 'boolean',
-            'product_ids' => 'nullable|array',
-            'product_ids.*' => 'exists:products,id',
+            'applies_to_all_clients' => 'boolean',
+
+            'products_with_variants' => 'nullable',
+
             'type' => 'nullable|in:all,specific',
         ]);
 
@@ -129,12 +162,27 @@ class PromoCodeController extends Controller
             $promoCode->clients()->sync($validated['client_ids']);
         }
 
+        if (!empty($validated['products_with_variants'])) {
 
-        if (!empty($validated['product_ids'])) {
-            $promoCode->products()->sync($validated['product_ids']);
+            $promoCode->products()->detach(); // чистим старые связи
+
+            foreach ($validated['products_with_variants'] as $productId => $variantIds) {
+                // Если variantIds пустой массив, значит добавляем продукт без конкретного варианта
+                if (empty($variantIds)) {
+                    $promoCode->products()->attach([
+                        $productId => ['product_variant_id' => null]
+                    ]);
+                } else {
+                    foreach ($variantIds as $variantId) {
+                        $promoCode->products()->attach([
+                            $productId => ['product_variant_id' => $variantId]
+                        ]);
+                    }
+                }
+            }
         }
 
-        // Загружаем промокод с клиентами для ответа
+
         $promoCode->load('clients');
 
         return response()->json([
@@ -165,85 +213,16 @@ class PromoCodeController extends Controller
         $request->validate([
             'code' => 'required|string',
             'client_id' => 'nullable|exists:clients,id',
-            'product_id' => 'nullable|exists:products,id',
-            // 'amount' => 'required|numeric|min:0'
+            'product_ids' => 'nullable|array',
         ]);
 
-        $client = null;
+        $result = $this->promoCodeService->validatePromo($request);
 
-        if ($request->get('client_id')) {
-            $client = Client::find($request->get('client_id'));
+        if (isset($result['error'])) {
+            return $result['error'];
         }
 
-        if (!$client) {
-            $authenticated = $request->user();
-            if ($authenticated instanceof \App\Models\Client) {
-                $client = $authenticated;
-            } elseif ($authenticated instanceof \App\Models\User) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Пожалуйста, укажите client_id — вы авторизованы как администратор, не как клиент.',
-                ], 422);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Пользователь не авторизован.',
-                ], 401);
-            }
-        }
-
-        $promoCode = PromoCode::where('code', $request->code)
-            ->where('is_active', true)
-            ->where(function ($query) {
-                $query->where('expires_at', '>', now())
-                    ->orWhereNull('expires_at');
-            })
-            ->first();
-
-
-        if (!$promoCode) {
-            return response()->json([
-                'message' => 'Промокод не найден или истек срок его действия'
-            ], 404);
-        }
-
-
-        if (!$promoCode->isAvailableForClient($client->id)) {
-            return response()->json([
-                'message' => 'Промокод недоступен для этого клиента или уже использован'
-            ], 400);
-        }
-
-
-        if ($promoCode->max_uses && $promoCode->total_uses >= $promoCode->max_uses) {
-            return response()->json([
-                'message' => 'Превышен лимит использований промокода'
-            ], 400);
-        }
-
-        if ($promoCode->usages()->where('client_id', $request->client_id)->exists()) {
-            return response()->json([
-                'message' => 'Вы уже использовали этот промокод'
-            ], 400);
-        }
-
-
-        if ($request->filled('product_id')) {
-
-            if ($promoCode->type == 'specific') {
-                $applies = $promoCode->products()->where('product_id', $request->product_id)->exists();
-                if (!$applies) {
-                    return response()->json([
-                        'message' => 'Этот промокод не применяется к выбранному товару'
-                    ], 400);
-                }
-            }
-        }
-
-        return response()->json([
-            'message' => "Купон доступен для использования.",
-            'promo_code' => $promoCode,
-        ]);
+        return response()->json($result);
     }
 
 

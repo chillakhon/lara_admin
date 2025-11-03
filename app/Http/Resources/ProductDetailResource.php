@@ -70,7 +70,7 @@ class ProductDetailResource extends JsonResource
                         'sku' => $variant->sku,
                         'price' => $variant->price,
                         'additional_cost' => $variant->additional_cost,
-                        'stock' => $variant->getCurrentStock(),
+                        'stock_quantity' => $variant->getCurrentStock(),
                     ];
 
                     // Проверяем загруженность отношений напрямую

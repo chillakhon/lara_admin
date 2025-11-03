@@ -117,7 +117,7 @@ trait HelperTrait
 
     public function applyMailSettings()
     {
-        $settings = MailSetting::first(); // или where('user_id', ...) если на пользователя
+        $settings = MailSetting::first();
 
         if (!$settings) {
             throw new Exception('Mail settings not found.');

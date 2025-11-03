@@ -29,6 +29,10 @@ class SimpleProductController extends Controller
                 $query->where('category_id', $request->category_id);
             }
 
+            if ($request->boolean('withVariants')) {
+                $query->with(['variants']);
+            }
+
             $perPage = $request->get('per_page', 10);
             $products = $query->paginate($perPage);
             return response()->json([
