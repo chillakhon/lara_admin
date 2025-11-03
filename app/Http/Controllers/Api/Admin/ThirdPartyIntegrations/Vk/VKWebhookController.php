@@ -26,54 +26,46 @@ class VKWebhookController extends Controller
     {
         try {
             $data = $request->json()->all();
-
-            Log::info("VKWebhookController: Incoming webhook", ['data' => $data]);
-
             $eventId = $data['event_id'] ?? null;
 
-            // ДЕДУБЛИЗАЦИЯ: проверяем был ли этот event уже обработан
+            // Проверяем дубликат ПЕРЕД обработкой
             if ($eventId && VKWebhookEvent::where('event_id', $eventId)->exists()) {
-                Log::warning("VKWebhookController: Duplicate event received", ['event_id' => $eventId]);
-                return response()->json(['ok' => true]); // Возвращаем ok, но не обрабатываем
+                Log::warning("VKWebhookController: Duplicate event skipped", ['event_id' => $eventId]);
+                return response()->json(['ok' => true]);
             }
 
-            // Обработка confirmation - СПЕЦИАЛЬНЫЙ СЛУЧАЙ
+            Log::warning("VKWebhookController: ", ['data' => $data]);
+
+            // Confirmation
             if ($data['type'] === 'confirmation') {
                 $settings = VKSettings::first();
                 if (!$settings || !$settings->confirmation_token) {
-                    Log::error("VKWebhookController: Confirmation token not found");
                     return response('', 200);
                 }
                 return response($settings->confirmation_token, 200);
             }
 
-            // Валидируем подпись
-            if (!$this->validateSignature($data)) {
-                Log::warning("VKWebhookController: Invalid signature");
-                return response()->json(['ok' => false], 403);
-            }
-
-            // Обработка обновления
+            // Обработка
             $result = $this->vkService->handleWebhookUpdate($data);
 
-            // Сохраняем что event обработан
-            if ($eventId) {
-                VKWebhookEvent::create([
-                    'event_id' => $eventId,
-                    'type' => $data['type'],
-                    'data' => $data,
-                    'received_at' => now(),
-                ]);
+            // Сохраняем event ТОЛЬКО если обработка прошла успешно
+            if ($eventId && ($result['ok'] ?? false)) {
+                try {
+                    VKWebhookEvent::create([
+                        'event_id' => $eventId,
+                        'type' => $data['type'],
+                        'data' => $data,
+                        'received_at' => now(),
+                    ]);
+                } catch (\Exception $e) {
+                    Log::warning("Could not save webhook event", ['error' => $e->getMessage()]);
+                }
             }
 
             return response()->json($result ?? ['ok' => true]);
 
         } catch (\Exception $e) {
-            Log::error("VKWebhookController: Exception in webhook", [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
+            Log::error("VKWebhookController: Exception", ['error' => $e->getMessage()]);
             return response()->json(['ok' => true], 200);
         }
     }
