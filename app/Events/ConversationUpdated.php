@@ -24,10 +24,6 @@ class ConversationUpdated implements ShouldBroadcast
     public function broadcastOn(): array
     {
 
-        Log::info([
-            'infoaddMessage3' => $this->conversation,
-        ]);
-
         return [
             new PrivateChannel  ('admin.notifications')
         ];

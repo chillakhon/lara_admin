@@ -146,17 +146,9 @@ class VKService
                 $messageData['attachments'] = $attachments;
             }
 
-            Log::info([
-                'infoaddMessage' => $message,
-            ]);
-
             $this->conversationService->addMessage($conversation, $messageData);
 
             event(new \App\Events\ConversationUpdated($conversation));
-
-            Log::info([
-                'infoaddMessage1' => $message,
-            ]);
 
             return ['ok' => true];
 
