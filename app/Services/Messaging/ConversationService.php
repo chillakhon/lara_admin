@@ -108,8 +108,17 @@ class ConversationService
             }
 
 
+            Log::info([
+                'MessageCreatedEvent1' => $message,
+            ]);
+
             try {
                 event(new \App\Events\MessageCreated($message));
+
+                Log::info([
+                    'MessageCreatedEvent2' => $message,
+                ]);
+
             } catch (\Exception $e) {
                 Log::warning('MessageCreated broadcast failed, but message saved:', [
                     'message_id' => $message->id,
