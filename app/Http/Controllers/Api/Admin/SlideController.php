@@ -76,34 +76,45 @@ class SlideController extends Controller
 
     public function update(SlideRequest $request, Slide $slide)
     {
-        $data = $request->validated();
+
+        try {
+            $data = $request->validated();
 
 
-        $checkOrder = Slide::where('order', $data['order'] ?? null)
-            ->where('is_active', 1)
-            ->where('id', '!=', $slide->id)
-            ->exists();
+            $checkOrder = Slide::where('order', $data['order'] ?? null)
+                ->where('is_active', 1)
+                ->where('id', '!=', $slide->id)
+                ->exists();
 
-        if ($checkOrder) {
             if ($checkOrder) {
-                return response()->json([
-                    'message' => 'Слайд с таким порядком уже существует и активен.'
-                ], 422);
+                if ($checkOrder) {
+                    return response()->json([
+                        'message' => 'Слайд с таким порядком уже существует и активен.'
+                    ], 422);
+                }
             }
+
+            if ($request->hasFile('image')) {
+                // Удаляем старые изображения всех размеров
+                $this->deleteImageVariants($slide);
+
+                // Сохраняем новые версии
+                $paths = $this->processAndSaveImage($request->file('image'), $data);
+                $data['image_paths'] = json_encode($paths);
+            }
+
+            $slide->update($data);
+
+            return new SlideResource($slide->fresh());
+        } catch (\Exception $exception) {
+            Log::error([
+                'message' => $exception->getMessage(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTrace()
+            ]);
         }
 
-        if ($request->hasFile('image')) {
-            // Удаляем старые изображения всех размеров
-            $this->deleteImageVariants($slide);
 
-            // Сохраняем новые версии
-            $paths = $this->processAndSaveImage($request->file('image'), $data);
-            $data['image_paths'] = json_encode($paths);
-        }
-
-        $slide->update($data);
-
-        return new SlideResource($slide->fresh());
     }
 
     public function destroy(Slide $slide)
@@ -136,9 +147,6 @@ class SlideController extends Controller
 
         return response()->file($filePath);
     }
-
-
-
 
 
     /**
