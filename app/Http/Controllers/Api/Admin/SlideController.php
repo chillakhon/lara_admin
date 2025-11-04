@@ -103,6 +103,11 @@ class SlideController extends Controller
                 $data['image_paths'] = json_encode($paths);
             }
 
+            Log::info([
+                'data' => $data,
+            ]);
+
+
             $slide->update($data);
 
             return new SlideResource($slide->fresh());
