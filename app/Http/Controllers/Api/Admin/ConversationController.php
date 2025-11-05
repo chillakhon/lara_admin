@@ -42,7 +42,6 @@ class ConversationController extends Controller
         $conversations = $query->paginate($perPage);
 
 
-//        sleep(2);
         return response()->json([
             'data' => $conversations
         ]);
@@ -156,47 +155,6 @@ class ConversationController extends Controller
     }
 
 
-    public function getOrCreateForClient(Request $request)
-    {
-
-
-//        return 45;
-
-        $data = $request->validate([
-            'client_id' => 'nullable|exists:clients,id',
-            'source' => 'nullable|in:telegram,whatsapp,web_chat',
-            'external_id' => 'nullable|string',
-        ]);
-
-
-//        return 455;
-        $conversation = Conversation::firstOrCreate(
-            [
-                'client_id' => $data['client_id'],
-                'source' => $data['source'] ?? 'web_chat',
-                'external_id' => $data['external_id'] ?? '',
-            ],
-            [
-                'status' => 'active',
-                'last_message_at' => now(),
-                'unread_messages_count' => 0,
-            ]
-        );
-
-        $conversation->load([
-            'messages.attachments',
-            'lastMessage',
-            'client.profile',
-            'assignedUser',
-            'participants.user'
-        ]);
-
-        return response()->json([
-            'conversation' => $conversation
-        ]);
-    }
-
-
     // Ответить на сообщение
     public function reply(Request $request, Conversation $conversation)
     {
@@ -227,15 +185,13 @@ class ConversationController extends Controller
     }
 
 
-
-
     public function incomingForClient(Request $request)
     {
         $validated = $request->validate([
-            'client_id'   => 'nullable|exists:clients,id',
+            'client_id' => 'nullable|exists:clients,id',
             'external_id' => 'nullable|string',
-            'source'      => 'nullable|in:telegram,whatsapp,web_chat',
-            'content'     => 'required|string',
+            'source' => 'nullable|in:telegram,whatsapp,web_chat',
+            'content' => 'required|string',
             'attachments' => 'nullable|array',
         ]);
 
@@ -258,16 +214,16 @@ class ConversationController extends Controller
 
         // Добавляем сообщение через сервис
         $message = $this->conversationService->addMessage($conversation, [
-            'direction'   => Message::DIRECTION_INCOMING,
-            'content'     => $validated['content'],
+            'direction' => Message::DIRECTION_INCOMING,
+            'content' => $validated['content'],
             'attachments' => $validated['attachments'] ?? [],
-            'status'      => Message::STATUS_SENT,
+            'status' => Message::STATUS_SENT,
         ]);
 
 
         return response()->json([
-            'message'      => 'Входящее сообщение сохранено.',
-            'data'         => $message,
+            'message' => 'Входящее сообщение сохранено.',
+            'data' => $message,
             'unread_count' => $conversation->unread_messages_count,
         ], 201);
     }

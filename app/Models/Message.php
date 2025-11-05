@@ -70,4 +70,4 @@ class Message extends Model
     {
         return $this->hasMany(MessageAttachment::class);
     }
-} 
+}

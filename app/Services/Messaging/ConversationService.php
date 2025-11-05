@@ -97,9 +97,9 @@ class ConversationService
                     );
                 }
 
-                $message->update([
-                    'status' => $sent ? 'sent' : 'failed'
-                ]);
+//                $message->update([
+//                    'status' => $sent ? 'sent' : 'failed'
+//                ]);
 
             }
 

@@ -65,15 +65,23 @@ use App\Http\Controllers\Api\LeadController;
 use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\PromoCodeController;
 use App\Http\Controllers\Api\Admin\ReviewController;
+use App\Http\Controllers\Api\Public\Conversation\PublicConversationController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\Admin\SlideController;
 use App\Services\WhatsappService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
 Route::prefix("/public")->group(function () {
+
     Route::post('/vk/webhook', [VKWebhookController::class, 'webhook']);
+
+    Route::prefix('/conversations')->group(function () {
+        Route::get('/client', [PublicConversationController::class, 'getOrCreateForClient']);
+        Route::post('/{conversation}/reply', [PublicConversationController::class, 'reply']);
+        Route::post('/{conversation}/read', [PublicConversationController::class, 'read']);
+    });
+
 });
 
 Route::get('/admin-user', [AuthenticatedSessionController::class, 'get_admin_user'])
@@ -246,14 +254,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
 
-//    Route::post('/conversations', [ConversationController::class, 'store']);
-
-
     Route::prefix('/conversations')->group(function () {
-        //for client web
-        Route::get('/client', [ConversationController::class, 'getOrCreateForClient']);
-        Route::get('/view', [ConversationController::class, 'showForClient']);
-        Route::post('/incoming', [ConversationController::class, 'incomingForClient']);
 
         //for admin_panel
         // Создать новый чат + первое сообщение

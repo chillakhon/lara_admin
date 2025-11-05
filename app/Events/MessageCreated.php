@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Message;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -20,9 +21,17 @@ class MessageCreated implements ShouldBroadcast
         $this->message = $message->load('attachments');
     }
 
-    public function broadcastOn(): PrivateChannel
+    public function broadcastOn(): array
     {
-        return new PrivateChannel('conversation.' . $this->message->conversation_id);
+        Log::info('Public conversation channel auth', [
+            $this->message,
+        ]);
+        return [
+            // Приватный канал для админов
+            new PrivateChannel('conversation.' . $this->message->conversation_id),
+
+            new Channel('public.conversation.' . $this->message->conversation_id),
+        ];
     }
 
     public function broadcastWith(): array
