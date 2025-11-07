@@ -699,9 +699,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::post('configuration', [VKSettingsController::class, 'configuration']);
             Route::post('/test', [VKSettingsController::class, 'test']);
 
-
             Route::post('/webhook', [VKWebhookController::class, 'webhook']);
-
         });
 
         Route::prefix('/mail')->group(function () {

@@ -97,10 +97,6 @@ class ConversationService
                     );
                 }
 
-//                $message->update([
-//                    'status' => $sent ? 'sent' : 'failed'
-//                ]);
-
             }
 
             if ($conversation->status === 'new') {
@@ -110,7 +106,7 @@ class ConversationService
 
             try {
                 event(new \App\Events\MessageCreated($message));
-
+                event(new \App\Events\ConversationUpdated($conversation));
             } catch (\Exception $e) {
                 Log::warning('MessageCreated broadcast failed, but message saved:', [
                     'message_id' => $message->id,

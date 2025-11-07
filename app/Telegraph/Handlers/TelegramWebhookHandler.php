@@ -9,6 +9,7 @@ use App\Models\OrderPayment;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Services\Messaging\ConversationService;
+use App\Services\Telegram\TelegramService;
 use App\Traits\ClientControllerTrait;
 use DefStudio\Telegraph\Enums\ChatActions;
 use DefStudio\Telegraph\Facades\Telegraph;
@@ -19,13 +20,24 @@ use DefStudio\Telegraph\Models\TelegraphChat;
 use Illuminate\Support\Stringable;
 use Illuminate\Support\Facades\Log;
 use App\Models\Message;
+
 class TelegramWebhookHandler extends WebhookHandler
 {
 
     use ClientControllerTrait;
 
+
+    private TelegramService $telegramService;
+
+    public function __construct(TelegramService $telegramService)
+    {
+        $this->telegramService = $telegramService;
+    }
+
+
     public function start()
     {
+
         $chat = $this->getChat();
 
         $chat->chatAction(ChatActions::TYPING)->send();
@@ -76,8 +88,26 @@ class TelegramWebhookHandler extends WebhookHandler
 
     public function handleChatMessage(Stringable $text): void
     {
-        $telegramId = $this->message->from()->id();
+
+        $telegramId = $this->getUserId();
+        $chatId = $this->message->chat()->id();
+        $firstName = $this->message->from()->firstName();
+        $lastName = $this->message->from()->lastName();
+        $content = (string)$text;
+        $client_profile = UserProfile::where('telegram_user_id', $telegramId)->first();
+
         $awaitingEmail = cache("awaiting_email_$telegramId");
+
+        Log::info('TelegramWebhookHandler: User info', [
+            'telegram_id' => $telegramId,
+            'chat_id' => $chatId,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'content' => $content,
+            'client_profile' => $client_profile,
+            '$awaitingEmail' => $awaitingEmail
+        ]);
+
 
         if ($awaitingEmail) {
             $email = $this->message->text();
@@ -118,10 +148,12 @@ class TelegramWebhookHandler extends WebhookHandler
             return;
         }
 
-        // если не ожидается email
-        $this->reply("Я вас не понял. Напишите */start* чтобы начать.");
+        $this->telegramService->findOrCreateConversationAndSendMessage(
+            $telegramId,
+            $client_profile,
+            $content,
+        );
 
-        Log::info(json_encode($this->message->toArray(), JSON_UNESCAPED_UNICODE));
     }
 
     public function orders()
@@ -148,9 +180,10 @@ class TelegramWebhookHandler extends WebhookHandler
     }
 
     public function send_order_data(
-        Client $client,
+        Client                         $client,
         \DefStudio\Telegraph\Telegraph $chat
-    ) {
+    )
+    {
         $find_pending_orders_ids = Order
             ::whereIn('status', [Order::STATUS_PROCESSING, Order::STATUS_NEW])
             ->whereNull("deleted_at")
@@ -215,7 +248,13 @@ class TelegramWebhookHandler extends WebhookHandler
     }
 
 
-    public function reset()
+    private function reset()
+    {
+        $telegramId = $this->getUserId();
+        cache()->forget("awaiting_email_$telegramId");
+    }
+
+    public function cancel()
     {
         $chat = $this->getChat();
 
@@ -223,16 +262,14 @@ class TelegramWebhookHandler extends WebhookHandler
 
         $client_profile = $this->user_profile();
 
-        if (!$client_profile) {
-            $this->start();
-            return;
+        if ($client_profile) {
+            $client_profile->update([
+                'telegram_user_id' => null,
+            ]);
         }
 
-        $client_profile->update([
-            'telegram_user_id' => null,
-        ]);
-
-        $chat->message("Ваши данные были сброшены. Пожалуйста, начните заново с команды /start")->send();
+        $this->reset();
+        $chat->message("Авторизация отменена. Вы можете писать свои вопросы или использовать /start для повторной авторизации.")->send();
     }
 
     protected function getChat(): \DefStudio\Telegraph\Telegraph

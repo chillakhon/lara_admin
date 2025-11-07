@@ -45,7 +45,16 @@ class NotificationController extends Controller
         $tasks = $lastTasks ? Task::where('created_at', '>', $lastTasks)->count() : 0;
         $reviews = $lastReviews ? Review::where('created_at', '>', $lastReviews)->count() : 0;
         $requests = $lastRequests ? ContactRequest::where('created_at', '>', $lastRequests)->count() : 0;
-        $conversations = $lastConversations ? Conversation::where('created_at', '>', $lastConversations)->count() : 0;
+
+//        $conversations = $lastConversations ? Conversation::where('created_at', '>', $lastConversations)->count() : 0;
+
+        $conversations = $lastConversations
+            ? Conversation::where('created_at', '>', $lastConversations)
+                ->orWhereHas('messages', function ($query) use ($lastConversations) {
+                    $query->where('created_at', '>', $lastConversations);
+                })
+                ->count()
+            : 0;
 
         $total = $orders + $tasks + $reviews + $requests + $conversations;
 

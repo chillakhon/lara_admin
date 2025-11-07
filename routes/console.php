@@ -16,7 +16,6 @@ Artisan::command('discounts:check-validity', function () {
 
 Artisan::command('bot_settings', function () {
     $bot = TelegraphBot::first();
-
     dd($bot->registerCommands([
         "help" => "Что умеет этот бот",
         "start" => "Начать использовать наш бот",

@@ -59,7 +59,7 @@ class ChatsIntegrationController extends Controller
                 "help" => "Что умеет этот бот",
                 "start" => "Начать использовать наш бот",
                 "orders" => "Заказы",
-                "reset" => "Сбросить данные и начать заново"
+                "cancel" => "Отменить авторизацию"
             ])->send();
 
             return response()->json([
