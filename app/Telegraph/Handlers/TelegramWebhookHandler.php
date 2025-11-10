@@ -241,7 +241,7 @@ class TelegramWebhookHandler extends WebhookHandler
                 Keyboard::make()->buttons([
                     Button::make("Начать работу с ботом")->action('start'),
                     Button::make("Посмотреть мои заказы")->action('orders'),
-                    Button::make("Перейти на сайт")->url(env("APP_URL")),
+                    Button::make("Перейти на сайт")->url(env("FRONTEND_URL")),
                 ])
             )
             ->send();

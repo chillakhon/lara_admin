@@ -66,6 +66,7 @@ use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\PromoCodeController;
 use App\Http\Controllers\Api\Admin\ReviewController;
 use App\Http\Controllers\Api\Public\Conversation\PublicConversationController;
+use App\Http\Controllers\Api\Public\WhatsApp\WhatsAppWebhookController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\Admin\SlideController;
 use App\Services\WhatsappService;
@@ -75,6 +76,9 @@ use Illuminate\Support\Facades\Route;
 Route::prefix("/public")->group(function () {
 
     Route::post('/vk/webhook', [VKWebhookController::class, 'webhook']);
+
+    Route::post('/whatsapp/webhook', [WhatsAppWebhookController::class, 'webhook']);
+
 
     Route::prefix('/conversations')->group(function () {
         Route::get('/client', [PublicConversationController::class, 'getOrCreateForClient']);
@@ -253,7 +257,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         });
     });
 
-
     Route::prefix('/conversations')->group(function () {
 
         //for admin_panel
@@ -285,7 +288,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 //             Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usages'])->name('usage');
     });
 
-
     Route::group(['prefix' => 'promo-code-clients'], function () {
 
         Route::get('/available-promo-codes', [PromoCodeClientController::class, 'getAvailablePromoCodes']);
@@ -300,7 +302,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     });
 
-
     Route::group(['prefix' => 'promo-code-products'], function () {
         Route::get('', [PromoCodeProductController::class, 'index']);
         Route::get('/products/{promoCodeId}', [PromoCodeProductController::class, 'getProductsByPromoCode']);
@@ -309,7 +310,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{promoCodeProduct}', [PromoCodeProductController::class, 'update']);
         Route::delete('/{promoCodeProduct}', [PromoCodeProductController::class, 'destroy']);
     });
-
 
     Route::prefix('promo-code-usage')->group(function () {
 
@@ -334,7 +334,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Экспорт статистики в CSV
         Route::get('/promo-code/{promoCodeId}/export', [PromoCodeUsageController::class, 'exportStatistics']);
     });
-
 
     Route::prefix('/orders')->group(function () {
 
@@ -364,15 +363,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/report/dashboard', [FinancialAnalyticsController::class, 'report_dashboard']);
         Route::get('/products/income', [FinancialAnalyticsController::class, 'income_by_products']);
         Route::get('/chart', [FinancialAnalyticsController::class, 'weeklyAmount']);
-    });
-
-    Route::prefix('/whatsapp')->group(function () {
-        Route::get('/send-message', function (WhatsappService $whatsapp) {
-            $to = '992915172589'; // Например: 79876543210
-            // $message = "Вы оформили заказ *№{{1}}* от *{{2}}* на сумму *{{3}}*.\n Мы уже начали обработку. Ожидайте, пожалуйста, подтверждение.\n С уважением, команда *Again*!";
-            return $whatsapp->payment_notification($to, 1, "10-10-25 10:00", 99.99)->json();
-            // return $whatsapp->sendTextMessage($to, $message)->json();
-        });
     });
 
 

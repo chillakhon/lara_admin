@@ -6,6 +6,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\Messaging\Adapters\VKAdapter;
+use App\Services\Messaging\Adapters\WhatsAppAdapter;
 use Illuminate\Support\Facades\DB;
 use App\Services\Messaging\Adapters\TelegramAdapter;
 use App\Models\Client;
@@ -15,6 +16,8 @@ class ConversationService
 {
     protected $telegramAdapter;
     protected $vkAdapter;
+    protected $whatsappAdapter;
+
 
     public function __construct(TelegramAdapter $telegramAdapter)
     {
@@ -26,6 +29,14 @@ class ConversationService
             Log::warning("VKAdapter not available: " . $e->getMessage());
             $this->vkAdapter = null;
         }
+
+        try {
+            $this->whatsappAdapter = new WhatsAppAdapter();
+        } catch (\Exception $e) {
+            Log::warning("WhatsAppAdapter not available: " . $e->getMessage());
+            $this->whatsappAdapter = null;
+        }
+
 
     }
 
@@ -91,6 +102,12 @@ class ConversationService
                     );
                 } elseif ($conversation->source === 'vk' && $this->vkAdapter) {
                     $sent = $this->vkAdapter->sendMessage(
+                        $conversation->external_id,
+                        $messageData['content'],
+                        $messageData['attachments'] ?? []
+                    );
+                } elseif ($conversation->source === 'whatsapp' && $this->whatsappAdapter) {
+                    $sent = $this->whatsappAdapter->sendMessage(
                         $conversation->external_id,
                         $messageData['content'],
                         $messageData['attachments'] ?? []

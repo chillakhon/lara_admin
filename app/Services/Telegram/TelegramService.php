@@ -25,7 +25,12 @@ class TelegramService
         $this->commandHandler = $commandHandler;
     }
 
-
+    /**
+     * @param int $telegramUserId
+     * @param UserProfile|null $client_profile
+     * @param string $content
+     * @return void
+     */
     public function findOrCreateConversationAndSendMessage(
         int              $telegramUserId,
         UserProfile|null $client_profile,

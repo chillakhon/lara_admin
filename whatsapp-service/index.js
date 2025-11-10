@@ -99,8 +99,23 @@ function setupClientEvents() {
 // WHATSAPP CLIENT SETUP
 // ============================================
 
+// client = new Client({
+//   authStrategy: new (require('whatsapp-web.js').LocalAuth)(),
+// });
+
+
 client = new Client({
   authStrategy: new (require('whatsapp-web.js').LocalAuth)(),
+  puppeteer: {
+    headless: true,
+    executablePath: '/usr/bin/chromium-browser',
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu'
+    ]
+  }
 });
 
 setupClientEvents();
