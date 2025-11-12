@@ -25,7 +25,7 @@ class PublicConversationController extends Controller
     {
         $data = $request->validate([
             'client_id' => 'nullable|exists:clients,id',
-            'source' => 'nullable|in:telegram,whatsapp,web_chat',
+            'source' => 'nullable|in:telegram,whatsapp,web_chat,email',
             'external_id' => 'nullable|string',
         ]);
 

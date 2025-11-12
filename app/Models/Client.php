@@ -14,16 +14,7 @@ class Client extends Model
 {
     use HasFactory, SoftDeletes, Notifiable, HasApiTokens;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    // protected $fillable = [
-    //     'user_id',
-    //     'client_level_id',
-    //     'bonus_balance',
-    // ];
+
 
     protected $guarded = ['id'];
 
@@ -35,14 +26,6 @@ class Client extends Model
     protected $casts = [
         'bonus_balance' => 'decimal:2',
     ];
-
-    /**
-     * Get the user that owns the client.
-     */
-    // public function user()
-    // {
-    //     return $this->belongsTo(User::class);
-    // }
 
     /**
      * Get the level that owns the client.

@@ -27,6 +27,7 @@
         "pusher/pusher-php-server": "^7.2",
         "spatie/laravel-medialibrary": "^11.12",
         "tightenco/ziggy": "^2.0",
+        "webklex/laravel-imap": "^6.2",
         "yoomoney/yookassa-sdk-php": "^3.0"
     },
     "require-dev": {

@@ -5,6 +5,7 @@ namespace App\Services\Messaging;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Messaging\Adapters\EmailAdapter;
 use App\Services\Messaging\Adapters\VKAdapter;
 use App\Services\Messaging\Adapters\WhatsAppAdapter;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ class ConversationService
     protected $telegramAdapter;
     protected $vkAdapter;
     protected $whatsappAdapter;
+    protected $emailAdapter;
 
 
     public function __construct(TelegramAdapter $telegramAdapter)
@@ -37,6 +39,12 @@ class ConversationService
             $this->whatsappAdapter = null;
         }
 
+        try {
+            $this->emailAdapter = new EmailAdapter();
+        } catch (\Exception $e) {
+            Log::warning("EmailAdapter not available: " . $e->getMessage());
+            $this->emailAdapter = null;
+        }
 
     }
 
@@ -108,6 +116,12 @@ class ConversationService
                     );
                 } elseif ($conversation->source === 'whatsapp' && $this->whatsappAdapter) {
                     $sent = $this->whatsappAdapter->sendMessage(
+                        $conversation->external_id,
+                        $messageData['content'],
+                        $messageData['attachments'] ?? []
+                    );
+                } elseif ($conversation->source === 'email' && $this->emailAdapter) {
+                    $sent = $this->emailAdapter->sendMessage(
                         $conversation->external_id,
                         $messageData['content'],
                         $messageData['attachments'] ?? []

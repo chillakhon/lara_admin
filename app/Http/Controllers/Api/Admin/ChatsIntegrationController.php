@@ -111,6 +111,8 @@ class ChatsIntegrationController extends Controller
             'mailer' => 'nullable|string',
             'host' => 'required|string',
             'port' => 'required|numeric',
+            'imap_host' => 'nullable|string',
+            'imap_port' => 'nullable|numeric',
             'username' => 'required|string',
             'password' => 'required|string',
             'encryption' => 'nullable|string',
@@ -127,6 +129,8 @@ class ChatsIntegrationController extends Controller
             'encryption',
             'from_address',
             'notification_email',
+            'imap_host',
+            'imap_port'
         ]);
 
         // Apply defaults if missing

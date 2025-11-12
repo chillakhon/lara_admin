@@ -25,7 +25,7 @@ class ConversationController extends Controller
         // Опциональный параметр фильтрации
         $validated = $request->validate([
             'per_page' => 'nullable|integer|min:1',
-            'source' => 'nullable|in:telegram,whatsapp,web_chat,vk',
+            'source' => 'nullable|in:telegram,whatsapp,web_chat,vk,email',
         ]);
 
         // Базовый запрос с нужными связями
@@ -112,7 +112,7 @@ class ConversationController extends Controller
         $data = $request->validate([
             'client_id' => 'nullable|exists:clients,id',
             'external_id' => 'nullable|string',
-            'source' => 'nullable|in:telegram,whatsapp,web_chat',
+            'source' => 'nullable|in:telegram,whatsapp,web_chat,email,vk',
         ]);
 
         // Ищем разговор
@@ -190,7 +190,7 @@ class ConversationController extends Controller
         $validated = $request->validate([
             'client_id' => 'nullable|exists:clients,id',
             'external_id' => 'nullable|string',
-            'source' => 'nullable|in:telegram,whatsapp,web_chat',
+            'source' => 'nullable|in:telegram,whatsapp,web_chat,email,vk',
             'content' => 'required|string',
             'attachments' => 'nullable|array',
         ]);

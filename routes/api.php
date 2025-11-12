@@ -69,16 +69,13 @@ use App\Http\Controllers\Api\Public\Conversation\PublicConversationController;
 use App\Http\Controllers\Api\Public\WhatsApp\WhatsAppWebhookController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\Admin\SlideController;
-use App\Services\WhatsappService;
 use Illuminate\Support\Facades\Route;
 
 
 Route::prefix("/public")->group(function () {
 
     Route::post('/vk/webhook', [VKWebhookController::class, 'webhook']);
-
     Route::post('/whatsapp/webhook', [WhatsAppWebhookController::class, 'webhook']);
-
 
     Route::prefix('/conversations')->group(function () {
         Route::get('/client', [PublicConversationController::class, 'getOrCreateForClient']);
@@ -110,7 +107,6 @@ Route::get('promo-code/getImage', [PromoCodeController::class, 'getImage']);
 
 //client - admin
 Route::get('/products', [ProductController::class, 'index']);
-
 
 // clients
 Route::prefix("/cart-items")->group(function () {
