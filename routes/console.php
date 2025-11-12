@@ -2,8 +2,6 @@
 
 use App\Console\Commands\SyncEmailMessages;
 use App\Console\Commands\CheckDiscountsValidity;
-use DefStudio\Telegraph\Models\TelegraphBot;
-use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 

@@ -6,6 +6,7 @@ use App\Helpers\PaginationHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Order;
+use App\Services\Notifications\Jobs\SendNotificationJob;
 use App\Services\Order\OrderValidationService;
 use App\Services\Order\OrderCreationService;
 use App\Services\Order\OrderFilterService;
@@ -405,18 +406,21 @@ class OrderController extends Controller
     private function sendNotifications($client, Order $order): void
     {
         try {
-            // TODO: Реализовать отправку уведомлений
+            $message = "Ваш заказ #{$order->id} принят! Сумма: {$order->total} руб.";
 
-            Log::info('Order notifications sent', [
-                'order_id' => $order->id,
-                'client_id' => $client->id,
-            ]);
+            // Отправить через все доступные каналы асинхронно
+            if ($client->email) {
+                SendNotificationJob::dispatch('email', $client->email, $message, ['order_id' => $order->id]);
+            }
+            if ($client->profile?->telegram_user_id) {
+                SendNotificationJob::dispatch('telegram', $client->profile->telegram_user_id, $message, ['order_id' => $order->id]);
+            }
+            // и т.д. для других каналов
+
+            Log::info('Order notifications queued', ['order_id' => $order->id]);
 
         } catch (\Exception $e) {
-            Log::error('Failed to send order notifications', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
+            Log::error('Failed to queue notifications', ['error' => $e->getMessage()]);
         }
     }
 
