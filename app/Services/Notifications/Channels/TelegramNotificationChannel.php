@@ -19,7 +19,9 @@ class TelegramNotificationChannel extends BaseNotificationChannel
                 return false;
             }
 
-            $bot->chat($recipientId)->message($message)->send();
+            $bot->chat($recipientId)
+                ->message($message)
+                ->send();
 
             $this->logSend($recipientId, $this->getChannelName(), $message, true);
             return true;
