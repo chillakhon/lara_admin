@@ -105,19 +105,19 @@ class VKService
             }
 
             // Ищем или создаём клиента
-            $client = $this->findOrCreateClient($userId);
+            $client = $this->findClient($userId);
 
-            if (!$client) {
-                Log::warning("VKService: Could not create client for user", ['user_id' => $userId]);
-                return ['ok' => false];
-            }
+//            if (!$client) {
+//                Log::warning("VKService: Could not create client for user", ['user_id' => $userId]);
+//                return ['ok' => false];
+//            }
 
             // Ищем или создаём разговор
             $conversation = Conversation::firstOrCreate(
                 [
                     'source' => 'vk',
                     'external_id' => (string)$userId,
-                    'client_id' => $client->id,
+                    'client_id' => $client?->id ?? null,
                 ],
                 [
                     'status' => 'active',
@@ -158,7 +158,7 @@ class VKService
     /**
      * Найти или создать клиента
      */
-    protected function findOrCreateClient(int $vkUserId): ?Client
+    protected function findClient(int $vkUserId): ?Client
     {
         try {
             // Ищем клиента по ВК ID в профиле
@@ -168,30 +168,32 @@ class VKService
 
             if ($client) {
                 return $client;
+            }else {
+                return null;
             }
 
-            // Если не найден — создаём анонимного клиента с ВК ID
-            $client = Client::create([
-                'email' => "vk_{$vkUserId}@vk.local",
-                'name' => "ВК пользователь {$vkUserId}",
-            ]);
-
-            // Сохраняем ВК ID в профиль
-            if ($client->profile) {
-                $client->profile->update(['vk_user_id' => $vkUserId]);
-            } else {
-                // Создаём профиль если нет
-                $client->profile()->create([
-                    'vk_user_id' => $vkUserId
-                ]);
-            }
-
-            Log::info("VKService: Client created", [
-                'vk_user_id' => $vkUserId,
-                'client_id' => $client->id
-            ]);
-
-            return $client;
+//            // Если не найден — создаём анонимного клиента с ВК ID
+//            $client = Client::create([
+//                'email' => "vk_{$vkUserId}@vk.local",
+//                'name' => "ВК пользователь {$vkUserId}",
+//            ]);
+//
+//            // Сохраняем ВК ID в профиль
+//            if ($client->profile) {
+//                $client->profile->update(['vk_user_id' => $vkUserId]);
+//            } else {
+//                // Создаём профиль если нет
+//                $client->profile()->create([
+//                    'vk_user_id' => $vkUserId
+//                ]);
+//            }
+//
+//            Log::info("VKService: Client created", [
+//                'vk_user_id' => $vkUserId,
+//                'client_id' => $client->id
+//            ]);
+//
+//            return $client;
 
         } catch (\Exception $e) {
             Log::error("VKService: Failed to create client", [

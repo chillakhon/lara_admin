@@ -15,7 +15,6 @@ class Client extends Model
     use HasFactory, SoftDeletes, Notifiable, HasApiTokens;
 
 
-
     protected $guarded = ['id'];
 
     /**
@@ -81,7 +80,9 @@ class Client extends Model
 
     public function promoCodes()
     {
-        return $this->belongsToMany(PromoCode::class, 'promo_code_client');
+        return $this->belongsToMany(PromoCode::class, 'promo_code_client')
+            ->withPivot('birthday_discount', 'notified_at', 'reminder_sent')
+            ->withTimestamps();
     }
 
 }

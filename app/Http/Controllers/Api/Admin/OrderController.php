@@ -406,7 +406,7 @@ class OrderController extends Controller
     private function sendNotifications($client, Order $order): void
     {
         try {
-            $message = "Ваш заказ #{$order->id} принят! Сумма: {$order->total} руб.";
+            $message = "Ваш заказ #{$order->id} принят! Сумма: {$order->total_amount} руб.";
 
             // Отправить через все доступные каналы асинхронно
             if ($client->email) {
@@ -415,6 +415,7 @@ class OrderController extends Controller
             if ($client->profile?->telegram_user_id) {
                 SendNotificationJob::dispatch('telegram', $client->profile->telegram_user_id, $message, ['order_id' => $order->id]);
             }
+
             // и т.д. для других каналов
 
             Log::info('Order notifications queued', ['order_id' => $order->id]);

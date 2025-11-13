@@ -12,3 +12,6 @@ Artisan::command('discounts:check-validity', function () {
 
 
 Schedule::command('email:sync')->everyMinute();
+
+Schedule::command('birthday:process')->daily();
+
