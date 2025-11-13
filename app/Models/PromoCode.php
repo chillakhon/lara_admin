@@ -32,7 +32,8 @@ class PromoCode extends Model
         'is_active',
         'applies_to_all_products',
         'applies_to_all_clients',
-        'type'
+        'type',
+        'template_type'
     ];
 
     protected $casts = [

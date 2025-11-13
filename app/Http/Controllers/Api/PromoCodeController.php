@@ -76,6 +76,7 @@ class PromoCodeController extends Controller
             'products_with_variants' => 'nullable',
 
 
+            'template_type' => 'nullable|in:regular,birthday',
             'type' => 'nullable|in:all,specific',
         ]);
 
@@ -140,6 +141,7 @@ class PromoCodeController extends Controller
             'applies_to_all_clients' => 'boolean',
 
             'products_with_variants' => 'nullable',
+            'template_type' => 'nullable|in:regular,birthday',
 
             'type' => 'nullable|in:all,specific',
         ]);

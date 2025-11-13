@@ -10,7 +10,6 @@ class UserProfile extends Model
     use HasFactory;
 
 
-
     protected $guarded = ["id"];
 
     public function user()
@@ -18,6 +17,11 @@ class UserProfile extends Model
         return $this->belongsTo(User::class);
     }
 
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class, 'client_id');
+    }
 
     public function Country()
     {

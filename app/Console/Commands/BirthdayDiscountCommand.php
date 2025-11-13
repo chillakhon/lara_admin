@@ -6,12 +6,16 @@ use App\Models\Client;
 use App\Models\PromoCode;
 use App\Models\UserProfile;
 use App\Services\Notifications\Jobs\SendNotificationJob;
+use App\Traits\PhoneFormatterTrait;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class BirthdayDiscountCommand extends Command
 {
+
+    use PhoneFormatterTrait;
+
     protected $signature = 'birthday:process';
     protected $description = 'Обработать скидки на день рождения';
 
@@ -56,12 +60,14 @@ class BirthdayDiscountCommand extends Command
 
         $clients = UserProfile::whereRaw("DATE_FORMAT(birthday, '%m-%d') = ?", ["{$birthdayMonth}-{$birthdayDay}"])
             ->whereNotNull('client_id')
+            ->with('client')
             ->get();
 
         $this->info("📅 Найдено клиентов с ДР через 3 дня: " . $clients->count());
 
         foreach ($clients as $profile) {
             try {
+
                 // Проверяем есть ли уже промокод на ДР для этого клиента
                 $existingPromo = $profile->client->promoCodes()
                     ->where('template_type', 'birthday')
@@ -192,7 +198,7 @@ class BirthdayDiscountCommand extends Command
         return PromoCode::create([
             'code' => 'BIRTHDAY' . $today->format('Ymd'),
             'description' => 'Скидка на день рождения',
-            'discount_amount' => 10, // 10% или 10 рублей (зависит от типа)
+            'discount_amount' => 5, // 10% или 10 рублей (зависит от типа)
             'discount_type' => 'percentage', // или 'fixed'
             'discount_behavior' => 'stack',
             'starts_at' => $today,
@@ -213,7 +219,7 @@ class BirthdayDiscountCommand extends Command
     {
         $clientName = $profile->first_name ?? $profile->client->email;
 
-        $message = "Здравствуйте {$clientName}, наша команда «Again» от души поздравляеь вас с предстоящим днем рождения!\n" .
+        $message = "Здравствуйте {$clientName}, наша команда «Again» от души поздравляет вас с предстоящим днем рождения!\n" .
             "Желаем вам отличного настроения, радости и улыбок.. Также от нас, дарим вам промокод на товары в нашем магазине в честь дня рождения.\n" .
             "Важно: промокод действует за 3 дня до дня рождения и 3 дня после него! Не упустите оформить заказ по выгодной цене!\n" .
             "С уважением, команда «Again»";
@@ -234,6 +240,15 @@ class BirthdayDiscountCommand extends Command
         if ($profile->vk_user_id) {
             SendNotificationJob::dispatch('vk', (string)$profile->vk_user_id, $message);
         }
+
+        // WhatsApp
+        if ($profile?->phone) {
+
+            $phone = $this->formatPhoneForWhatsApp($profile->phone);
+
+            SendNotificationJob::dispatch('whatsapp', $phone, $message);
+        }
+
     }
 
     /**
@@ -264,5 +279,13 @@ class BirthdayDiscountCommand extends Command
         if ($client->profile?->vk_user_id) {
             SendNotificationJob::dispatch('vk', (string)$client->profile->vk_user_id, $message);
         }
+
+        // WhatsApp
+        if ($client->profile?->phone) {
+            $phone = $this->formatPhoneForWhatsApp($client->profile->phone);
+
+            SendNotificationJob::dispatch('whatsapp', $phone, $message);
+        }
+
     }
 }
