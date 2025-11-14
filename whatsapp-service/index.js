@@ -99,19 +99,47 @@ function setupClientEvents() {
 // });
 
 
+// client = new Client({
+//   authStrategy: new (require('whatsapp-web.js').LocalAuth)(),
+//   puppeteer: {
+//     headless: true,
+//     executablePath: '/usr/bin/chromium-browser',
+//     args: [
+//       '--no-sandbox',
+//       '--disable-setuid-sandbox',
+//       '--disable-dev-shm-usage',
+//       '--disable-gpu'
+//     ]
+//   }
+// });
+
+
+
+const useChromium = process.env.USE_CHROMIUM === 'true';
+
 client = new Client({
   authStrategy: new (require('whatsapp-web.js').LocalAuth)(),
-  puppeteer: {
-    headless: true,
-    executablePath: '/usr/bin/chromium-browser',
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu'
-    ]
-  }
+  puppeteer: useChromium
+    ? {
+      headless: true,
+      executablePath: '/usr/bin/chromium-browser',
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu'
+      ]
+    }
+    : {
+      headless: false, // чтобы локально видеть окно
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox'
+      ]
+    }
 });
+
+
 
 setupClientEvents();
 
@@ -160,6 +188,7 @@ app.post('/send-message', async (req, res) => {
     }
 
     console.log(`Sending message to ${phone_number}:`, message_text);
+
 
     // Получаем чат по номеру телефона
     const chat = await client.getChatById(phone_number);
