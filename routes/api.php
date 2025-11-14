@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\Admin\MoySkladController;
 use App\Http\Controllers\Api\Admin\NotificationController;
 use App\Http\Controllers\Api\Admin\OptionController;
 use App\Http\Controllers\Api\Admin\OrderStatsController;
+use App\Http\Controllers\Api\Admin\Product\ProductAttributeController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\ProductImageController;
 use App\Http\Controllers\Api\Admin\ProductionController;
@@ -445,15 +446,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::post('{product}/order', [ProductOrderController::class, 'updateOrder']);
             // Инициализировать порядок для всех товаров (только один раз!)
             Route::post('/initialize', [ProductOrderController::class, 'initializeOrders']);
-
-            // Получить максимальный порядок
-//            Route::get('/max', [ProductOrderController::class, 'getMaxOrder']);
-            // Перестроить порядок товаров (убрать пробелы)
-//            Route::post('/rebuild', [ProductOrderController::class, 'rebuildOrders']);
-            // Пакетное обновление порядка
-//            Route::post('/bulk-update', [ProductOrderController::class, 'bulkUpdateOrders']);
-
         });
+
+
+
+        // НОВЫЕ маршруты для характеристик
+        Route::group(['prefix' => 'attributes', 'as' => 'attributes.'], function () {
+            Route::post('{product}/absorbency', [ProductAttributeController::class, 'updateAbsorbency']);
+            Route::post('{product}', [ProductAttributeController::class, 'updateAttributes']);
+        });
+
 
 
     });

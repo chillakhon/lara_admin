@@ -21,6 +21,7 @@ class ProductNumberThreeResource extends JsonResource
             'slug' => $this->slug,
             'description' => $this->description,
             'default_unit_id' => $this->default_unit_id,
+            'absorbency_level' => $this->absorbency_level,
             'price' => (float) $this->price,
             'old_price' => (float) $this->old_price,
             'discount_price' => (float) $this->discount_price,

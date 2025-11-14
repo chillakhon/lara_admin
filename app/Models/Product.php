@@ -47,6 +47,7 @@ class Product extends Model implements HasMedia
         'uuid',
         'marketplace_links',
         'display_order',
+        'absorbency_level'
     ];
 
     protected $guarded = ["id"];

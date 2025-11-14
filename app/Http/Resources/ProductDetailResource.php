@@ -15,6 +15,7 @@ class ProductDetailResource extends JsonResource
             'type' => $this->type,
             'description' => $this->description,
             'has_variants' => $this->has_variants,
+            'absorbency_level' => $this->has_variants,
             'allow_preorder' => $this->allow_preorder,
             'after_purchase_processing_time' => $this->after_purchase_processing_time,
             'default_unit' => $this->whenLoaded('defaultUnit', function() {

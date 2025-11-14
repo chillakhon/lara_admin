@@ -79,6 +79,7 @@ class ProductNumberTwoResouce extends JsonResource
             'name' => $this->name,
             'marketplace_links' => $this->marketplace_links ? json_decode($this->marketplace_links, true) : null,
             'display_order' => (int)$this->display_order,
+            'absorbency_level' => (int)$this->absorbency_level,
             'slug' => $this->slug,
             'code' => $this->code,
             'description' => $this->description,
