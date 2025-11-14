@@ -43,7 +43,8 @@ class ProductController extends Controller
 
         try {
 
-            $isAdmin = $request->boolean('admin', false);
+//            $isAdmin = $request->boolean('admin', false);
+            $isAdmin = false; //это для отключение мой склад надо вернут когда подключишь мой склад
 
             $product_stock_sklad = [];
             if ($isAdmin) {
@@ -452,7 +453,6 @@ class ProductController extends Controller
             $this->price_history_create($request, $prev_price, $product);
 
             $this->update_product_images($request, $product);
-
 
 
             $colorIds = collect($validated['colors'] ?? [])->pluck('id');
