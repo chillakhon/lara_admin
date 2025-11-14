@@ -8,7 +8,22 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+
+if (process.env.NODE_ENV === 'development') {
+  app.use(cors({
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:8080',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:8080',
+    ],
+    credentials: true,
+  }));
+} else {
+  app.use(cors());
+}
+
 
 // Middleware
 app.use(express.json());
@@ -59,7 +74,7 @@ function setupClientEvents() {
         message_text: messageText,
         message_id: messageId,
         timestamp: timestamp,
-        from_id: fromId
+        from_id: fromId,
       };
 
       console.log('Sending webhook to Laravel:', webhookData);
@@ -70,10 +85,10 @@ function setupClientEvents() {
         {
           headers: {
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
           },
-          timeout: 10000
-        }
+          timeout: 10000,
+        },
       );
 
       console.log('Laravel webhook response:', response.data);
@@ -99,22 +114,6 @@ function setupClientEvents() {
 // });
 
 
-// client = new Client({
-//   authStrategy: new (require('whatsapp-web.js').LocalAuth)(),
-//   puppeteer: {
-//     headless: true,
-//     executablePath: '/usr/bin/chromium-browser',
-//     args: [
-//       '--no-sandbox',
-//       '--disable-setuid-sandbox',
-//       '--disable-dev-shm-usage',
-//       '--disable-gpu'
-//     ]
-//   }
-// });
-
-
-
 const useChromium = process.env.USE_CHROMIUM === 'true';
 
 client = new Client({
@@ -127,18 +126,17 @@ client = new Client({
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--disable-gpu'
-      ]
+        '--disable-gpu',
+      ],
     }
     : {
       headless: false, // чтобы локально видеть окно
       args: [
         '--no-sandbox',
-        '--disable-setuid-sandbox'
-      ]
-    }
+        '--disable-setuid-sandbox',
+      ],
+    },
 });
-
 
 
 setupClientEvents();
@@ -176,14 +174,14 @@ app.post('/send-message', async (req, res) => {
     if (!phone_number || !message_text) {
       return res.status(400).json({
         success: false,
-        error: 'phone_number и message_text обязательны'
+        error: 'phone_number и message_text обязательны',
       });
     }
 
     if (!isReady) {
       return res.status(400).json({
         success: false,
-        error: 'WhatsApp не подключен'
+        error: 'WhatsApp не подключен',
       });
     }
 
@@ -196,7 +194,7 @@ app.post('/send-message', async (req, res) => {
     if (!chat) {
       return res.status(400).json({
         success: false,
-        error: `Chat not found for phone: ${phone_number}`
+        error: `Chat not found for phone: ${phone_number}`,
       });
     }
 
@@ -208,14 +206,14 @@ app.post('/send-message', async (req, res) => {
     return res.json({
       success: true,
       message: 'Message sent successfully',
-      phone_number: phone_number
+      phone_number: phone_number,
     });
 
   } catch (error) {
     console.error('Error sending message:', error);
     return res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 });
