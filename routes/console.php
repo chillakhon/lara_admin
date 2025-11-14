@@ -11,7 +11,7 @@ Artisan::command('discounts:check-validity', function () {
 })->purpose('Activate and deactivate discounts')->everyFiveMinutes();
 
 
-Schedule::command('email:sync')->everyMinute();
+Schedule::command('email:sync')->everyFiveMinutes();
 
 Schedule::command('birthday:process')->daily();
 
