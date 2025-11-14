@@ -219,10 +219,20 @@ class BirthdayDiscountCommand extends Command
     {
         $clientName = $profile->first_name ?? $profile->client->email;
 
-        $message = "Здравствуйте {$clientName}, наша команда «Again» от души поздравляет вас с предстоящим днем рождения!\n" .
-            "Желаем вам отличного настроения, радости и улыбок.. Также от нас, дарим вам промокод на товары в нашем магазине в честь дня рождения.\n" .
-            "Важно: промокод действует за 3 дня до дня рождения и 3 дня после него! Не упустите оформить заказ по выгодной цене!\n" .
+
+
+
+        $frontendUrl = env('FRONTEND_URL', 'https://againdev2.ru');
+        $promoPageUrl = $frontendUrl . '/profile/sales';
+
+        // Универсальное текстовое сообщение для Email, VK, WhatsApp
+        $message = "Здравствуйте {$clientName}, наша команда «Again» от души поздравляет вас с предстоящим днем рождения!\n\n" .
+            "Желаем вам отличного настроения, радости и улыбок! Также от нас — промокод на товары в нашем магазине в честь дня рождения.\n\n" .
+            "Важно: промокод действует за 3 дня до дня рождения и 3 дня после него! Не упустите оформить заказ по выгодной цене!\n\n" .
+            "🎁 Чтобы посмотреть и использовать ваш промокод, перейдите по ссылке:\n" .
+            "{$promoPageUrl}\n\n" .
             "С уважением, команда «Again»";
+
 
         // Email
         if ($profile->client->email) {
@@ -258,9 +268,13 @@ class BirthdayDiscountCommand extends Command
     {
         $clientName = $client->profile?->first_name ?? $client->email;
 
+        $frontendUrl = env('FRONTEND_URL', 'https://againdev2.ru');
+        $promoPageUrl = $frontendUrl . '/profile/sales';
+
         $message = "Здравствуйте {$clientName}!\n" .
             "Напоминаем, что сегодня крайний день, когда вы можете воспользоваться своим промокодом на день рождения!\n" .
             "Не упустите оформить заказ по выгодной цене!\n" .
+            "Посмотреть ваш промокод можно здесь: {$promoPageUrl}\n\n" .
             "С уважением, команда «Again»";
 
         // Email
@@ -275,17 +289,17 @@ class BirthdayDiscountCommand extends Command
             SendNotificationJob::dispatch('telegram', $client->profile->telegram_user_id, $message);
         }
 
-        // VK
-        if ($client->profile?->vk_user_id) {
-            SendNotificationJob::dispatch('vk', (string)$client->profile->vk_user_id, $message);
-        }
-
-        // WhatsApp
-        if ($client->profile?->phone) {
-            $phone = $this->formatPhoneForWhatsApp($client->profile->phone);
-
-            SendNotificationJob::dispatch('whatsapp', $phone, $message);
-        }
+//        // VK
+//        if ($client->profile?->vk_user_id) {
+//            SendNotificationJob::dispatch('vk', (string)$client->profile->vk_user_id, $message);
+//        }
+//
+//        // WhatsApp
+//        if ($client->profile?->phone) {
+//            $phone = $this->formatPhoneForWhatsApp($client->profile->phone);
+//
+//            SendNotificationJob::dispatch('whatsapp', $phone, $message);
+//        }
 
     }
 }

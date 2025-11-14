@@ -30,7 +30,7 @@ class WhatsAppAdapter extends AbstractMessageAdapter
     {
         try {
             $response = Http::post("{$this->whatsappServiceUrl}/send-message", [
-                'phone_number' => $externalId, // +79991234567
+                'phone_number' => $externalId,
                 'message_text' => $content,
             ]);
 
