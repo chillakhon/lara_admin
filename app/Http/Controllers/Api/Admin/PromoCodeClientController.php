@@ -93,11 +93,10 @@ class PromoCodeClientController extends Controller
                     ->orWhereNull('starts_at');
             })
             ->where(function ($q) use ($clientId) {
-                // Промокоды без привязки к клиентам (общие для всех)
-                // ИЛИ промокоды, привязанные к данному клиенту
-                $q->whereDoesntHave('clients')
+                $q->where('applies_to_all_clients', true)
                     ->orWhereHas('clients', function ($subQ) use ($clientId) {
-                        $subQ->where('client_id', $clientId);
+                        $subQ->where('applies_to_all_clients', false)
+                            ->where('client_id', $clientId);
                     });
             });
 
