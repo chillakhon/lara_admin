@@ -37,7 +37,16 @@ class EmailAdapter extends AbstractMessageAdapter
             $to = $externalId;
 
 
-            Mail::html(nl2br($content), function ($message) use ($to) {
+//            Mail::html(nl2br($content), function ($message) use ($to) {
+//                $message->to($to)
+//                    ->from($this->settings->from_address)
+//                    ->subject('Re: Ответ от поддержки');
+//            });
+
+
+            Mail::send('emails.message', [
+                'content' => $content,
+            ], function ($message) use ($to) {
                 $message->to($to)
                     ->from($this->settings->from_address)
                     ->subject('Re: Ответ от поддержки');
