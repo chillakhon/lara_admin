@@ -37,21 +37,16 @@ class MailNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $message = (new MailMessage)
+        return (new MailMessage)
             ->subject('Ваш код подтверждения')
             ->greeting("Здравствуйте, {$this->title}!")
             ->line('Вы запрашивали код подтверждения.')
             ->line("Ваш код подтверждения: **{$this->verification_code}**")
             ->line('Пожалуйста, введите этот код для завершения процесса.')
             ->line('Если вы не запрашивали код, просто проигнорируйте это письмо.')
-            ->salutation('С уважением, команда ' . config('app.name'));
-
-        // Добавляем footer с отпиской
-        return $message->view('emails.notification-with-unsubscribe', [
-            'unsubscribeUrl' => url('/api/public/unsubscribe/' . $notifiable->id),
-        ]);
+            ->salutation('С уважением, команда ' . config('app.name'))
+            ->markdown('emails.unsubscribe');
     }
-
     /**
      * Get the array representation of the notification.
      *
