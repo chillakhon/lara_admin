@@ -3,6 +3,7 @@
 namespace App\Services\Notifications\Channels;
 
 use App\Services\Notifications\BaseNotificationChannel;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Mail\Message;
 
@@ -36,13 +37,20 @@ class EmailNotificationChannel extends BaseNotificationChannel
     {
         $unsubscribeUrl = url('/api/public/unsubscribe/{token}');
 
+
         $html = nl2br($message) . "<br><br>" .
             "<hr>" .
             "<p style='font-size: 12px; color: #666;'>" .
             "<a href='#' style='color: #0066cc;'>Отписаться от рассылки</a>" .
             "</p>";
 
+
+        Log::debug([
+            'unsubscribeUrl' => $unsubscribeUrl,
+        ]);
+
         return $html;
+
     }
 
 
