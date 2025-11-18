@@ -37,7 +37,7 @@ class EmailAdapter extends AbstractMessageAdapter
             $to = $externalId;
 
 
-            Mail::raw($this->addUnsubscribeLink($content), function ($message) use ($to) {
+            Mail::raw($this->formatMessage($content), function ($message) use ($to) {
                 $message->to($to)
                     ->from($this->settings->from_address)
                     ->subject('Re: Ответ от поддержки');
