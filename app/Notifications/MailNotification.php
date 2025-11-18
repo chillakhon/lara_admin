@@ -37,7 +37,7 @@ class MailNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        $message = (new MailMessage)
             ->subject('Ваш код подтверждения')
             ->greeting("Здравствуйте, {$this->title}!")
             ->line('Вы запрашивали код подтверждения.')
@@ -45,6 +45,11 @@ class MailNotification extends Notification
             ->line('Пожалуйста, введите этот код для завершения процесса.')
             ->line('Если вы не запрашивали код, просто проигнорируйте это письмо.')
             ->salutation('С уважением, команда ' . config('app.name'));
+
+        // Добавляем footer с отпиской
+        return $message->view('emails.notification-with-unsubscribe', [
+            'unsubscribeUrl' => url('/api/public/unsubscribe/' . $notifiable->id),
+        ]);
     }
 
     /**
@@ -58,4 +63,12 @@ class MailNotification extends Notification
             //
         ];
     }
+
+
+
+
+
+
+
+
 }
