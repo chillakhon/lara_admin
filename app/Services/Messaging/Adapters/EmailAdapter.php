@@ -36,20 +36,13 @@ class EmailAdapter extends AbstractMessageAdapter
             // externalId для email = адрес отправителя письма
             $to = $externalId;
 
-            Log::info("EmailAdapter: Sending message", [
-                'to' => $to,
-                'content_length' => strlen($content)
-            ]);
 
-            Mail::raw($content, function ($message) use ($to) {
+            Mail::raw($this->addUnsubscribeLink($content), function ($message) use ($to) {
                 $message->to($to)
                     ->from($this->settings->from_address)
                     ->subject('Re: Ответ от поддержки');
             });
 
-            Log::info("EmailAdapter: Message sent successfully", [
-                'to' => $to
-            ]);
 
             return true;
 
@@ -75,4 +68,22 @@ class EmailAdapter extends AbstractMessageAdapter
     {
         return 'email';
     }
+
+
+    protected function addUnsubscribeLink(string $message): string
+    {
+        $unsubscribeUrl = url('/api/public/unsubscribe/{token}');
+
+
+        $html = nl2br($message) . "<br><br>" .
+            "<hr>" .
+            "<p style='font-size: 12px; color: #666;'>" .
+            "<a href='#' style='color: #0066cc;'>Отписаться от рассылки</a>" .
+            "</p>";
+
+
+        return $html;
+
+    }
+
 }
