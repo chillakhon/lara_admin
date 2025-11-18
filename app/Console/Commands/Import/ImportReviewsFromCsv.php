@@ -132,7 +132,9 @@ class ImportReviewsFromCsv extends Command
         try {
             // 4. Парсим дату публикации
             $publishedAt = $this->parseDate($data['Дата и время публикации'] ?? '');
-
+            if (!$publishedAt) {
+                $publishedAt = now(); // Если дата не распарсилась, берем текущее время
+            }
             // 5. Определяем опубликован ли отзыв
             $isPublished = trim($data['Опубликованность'] ?? '') === 'Да';
 
