@@ -1,5 +1,11 @@
 <?php
 
-define('PRODUCT', 'Product');
-define('PRODUCT_VARIANT', 'ProductVariant');
-define('MATERIAL', 'Material');
+if (!defined('PRODUCT')) {
+    define('PRODUCT', 'Product');
+}
+if (!defined('PRODUCT_VARIANT')) {
+    define('PRODUCT_VARIANT', 'ProductVariant');
+}
+if (!defined('MATERIAL')) {
+    define('MATERIAL', 'Material');
+}
