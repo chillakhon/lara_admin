@@ -70,20 +70,32 @@ class EmailAdapter extends AbstractMessageAdapter
     }
 
 
-    protected function addUnsubscribeLink(string $message): string
+    protected function formatMessage(string $message): string
     {
+        // Если сообщение уже содержит HTML теги - оставляем как есть
+        if (str_contains($message, '<')) {
+            $htmlContent = $message;
+        } else {
+            // Конвертируем текст в HTML (переносы строк в <br>)
+            $htmlContent = nl2br(htmlspecialchars($message, ENT_QUOTES, 'UTF-8'));
+        }
+
         $unsubscribeUrl = url('/api/public/unsubscribe/{token}');
 
+        return "
+            <html>
+            <body style='font-family: Arial, sans-serif; color: #333;'>
+                <div style='max-width: 600px; margin: 0 auto;'>
+                    {$htmlContent}
 
-        $html = nl2br($message) . "<br><br>" .
-            "<hr>" .
-            "<p style='font-size: 12px; color: #666;'>" .
-            "<a href='#' style='color: #0066cc;'>Отписаться от рассылки</a>" .
-            "</p>";
-
-
-        return $html;
-
+                    <hr style='margin-top: 30px; border: none; border-top: 1px solid #ddd;'>
+                    <p style='font-size: 12px; color: #999; margin-top: 20px;'>
+                        <a href='{$unsubscribeUrl}' style='color: #0066cc; text-decoration: none;'>Отписаться от рассылки</a>
+                    </p>
+                </div>
+            </body>
+            </html>
+        ";
     }
 
 }
