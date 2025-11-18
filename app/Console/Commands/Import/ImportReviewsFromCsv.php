@@ -145,9 +145,9 @@ class ImportReviewsFromCsv extends Command
                 'reviewable_id' => $product->id,
                 'content' => trim($data['Комментарий'] ?? ''),
                 'rating' => $rating,
-                'is_published' => $isPublished,
-                'is_verified' => $isPublished,
-                'status' => $isPublished ? Review::STATUS_PUBLISHED : Review::STATUS_NEW,
+                'is_published' => true,
+                'is_verified' => true,
+                'status' => true ? Review::STATUS_PUBLISHED : Review::STATUS_NEW,
                 'published_at' => $isPublished ? $publishedAt : null,
                 'created_at' => $publishedAt,
             ]);
