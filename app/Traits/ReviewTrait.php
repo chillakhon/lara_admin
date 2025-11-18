@@ -19,14 +19,6 @@ trait ReviewTrait
             $reviewableMorphMap[Product::class] = ['images']; // or any relations
         }
 
-        // if any other models were morphed with Review model
-        // if ($request->service_id) {
-        //     $reviewableMorphMap[Service::class] = ['provider']; // relations
-        // }
-
-        // if ($request->store_id) {
-        //     $reviewableMorphMap[Store::class] = ['location']; // relations
-        // }
 
         return $reviewableMorphMap;
     }
@@ -56,15 +48,7 @@ trait ReviewTrait
             });
         }
 
-//        if ($request->get('search')) {
-//            $search_value = $request->get('search');
-//            $reviews->where(function ($query) use ($search_value) {
-//                $query->where('content', "LIKE", "%{$search_value}%");
-//            });
-//        }
 
-        // published should be true by default, then admin
-        // can change that from admin panel
         if ($request->has('published')) {
             $reviews->where('is_published', $request->boolean('published'));
         }

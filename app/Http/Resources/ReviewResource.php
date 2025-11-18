@@ -19,7 +19,7 @@ class ReviewResource extends JsonResource
             'is_verified' => $this->is_verified,
             'is_published' => $this->is_published,
             'published_at' => $this->published_at?->format('d.m.Y H:i'),
-            'created_at' => $this->created_at->format('d.m.Y H:i'),
+            'created_at' => $this->created_at?->format('d.m.Y H:i'),
             'status' => $this->status, // Добавляем статус
             'client' => $this->when($this->client, function () {
                 return [
