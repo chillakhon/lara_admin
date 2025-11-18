@@ -80,7 +80,7 @@ class EmailAdapter extends AbstractMessageAdapter
             $htmlContent = nl2br(htmlspecialchars($message, ENT_QUOTES, 'UTF-8'));
         }
 
-        $unsubscribeUrl = url('/api/public/unsubscribe/{token}');
+        $unsubscribeUrl = url("/api/public/unsubscribe/{token}");
 
         return "
             <html>
@@ -90,7 +90,7 @@ class EmailAdapter extends AbstractMessageAdapter
 
                     <hr style='margin-top: 30px; border: none; border-top: 1px solid #ddd;'>
                     <p style='font-size: 12px; color: #999; margin-top: 20px;'>
-                        <a href='{$unsubscribeUrl}' style='color: #0066cc; text-decoration: none;'>Отписаться от рассылки</a>
+                        <a href='#' style='color: #0066cc; text-decoration: none;'>Отписаться от рассылки</a>
                     </p>
                 </div>
             </body>
