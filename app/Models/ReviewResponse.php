@@ -11,12 +11,7 @@ class ReviewResponse extends Model
 {
     use HasFactory, SoftDeletes;
 
-    // protected $fillable = [
-    //     'review_id',
-    //     'user_id',
-    //     'content',
-    //     'is_published'
-    // ];
+
 
     protected $guarded = ['id'];
 

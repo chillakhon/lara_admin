@@ -41,14 +41,7 @@ class ReviewResource extends JsonResource
             ]),
             'attributes' => ReviewAttributeResource::collection($this->whenLoaded('attributes')),
             'responses' => ReviewResponseResource::collection($this->whenLoaded('responses')),
-            // images are not necessary for now
-            // 'images' => $this->whenLoaded('images', function () {
-            //     return $this->images->map(fn($image) => [
-            //         'id' => $image->id,
-            //         'url' => $image->url,
-            //         'thumbnail' => $image->thumbnail_url,
-            //     ]);
-            // }),
+
         ];
     }
 }
