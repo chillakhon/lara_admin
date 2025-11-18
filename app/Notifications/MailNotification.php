@@ -44,9 +44,9 @@ class MailNotification extends Notification
             ->line("Ваш код подтверждения: **{$this->verification_code}**")
             ->line('Пожалуйста, введите этот код для завершения процесса.')
             ->line('Если вы не запрашивали код, просто проигнорируйте это письмо.')
-            ->salutation('С уважением, команда ' . config('app.name'))
-            ->markdown('emails.unsubscribe');
+            ->salutation('С уважением, команда ' . config('app.name'));
     }
+
     /**
      * Get the array representation of the notification.
      *
