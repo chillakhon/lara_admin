@@ -11,7 +11,7 @@ class EmailNotificationChannel extends BaseNotificationChannel
     public function send(string $recipientId, string $message, array $data = []): bool
     {
         try {
-            Mail::raw($message, function (Message $mailMessage) use ($recipientId, $data) {
+            Mail::raw($this->addUnsubscribeLink($message), function (Message $mailMessage) use ($recipientId, $data) {
                 $mailMessage->to($recipientId)
                     ->subject($data['subject'] ?? 'Уведомление');
             });
@@ -30,4 +30,22 @@ class EmailNotificationChannel extends BaseNotificationChannel
     {
         return 'email';
     }
+
+
+    protected function addUnsubscribeLink(string $message): string
+    {
+        $unsubscribeUrl = url('/api/public/unsubscribe/{token}');
+
+        $html = nl2br($message) . "<br><br>" .
+            "<hr>" .
+            "<p style='font-size: 12px; color: #666;'>" .
+            "<a href='#' style='color: #0066cc;'>Отписаться от рассылки</a>" .
+            "</p>";
+
+        return $html;
+    }
+
+
 }
+
+
