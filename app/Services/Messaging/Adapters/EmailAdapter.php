@@ -33,25 +33,31 @@ class EmailAdapter extends AbstractMessageAdapter
     public function sendMessage(string $externalId, string $content, array $attachments = []): bool
     {
         try {
-            // externalId для email = адрес отправителя письма
             $to = $externalId;
+            $htmlContent = nl2br(e($content));
+            $unsubscribeUrl = url('/api/public/unsubscribe');
 
+            $html = "
+            <html>
+            <body style='font-family: Arial, sans-serif; color: #333;'>
+                <div style='max-width: 600px; margin: 0 auto;'>
+                    {$htmlContent}
+                    <hr style='margin-top: 30px; border: none; border-top: 1px solid #ddd;'>
+                    <p style='font-size: 12px; color: #999; margin-top: 20px;  text-align: center;'>
+                        <a href='{$unsubscribeUrl}' style='color: #0066cc; text-decoration: none;'>
+                            Отписаться от рассылки
+                        </a>
+                    </p>
+                </div>
+            </body>
+            </html>
+        ";
 
-//            Mail::html(nl2br($content), function ($message) use ($to) {
-//                $message->to($to)
-//                    ->from($this->settings->from_address)
-//                    ->subject('Re: Ответ от поддержки');
-//            });
-
-
-            Mail::send('emails.message', [
-                'content' => $content,
-            ], function ($message) use ($to) {
+            Mail::html($html, function ($message) use ($to) {
                 $message->to($to)
                     ->from($this->settings->from_address)
                     ->subject('Re: Ответ от поддержки');
             });
-
 
             return true;
 
