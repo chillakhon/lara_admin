@@ -51,8 +51,11 @@ class ProductsAndVariantsSyncWithMoySkladService
 
         $syncedUUIDs = [];
 
+
+//        return;
         foreach ($products as $productData) {
             try {
+
                 $product = $this->upsertProduct($productData, $stock, $moyskladUnits);
                 $syncedUUIDs[] = $productData->id;
 
@@ -289,8 +292,12 @@ class ProductsAndVariantsSyncWithMoySkladService
         try {
             $characteristic = collect($data->characteristics ?? [])
                 ->firstWhere('name', 'Размер');
+
             $colorCharacteristic = collect($data->characteristics ?? [])
                 ->firstWhere('name', 'Цвет');
+            $nominalCharacteristic = collect($data->characteristics ?? [])
+                ->firstWhere('name', 'Номинал');
+
 
             $color_name = $colorCharacteristic?->value ?? '';
 
@@ -303,9 +310,17 @@ class ProductsAndVariantsSyncWithMoySkladService
             }
 
 
-
-
             $variant_name = mb_substr($characteristic?->value ?? '', 0, 255);
+            $nominal_variant_name = mb_substr($nominalCharacteristic?->name ?? '', 0, 255);
+
+
+            if ($productData->name == 'Подарочный сертификат') {
+                if (!empty($nominal_variant_name)) {
+                    $variant_name = $nominal_variant_name;
+
+                }
+            }
+
             $slug = Str::slug($variant_name);
             $sku = $slug . '-' . $product->id;
 
@@ -313,6 +328,7 @@ class ProductsAndVariantsSyncWithMoySkladService
             $variant = ProductVariant::withTrashed()
                 ->where('uuid', $data->id)
                 ->first();
+
 
             $stockQty = $this->normalizeIntValue($stock[$data->id]['stock'] ?? 0);
 
@@ -344,7 +360,13 @@ class ProductsAndVariantsSyncWithMoySkladService
 
                 unset($attributes['uuid']);
                 $variant->update($attributes);
+                if ($productData->name == 'Подарочный сертификат') {
 
+                    \Illuminate\Support\Facades\Log::debug([
+                        'name_varinat' => $variant_name
+                    ]);
+
+                }
 
                 return $variant;
             }

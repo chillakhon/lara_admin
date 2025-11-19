@@ -30,12 +30,14 @@ class ConversationController extends Controller
 
         // Базовый запрос с нужными связями
         $query = Conversation::with(['lastMessage', 'client.profile', 'assignedUser'])
+            ->whereHas('messages')
             ->orderBy('last_message_at', 'desc');
 
         // Если пришёл source — добавляем where-условие
         if (!empty($validated['source'])) {
             $query->where('source', $validated['source']);
         }
+
 
         // Пагинация
         $perPage = $validated['per_page'] ?? 20;

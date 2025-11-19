@@ -43,7 +43,7 @@ class EmailNotificationChannel extends BaseNotificationChannel
             $htmlContent = nl2br(htmlspecialchars($message, ENT_QUOTES, 'UTF-8'));
         }
 
-        $unsubscribeUrl = url("/api/public/unsubscribe/{token}");
+        $unsubscribeUrl = url("/api/public/unsubscribe");
 
         return "
             <html>

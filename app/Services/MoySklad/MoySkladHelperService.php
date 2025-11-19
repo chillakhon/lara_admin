@@ -107,6 +107,7 @@ class MoySkladHelperService
         $objects = [
             ["name" => "Размер", "type" => "string"],
             ["name" => "Цвет", "type" => "string"],
+//            ["name" => "Номинал", "type" => "string"]
             // ["name" => "Test", "type" => "string"]
         ];
 

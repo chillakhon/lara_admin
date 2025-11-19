@@ -43,8 +43,8 @@ class ProductController extends Controller
 
         try {
 
-//            $isAdmin = $request->boolean('admin', false);
-            $isAdmin = false; //это для отключение мой склад надо вернут когда подключишь мой склад
+            $isAdmin = $request->boolean('admin', false);
+//            $isAdmin = false; //это для отключение мой склад надо вернут когда подключишь мой склад
 
             $product_stock_sklad = [];
             if ($isAdmin) {
@@ -500,6 +500,8 @@ class ProductController extends Controller
                     $variant->delete();
                 });
 
+
+
             // Add or update variants
             foreach (($validated['variants'] ?? []) as $variantData) {
                 $uuid = $variantData['local_uuid'] ?? null;
@@ -548,11 +550,15 @@ class ProductController extends Controller
             }
 
 
+
+
+
             if ($createdVariants) {
                 $massCreatedModifications = $moyskadController->mass_variant_creation_and_update(
                     $createdVariants,
                     $msProduct,
                 );
+
 
 
                 // update local variants after mass creation with uuid
@@ -565,6 +571,9 @@ class ProductController extends Controller
                     }
                 }
             }
+
+
+
             // if everything goes perfect
             // we will delete all deleted variants from moysklad too
             // BUT! remember if there is any supplier invoice that were made for

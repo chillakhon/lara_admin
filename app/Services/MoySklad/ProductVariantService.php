@@ -173,6 +173,7 @@ class ProductVariantService
         $priceType = $moySkladHelperService->get_price_types()[0];
         $sizeId = $moySkladHelperService->ensureCharacteristic('Размер', 'string');
         $colorId = $moySkladHelperService->ensureCharacteristic('Цвет', 'string');
+        $nominal = $moySkladHelperService->ensureCharacteristic('Номинал', 'string');
 
         foreach ($productVariants as $key => $variant) {
             $existingVariant = ProductVariant::find($variant->id);
@@ -180,13 +181,10 @@ class ProductVariantService
             $colorValue = $existingVariant->table_color?->name ?? '';
 
 
-
-
-
             $characteristics = [
                 [
                     'id' => (string)$sizeId,
-                    'value' => $variant->name,
+                    'value' => $variant->name == 'Номинал' ? $variant->price : $variant->name,
                 ],
             ];
 
@@ -214,30 +212,6 @@ class ProductVariantService
             ];
 
 
-//            $data = [
-//                'name' => $variant->name,
-//                'description' => $variant->description ?? '',
-//                'salePrices' => [
-//                    [
-//                        'value' => ($variant->price ?? 0) * 100,
-//                        'currency' => $currency,
-//                        'priceType' => $priceType,
-//                    ]
-//                ],
-//                'buyPrice' => [
-//                    'value' => ($variant->cost_price ?? 0) * 100, // копейки
-//                ],
-//                'characteristics' => [
-//                    [
-//                        'id' => (string)$sizeId,
-//                        'value' => $variant->name,
-//                    ],
-//                    [
-//                        'id' => $colorId ? (string)$colorId : '', // пустая строка вместо null
-//                        'value' => $colorValue,                  // пустая строка если цвета нет
-//                    ],
-//                ],
-//            ];
 
             $codeAndIds[$existingVariant->code] = $existingVariant?->uuid;
 

@@ -8,6 +8,7 @@ use App\Models\PromoCode;
 use App\Models\PromoCodeClient;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class PromoCodeClientController extends Controller
 {
@@ -100,6 +101,8 @@ class PromoCodeClientController extends Controller
                     });
             });
 
+
+
         // Исключаем уже использованные промокоды этим клиентом
         $query->whereDoesntHave('usages', function ($q) use ($clientId) {
             $q->where('client_id', $clientId);
@@ -130,22 +133,28 @@ class PromoCodeClientController extends Controller
         // Разрешенные поля для сортировки
         $allowedSortFields = ['created_at', 'expires_at', 'discount_amount', 'code'];
         if (in_array($sortField, $allowedSortFields)) {
-            $query->orderBy($sortField, $sortDirection);
+            $query->orderBy('promo_codes.' . $sortField, $sortDirection);
         } else {
-            $query->orderBy('created_at', 'desc');
+            $query->orderBy('promo_codes.created_at', 'desc');
         }
 
-        // Получаем промокоды (убираем times_uses из выборки)
-        $promoCodes = $query->get([
-            'id',
-            'code',
-            'description',
-            'image',
-            'discount_amount',
-            'discount_type',
-            'expires_at',
-            'max_uses'
-        ]);
+        // Получаем промокоды с полями из promo_code_client
+        $promoCodes = $query->leftJoin('promo_code_client', function ($join) use ($clientId) {
+            $join->on('promo_codes.id', '=', 'promo_code_client.promo_code_id')
+                ->where('promo_code_client.client_id', '=', $clientId);
+        })
+            ->get([
+                'promo_codes.id',
+                'promo_codes.code',
+                'promo_codes.description',
+                'promo_codes.image',
+                'promo_codes.discount_amount',
+                'promo_codes.discount_type',
+                'promo_codes.expires_at',
+                'promo_codes.max_uses',
+                'promo_code_client.notified_at',
+                'promo_code_client.birthday_discount',
+            ]);
 
         // Добавляем дополнительную информацию для каждого промокода
         $promoCodes->each(function ($promoCode) {
@@ -179,7 +188,6 @@ class PromoCodeClientController extends Controller
             'client_id' => $clientId,
         ]);
     }
-
 
     /**
      * Создать новую связь промокода с клиентом
