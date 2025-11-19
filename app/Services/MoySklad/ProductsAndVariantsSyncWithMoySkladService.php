@@ -318,7 +318,8 @@ class ProductsAndVariantsSyncWithMoySkladService
             if ($productData->name == 'Подарочный сертификат') {
                 \Illuminate\Support\Facades\Log::debug([
                     'test1' => $variant_name,
-                    '$nominalCharacteristic' => $nominalCharacteristic
+                    '$nominalCharacteristic' => $nominalCharacteristic,
+                    '$data->characteristics' => $data->characteristics
                 ]);
                 if (!empty($nominal_variant_name)) {
 
