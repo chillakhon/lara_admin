@@ -173,7 +173,13 @@ class ProductVariantService
         $priceType = $moySkladHelperService->get_price_types()[0];
         $sizeId = $moySkladHelperService->ensureCharacteristic('Размер', 'string');
         $colorId = $moySkladHelperService->ensureCharacteristic('Цвет', 'string');
-        $nominal = $moySkladHelperService->ensureCharacteristic('Номинал', 'string');
+        $nominalId = $moySkladHelperService->ensureCharacteristic('Номинал', 'string');
+
+        \Illuminate\Support\Facades\Log::debug([
+            'sizeId' => $sizeId,
+            'colorId' => $colorId,
+            'mominal' => $nominalId
+        ]);
 
         foreach ($productVariants as $key => $variant) {
             $existingVariant = ProductVariant::find($variant->id);
@@ -181,12 +187,24 @@ class ProductVariantService
             $colorValue = $existingVariant->table_color?->name ?? '';
 
 
+            $isNominal = $variant->name == 'Номинал';
+            $characteristicId = $isNominal ? $nominalId : $sizeId;
+            $characteristicValue = $isNominal ? (string)$variant->price : $variant->name;
+
             $characteristics = [
                 [
-                    'id' => (string)$sizeId,
-                    'value' => $variant->name == 'Номинал' ? $variant->price : $variant->name,
+                    'id' => (string)$characteristicId,  // UUID, не строка "Номинал"
+                    'value' => $characteristicValue,
                 ],
             ];
+
+//            $characteristics = [
+//                [
+//                    'id' => (string)$nominalId,
+//                    'value' => $variant->name,
+//                ],
+//
+//            ];
 
             if ($colorId && $existingVariant->table_color?->name) {
                 $characteristics[] = [
@@ -210,7 +228,6 @@ class ProductVariantService
                 ],
                 'characteristics' => $characteristics,
             ];
-
 
 
             $codeAndIds[$existingVariant->code] = $existingVariant?->uuid;

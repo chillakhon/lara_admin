@@ -559,8 +559,6 @@ class ProductController extends Controller
                     $msProduct,
                 );
 
-
-
                 // update local variants after mass creation with uuid
                 foreach ($createdVariants as $key => $cv) {
                     if (array_key_exists($cv->code, $massCreatedModifications)) {
