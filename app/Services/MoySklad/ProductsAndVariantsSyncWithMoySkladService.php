@@ -314,9 +314,6 @@ class ProductsAndVariantsSyncWithMoySkladService
             $nominal_variant_name = mb_substr($nominalCharacteristic?->name ?? '', 0, 255);
 
 
-            \Illuminate\Support\Facades\Log::debug([
-                '$productData' => $productData
-            ]);
 
             if ($productData->name == 'Подарочный сертификат') {
                 if (!empty($nominal_variant_name)) {
