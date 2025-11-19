@@ -184,8 +184,7 @@ class ProductVariantService
             $characteristics = [
                 [
                     'id' => (string)$sizeId,
-                    'value' => $variant->name,
-//                    'value' => $variant->name == 'Номинал' ? $variant->price : $variant->name,
+                    'value' => $variant->name == 'Номинал' ? $variant->price : $variant->name,
                 ],
             ];
 
