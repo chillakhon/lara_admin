@@ -316,11 +316,19 @@ class ProductsAndVariantsSyncWithMoySkladService
 
 
             if ($productData->name == 'Подарочный сертификат') {
+                \Illuminate\Support\Facades\Log::debug([
+                    'test1' => $variant_name
+                ]);
                 if (!empty($nominal_variant_name)) {
+
+                    \Illuminate\Support\Facades\Log::debug([
+                        'test2' => $variant_name
+                    ]);
+
                     $variant_name = $nominal_variant_name;
 
                     \Illuminate\Support\Facades\Log::debug([
-                        'test' => $variant_name
+                        'test3' => $variant_name
                     ]);
 
                 }
