@@ -175,11 +175,6 @@ class ProductVariantService
         $colorId = $moySkladHelperService->ensureCharacteristic('Цвет', 'string');
         $nominalId = $moySkladHelperService->ensureCharacteristic('Номинал', 'string');
 
-        \Illuminate\Support\Facades\Log::debug([
-            'sizeId' => $sizeId,
-            'colorId' => $colorId,
-            'mominal' => $nominalId
-        ]);
 
         foreach ($productVariants as $key => $variant) {
             $existingVariant = ProductVariant::find($variant->id);
@@ -193,7 +188,7 @@ class ProductVariantService
 
             $characteristics = [
                 [
-                    'id' => (string)$characteristicId,  // UUID, не строка "Номинал"
+                    'id' => (string)$characteristicId,
                     'value' => $characteristicValue,
                 ],
             ];

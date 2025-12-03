@@ -37,6 +37,7 @@ use App\Http\Controllers\Api\Admin\PromoCodeProductController;
 use App\Http\Controllers\Api\Admin\PromoCodeUsageController;
 use App\Http\Controllers\Api\Admin\RecipeController;
 use App\Http\Controllers\Api\Admin\RoleController;
+use App\Http\Controllers\Api\Admin\Segment\SegmentController;
 use App\Http\Controllers\Api\Admin\SettingsController;
 use App\Http\Controllers\Api\Admin\ShipmentController;
 use App\Http\Controllers\Api\Admin\SimpleProductController;
@@ -84,7 +85,21 @@ Route::prefix("/public")->group(function () {
         Route::post('/{conversation}/read', [PublicConversationController::class, 'read']);
     });
 
+
+    Route::prefix('delivery')->name('delivery.')->group(function () {
+
+        Route::post('/calculate', [DeliveryController::class, 'calculate'])->name('calculate');
+
+        Route::post('/available-methods', [DeliveryController::class, 'getAvailableMethods'])
+            ->name('available-methods');
+
+        Route::get('/track/{tracking_number}', [DeliveryController::class, 'track'])
+            ->name('track');
+
+    });
+
 });
+
 
 Route::get('/admin-user', [AuthenticatedSessionController::class, 'get_admin_user'])
     ->middleware('auth:sanctum');
@@ -118,7 +133,6 @@ Route::prefix("/cart-items")->group(function () {
     Route::delete('/remove-item', [CartController::class, 'remove_single_item_from_cart']);
 });
 
-
 //colors
 Route::get('/colors', [ColorController::class, 'index']);
 Route::get('/colors/used-in-catalog', [ColorController::class, 'get_colors']);
@@ -127,15 +141,9 @@ Route::get('reviews/product/{product}', [ReviewController::class, 'productReview
 
 Route::post('/conversations', [ConversationController::class, 'store']);
 
-//Route::get('/products/{slug}', [ProductController::class, 'show']);
 
-//Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('search', [SearchController::class, 'search'])->name('api.search');
-// Route::post('/promo-codes/validate', [PromoCodeController::class, 'validate'])
 
-Route::prefix('leads')->group(function () {
-    Route::post('/', [LeadController::class, 'store']);
-});
 
 Route::prefix('reviews')->group(function () {
     Route::get('/', [ReviewController::class, 'index']);
@@ -149,8 +157,7 @@ Route::prefix('reviews')->group(function () {
         Route::post('{review}/respond', [ReviewController::class, 'respond']);
         Route::delete('{review}', [ReviewController::class, 'destroy']); // ->middleware('auth:api'); was removed because sending error
     });
-    // Route::get('/shipments', [ShipmentController::class, 'userShipments'])
-    //     ->name('shipments.index');
+
 });
 
 Route::middleware('auth:sanctum')->prefix('favorites')->group(function () {
@@ -159,15 +166,6 @@ Route::middleware('auth:sanctum')->prefix('favorites')->group(function () {
     Route::get('/', [FavoriteController::class, 'favorites']);
 });
 
-Route::prefix('delivery')->name('delivery.')->group(function () {
-    Route::post('/calculate', [DeliveryController::class, 'calculate'])->name('calculate');
-
-    Route::post('/available-methods', [DeliveryController::class, 'getAvailableMethods'])
-        ->name('available-methods');
-
-    Route::get('/track/{tracking_number}', [DeliveryController::class, 'track'])
-        ->name('track');
-});
 
 //admin panel api dashboard
 Route::post('/admin-login', [AuthenticatedSessionController::class, 'admin_login']);
@@ -176,12 +174,15 @@ Route::get('/client-user', [AuthenticatedSessionController::class, 'get_user'])-
 
 Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
 Route::post('reset-password', [NewPasswordController::class, 'store']);
+
 //auth user
 Route::middleware('guest')->group(function () {
     Route::post('register', [RegisteredUserController::class, 'register']);
     Route::post('login', [AuthenticatedSessionController::class, 'login']);
     Route::post('check-verification', [AuthenticatedSessionController::class, 'check_verification']);
 });
+
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class);
     Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
@@ -194,18 +195,66 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 
-//Route::post('/ssss', [ProductController::class, 'store']);
 Route::middleware(['auth:sanctum'])->group(function () {
+
+
+
+    Route::prefix('segments')->name('segments.')->group(function () {
+
+        // Список сегментов
+        Route::get('/', [SegmentController::class, 'index'])->name('index');
+
+        // Создать сегмент
+        Route::post('/', [SegmentController::class, 'store'])->name('store');
+
+        // Получить сегмент
+        Route::get('/{segment}', [SegmentController::class, 'show'])->name('show');
+
+        // Обновить сегмент
+        Route::put('/{segment}', [SegmentController::class, 'update'])->name('update');
+
+        // Удалить сегмент
+        Route::delete('/{segment}', [SegmentController::class, 'destroy'])->name('destroy');
+
+        // Переключить активность
+        Route::post('/{segment}/toggle-active', [SegmentController::class, 'toggleActive'])->name('toggle-active');
+
+        // Пересчитать клиентов вручную
+        Route::post('/{segment}/recalculate', [SegmentController::class, 'recalculate'])->name('recalculate');
+
+        // Клиенты сегмента
+        Route::get('/{segment}/clients', [SegmentController::class, 'getClients'])->name('clients');
+
+        // Добавить клиентов в сегмент
+        Route::post('/{segment}/clients', [SegmentController::class, 'attachClients'])->name('attach-clients');
+
+        // Удалить клиентов из сегмента
+        Route::delete('/{segment}/clients', [SegmentController::class, 'detachClients'])->name('detach-clients');
+
+        // Прикрепить промокоды к сегменту
+        Route::post('/{segment}/promo-codes', [SegmentController::class, 'attachPromoCodes'])->name('attach-promo-codes');
+
+        // Открепить промокоды от сегмента
+        Route::delete('/{segment}/promo-codes', [SegmentController::class, 'detachPromoCodes'])->name('detach-promo-codes');
+
+        // Статистика сегмента
+        Route::get('/{segment}/statistics', [SegmentController::class, 'statistics'])->name('statistics');
+
+        // Предпросмотр экспорта
+        Route::get('/{segment}/export-preview', [SegmentController::class, 'exportPreview'])->name('export-preview');
+
+        // Экспорт в CSV
+        Route::get('/{segment}/export', [SegmentController::class, 'export'])->name('export');
+    });
+
 
 
     //notification
     Route::get('/notifications/counter', [NotificationController::class, 'counter']);
 
-
     //updateUserProfile
     Route::put('users/update-profile/{user}', [UserController::class, 'update_profile']);
     Route::post('/users/update-profile/image', [UserController::class, 'update_profile_image']);
-
 
     Route::prefix("/contact-requests")->group(function () {
         Route::get('/', [ContactRequestController::class, 'index']);
@@ -214,7 +263,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::patch('/{contact_request}', [ContactRequestController::class, 'update']);
         Route::delete('/{contact_request}', [ContactRequestController::class, 'destroy']);
     });
-
 
     Route::prefix('/slides')->group(function () {
         // список слайдов (публично или под auth — см. примечание)
@@ -332,19 +380,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/promo-code/{promoCodeId}/export', [PromoCodeUsageController::class, 'exportStatistics']);
     });
 
-    Route::prefix('/orders')->group(function () {
-
-        Route::post('/', [OrderController::class, 'store']);
-        Route::get('/delivery-methods', [DeliveryMethodController::class, 'index']);
-        Route::get('/user', [OrderController::class, 'getUserOrders']);
-        Route::post('/payment/{order}', [OrderController::class, 'pay']);
-
-    });
-
-    Route::prefix('/clients')->group(function () {
-        Route::put('/update-profile', [ClientController::class, 'update_profile']);
-        Route::put('/update-delivery-address', [ClientController::class, 'update_delivery_address']);
-    });
 
     Route::prefix('/carts')->group(function () {
         Route::get('/', [CartController::class, 'carts']);
@@ -362,7 +397,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/chart', [FinancialAnalyticsController::class, 'weeklyAmount']);
     });
 
-
     // Categories
     Route::group(['prefix' => 'categories', 'as' => 'categories.'], function () {
         Route::get('/', [CategoryController::class, 'index']);
@@ -371,28 +405,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{category}', [CategoryController::class, 'update']);
         Route::delete('/{category}', [CategoryController::class, 'destroy']);
     });
+
     // Units
     Route::group(['prefix' => 'units', 'as' => 'units.'], function () {
         Route::get('/', [UnitController::class, 'index']);
-    });
-
-    //         Options
-    Route::group(['prefix' => 'options', 'as' => 'options.'], function () {
-        Route::get('/', [OptionController::class, 'index']);
-        Route::post('/', [OptionController::class, 'store']);
-        Route::put('/{option}', [OptionController::class, 'update']);
-        Route::delete('/{option}', [OptionController::class, 'destroy']);
-    });
-
-    // Materials
-    Route::group(['prefix' => 'materials', 'as' => 'materials.'], function () {
-        Route::get('/', [MaterialController::class, 'index']);
-        Route::get('/{material}', [MaterialController::class, 'show']);
-        Route::post('/', [MaterialController::class, 'store']);
-        Route::put('/{material}', [MaterialController::class, 'update']);
-        Route::delete('/{material}', [MaterialController::class, 'destroy']);
-        Route::post('/{material}/add-stock', [MaterialController::class, 'addStock']);
-        Route::post('/{material}/remove-stock', [MaterialController::class, 'removeStock']);
     });
 
     //        // Products
@@ -449,13 +465,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         });
 
 
-
         // НОВЫЕ маршруты для характеристик
         Route::group(['prefix' => 'attributes', 'as' => 'attributes.'], function () {
             Route::post('{product}/absorbency', [ProductAttributeController::class, 'updateAbsorbency']);
             Route::post('{product}', [ProductAttributeController::class, 'updateAttributes']);
         });
-
 
 
     });
@@ -467,20 +481,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{discount}', [DiscountController::class, 'destroy']);
     });
 
-    Route::group(['prefix' => 'recipes', 'as' => 'recipes.'], function () {
-        Route::get('/', [RecipeController::class, 'index']);
-        Route::post('/', [RecipeController::class, 'store']);
-        // Route::get('/{recipe}', [RecipeController::class, 'show']);
-        Route::put('/{recipe}', [RecipeController::class, 'update']);
-        Route::delete('/{recipe}', [RecipeController::class, 'destroy']);
 
-
-    });
-
-    //         Cost Categories
-    Route::get('/cost-categories', [CostCategoryController::class, 'index']);
-    //
     Route::group(['prefix' => 'clients',], function () {
+
+        Route::put('/update-profile', [ClientController::class, 'update_profile']);
+        Route::put('/update-delivery-address', [ClientController::class, 'update_delivery_address']);
+
+
         Route::get('/', [ClientController::class, 'index']);
         Route::get('/{client}', [ClientController::class, 'show'])->name('show');
         Route::post('/', [ClientController::class, 'store'])->name('store');
@@ -490,38 +497,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
 
-    // Инвентарь
-    Route::prefix('inventory')->name('inventory.')->group(function () {
-        Route::get('/', [InventoryController::class, 'index'])->name('index');
-        Route::post('/add', [InventoryController::class, 'addStock'])->name('add');
-        Route::post('/remove', [InventoryController::class, 'removeStock'])->name('remove');
-        Route::get('/transactions', [InventoryController::class, 'transactions'])->name('transactions');
-        Route::get('/stock', [InventoryController::class, 'getStock'])->name('stock');
-        Route::get('/transactions/history', [InventoryController::class, 'getTransactionHistory'])->name('transactions.history');
-
-    });
-    //
-//        // Производство
-    Route::prefix('production')->name('production.')->group(function () {
-        Route::get('/', [ProductionController::class, 'index']);
-        // Start production
-        Route::post('/create-batch', [ProductionController::class, 'store']);
-        Route::put('/update-batch', [ProductionController::class, 'update']);
-        // Route::get('/create/{recipe}', [ProductionController::class, 'create'])->name('create');
-        //            Route::get('/batches/{batch}', [ProductionController::class, 'show'])->name('show');
-        // Route::post('/batches/{batch}/start', [ProductionController::class, 'start'])->name('start');
-        Route::put('/batches/complete', [ProductionController::class, 'complete'])->name('complete');
-        Route::put('/batches/cancel', [ProductionController::class, 'cancel'])->name('cancel');
-        Route::put('/batches/cancel/all-batch', [ProductionController::class, 'cancelAll']);
-        //            Route::post('/batches/{batch}/add-costs', [ProductionController::class, 'addCosts'])->name('addCosts');
-
-        // Статистика и отчеты
-//            Route::get('/statistics', [ProductionController::class, 'statistics'])->name('statistics');
-//            Route::get('/pending', [ProductionController::class, 'pending'])->name('pending');
-//            Route::get('/history', [ProductionController::class, 'history'])->name('history');
-    });
     //        // Orders
     Route::prefix('orders')->name('orders.')->group(function () {
+
+        Route::post('/', [OrderController::class, 'store']);
+        Route::get('/delivery-methods', [DeliveryMethodController::class, 'index']);
+        Route::get('/user', [OrderController::class, 'getUserOrders']);
+        Route::post('/payment/{order}', [OrderController::class, 'pay']);
+
+
         Route::get('/', [OrderController::class, 'index'])->name('orders.index');  // Путь будет /api/orders
         // Route::post('/', [OrderController::class, 'store'])->name('orders.store');  // Путь будет /api/orders
         Route::get('/stats', [OrderStatsController::class, 'stats'])->name('orders.stats');
@@ -551,30 +535,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Управление ролями и разрешениями (только для супер-админа)
     Route::prefix('/roles')->group(function () {
-//                 Route::resource('roles', RoleController::class);
-        // Route::resource('permissions', PermissionController::class);
-        // Route::post('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
-        //     ->name('roles.updatePermissions');
         Route::get('/with-permissions', [RoleController::class, 'index']);
         Route::get('/', [RoleController::class, 'all_roles']);
         Route::get('/permissions', [RoleController::class, 'all_permissions']);
         Route::post('/', [RoleController::class, 'store']);
         Route::put('/{role}', [RoleController::class, 'update']);
     });
-
-    // Для получения всех уровней клиентов
-    Route::get('client-levels', [ClientLevelController::class, 'index'])->name('client-levels.index');
-
-    // Для создания нового уровня клиента
-    Route::post('client-levels', [ClientLevelController::class, 'store'])->name('client-levels.store');
-
-    // Для получения конкретного уровня клиента по ID
-
-    // Для обновления уровня клиента
-    Route::put('client-levels/{clientLevel}', [ClientLevelController::class, 'update'])->name('client-levels.update');
-
-    // Для удаления уровня клиента
-    Route::delete('client-levels/{clientLevel}', [ClientLevelController::class, 'destroy'])->name('client-levels.destroy');
 
 
 //        // Задачи
@@ -584,9 +550,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/{task}', [TaskController::class, 'update']);
         Route::delete('/{task}', [TaskController::class, 'destroy']);
 
-
         Route::post('/{task}/complete', [TaskController::class, 'complete']);
-
 
     });
 
@@ -645,34 +609,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('/shipments/{shipment}', [ShipmentController::class, 'update'])->name('shipments.update');
         Route::get('/shipments/{shipment}/print-label', [ShipmentController::class, 'printLabel'])->name('shipments.print-label');
         Route::post('/shipments/{shipment}/cancel', [ShipmentController::class, 'cancel'])->name('shipments.cancel');
-    });
-    //
-    Route::group(['prefix' => 'settings', 'as' => 'settings.'], function () {
-        Route::get('/general', [SettingsController::class, 'general'])->name('general');
-        Route::post('/general', [SettingsController::class, 'updateGeneral']);
-
-        Route::get('/integrations', [SettingsController::class, 'integrations'])->name('integrations');
-        Route::post('/integrations', [SettingsController::class, 'updateIntegrations']);
-
-        Route::get('/api-keys', [SettingsController::class, 'apiKeys'])->name('api-keys');
-        Route::post('/api-keys', [SettingsController::class, 'updateApiKeys']);
-        Route::delete('/api-keys/{key}', [SettingsController::class, 'deleteApiKey']);
-
-        Route::get('/notifications', [SettingsController::class, 'notifications'])->name('notifications');
-        Route::post('/notifications', [SettingsController::class, 'updateNotifications']);
-
-        Route::get('/payment', [SettingsController::class, 'payment'])->name('payment');
-        Route::post('/payment', [SettingsController::class, 'updatePayment'])->name('payment.update');
-
-        Route::get('/delivery', [SettingsController::class, 'delivery'])->name('delivery');
-        Route::post('/delivery', [SettingsController::class, 'updateDelivery'])->name('delivery.update');
-
-        Route::get('/{type}', [SettingsController::class, 'show'])
-            ->middleware('permission:settings.manage')
-            ->name('show');
-        Route::post('/{type}', [SettingsController::class, 'update'])
-            ->middleware('permission:settings.manage')
-            ->name('update');
     });
 
 

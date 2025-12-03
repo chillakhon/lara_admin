@@ -13,7 +13,6 @@ use App\Services\InventoryService;
 use App\Traits\HelperTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
 
 class InventoryController extends Controller
 {
@@ -31,76 +30,7 @@ class InventoryController extends Controller
      * Этот метод возвращает данные об инвентаре, включая материалы, продукты, единицы измерения
      * и их остатки на складе.
      *
-     * @OA\Get(
-     *     path="/api/inventory",
-     *     tags={"Inventory"},
-     *     summary="Получение списка материалов, продуктов и их остатков",
-     *     description="Возвращает список материалов, продуктов, единиц измерения и их инвентарных остатков.",
-     *     @OA\Response(
-     *         response=200,
-     *         description="Успешный ответ",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="materials", type="array", @OA\Items(
-     *                 @OA\Property(property="id", type="integer"),
-     *                 @OA\Property(property="title", type="string")
-     *             )),
-     *             @OA\Property(property="products", type="array", @OA\Items(
-     *                 @OA\Property(property="id", type="integer"),
-     *                 @OA\Property(property="name", type="string"),
-     *                 @OA\Property(property="has_variants", type="boolean"),
-     *                 @OA\Property(property="variants", type="array", @OA\Items(
-     *                     @OA\Property(property="id", type="integer"),
-     *                     @OA\Property(property="product_id", type="integer"),
-     *                     @OA\Property(property="name", type="string"),
-     *                     @OA\Property(property="sku", type="string"),
-     *                     @OA\Property(property="unit_id", type="integer"),
-     *                     @OA\Property(property="inventoryBalance", type="object",
-     *                         @OA\Property(property="id", type="integer"),
-     *                         @OA\Property(property="item_id", type="integer"),
-     *                         @OA\Property(property="item_type", type="string"),
-     *                         @OA\Property(property="total_quantity", type="number", format="float"),
-     *                         @OA\Property(property="average_price", type="number", format="float"),
-     *                         @OA\Property(property="unit", type="object",
-     *                             @OA\Property(property="id", type="integer"),
-     *                             @OA\Property(property="name", type="string")
-     *                         )
-     *                     )
-     *                 ))
-     *             )),
-     *             @OA\Property(property="units", type="array", @OA\Items(
-     *                 @OA\Property(property="id", type="integer"),
-     *                 @OA\Property(property="name", type="string")
-     *             )),
-     *             @OA\Property(property="materialsInventory", type="object",
-     *                 @OA\Property(property="data", type="array", @OA\Items(
-     *                     @OA\Property(property="id", type="integer"),
-     *                     @OA\Property(property="item", type="object",
-     *                         @OA\Property(property="id", type="integer"),
-     *                         @OA\Property(property="name", type="string")
-     *                     ),
-     *                     @OA\Property(property="unit", type="object",
-     *                         @OA\Property(property="id", type="integer"),
-     *                         @OA\Property(property="name", type="string")
-     *                     )
-     *                 ))
-     *             ),
-     *             @OA\Property(property="productsInventory", type="object",
-     *                 @OA\Property(property="data", type="array", @OA\Items(
-     *                     @OA\Property(property="id", type="integer"),
-     *                     @OA\Property(property="item", type="object",
-     *                         @OA\Property(property="id", type="integer"),
-     *                         @OA\Property(property="name", type="string"),
-     *                         @OA\Property(property="has_variants", type="boolean")
-     *                     ),
-     *                     @OA\Property(property="unit", type="object",
-     *                         @OA\Property(property="id", type="integer"),
-     *                         @OA\Property(property="name", type="string")
-     *                     )
-     *                 ))
-     *             )
-     *         )
-     *     )
-     * )
+
      */
     public function index()
     {
@@ -154,39 +84,7 @@ class InventoryController extends Controller
         // ]);
     }
 
-    /**
-     * Добавление товара на склад
-     *
-     * @OA\Post(
-     *     path="/api/inventory/add",
-     *     tags={"Inventory"},
-     *     summary="Добавить товар на склад",
-     *     description="Добавляет материалы, продукты или их варианты на склад с указанием цены, количества и даты получения.",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"item_type", "item_id", "quantity", "price_per_unit", "unit_id", "received_date"},
-     *             @OA\Property(property="item_type", type="string", enum={"material", "product", "variant"}),
-     *             @OA\Property(property="item_id", type="integer"),
-     *             @OA\Property(property="quantity", type="number", format="float", minimum=0),
-     *             @OA\Property(property="price_per_unit", type="number", format="float", minimum=0),
-     *             @OA\Property(property="unit_id", type="integer"),
-     *             @OA\Property(property="received_date", type="string", format="date"),
-     *             @OA\Property(property="description", type="string", nullable=true)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Запас успешно добавлен",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Запас успешно добавлен"),
-     *             @OA\Property(property="batch", type="object")
-     *         )
-     *     ),
-     *     @OA\Response(response=400, description="Ошибка валидации"),
-     *     @OA\Response(response=500, description="Ошибка сервера")
-     * )
-     */
+
     public function addStock(Request $request)
     {
         $validated = $request->validate([

@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Segments\Segment;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -83,6 +85,35 @@ class Client extends Model
         return $this->belongsToMany(PromoCode::class, 'promo_code_client')
             ->withPivot('birthday_discount', 'notified_at', 'reminder_sent')
             ->withTimestamps();
+    }
+
+
+    /**
+     * Сегменты, в которые входит клиент
+     */
+    public function segments(): BelongsToMany
+    {
+        return $this->belongsToMany(Segment::class, 'client_segment')
+            ->withPivot('added_at')
+            ->withTimestamps();
+    }
+
+    /**
+     * Проверить, находится ли клиент в определённом сегменте
+     */
+    public function isInSegment(int $segmentId): bool
+    {
+        return $this->segments()->where('segment_id', $segmentId)->exists();
+    }
+
+    /**
+     * Получить все промокоды клиента из сегментов
+     */
+    public function getSegmentPromoCodes()
+    {
+        return PromoCode::whereHas('segments', function ($query) {
+            $query->whereIn('segment_id', $this->segments->pluck('id'));
+        })->get();
     }
 
 }

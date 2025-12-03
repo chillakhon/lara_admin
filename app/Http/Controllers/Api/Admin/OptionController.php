@@ -11,12 +11,7 @@ use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-/**
- * @OA\Tag(
- *     name="Options",
- *     description="API для управления опциями"
- * )
- */
+
 class OptionController extends Controller
 {
     protected $imageService;
@@ -26,50 +21,6 @@ class OptionController extends Controller
         $this->imageService = $imageService;
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/options",
-     *     summary="Получить список опций",
-     *     tags={"Options"},
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Поиск по названию опции",
-     *         required=false,
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Parameter(
-     *         name="category",
-     *         in="query",
-     *         description="Фильтр по категории",
-     *         required=false,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Список опций",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(
-     *                 property="options",
-     *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/Option")
-     *             ),
-     *             @OA\Property(
-     *                 property="categories",
-     *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/Category")
-     *             ),
-     *             @OA\Property(
-     *                 property="filters",
-     *                 type="object",
-     *                 @OA\Property(property="search", type="string"),
-     *                 @OA\Property(property="category", type="integer")
-     *             )
-     *         )
-     *     )
-     * )
-     */
     public function index(Request $request)
     {
         $query = Option::query()
@@ -94,64 +45,6 @@ class OptionController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/options",
-     *     summary="Создать новую опцию",
-     *     tags={"Options"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"name", "category_id", "values"},
-     *             @OA\Property(property="name", type="string", maxLength=255, description="Название опции"),
-     *             @OA\Property(property="category_id", type="integer", description="ID категории"),
-     *             @OA\Property(property="is_required", type="boolean", description="Обязательность опции"),
-     *             @OA\Property(property="order", type="integer", minimum=0, description="Порядковый номер"),
-     *             @OA\Property(
-     *                 property="values",
-     *                 type="array",
-     *                 minItems=1,
-     *                 @OA\Items(
-     *                     type="object",
-     *                     required={"name", "order"},
-     *                     @OA\Property(property="name", type="string", maxLength=255, description="Название значения"),
-     *                     @OA\Property(property="value", type="string", maxLength=255, nullable=true, description="Значение"),
-     *                     @OA\Property(property="color_code", type="string", maxLength=255, nullable=true, description="Цветовой код"),
-     *                     @OA\Property(property="order", type="integer", minimum=0, description="Порядковый номер"),
-     *                     @OA\Property(
-     *                         property="image",
-     *                         type="string",
-     *                         format="binary",
-     *                         nullable=true,
-     *                         description="Изображение (максимальный размер 2MB)"
-     *                     )
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="Опция успешно создана",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Опция успешно создана")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Ошибка валидации",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Ошибка валидации")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Ошибка сервера при создании опции",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Произошла ошибка при создании опции")
-     *         )
-     *     )
-     * )
-     */
 
     public function store(Request $request)
     {

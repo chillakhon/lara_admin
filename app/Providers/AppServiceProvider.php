@@ -30,18 +30,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // if($this->app->environment('production') || $this->app->environment('development') || $this->app->environment('local')) {
-        //     URL::forceScheme('https');
-        // }
-
-        Relation::morphMap([
-            // 'Material' => \App\Models\Material::class,
-            // 'material' => \App\Models\Material::class,
-            // 'Product' => \App\Models\Product::class,
-            // 'product' => \App\Models\Product::class,
-            // 'Variant' => \App\Models\ProductVariant::class,
-            // 'variant' => \App\Models\ProductVariant::class,
-        ]);
 
         JsonResource::withoutWrapping();
 

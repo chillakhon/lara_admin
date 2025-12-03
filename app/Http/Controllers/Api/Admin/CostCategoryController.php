@@ -8,25 +8,7 @@ use App\Http\Resources\CostCategoryResource;
 use App\Models\CostCategory;
 use Illuminate\Http\JsonResponse;
 
-/**
- * @OA\Get(
- *     path="/cost-categories",
- *     summary="Get list of active cost categories",
- *     tags={"Cost Categories"},
- *     @OA\Response(
- *         response=200,
- *         description="Successful operation",
- *         @OA\JsonContent(
- *             type="array",
- *             @OA\Items(ref="#/components/schemas/CostCategory")
- *         )
- *     ),
- *     @OA\Response(
- *         response=500,
- *         description="Internal Server Error"
- *     )
- * )
- */
+
 class CostCategoryController extends Controller
 {
     public function index(): JsonResponse

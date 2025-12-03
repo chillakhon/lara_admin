@@ -551,8 +551,6 @@ class ProductController extends Controller
 
 
 
-
-
             if ($createdVariants) {
                 $massCreatedModifications = $moyskadController->mass_variant_creation_and_update(
                     $createdVariants,

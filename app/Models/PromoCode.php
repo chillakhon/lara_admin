@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Segments\Segment;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -220,4 +222,38 @@ class PromoCode extends Model
 
         return min($this->discount_amount, $amount);
     }
+
+
+
+
+    /**
+     * Сегменты, к которым привязан промокод
+     */
+    public function segments(): BelongsToMany
+    {
+        return $this->belongsToMany(Segment::class, 'promo_code_segment')
+            ->withPivot('auto_apply')
+            ->withTimestamps();
+    }
+
+    /**
+     * Проверить, привязан ли промокод к сегменту
+     */
+    public function isAttachedToSegment(int $segmentId): bool
+    {
+        return $this->segments()->where('segment_id', $segmentId)->exists();
+    }
+
+    /**
+     * Получить всех клиентов из сегментов, к которым привязан промокод
+     */
+    public function getSegmentClients()
+    {
+        return Client::whereHas('segments', function ($query) {
+            $query->whereIn('segment_id', $this->segments->pluck('id'));
+        })->get();
+    }
+
+
+
 }
