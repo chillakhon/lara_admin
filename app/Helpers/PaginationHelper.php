@@ -9,9 +9,9 @@ class PaginationHelper
     public static function format(LengthAwarePaginator $paginator): array
     {
         return [
-            'current_page' => $paginator->currentPage(),
-            'total'        => $paginator->total(),
-            'per_page'     => $paginator->perPage(),
+            'page' => $paginator->currentPage(),
+            'total' => $paginator->total(),
+            'per_page' => $paginator->perPage(),
         ];
     }
 }

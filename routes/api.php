@@ -198,7 +198,6 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum'])->group(function () {
 
 
-
     Route::prefix('segments')->name('segments.')->group(function () {
 
         // Список сегментов
@@ -246,7 +245,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Экспорт в CSV
         Route::get('/{segment}/export', [SegmentController::class, 'export'])->name('export');
     });
-
 
 
     //notification

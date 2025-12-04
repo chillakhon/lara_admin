@@ -14,6 +14,7 @@ use App\DTOs\Segment\CreateSegmentDTO;
 use App\DTOs\Segment\SegmentClientFilterDTO;
 use App\DTOs\Segment\SegmentExportDTO;
 use App\DTOs\Segment\UpdateSegmentDTO;
+use App\Helpers\PaginationHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Segment\AttachClientsRequest;
 use App\Http\Requests\Segment\AttachPromoCodesRequest;
@@ -33,31 +34,33 @@ use App\Services\Segment\SegmentService;
 use App\Services\Segment\SegmentStatisticsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Sleep;
 
 class SegmentController extends Controller
 {
     public function __construct(
-        protected SegmentService $segmentService,
-        protected SegmentRepository $segmentRepository,
-        protected SegmentStatisticsService $statisticsService,
-        protected SegmentExportService $exportService,
-        protected CreateSegmentAction $createAction,
-        protected UpdateSegmentAction $updateAction,
-        protected DeleteSegmentAction $deleteAction,
-        protected RecalculateSegmentClientsAction $recalculateAction,
-        protected AttachClientsToSegmentAction $attachClientsAction,
-        protected DetachClientsFromSegmentAction $detachClientsAction,
-        protected AttachPromoCodeToSegmentAction $attachPromoCodeAction,
+        protected SegmentService                   $segmentService,
+        protected SegmentRepository                $segmentRepository,
+        protected SegmentStatisticsService         $statisticsService,
+        protected SegmentExportService             $exportService,
+        protected CreateSegmentAction              $createAction,
+        protected UpdateSegmentAction              $updateAction,
+        protected DeleteSegmentAction              $deleteAction,
+        protected RecalculateSegmentClientsAction  $recalculateAction,
+        protected AttachClientsToSegmentAction     $attachClientsAction,
+        protected DetachClientsFromSegmentAction   $detachClientsAction,
+        protected AttachPromoCodeToSegmentAction   $attachPromoCodeAction,
         protected DetachPromoCodeFromSegmentAction $detachPromoCodeAction
-    ) {}
+    )
+    {
+    }
 
     /**
      * Получить список всех сегментов
      *
      * GET /api/segments
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
         $filters = [
             'search' => $request->get('search'),
@@ -66,7 +69,7 @@ class SegmentController extends Controller
             'sort_direction' => $request->get('sort_direction', 'desc'),
         ];
 
-        $perPage = (int) $request->get('per_page', 15);
+        $perPage = (int)$request->get('per_page', 15);
         $segments = $this->segmentRepository->paginate($filters, $perPage);
 
         // Добавляем краткую статистику к каждому сегменту
@@ -75,7 +78,11 @@ class SegmentController extends Controller
             return $segment;
         });
 
-        return SegmentListResource::collection($segments);
+
+        return response()->json([
+            'data' => SegmentListResource::collection($segments->items()),
+            'meta' => PaginationHelper::format($segments),
+        ]);
     }
 
     /**
@@ -131,7 +138,6 @@ class SegmentController extends Controller
 
             // Получаем статистику
             $statistics = $this->statisticsService->getStatistics($segment);
-
             $segment->statistics = $statistics->toArray();
 
             return response()->json([
@@ -214,12 +220,15 @@ class SegmentController extends Controller
      *
      * GET /api/segments/{id}/clients
      */
-    public function getClients(FilterSegmentClientsRequest $request, Segment $segment): AnonymousResourceCollection
+    public function getClients(FilterSegmentClientsRequest $request, Segment $segment): JsonResponse
     {
         $filters = SegmentClientFilterDTO::fromRequest($request->validated());
         $clients = $this->segmentRepository->getSegmentClients($segment, $filters);
 
-        return SegmentClientResource::collection($clients);
+        return response()->json([
+            'data' => SegmentClientResource::collection($clients->items()),
+            'meta' => PaginationHelper::format($clients),
+        ]);
     }
 
     /**
@@ -396,7 +405,6 @@ class SegmentController extends Controller
     public function export(ExportSegmentRequest $request, Segment $segment)
     {
         try {
-            // Проверяем, можно ли экспортировать
             if (!$this->exportService->canExport($segment)) {
                 return response()->json([
                     'success' => false,
@@ -405,7 +413,6 @@ class SegmentController extends Controller
             }
 
             $dto = SegmentExportDTO::fromRequest($segment->id, $request->validated());
-
             return $this->exportService->exportToCSV($segment, $dto);
 
         } catch (\Exception $e) {
