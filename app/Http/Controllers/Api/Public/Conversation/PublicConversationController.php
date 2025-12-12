@@ -3,18 +3,27 @@
 namespace App\Http\Controllers\Api\Public\Conversation;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Conversation\SendMessageRequest;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Services\File\FileStorageService;
 use App\Services\Messaging\ConversationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use mysql_xdevapi\Exception;
 
 class PublicConversationController extends Controller
 {
     protected $conversationService;
+    protected $fileStorage;
 
-    public function __construct(ConversationService $conversationService)
+    public function __construct(
+        ConversationService $conversationService,
+        FileStorageService  $fileStorage
+    )
     {
         $this->conversationService = $conversationService;
+        $this->fileStorage = $fileStorage;
     }
 
     /**
@@ -76,35 +85,57 @@ class PublicConversationController extends Controller
      * Отправить сообщение клиентом
      * POST /api/public/conversations/{conversation}/reply
      */
-    public function reply(Request $request, Conversation $conversation)
+    public function reply(SendMessageRequest $request, Conversation $conversation)
     {
-        $validated = $request->validate([
-            'content' => 'required|string|max:5000',
-            'attachments' => 'nullable|array',
-        ]);
 
-        // Добавляем входящее сообщение (от клиента)
-        $message = $this->conversationService->addMessage($conversation, [
-            'direction' => Message::DIRECTION_INCOMING,
-            'content' => $validated['content'],
-            'attachments' => $validated['attachments'] ?? [],
-            'status' => Message::STATUS_SENT,
-        ]);
+        $validated = $request;
 
-        // Обновляем время последнего сообщения и увеличиваем счётчик непрочитанных
-        $conversation->update([
-            'last_message_at' => now(),
-            'unread_messages_count' => $conversation->messages()
-                ->where('direction', Message::DIRECTION_INCOMING)
-                ->where('status', '!=', Message::STATUS_READ)
-                ->count(),
-        ]);
+        $attachmentsData = [];
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Message sent successfully.',
-            'data' => $message,
-        ], 201);
+        try {
+            // Обрабатываем файлы если они есть
+            if ($request->hasFile('attachments')) {
+                $attachmentsData = $this->fileStorage->storeAttachments(
+                    $request->file('attachments')
+                );
+            }
+
+            // Добавляем входящее сообщение (от клиента)
+            $message = $this->conversationService->addMessage($conversation, [
+                'direction' => Message::DIRECTION_INCOMING,
+                'content' => $validated['content'],
+                'attachments' => $attachmentsData,
+                'status' => Message::STATUS_SENT,
+            ]);
+
+            // Обновляем время последнего сообщения и увеличиваем счётчик непрочитанных
+            $conversation->update([
+                'last_message_at' => now(),
+                'unread_messages_count' => $conversation->messages()
+                    ->where('direction', Message::DIRECTION_INCOMING)
+                    ->where('status', '!=', Message::STATUS_READ)
+                    ->count(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Message sent successfully.',
+                'data' => $message,
+            ], 201);
+
+        } catch (\Exception $e) {
+            // При ошибке удаляем загруженные файлы
+            if (!empty($attachmentsData)) {
+                foreach ($attachmentsData as $attachment) {
+                    $this->fileStorage->delete($attachment['file_path']);
+                }
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send message: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

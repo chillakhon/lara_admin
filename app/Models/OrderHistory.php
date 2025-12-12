@@ -37,8 +37,8 @@ class OrderHistory extends Model
      */
     public function getPaymentStatusLabelAttribute(): ?string
     {
-        return $this->payment_status 
+        return $this->payment_status
             ? (Order::getPaymentStatuses()[$this->payment_status] ?? $this->payment_status)
             : null;
     }
-} 
+}

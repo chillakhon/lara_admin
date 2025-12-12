@@ -2,11 +2,21 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Enums\OrderStatus;
 use App\Helpers\PaginationHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Order\AddOrderItemsRequest;
+use App\Http\Requests\Order\CancelOrderRequest;
+use App\Http\Requests\Order\CreateOrderRequest;
+use App\Http\Requests\Order\UpdateOrderRequest;
+use App\Http\Requests\Order\UpdateOrderStatusRequest;
 use App\Models\Client;
 use App\Models\Order;
 use App\Services\Notifications\Jobs\SendNotificationJob;
+use App\Services\Order\OrderAuthorizationService;
+use App\Services\Order\OrderDeletionService;
+use App\Services\Order\OrderItemService;
+use App\Services\Order\OrderUpdateService;
 use App\Services\Order\OrderValidationService;
 use App\Services\Order\OrderCreationService;
 use App\Services\Order\OrderFilterService;
@@ -18,22 +28,18 @@ use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
-    protected OrderValidationService $orderValidationService;
-    protected OrderCreationService $orderCreationService;
-    protected PromoCodeValidationService $promoValidationService;
-    protected OrderFilterService $orderFilterService;
 
     public function __construct(
-        OrderValidationService     $orderValidationService,
-        OrderCreationService       $orderCreationService,
-        PromoCodeValidationService $promoValidationService,
-        OrderFilterService         $orderFilterService
+        protected OrderValidationService     $orderValidationService,
+        protected OrderCreationService       $orderCreationService,
+        protected OrderUpdateService         $orderUpdateService,
+        protected OrderDeletionService       $orderDeletionService,
+        protected OrderItemService           $orderItemService,
+        protected OrderAuthorizationService  $orderAuthorizationService,
+        protected PromoCodeValidationService $promoValidationService,
+        protected OrderFilterService         $orderFilterService
     )
     {
-        $this->orderValidationService = $orderValidationService;
-        $this->orderCreationService = $orderCreationService;
-        $this->promoValidationService = $promoValidationService;
-        $this->orderFilterService = $orderFilterService;
     }
 
     /**
@@ -81,8 +87,10 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
+
+
         // Проверяем права доступа
-        if ($user instanceof \App\Models\Client && $order->client_id !== $user->id) {
+        if (!$this->orderAuthorizationService->canView($user, $order)) {
             return $this->errorResponse('Доступ запрещён', 403);
         }
 
@@ -104,9 +112,8 @@ class OrderController extends Controller
     /**
      * Создание нового заказа
      */
-    public function store(Request $request)
+    public function store(CreateOrderRequest $request)
     {
-        $validated = $this->validateOrderData($request);
 
         DB::beginTransaction();
 
@@ -217,6 +224,7 @@ class OrderController extends Controller
         }
     }
 
+
     public function getUserOrders(Request $request)
     {
         $user = $request->user();
@@ -254,29 +262,70 @@ class OrderController extends Controller
 
 
     /**
-     * Обновление статуса заказа
+     * Обновление заказа
      */
-    public function updateStatus(Request $request, Order $order): JsonResponse
+    public function update(UpdateOrderRequest $request, Order $order): JsonResponse
     {
-        $validated = $request->validate([
-            'status' => 'required|in:pending,processing,confirmed,shipped,delivered,cancelled',
-            'reason' => 'nullable|string|max:500',
-        ]);
+        $user = $request->user();
+
+        if (!$this->orderAuthorizationService->canUpdate($user)) {
+            return $this->errorResponse('Доступ запрещён', 403);
+        }
+
+        if (!$this->orderUpdateService->canUpdate($order)) {
+            return $this->errorResponse(
+                'Невозможно редактировать заказ в текущем статусе',
+                422
+            );
+        }
 
         DB::beginTransaction();
 
         try {
-            $status = $validated['status'];
+            $success = $this->orderUpdateService->update($order, $request->validated());
 
-            if ($status === 'cancelled') {
+            if (!$success) {
+                DB::rollBack();
+                return $this->errorResponse('Не удалось обновить заказ', 500);
+            }
+
+            DB::commit();
+
+            $order->load(['items.product', 'items.variant', 'promoCode', 'client']);
+
+            return $this->successResponse(
+                'Заказ успешно обновлён',
+                [
+                    'order' => $order,
+                    'summary' => $this->orderCreationService->getOrderSummary($order)
+                ]
+            );
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update order', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            return $this->errorResponse('Ошибка при обновлении заказа', 500);
+        }
+    }
+
+
+    /**
+     * Обновление статуса заказа
+     */
+    public function updateStatus(UpdateOrderStatusRequest $request, Order $order): JsonResponse
+    {
+        DB::beginTransaction();
+
+        try {
+            $status = \App\Enums\OrderStatus::from($request->validated('status'));
+
+            if ($status === \App\Enums\OrderStatus::CANCELLED) {
                 $success = $this->orderCreationService->cancelOrder(
                     $order,
-                    $validated['reason'] ?? null
+                    $request->validated('reason')
                 );
-            } elseif ($status === 'confirmed') {
-                $success = $this->orderCreationService->confirmOrder($order);
             } else {
-                $success = $this->orderCreationService->updateDeliveryStatus($order, $status);
+                $success = $this->orderCreationService->updateOrderStatus($order, $status);
             }
 
             if (!$success) {
@@ -291,48 +340,41 @@ class OrderController extends Controller
                 ['order' => $order->fresh()]
             );
 
+        } catch (\ValueError $e) {
+            DB::rollBack();
+            return $this->errorResponse('Невалидный статус заказа', 422);
         } catch (\Exception $e) {
             DB::rollBack();
-
-            Log::error('Failed to update order status', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-
+            Log::error('Failed to update order status', ['order_id' => $order->id, 'error' => $e->getMessage()]);
             return $this->errorResponse('Ошибка при обновлении статуса', 500);
         }
     }
 
+
     /**
      * Отмена заказа
      */
-    public function cancel(Request $request, Order $order): JsonResponse
+    public function cancel(CancelOrderRequest $request, Order $order): JsonResponse
     {
         $user = $request->user();
 
-        // Проверяем права доступа
-        if ($user instanceof \App\Models\Client && $order->client_id !== $user->id) {
+        if (!$this->orderAuthorizationService->canCancel($user, $order)) {
             return $this->errorResponse('Доступ запрещён', 403);
         }
 
-        // Проверяем, можно ли отменить заказ
-        if (in_array($order->status, ['delivered', 'cancelled'])) {
+        if (in_array($order->status, [\App\Enums\OrderStatus::DELIVERED, \App\Enums\OrderStatus::CANCELLED])) {
             return $this->errorResponse(
                 'Невозможно отменить заказ в текущем статусе',
                 422
             );
         }
 
-        $validated = $request->validate([
-            'reason' => 'nullable|string|max:500',
-        ]);
-
         DB::beginTransaction();
 
         try {
             $success = $this->orderCreationService->cancelOrder(
                 $order,
-                $validated['reason'] ?? 'Отменён клиентом'
+                $request->validated('reason') ?? 'Отменён клиентом'
             );
 
             if (!$success) {
@@ -349,52 +391,156 @@ class OrderController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-
-            Log::error('Failed to cancel order', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-
+            Log::error('Failed to cancel order', ['order_id' => $order->id, 'error' => $e->getMessage()]);
             return $this->errorResponse('Ошибка при отмене заказа', 500);
         }
     }
 
+
     /**
-     * Валидация данных заказа
+     * Удаление заказа
      */
-    private function validateOrderData(Request $request): array
+    public function destroy(Request $request, Order $order): JsonResponse
     {
-        return $request->validate([
-            // Адрес доставки
-            'country_code' => 'required|string|size:2',
-            'city_name' => 'required|string|max:255',
-            'delivery_address' => 'required|string|max:500',
+        $user = $request->user();
 
-            // Заметки
-            'notes' => 'nullable|string|max:1000',
+        if (!$this->orderAuthorizationService->canDelete($user)) {
+            return $this->errorResponse('Доступ запрещён', 403);
+        }
 
-            // Промокод
-            'promo_code' => 'nullable|string|max:50',
+        if (!$this->orderDeletionService->canDelete($order)) {
+            return $this->errorResponse(
+                'Невозможно удалить заказ в текущем статусе',
+                422
+            );
+        }
 
-            // Контактная информация
-            'user' => 'required|array',
-            'user.first_name' => 'required|string|max:255',
-            'user.last_name' => 'required|string|max:255',
-            'user.phone' => 'required|string|max:20',
+        DB::beginTransaction();
 
-            // Товары
-            'items' => 'required|array|min:1|max:50',
-            'items.*.product_id' => 'required|integer|exists:products,id',
-            'items.*.product_variant_id' => 'nullable|integer|exists:product_variants,id',
-            'items.*.color_id' => 'nullable|integer|exists:colors,id',
-            'items.*.quantity' => 'required|integer|min:1|max:999',
-            'items.*.price' => 'required|numeric|min:0|max:9999999',
-        ]);
+        try {
+            $success = $this->orderDeletionService->delete($order);
+
+            if (!$success) {
+                DB::rollBack();
+                return $this->errorResponse('Не удалось удалить заказ', 500);
+            }
+
+            DB::commit();
+
+            return $this->successResponse('Заказ успешно удалён');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete order', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            return $this->errorResponse('Ошибка при удалении заказа', 500);
+        }
     }
 
+
     /**
-     * Валидация промокода
+     * Добавить позиции в заказ
      */
+    public function addItems(AddOrderItemsRequest $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$this->orderAuthorizationService->canUpdate($user)) {
+            return $this->errorResponse('Доступ запрещён', 403);
+        }
+
+        if (!$this->orderItemService->canModifyItems($order)) {
+            return $this->errorResponse(
+                'Невозможно добавить товары в заказ с текущим статусом',
+                422
+            );
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $result = $this->orderItemService->addItems($order, $request->validated('items'));
+
+            if (!$result) {
+                DB::rollBack();
+                return $this->errorResponse('Ошибка при добавлении товаров', 500);
+            }
+
+            if (!$result['success']) {
+                DB::rollBack();
+                return $this->validationErrorResponse($result['errors']);
+            }
+
+            DB::commit();
+
+            $order->load(['items.product', 'items.variant']);
+
+            return $this->successResponse(
+                'Товары успешно добавлены в заказ',
+                [
+                    'order' => $order,
+                    'summary' => $this->orderCreationService->getOrderSummary($order)
+                ]
+            );
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to add items', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            return $this->errorResponse('Ошибка при добавлении товаров', 500);
+        }
+    }
+
+
+    /**
+     * Удалить позицию из заказа
+     */
+    public function removeItem(Request $request, Order $order, $itemId): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$this->orderAuthorizationService->canUpdate($user)) {
+            return $this->errorResponse('Доступ запрещён', 403);
+        }
+
+        if (!$this->orderItemService->canModifyItems($order)) {
+            return $this->errorResponse(
+                'Невозможно удалить товары из заказа с текущим статусом',
+                422
+            );
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $success = $this->orderItemService->removeItem($order, $itemId);
+
+            if (!$success) {
+                DB::rollBack();
+                return $this->errorResponse(
+                    'Не удалось удалить товар',
+                    422
+                );
+            }
+
+            DB::commit();
+
+            $order->load(['items.product', 'items.variant']);
+
+            return $this->successResponse(
+                'Товар успешно удалён из заказа',
+                [
+                    'order' => $order,
+                    'summary' => $this->orderCreationService->getOrderSummary($order)
+                ]
+            );
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to remove item', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            return $this->errorResponse('Ошибка при удалении товара', 500);
+        }
+    }
+
+
     private function validatePromoCode(string $code, $client): array
     {
         return $this->promoValidationService->validate($code, $client);

@@ -18,10 +18,14 @@ class SegmentListResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
+            'recalculate_frequency' => $this->recalculate_frequency,
             'is_active' => $this->is_active,
             'clients_count' => $this->clients_count ?? 0,
             'promo_codes_count' => $this->promo_codes_count ?? 0,
-            'created_at' => $this->created_at->format('d.m.Y'),
+            'created_at' => $this->created_at?->format('d.m.Y'),
+            'last_recalculated_at' => $this->last_recalculated_at?->format('d.m.Y H:i:s'),
+
+            'conditions' => $this->conditions ?? [],
 
             // Краткая статистика (если передана)
             'statistics' => $this->when(isset($this->statistics), function () {

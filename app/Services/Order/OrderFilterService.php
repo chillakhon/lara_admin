@@ -2,6 +2,8 @@
 
 namespace App\Services\Order;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Order;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -70,13 +72,13 @@ class OrderFilterService
      */
     private function filterByStatus(Builder $query, string $status): Builder
     {
-        $allowedStatuses = Order::getStatusValues();
-
-        if (in_array($status, $allowedStatuses)) {
-            return $query->where('status', $status);
+        try {
+            $statusEnum = OrderStatus::from($status);
+            return $query->where('status', $statusEnum);
+        } catch (\ValueError $e) {
+            // Невалидный статус - возвращаем query без фильтра
+            return $query;
         }
-
-        return $query;
     }
 
     /**
@@ -84,13 +86,16 @@ class OrderFilterService
      */
     private function filterByPaymentStatus(Builder $query, string $paymentStatus): Builder
     {
-        $allowedStatuses = Order::getPaymentStatusValues();
+        try {
 
-        if (in_array($paymentStatus, $allowedStatuses)) {
-            return $query->where('payment_status', $paymentStatus);
+            $paymentStatusEnum = PaymentStatus::from($paymentStatus);
+
+            return $query->where('payment_status', $paymentStatusEnum);
+        } catch (\ValueError $e) {
+            // Невалидный статус - возвращаем query без фильтра
+            return $query;
         }
 
-        return $query;
     }
 
     /**
@@ -351,9 +356,8 @@ class OrderFilterService
     public function validateFilterParams(Request $request): array
     {
         return $request->validate([
-//            'status' => 'nullable|string|in:pending,processing,confirmed,shipped,delivered,cancelled',
             'status' => 'nullable|string',
-            'payment_status' => 'nullable|string|in:pending,paid,failed,refunded',
+            'payment_status' => 'nullable|string',
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date|after_or_equal:date_from',
             'client_id' => 'nullable|integer|exists:clients,id',

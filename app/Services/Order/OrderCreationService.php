@@ -2,12 +2,16 @@
 
 namespace App\Services\Order;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\PromoCode;
 use Illuminate\Support\Facades\Log;
 
 class OrderCreationService
 {
+
+
     /**
      * Создать заказ из валидированных данных
      *
@@ -19,15 +23,14 @@ class OrderCreationService
     {
         $order = Order::create([
             'client_id' => $clientId,
-            'status' => Order::STATUS_NEW,
-            'payment_status' => Order::PAYMENT_STATUS_PENDING,
+            'status' => OrderStatus::NEW,
+            'payment_status' => PaymentStatus::PENDING,
             'order_number' => $this->generateOrderNumber(),
             'total_amount' => $orderData['total'] ?? 0,
 
             // Адрес доставки
             'country_code' => $orderData['country_code'] ?? null,
             'city_name' => $orderData['city_name'] ?? null,
-//            'delivery_address' => $orderData['delivery_address'] ?? null,
 
             // Заметки
             'notes' => $orderData['notes'] ?? null,
@@ -40,7 +43,6 @@ class OrderCreationService
             // Временные метки
             'created_at' => now(),
         ]);
-
 
         return $order;
     }
@@ -65,57 +67,57 @@ class OrderCreationService
         try {
 
 
-        $orderTotal = 0;
-        $totalDiscount = 0;
-        $totalPromoDiscount = 0;
-        $itemsCreated = 0;
+            $orderTotal = 0;
+            $totalDiscount = 0;
+            $totalPromoDiscount = 0;
+            $itemsCreated = 0;
 
 
-        foreach ($validatedItems as $item) {
-            $quantity = $item['quantity'];
-            $finalPrice = $item['final_price'];
+            foreach ($validatedItems as $item) {
+                $quantity = $item['quantity'];
+                $finalPrice = $item['final_price'];
 
-            // Рассчитываем суммы для позиции
-            $subtotal = $finalPrice * $quantity;
-            $discountAmount = $item['discount_amount'] * $quantity;
-            $promoDiscount = $item['promo_discount'] * $quantity;
-            $totalItemDiscount = $discountAmount + $promoDiscount;
+                // Рассчитываем суммы для позиции
+                $subtotal = $finalPrice * $quantity;
+                $discountAmount = $item['discount_amount'] * $quantity;
+                $promoDiscount = $item['promo_discount'] * $quantity;
+                $totalItemDiscount = $discountAmount + $promoDiscount;
 
-            // Создаем позицию заказа
-            $orderItem = $order->items()->create([
-                'order_id' => $order->id,
-                'product_id' => $item['product_id'],
-                'product_variant_id' => $item['variant_id'],
-                'color_id' => $item['color_id'] ?? null,
-                'quantity' => $quantity,
-                'price' => $finalPrice,
-                'discount' => $totalItemDiscount,
+                // Создаем позицию заказа
+                $orderItem = $order->items()->create([
+                    'order_id' => $order->id,
+                    'product_id' => $item['product_id'],
+                    'product_variant_id' => $item['variant_id'],
+                    'color_id' => $item['color_id'] ?? null,
+                    'quantity' => $quantity,
+                    'price' => $finalPrice,
+                    'discount' => $totalItemDiscount,
 //                'subtotal' => $subtotal,
 //                'name' => $item['name'] ?? null,
 //                'original_price' => $item['original_price'],
-            ]);
+                ]);
 
-            // Уменьшаем остатки товара
+                // Уменьшаем остатки товара
 //            $model = $item['model'];
 //            $newQuantity = max(0, $model->stock_quantity - $quantity);
 //            $model->update(['stock_quantity' => $newQuantity]);
 
-            // Суммируем итоги
-            $orderTotal += $subtotal;
-            $totalDiscount += $discountAmount;
-            $totalPromoDiscount += $promoDiscount;
-            $itemsCreated++;
+                // Суммируем итоги
+                $orderTotal += $subtotal;
+                $totalDiscount += $discountAmount;
+                $totalPromoDiscount += $promoDiscount;
+                $itemsCreated++;
 
 
-        }
+            }
 
 
-        return [
-            'order_total' => round($orderTotal, 2),
-            'total_discount' => round($totalDiscount, 2),
-            'total_promo_discount' => round($totalPromoDiscount, 2),
-            'items_created' => $itemsCreated,
-        ];
+            return [
+                'order_total' => round($orderTotal, 2),
+                'total_discount' => round($totalDiscount, 2),
+                'total_promo_discount' => round($totalPromoDiscount, 2),
+                'items_created' => $itemsCreated,
+            ];
 
 
         } catch (\Exception $exception) {
@@ -194,6 +196,7 @@ class OrderCreationService
 
     }
 
+
     /**
      * Отменить заказ и вернуть товары на склад
      *
@@ -232,7 +235,7 @@ class OrderCreationService
 
             // Обновляем статус заказа
             $order->update([
-                'status' => 'cancelled',
+                'status' => OrderStatus::CANCELLED,
                 'cancellation_reason' => $reason,
                 'cancelled_at' => now(),
             ]);
@@ -254,110 +257,36 @@ class OrderCreationService
         }
     }
 
-    /**
-     * Подтвердить заказ
-     *
-     * @param Order $order Заказ
-     * @return bool Успешность операции
-     */
-    public function confirmOrder(Order $order): bool
-    {
-        try {
-            $order->update([
-                'status' => 'confirmed',
-                'confirmed_at' => now(),
-            ]);
-
-            Log::info('Order confirmed', [
-                'order_id' => $order->id,
-            ]);
-
-            return true;
-
-        } catch (\Exception $e) {
-            Log::error('Failed to confirm order', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
-    }
 
     /**
-     * Пометить заказ как оплаченный
+     * Обновить статус заказа
      *
      * @param Order $order Заказ
-     * @param string $paymentMethod Метод оплаты
-     * @param string|null $transactionId ID транзакции
+     * @param OrderStatus $status Новый статус
      * @return bool Успешность операции
      */
-    public function markAsPaid(Order $order, string $paymentMethod, ?string $transactionId = null): bool
+    public function updateOrderStatus(Order $order, OrderStatus $status): bool
     {
-        try {
-            $order->update([
-                'payment_status' => 'paid',
-                'payment_method' => $paymentMethod,
-                'transaction_id' => $transactionId,
-                'paid_at' => now(),
-            ]);
-
-            Log::info('Order marked as paid', [
-                'order_id' => $order->id,
-                'payment_method' => $paymentMethod,
-                'transaction_id' => $transactionId,
-            ]);
-
-            return true;
-
-        } catch (\Exception $e) {
-            Log::error('Failed to mark order as paid', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
-        }
-    }
-
-    /**
-     * Изменить статус доставки заказа
-     *
-     * @param Order $order Заказ
-     * @param string $status Новый статус
-     * @return bool Успешность операции
-     */
-    public function updateDeliveryStatus(Order $order, string $status): bool
-    {
-        $allowedStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-
-        if (!in_array($status, $allowedStatuses)) {
-            Log::warning('Invalid delivery status', [
-                'order_id' => $order->id,
-                'status' => $status,
-            ]);
-            return false;
-        }
-
         try {
             $order->update([
                 'status' => $status,
                 'updated_at' => now(),
             ]);
 
-            if ($status === 'delivered') {
+            // Специальные действия для определенных статусов
+            if ($status === OrderStatus::DELIVERED) {
                 $order->update(['delivered_at' => now()]);
             }
 
-            Log::info('Order delivery status updated', [
+            Log::info('Order status updated', [
                 'order_id' => $order->id,
-                'status' => $status,
+                'status' => $status->value,
             ]);
 
             return true;
 
         } catch (\Exception $e) {
-            Log::error('Failed to update delivery status', [
+            Log::error('Failed to update order status', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
@@ -365,6 +294,7 @@ class OrderCreationService
             return false;
         }
     }
+
 
     /**
      * Получить сводку по заказу
@@ -389,7 +319,7 @@ class OrderCreationService
 
             // Клиент
             'client' => [
-                'id' => $order->client->id,
+                'id' => $order->client?->id,
                 'name' => $order->first_name . ' ' . $order->last_name,
                 'email' => $order->client->email ?? null,
                 'phone' => $order->phone,

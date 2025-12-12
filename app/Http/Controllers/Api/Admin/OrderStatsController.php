@@ -33,7 +33,6 @@ class OrderStatsController extends Controller
             $from = $request->query('from') ? Carbon::parse($request->query('from')) : now()->subMonths(5)->startOfMonth();
             $to = $request->query('to') ? Carbon::parse($request->query('to')) : now()->endOfMonth();
 
-            
 
             $stats = Order::query()
                 ->when($request->has(['from', 'to']), function ($query) use ($from, $to) {
@@ -46,7 +45,7 @@ class OrderStatsController extends Controller
                 ])
                 ->groupBy('status')
                 ->get()
-                ->keyBy('status');
+                ->keyBy(fn($item) => $item->status->value);;
 
             // Получаем данные по месяцам и статусам
             $chartRawData = Order::query()
@@ -83,7 +82,7 @@ class OrderStatsController extends Controller
                         ->firstWhere(fn($item) => $item->month === $month && $item->status === $status)
                         ->count ?? 0;
 
-                    $chartData[$status][] = (int) $count;
+                    $chartData[$status][] = (int)$count;
                 }
             }
 
@@ -91,16 +90,16 @@ class OrderStatsController extends Controller
 
             return response()->json([
                 'new' => [
-                    'count' => (int) ($stats['new']->count ?? 0),
-                    'total_amount' => (float) ($stats['new']->total_amount ?? 0)
+                    'count' => (int)($stats['new']->count ?? 0),
+                    'total_amount' => (float)($stats['new']->total_amount ?? 0)
                 ],
                 'processing' => [
-                    'count' => (int) ($stats['processing']->count ?? 0),
-                    'total_amount' => (float) ($stats['processing']->total_amount ?? 0)
+                    'count' => (int)($stats['processing']->count ?? 0),
+                    'total_amount' => (float)($stats['processing']->total_amount ?? 0)
                 ],
                 'approved' => [
-                    'count' => (int) ($stats['approved']->count ?? 0),
-                    'total_amount' => (float) ($stats['approved']->total_amount ?? 0)
+                    'count' => (int)($stats['approved']->count ?? 0),
+                    'total_amount' => (float)($stats['approved']->total_amount ?? 0)
                 ],
                 'chartData' => $chartData
             ]);

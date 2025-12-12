@@ -20,6 +20,7 @@ class SegmentDetailResource extends JsonResource
             'description' => $this->description,
             'conditions' => $this->formatConditions(),
             'is_active' => $this->is_active,
+            'promo_codes_count' => $this->promo_codes_count ?? 0,
             'recalculate_frequency' => $this->recalculate_frequency,
             'last_recalculated_at' => $this->last_recalculated_at?->format('d.m.Y H:i:s'),
             'clients_count' => $this->clients()->count(),

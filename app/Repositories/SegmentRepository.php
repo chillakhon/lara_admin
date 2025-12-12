@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 use App\DTOs\Segment\SegmentClientFilterDTO;
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Client;
 use App\Models\Order;
 use App\Models\Segments\Segment;
@@ -37,12 +39,51 @@ class SegmentRepository
         return $query->get();
     }
 
+
+
+    /**
+     * Получить доступных клиентов для добавления в сегмент
+     * Возвращает только базовую информацию: ID, email, profile
+     */
+    public function getAvailableClients(Segment $segment, SegmentClientFilterDTO $filters): LengthAwarePaginator
+    {
+        $query = Client::query()
+            ->with(['profile'])
+            ->select('clients.*');
+
+        // Исключаем клиентов, которые УЖЕ в сегменте
+        $query->whereNotIn('clients.id', function ($subQuery) use ($segment) {
+            $subQuery->select('client_id')
+                ->from('client_segment')
+                ->where('segment_id', $segment->id);
+        });
+
+        // Фильтр по поиску (имя, email, телефон)
+        if ($filters->search) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('email', 'like', '%' . $filters->search . '%')
+                    ->orWhereHas('profile', function ($profileQuery) use ($filters) {
+                        $profileQuery->where('first_name', 'like', '%' . $filters->search . '%')
+                            ->orWhere('last_name', 'like', '%' . $filters->search . '%')
+                            ->orWhere('phone', 'like', '%' . $filters->search . '%');
+                    });
+            });
+        }
+
+        // Сортировка
+        $query->orderBy('created_at', 'desc');
+
+        return $query->paginate($filters->perPage);
+    }
+
+
     /**
      * Получить сегменты с пагинацией
      */
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = Segment::query()->withCount('clients');
+        $query = Segment::query()
+            ->withCount('clients', 'promoCodes');
 
         // Фильтр по активности
         if (isset($filters['is_active'])) {
@@ -156,8 +197,8 @@ class SegmentRepository
     {
         $query = $segment->clients()
             ->with(['profile', 'orders' => function ($q) {
-                $q->where('status', Order::STATUS_COMPLETED)
-                    ->where('payment_status', Order::PAYMENT_STATUS_PAID);
+                $q->where('status', OrderStatus::DELIVERED)
+                    ->where('payment_status', PaymentStatus::PAID);
             }])
             ->select('clients.*');
 
@@ -169,7 +210,7 @@ class SegmentRepository
              AND orders.payment_status = ?
              AND orders.deleted_at IS NULL
             ) as orders_count',
-            [Order::STATUS_COMPLETED, Order::PAYMENT_STATUS_PAID]
+            [OrderStatus::DELIVERED, PaymentStatus::PAID]
         );
 
         $query->selectRaw('
@@ -179,7 +220,7 @@ class SegmentRepository
              AND orders.payment_status = ?
              AND orders.deleted_at IS NULL
             ), 0) as total_amount',
-            [Order::STATUS_COMPLETED, Order::PAYMENT_STATUS_PAID]
+            [OrderStatus::DELIVERED, PaymentStatus::PAID]
         );
 
         $query->selectRaw('
@@ -189,17 +230,23 @@ class SegmentRepository
              AND orders.payment_status = ?
              AND orders.deleted_at IS NULL
             ), 0) as average_check',
-            [Order::STATUS_COMPLETED, Order::PAYMENT_STATUS_PAID]
+            [OrderStatus::DELIVERED, PaymentStatus::PAID]
         );
 
         // Фильтр по поиску (имя, телефон)
         if ($filters->search) {
-            $query->where(function ($q) use ($filters) {
-                $q->whereHas('profile', function ($profileQuery) use ($filters) {
-                    $profileQuery->where('first_name', 'like', '%' . $filters->search . '%')
-                        ->orWhere('last_name', 'like', '%' . $filters->search . '%')
-                        ->orWhere('phone', 'like', '%' . $filters->search . '%');
-                })->orWhere('email', 'like', '%' . $filters->search . '%');
+            $search = $filters->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('email', 'like', "%{$search}%")
+                    ->orWhereHas('profile', function ($profileQuery) use ($search) {
+                        $profileQuery->where(function ($subQuery) use ($search) {
+                            $subQuery->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%")
+                                ->orWhere('phone', 'like', "%{$search}%")
+                                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                        });
+                    });
             });
         }
 
@@ -212,8 +259,8 @@ class SegmentRepository
                 if ($filters->periodTo) {
                     $q->where('created_at', '<=', $filters->periodTo);
                 }
-                $q->where('status', Order::STATUS_COMPLETED)
-                    ->where('payment_status', Order::PAYMENT_STATUS_PAID);
+                $q->where('status', OrderStatus::DELIVERED)
+                    ->where('payment_status', PaymentStatus::PAID);
             });
         }
 
@@ -249,8 +296,8 @@ class SegmentRepository
             ->join('client_segment', 'clients.id', '=', 'client_segment.client_id')
             ->leftJoin('orders', function ($join) {
                 $join->on('clients.id', '=', 'orders.client_id')
-                    ->where('orders.status', Order::STATUS_COMPLETED)
-                    ->where('orders.payment_status', Order::PAYMENT_STATUS_PAID)
+                    ->where('orders.status', OrderStatus::DELIVERED)
+                    ->where('orders.payment_status', PaymentStatus::PAID)
                     ->whereNull('orders.deleted_at');
             })
             ->where('client_segment.segment_id', $segment->id)
@@ -263,10 +310,10 @@ class SegmentRepository
             ->first();
 
         return [
-            'clients_count' => (int) $stats->clients_count,
-            'total_amount' => (float) $stats->total_amount,
-            'total_orders' => (int) $stats->total_orders,
-            'average_check' => (float) $stats->average_check,
+            'clients_count' => (int)$stats->clients_count,
+            'total_amount' => (float)$stats->total_amount,
+            'total_orders' => (int)$stats->total_orders,
+            'average_check' => (float)$stats->average_check,
         ];
     }
 
@@ -280,8 +327,8 @@ class SegmentRepository
             ->leftJoin('user_profiles', 'clients.id', '=', 'user_profiles.client_id')
             ->leftJoin('orders', function ($join) {
                 $join->on('clients.id', '=', 'orders.client_id')
-                    ->where('orders.status', Order::STATUS_COMPLETED)
-                    ->where('orders.payment_status', Order::PAYMENT_STATUS_PAID)
+                    ->where('orders.status', OrderStatus::DELIVERED)
+                    ->where('orders.payment_status', PaymentStatus::PAID)
                     ->whereNull('orders.deleted_at');
             })
             ->where('client_segment.segment_id', $segment->id)

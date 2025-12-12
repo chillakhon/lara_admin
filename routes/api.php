@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\Admin\MoySkladController;
 use App\Http\Controllers\Api\Admin\NotificationController;
 use App\Http\Controllers\Api\Admin\OptionController;
 use App\Http\Controllers\Api\Admin\OrderStatsController;
+use App\Http\Controllers\Api\Admin\Statuses\StatusController;
 use App\Http\Controllers\Api\Admin\Product\ProductAttributeController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\ProductImageController;
@@ -75,6 +76,12 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::prefix("/public")->group(function () {
+
+
+    Route::prefix('statuses')->name('statuses.')->group(function () {
+        Route::get('/', [StatusController::class, 'index'])->name('index');
+    });
+
 
     Route::post('/vk/webhook', [VKWebhookController::class, 'webhook']);
     Route::post('/whatsapp/webhook', [WhatsAppWebhookController::class, 'webhook']);
@@ -221,6 +228,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Пересчитать клиентов вручную
         Route::post('/{segment}/recalculate', [SegmentController::class, 'recalculate'])->name('recalculate');
 
+        //  Доступные клиенты для добавления (которых НЕТ в сегменте)
+        Route::get('/{segment}/available-clients', [SegmentController::class, 'getAvailableClients'])->name('available-clients');
+
         // Клиенты сегмента
         Route::get('/{segment}/clients', [SegmentController::class, 'getClients'])->name('clients');
 
@@ -245,7 +255,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Экспорт в CSV
         Route::get('/{segment}/export', [SegmentController::class, 'export'])->name('export');
     });
-
 
     //notification
     Route::get('/notifications/counter', [NotificationController::class, 'counter']);
@@ -328,7 +337,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/', [PromoCodeController::class, 'store']);
         Route::put('/{promoCode}', [PromoCodeController::class, 'update']);
         Route::delete('/{promoCode}', [PromoCodeController::class, 'destroy']);
-//             Route::get('/{promoCode}/usage', [PromoCodeController::class, 'usages'])->name('usage');
     });
 
     Route::group(['prefix' => 'promo-code-clients'], function () {
@@ -495,28 +503,29 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
 
-    //        // Orders
     Route::prefix('orders')->name('orders.')->group(function () {
-
-        Route::post('/', [OrderController::class, 'store']);
-        Route::get('/delivery-methods', [DeliveryMethodController::class, 'index']);
+        Route::get('/', [OrderController::class, 'index'])->name('index');
+        Route::post('/', [OrderController::class, 'store'])->name('store');
+        Route::get('/stats', [OrderStatsController::class, 'stats'])->name('stats');
         Route::get('/user', [OrderController::class, 'getUserOrders']);
-        Route::post('/payment/{order}', [OrderController::class, 'pay']);
+
+        Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+        Route::put('/{order}', [OrderController::class, 'update'])->name('update');
+        Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
+
+        // Дополнительные действия
+        Route::put('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');
+        Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
+        Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');
+        Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');
 
 
-        Route::get('/', [OrderController::class, 'index'])->name('orders.index');  // Путь будет /api/orders
-        // Route::post('/', [OrderController::class, 'store'])->name('orders.store');  // Путь будет /api/orders
-        Route::get('/stats', [OrderStatsController::class, 'stats'])->name('orders.stats');
+        //DeliveryMethodController
+        Route::get('/delivery-methods', [DeliveryMethodController::class, 'index']);
 
-        Route::get('/{order}', [OrderController::class, 'show']);  // Путь будет /api/orders/{order}
 
-        Route::put('/{order}', [OrderController::class, 'update'])->name('orders.update');  // Путь будет /api/orders/{order}
-        Route::delete('/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');  // Путь будет /api/orders/{order}
-        // Дополнительные действия с заказами
-        Route::put('/{order}/status', [OrderController::class, 'updateStatus'])->name('update-status');  // Путь будет /api/orders/{order}/status
-        Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');  // Путь будет /api/orders/{order}/items
-        Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');  // Путь будет /api/orders/{order}/items/{item}
     });
+
 
     // Маршруты, доступные только администраторам
     // Управление пользователями

@@ -3,16 +3,21 @@
 namespace App\Services\Segment;
 
 use App\DTOs\Segment\SegmentConditionsDTO;
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Client;
 use App\Models\Order;
 use App\Models\Segments\Segment;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SegmentRecalculationService
 {
     public function __construct(
         protected SegmentPromoCodeSyncService $promoCodeSyncService
-    ) {}
+    )
+    {
+    }
 
     /**
      * Пересчитать клиентов сегмента на основе условий
@@ -68,14 +73,14 @@ class SegmentRecalculationService
     protected function findClientsMatchingConditions(SegmentConditionsDTO $conditions): array
     {
         $query = Client::query()
-            ->whereNotNull('email_verified_at'); // Только верифицированные клиенты
+            ->whereNotNull('verified_at'); // Только верифицированные клиенты
 
         // Подзапрос для расчёта статистики по заказам
         $query->select('clients.id')
             ->leftJoin('orders', function ($join) use ($conditions) {
                 $join->on('clients.id', '=', 'orders.client_id')
-                    ->where('orders.status', Order::STATUS_COMPLETED)
-                    ->where('orders.payment_status', Order::PAYMENT_STATUS_PAID)
+                    ->where('orders.status', OrderStatus::DELIVERED)
+                    ->where('orders.payment_status', PaymentStatus::PAID)
                     ->whereNull('orders.deleted_at');
 
                 // Фильтр по периоду

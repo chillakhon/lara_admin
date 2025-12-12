@@ -23,7 +23,6 @@ class ClientController extends Controller
 {
     use ClientControllerTrait;
 
-
     public function index(Request $request)
     {
         $query = Client::with(['level'])
@@ -79,6 +78,7 @@ class ClientController extends Controller
                     'id' => $client->id,
                     'email' => $client?->email,
                     'verified_at' => $client?->verified_at,
+                    'full_name' => $client?->profile?->first_name . ' ' . $client->profile?->last_name,
                     'profile' => [
                         'first_name' => $client?->profile?->first_name,
                         'last_name' => $client?->profile?->last_name,

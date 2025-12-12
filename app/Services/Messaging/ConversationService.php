@@ -127,13 +127,11 @@ class ConversationService
                         $messageData['attachments'] ?? []
                     );
                 }
-
             }
 
             if ($conversation->status === 'new') {
                 $conversation->update(['status' => 'active']);
             }
-
 
             try {
                 event(new \App\Events\MessageCreated($message));
@@ -144,7 +142,6 @@ class ConversationService
                     'error' => $e->getMessage()
                 ]);
             }
-
 
             return $message;
         });

@@ -136,9 +136,19 @@ class SegmentController extends Controller
                 $segment = $segment->fresh(['clients', 'promoCodes']);
             }
 
+
+            //  Загружаем промокоды, если ещё не загружены
+            if (!$segment->relationLoaded('promoCodes')) {
+                $segment->load('promoCodes');
+            }
+
+            //  Загружаем count
+            $segment->loadCount('promoCodes');
+
             // Получаем статистику
-            $statistics = $this->statisticsService->getStatistics($segment);
-            $segment->statistics = $statistics->toArray();
+            $statistics = $this->statisticsService->getBriefStatistics($segment);
+            $segment->statistics = $statistics;
+
 
             return response()->json([
                 'success' => true,
@@ -198,7 +208,9 @@ class SegmentController extends Controller
      */
     public function destroy(Segment $segment): JsonResponse
     {
+
         try {
+
             $this->deleteAction->execute($segment);
 
             return response()->json([
@@ -217,8 +229,6 @@ class SegmentController extends Controller
 
     /**
      * Получить клиентов сегмента с фильтрацией
-     *
-     * GET /api/segments/{id}/clients
      */
     public function getClients(FilterSegmentClientsRequest $request, Segment $segment): JsonResponse
     {
@@ -231,10 +241,20 @@ class SegmentController extends Controller
         ]);
     }
 
+
+    public function getAvailableClients(FilterSegmentClientsRequest $request, Segment $segment): JsonResponse
+    {
+        $filters = SegmentClientFilterDTO::fromRequest($request->validated());
+        $clients = $this->segmentRepository->getAvailableClients($segment, $filters);
+
+        return response()->json([
+            'data' => SegmentClientResource::collection($clients->items()),
+            'meta' => PaginationHelper::format($clients),
+        ]);
+    }
+
     /**
      * Добавить клиентов в сегмент
-     *
-     * POST /api/segments/{id}/clients
      */
     public function attachClients(AttachClientsRequest $request, Segment $segment): JsonResponse
     {
@@ -313,6 +333,7 @@ class SegmentController extends Controller
             $autoApply = $request->validated()['auto_apply'] ?? true;
 
             $this->attachPromoCodeAction->execute($segment, $promoCodeIds, $autoApply);
+
 
             return response()->json([
                 'success' => true,

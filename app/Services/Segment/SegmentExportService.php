@@ -63,7 +63,7 @@ class SegmentExportService
             'phone' => $client->profile?->phone ?? '',
             'email' => $client->email ?? '',
             'birthday' => $client->profile?->birthday
-                ? $client->profile->birthday->format('d.m.Y')
+                ? $client->profile->birthday
                 : '',
             'address' => $client->profile?->address ?? '',
             'average_check' => $this->calculateAverageCheck($client),

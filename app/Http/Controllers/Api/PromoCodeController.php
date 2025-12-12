@@ -42,6 +42,7 @@ class PromoCodeController extends Controller
         $perPage = $request->get('per_page', 15);
         $promos = $query->paginate($perPage);
 
+
         return response()->json([
             'success' => true,
             'data' => $promos->items(),
