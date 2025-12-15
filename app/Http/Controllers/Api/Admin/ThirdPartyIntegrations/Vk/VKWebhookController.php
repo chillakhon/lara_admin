@@ -34,8 +34,6 @@ class VKWebhookController extends Controller
                 return response()->json(['ok' => true]);
             }
 
-            Log::warning("VKWebhookController: ", ['data' => $data]);
-
             // Confirmation
             if ($data['type'] === 'confirmation') {
                 $settings = VKSettings::first();

@@ -116,7 +116,7 @@ class VKService
 
             $messageData = [
                 'direction' => 'incoming',
-                'content' => $text ?: '📎 Вложения',
+                'content' => $text,
                 'content_type' => 'text',
                 'status' => 'delivered',
                 'source_data' => [
