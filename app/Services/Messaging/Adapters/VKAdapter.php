@@ -40,7 +40,7 @@ class VKAdapter extends AbstractMessageAdapter
      * @param array $attachments - Вложения
      * @return bool
      */
-    public function sendMessage(string $externalId, string $content, array $attachments = []): bool
+    public function sendMessage(string $externalId, ?string $content, array $attachments = []): bool
     {
         try {
             // Загружаем вложения и получаем attachment_ids
