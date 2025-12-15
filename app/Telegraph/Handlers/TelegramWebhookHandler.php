@@ -2,6 +2,7 @@
 
 namespace App\Telegraph\Handlers;
 
+use App\Enums\OrderStatus;
 use App\Models\Client;
 use App\Models\Conversation;
 use App\Models\Order;
@@ -148,10 +149,15 @@ class TelegramWebhookHandler extends WebhookHandler
             return;
         }
 
+        $requestData = $this->request->input('message', []);
+        $botToken = $this->bot->token;
+
         $this->telegramService->findOrCreateConversationAndSendMessage(
             $telegramId,
             $client_profile,
             $content,
+            $requestData,
+            $botToken
         );
 
     }
@@ -185,7 +191,7 @@ class TelegramWebhookHandler extends WebhookHandler
     )
     {
         $find_pending_orders_ids = Order
-            ::whereIn('status', [Order::STATUS_PROCESSING, Order::STATUS_NEW])
+            ::whereIn('status', [OrderStatus::PROCESSING, OrderStatus::NEW])
             ->whereNull("deleted_at")
             // once you found by clients, it's enought
             // because second time you request with ids

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Services\Email\EmailService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Webklex\IMAP\Facades\Client;
 use Exception;
 
@@ -26,14 +27,11 @@ class SyncEmailMessages extends Command
         try {
             $this->info('🔄 Синхронизация писем началась...');
 
-            // Подключаемся через Webklex IMAP Client
             $client = Client::account('default');
             $client->connect();
 
-            // Получаем папку INBOX
             $inbox = $client->getFolder('INBOX');
 
-            // Получаем непрочитанные письма за последние 30 дней
             $emails = $inbox->search()
                 ->unseen()
                 ->since(now()->subDays(30))
@@ -46,17 +44,14 @@ class SyncEmailMessages extends Command
 
             $this->info("📧 Найдено писем: " . $emails->count());
 
-            // Проверяем первый запуск
             $processedCount = $this->getProcessedEmailCount();
             $isFirstRun = $processedCount === 0;
 
-            // Если первый запуск — берём только последние 20
             if ($isFirstRun) {
                 $emails = $emails->slice(-20);
                 $this->info("📧 Первый запуск: обработаю последние 20 писем");
             }
 
-            // Обрабатываем каждое письмо
             foreach ($emails as $email) {
                 try {
                     $this->processEmail($email);
@@ -83,28 +78,22 @@ class SyncEmailMessages extends Command
         }
     }
 
-    /**
-     * Обработать одно письмо
-     */
     protected function processEmail($email)
     {
-        // Извлекаем данные письма
         $fromEmail = $email->getFrom()[0]->mail;
         $subject = $email->getSubject();
         $body = $email->getHTMLBody() ?? $email->getTextBody();
         $messageId = $email->getMessageId();
 
-        // Получаем вложения
-//        $attachments = $this->getEmailAttachments($email);
-        $attachments = [];
+        // ← РАСКОММЕНТИРОВАЛИ!
+        $attachments = $this->getEmailAttachments($email);
 
-        // Отправляем в EmailService
         $data = [
             'from' => $fromEmail,
             'subject' => $subject,
             'text' => $body,
             'message_id' => $messageId,
-            'attachments' => $attachments
+            'attachments' => $attachments // ← Передаем вложения
         ];
 
         $result = $this->emailService->handleIncomingEmail($data);
@@ -113,12 +102,11 @@ class SyncEmailMessages extends Command
             throw new Exception($result['error'] ?? 'Unknown error');
         }
 
-        // Помечаем письмо как прочитанное
         $email->setFlag(['Seen']);
     }
 
     /**
-     * Получить вложения из письма
+     * Получить вложения из письма и сохранить в правильную структуру
      */
     protected function getEmailAttachments($email)
     {
@@ -126,40 +114,90 @@ class SyncEmailMessages extends Command
 
         try {
             foreach ($email->getAttachments() as $attachment) {
+                $originalFileName = $attachment->getName();
+                $mimeType = $attachment->getMimeType();
 
-                // Генерируем уникальное имя файла
-                $fileName = uniqid() . '_' . $attachment->getName();
-                $filePath = 'public/attachments/emails/' . $fileName;
-
-                // Создаём папку если её нет
-                if (!file_exists('storage/app/public/attachments/emails/')) {
-                    mkdir('storage/app/public/attachments/emails/', 0755, true);
+                // Определяем расширение
+                $extension = pathinfo($originalFileName, PATHINFO_EXTENSION);
+                if (!$extension) {
+                    $extension = $this->guessExtensionFromMime($mimeType);
                 }
 
-                // Получаем содержимое файла и сохраняем
-                $content = $attachment->getAttributes()['content'] ?? null;
+                // Генерируем уникальное имя файла
+                $hash = md5(time() . uniqid());
+                $fileName = $hash . '.' . $extension;
+
+                // Используем ту же структуру что и в FileStorageService
+                $directory = 'chat-attachments/' . now()->format('Y/m');
+                $filePath = $directory . '/' . $fileName;
+
+                // Получаем содержимое файла
+                $content = $attachment->getContent();
 
                 if ($content) {
-                    file_put_contents(storage_path('app/' . $filePath), $content);
+                    // Сохраняем в storage/app/public/
+                    Storage::disk('public')->put($filePath, $content);
 
                     $attachments[] = [
-                        'filename' => $attachment->getName(),
-                        'url' => '/storage/attachments/emails/' . $fileName,
-                        'id' => $attachment->getId(),
-                        'mime_type' => $attachment->getMimeType()
+                        'type' => $this->getAttachmentType($mimeType),
+                        'url' => url('storage/' . $filePath),
+                        'file_path' => $filePath,
+                        'file_name' => $originalFileName,
+                        'file_size' => strlen($content),
+                        'mime_type' => $mimeType,
                     ];
+
+                    Log::info("Email attachment saved", [
+                        'original_name' => $originalFileName,
+                        'saved_as' => $fileName,
+                        'size' => strlen($content)
+                    ]);
                 }
             }
         } catch (Exception $e) {
-            Log::warning("Error getting attachments", ['error' => $e->getMessage()]);
+            Log::error("Error getting email attachments", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
 
         return $attachments;
     }
 
     /**
-     * Получить количество уже обработанных писем
+     * Определить тип вложения по MIME
      */
+    protected function getAttachmentType(string $mimeType): string
+    {
+        if (str_starts_with($mimeType, 'image/')) {
+            return 'image';
+        }
+        if (str_starts_with($mimeType, 'audio/')) {
+            return 'audio';
+        }
+        return 'file';
+    }
+
+    /**
+     * Угадать расширение по MIME типу
+     */
+    protected function guessExtensionFromMime(string $mimeType): string
+    {
+        $mimeMap = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'audio/mpeg' => 'mp3',
+            'audio/ogg' => 'ogg',
+            'audio/wav' => 'wav',
+            'application/pdf' => 'pdf',
+            'application/msword' => 'doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+        ];
+
+        return $mimeMap[$mimeType] ?? 'bin';
+    }
+
     protected function getProcessedEmailCount()
     {
         return \App\Models\Conversation::where('source', 'email')->count();

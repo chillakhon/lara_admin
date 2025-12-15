@@ -526,7 +526,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     });
 
-
     // Маршруты, доступные только администраторам
     // Управление пользователями
     Route::prefix('users')->name('users.')->group(function () {

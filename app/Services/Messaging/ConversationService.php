@@ -149,15 +149,29 @@ class ConversationService
 
     protected function validateMessageData(array $data): void
     {
-        $required = ['direction', 'content'];
-        foreach ($required as $field) {
-            if (!isset($data[$field])) {
-                throw new \InvalidArgumentException("Missing required field: {$field}");
-            }
+        // direction обязателен всегда
+        if (!isset($data['direction'])) {
+            throw new \InvalidArgumentException('Missing required field: direction');
         }
 
-        if (!in_array($data['direction'], ['incoming', 'outgoing'])) {
+        if (!in_array($data['direction'], ['incoming', 'outgoing'], true)) {
             throw new \InvalidArgumentException("Invalid direction: {$data['direction']}");
+        }
+
+        // content и attachments могут отсутствовать по отдельности,
+        // но не могут отсутствовать ОБА
+        $hasContent = array_key_exists('content', $data)
+            && is_string($data['content'])
+            && trim($data['content']) !== '';
+
+        $hasAttachments = array_key_exists('attachments', $data)
+            && is_array($data['attachments'])
+            && count($data['attachments']) > 0;
+
+        if (!$hasContent && !$hasAttachments) {
+            throw new \InvalidArgumentException(
+                'Message must contain content or attachments'
+            );
         }
     }
 

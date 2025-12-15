@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\File\FileStorageService;
 use App\Services\Messaging\ConversationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ConversationController extends Controller
 {
@@ -17,8 +18,9 @@ class ConversationController extends Controller
 
     public function __construct(
         ConversationService $conversationService,
-        FileStorageService $fileStorage
-    ) {
+        FileStorageService  $fileStorage
+    )
+    {
         $this->conversationService = $conversationService;
         $this->fileStorage = $fileStorage;
     }
@@ -129,12 +131,12 @@ class ConversationController extends Controller
     }
 
 
-
     // Ответить на сообщение
     public function reply(Request $request, Conversation $conversation)
     {
+
         $validated = $request->validate([
-            'content' => 'required|string',
+            'content' => 'nullable|string',
             'attachments' => 'nullable|array|max:5',
             'attachments.*' => 'file|mimes:jpg,jpeg,png,mp3,wav,ogg,m4a|max:10240',
         ]);

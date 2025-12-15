@@ -20,20 +20,15 @@ class EmailService
         $this->conversationService = $conversationService;
     }
 
-    /**
-     * Обработать входящее письмо от Yandex 360 webhook
-     */
     public function handleIncomingEmail(array $emailData): array
     {
         try {
-            // Валидируем данные
             if (!isset($emailData['from']) || !isset($emailData['subject']) || !isset($emailData['text'])) {
                 Log::warning("EmailService: Missing required fields", ['data' => $emailData]);
                 return ['ok' => false, 'error' => 'Missing required fields'];
             }
 
             return DB::transaction(function () use ($emailData) {
-                // Извлекаем данные письма
                 $fromEmail = $emailData['from'];
                 $subject = $emailData['subject'] ?? 'No subject';
                 $text = $emailData['text'];
@@ -45,14 +40,11 @@ class EmailService
                 Log::info("EmailService: Processing incoming email", [
                     'from' => $fromEmail,
                     'subject' => $subject,
-                    'attachments' => $attachments
+                    'attachments_count' => count($attachments)
                 ]);
 
-                // Ищем или создаём клиента по email
                 $client = $this->findClient($fromEmail);
 
-
-                // Ищем или создаём conversation
                 $conversation = Conversation::firstOrCreate(
                     [
                         'source' => 'email',
@@ -66,8 +58,6 @@ class EmailService
                     ]
                 );
 
-
-                // Добавляем входящее сообщение
                 $messageData = [
                     'direction' => 'incoming',
                     'content' => $text,
@@ -77,21 +67,22 @@ class EmailService
                         'email_from' => $fromEmail,
                         'email_subject' => $subject,
                         'email_message_id' => $messageId,
-                        'email_attachments' => $attachments,
                     ]
                 ];
 
-                // Обработка вложений если есть
+                // ← ОБНОВИЛИ: просто передаем attachments как есть
                 if (!empty($attachments)) {
-                    $processedAttachments = $this->processAttachments($attachments);
-                    $messageData['attachments'] = $processedAttachments;
+                    $messageData['attachments'] = $attachments;
+
+                    Log::info("EmailService: Attachments to save", [
+                        'count' => count($attachments),
+                        'attachments' => $attachments
+                    ]);
                 }
 
                 $this->conversationService->addMessage($conversation, $messageData);
 
-
                 return ['ok' => true, 'conversation_id' => $conversation->id];
-
             });
 
         } catch (Exception $e) {
@@ -103,35 +94,20 @@ class EmailService
         }
     }
 
-
-    /**
-     * Извлечь текст из HTML письма
-     */
     protected function extractTextFromHtml(string $html): string
     {
-        // Удаляем HTML теги
         $text = strip_tags($html);
-
-        // Удаляем лишние пробелы и переносы строк
         $text = preg_replace('/\s+/', ' ', $text);
-
-        // Удаляем "Sent from", "Wednesday" и прочие служебные данные
         $text = preg_replace('/Sent from.*$/is', '', $text);
         $text = preg_replace('/Wednesday.*$/is', '', $text);
-
-        // Trim
         $text = trim($text);
 
         return $text;
     }
 
-    /**
-     * Найти или создать клиента по email
-     */
     protected function findClient(string $email): ?Client
     {
         try {
-            // Ищем клиента по email
             $client = Client::where('email', $email)->first();
 
             if ($client) {
@@ -147,25 +123,5 @@ class EmailService
             ]);
             return null;
         }
-    }
-
-    /**
-     * Обработать вложения из письма
-     */
-    protected function processAttachments(array $attachments): array
-    {
-        $processed = [];
-
-        foreach ($attachments as $attachment) {
-            // Сохраняем только ссылку на вложение
-            $processed[] = [
-                'type' => 'file',
-                'url' => $attachment['url'] ?? null,
-                'file_name' => $attachment['filename'] ?? 'attachment',
-                'attachment_id' => $attachment['id'] ?? uniqid('att_')
-            ];
-        }
-
-        return $processed;
     }
 }

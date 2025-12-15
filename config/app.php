@@ -123,4 +123,9 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'encryption' => [
+        'key' => env('ENCRYPTED_KEY'),
+        'iv' => env('ENCRYPTED_IV'),
+    ],
+
 ];

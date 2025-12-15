@@ -8,6 +8,7 @@ use App\Models\ProductVariant;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
 
 trait HelperTrait
 {
@@ -82,17 +83,38 @@ trait HelperTrait
 
     public function decryptToken($base64Token)
     {
+        $key = config('app.encryption.key');
+        $iv = config('app.encryption.iv');
+
+        if (empty($key) || empty($iv)) {
+            Log::error('Missing encryption credentials');
+            return false;
+        }
+
         $encrypted = base64_decode($base64Token);
+
+        if ($encrypted === false) {
+            Log::error('Base64 decode failed');
+            return false;
+        }
+
         $decrypted = openssl_decrypt(
             $encrypted,
             'AES-256-CBC',
-            env('ENCRYPTED_KEY'),
+            $key,
             OPENSSL_RAW_DATA,
-            env('ENCRYPTED_IV')
+            $iv
         );
+
+        if ($decrypted === false) {
+            Log::error('Decryption failed', [
+                'openssl_error' => openssl_error_string()
+            ]);
+            return false;
+        }
+
         return $decrypted;
     }
-
 
     function paginate_collection(
         array $items,
