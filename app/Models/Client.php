@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Segments\Segment;
+use App\Models\Tag\Tag;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -45,6 +46,11 @@ class Client extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function lastOrder()
+    {
+        return $this->hasOne(Order::class)->latest();
+    }
+
     /**
      * Get the full name of the client.
      *
@@ -52,7 +58,7 @@ class Client extends Model
      */
     public function get_full_name()
     {
-        return $this?->profile?->getFullNameAttribute();
+        return $this?->profile?->fullName();
     }
 
 
@@ -114,6 +120,13 @@ class Client extends Model
         return PromoCode::whereHas('segments', function ($query) {
             $query->whereIn('segment_id', $this->segments->pluck('id'));
         })->get();
+    }
+
+
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class, 'client_tag')
+            ->withTimestamps();
     }
 
 }

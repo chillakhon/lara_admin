@@ -16,3 +16,7 @@ Schedule::command('email:sync')->everyFiveMinutes();
 //Schedule::command('birthday:process')->daily();
 Schedule::command('birthday:process')->dailyAt('10:00');
 
+Schedule::command('giftcards:send-scheduled')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->runInBackground();

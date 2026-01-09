@@ -4,13 +4,22 @@ namespace App\Services\Order;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Models\GiftCard\GiftCard;
 use App\Models\Order;
 use App\Models\PromoCode;
+use App\Services\GiftCard\GiftCardService;
+use Exception;
 use Illuminate\Support\Facades\Log;
 
 class OrderCreationService
 {
 
+
+    public function __construct(
+        protected GiftCardService $giftCardService
+    )
+    {
+    }
 
     /**
      * Создать заказ из валидированных данных
@@ -62,11 +71,7 @@ class OrderCreationService
      */
     public function createOrderItems(Order $order, array $validatedItems)
     {
-
-
         try {
-
-
             $orderTotal = 0;
             $totalDiscount = 0;
             $totalPromoDiscount = 0;
@@ -122,7 +127,6 @@ class OrderCreationService
 
         } catch (\Exception $exception) {
             Log::error([
-                'chilla' => 'chilla',
                 'message' => $exception->getMessage(),
                 'line' => $exception->getLine(),
                 'trace' => $exception->getTraceAsString(),
@@ -240,6 +244,9 @@ class OrderCreationService
                 'cancelled_at' => now(),
             ]);
 
+
+            $this->refundGiftCardOnCancellation($order);
+
             Log::info('Order cancelled', [
                 'order_id' => $order->id,
                 'reason' => $reason,
@@ -352,4 +359,131 @@ class OrderCreationService
             'delivered_at' => $order->delivered_at?->format('Y-m-d H:i:s'),
         ];
     }
+
+
+    public function applyGiftCardToOrder(
+        Order $order,
+        GiftCard $giftCard,
+        float $orderTotal
+    ): array {
+        try {
+            // Применяем карту через сервис
+            $result = $this->giftCardService->applyToOrder($giftCard, $order, $orderTotal);
+
+            // Обновляем заказ
+            $order->update([
+                'gift_card_id' => $giftCard->id,
+                'gift_card_amount' => $result['amount_used'],
+                'total_amount' => $result['order_total_after'],
+            ]);
+//
+//            Log::info('Gift card applied to order in OrderCreationService', [
+//                'order_id' => $order->id,
+//                'gift_card_id' => $giftCard->id,
+//                'amount_used' => $result['amount_used'],
+//            ]);
+
+            return $result;
+
+        } catch (Exception $e) {
+            Log::error('Failed to apply gift card in OrderCreationService', [
+                'order_id' => $order->id,
+                'gift_card_id' => $giftCard->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Обновление сумм заказа с учетом подарочной карты
+     */
+    public function updateOrderTotalsWithGiftCard(
+        Order $order,
+        array $totals,
+        ?float $giftCardAmount = null
+    ): void {
+        $orderTotal = $totals['order_total'];
+
+        // Если есть подарочная карта, вычитаем её
+        if ($giftCardAmount && $giftCardAmount > 0) {
+            $orderTotal = max(0, $orderTotal - $giftCardAmount);
+        }
+
+        $order->update([
+            'total_amount_original' => $totals['order_total'],
+            'total_items_discount' => $totals['total_discount'],
+            'total_amount' => $orderTotal,
+        ]);
+    }
+
+    /**
+     * Проверка: содержит ли заказ подарочный сертификат
+     */
+    public function containsGiftCardProduct(array $items): bool
+    {
+        foreach ($items as $item) {
+            $product = \App\Models\Product::find($item['product_id']);
+
+            if ($product && $product->name === 'Подарочный сертификат') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Извлечение номинала из варианта подарочного сертификата
+     */
+    public function extractGiftCardNominal(array $item): ?float
+    {
+        if (isset($item['product_variant_id'])) {
+            $variant = \App\Models\ProductVariant::find($item['product_variant_id']);
+            if ($variant) {
+                return (float) $variant->price;
+            }
+
+        }
+
+        return null;
+    }
+
+    /**
+     * Возврат средств на подарочную карту при отмене заказа
+     */
+    public function refundGiftCardOnCancellation(Order $order): void
+    {
+        if (!$order->hasGiftCard()) {
+            return;
+        }
+
+        try {
+            $giftCard = $order->giftCard;
+
+            if ($giftCard) {
+                $this->giftCardService->refund(
+                    $giftCard,
+                    $order,
+                    $order->gift_card_amount
+                );
+
+                Log::info('Gift card refunded on order cancellation', [
+                    'order_id' => $order->id,
+                    'gift_card_id' => $giftCard->id,
+                    'refund_amount' => $order->gift_card_amount,
+                ]);
+            }
+
+        } catch (Exception $e) {
+            Log::error('Failed to refund gift card on cancellation', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Не выбрасываем исключение, чтобы не блокировать отмену заказа
+        }
+    }
+
 }

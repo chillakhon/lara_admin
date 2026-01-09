@@ -12,6 +12,16 @@ class PaginationHelper
             'page' => $paginator->currentPage(),
             'total' => $paginator->total(),
             'per_page' => $paginator->perPage(),
+//            'last_page' => $paginator->lastPage(),
+        ];
+    }
+    public static function formatShopFron(LengthAwarePaginator $paginator): array
+    {
+        return [
+            'per_page' => $paginator->perPage(),
+            'current_page' => $paginator->currentPage(),
+            'total' => $paginator->total(),
+            'last_page' => $paginator->lastPage(),
         ];
     }
 }

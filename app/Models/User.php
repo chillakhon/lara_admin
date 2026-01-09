@@ -8,17 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-/**
- * @OA\Schema(
- *     schema="User",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="John Doe"),
- *     @OA\Property(property="email", type="string", format="email", example="user@example.com"),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2023-10-01T12:00:00Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2023-10-01T12:00:00Z")
- * )
- */
+
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
@@ -44,7 +34,7 @@ class User extends Authenticatable
 
     public function get_full_name()
     {
-        return $this?->profile?->getFullNameAttribute();
+        return $this?->profile?->full_name ?? null;
     }
 
     public function profile()

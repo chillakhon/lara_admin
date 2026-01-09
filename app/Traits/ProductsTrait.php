@@ -173,15 +173,11 @@ trait ProductsTrait
         foreach ($products as $product) {
             $this->applyDiscountToProduct($product);
 
-
-            if ($products)
-
-                if ($product->relationLoaded('variants')) {
-                    foreach ($product->variants as $variant) {
-                        $this->applyDiscountToProduct($variant);
-                    }
+            if ($product->relationLoaded('variants')) {
+                foreach ($product->variants as $variant) {
+                    $this->applyDiscountToProduct($variant);
                 }
-
+            }
         }
     }
 

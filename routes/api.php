@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\Admin\DiscountAnalyticsController;
 use App\Http\Controllers\Api\Admin\DiscountController;
 use App\Http\Controllers\Api\Admin\FavoriteController;
 use App\Http\Controllers\Api\Admin\FinancialAnalyticsController;
+use App\Http\Controllers\Api\Admin\GiftCard\GiftCardController;
 use App\Http\Controllers\Api\Admin\InventoryController;
 use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\MoySkladController;
@@ -42,6 +43,8 @@ use App\Http\Controllers\Api\Admin\Segment\SegmentController;
 use App\Http\Controllers\Api\Admin\SettingsController;
 use App\Http\Controllers\Api\Admin\ShipmentController;
 use App\Http\Controllers\Api\Admin\SimpleProductController;
+use App\Http\Controllers\Api\Admin\Tag\ClientTagController;
+use App\Http\Controllers\Api\Admin\Tag\TagController;
 use App\Http\Controllers\Api\Admin\TaskAttachmentController;
 use App\Http\Controllers\Api\Admin\TaskCommentController;
 use App\Http\Controllers\Api\Admin\TaskController;
@@ -63,12 +66,13 @@ use App\Http\Controllers\Api\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\DeliveryController;
-use App\Http\Controllers\Api\LeadController;
 
 use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\PromoCodeController;
 use App\Http\Controllers\Api\Admin\ReviewController;
+use App\Http\Controllers\Api\Public\Catalog\CatalogController;
 use App\Http\Controllers\Api\Public\Conversation\PublicConversationController;
+use App\Http\Controllers\Api\Public\GiftCard\GiftCardPublicController;
 use App\Http\Controllers\Api\Public\WhatsApp\WhatsAppWebhookController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\Admin\SlideController;
@@ -76,6 +80,36 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::prefix("/public")->group(function () {
+
+
+    Route::prefix('gift-cards')->name('gift-cards.')->group(function () {
+        // Валидация кода карты (проверка баланса)
+        Route::post('/validate', [GiftCardPublicController::class, 'validate'])
+            ->name('validate');
+
+        // Альтернативный endpoint для проверки баланса
+        Route::post('/check-balance', [GiftCardPublicController::class, 'checkBalance'])
+            ->name('check-balance');
+    });
+
+
+    Route::prefix('catalog')->name('catalog.')->group(function () {
+
+        // Категории для меню каталога
+        Route::get('/menu-categories', [CatalogController::class, 'menuCategories'])
+            ->name('menu-categories');
+
+        // Баннеры для главной страницы
+        Route::get('/home-banners', [CatalogController::class, 'homeBanners'])
+            ->name('home-banners');
+
+        // Товары каталога с фильтрами
+        Route::get('/products', [CatalogController::class, 'products'])
+            ->name('products');
+
+        Route::get('/products/{product}', [CatalogController::class, 'getProduct'])
+            ->name('products');
+    });
 
 
     Route::prefix('statuses')->name('statuses.')->group(function () {
@@ -107,6 +141,17 @@ Route::prefix("/public")->group(function () {
 
 });
 
+//auth user
+Route::middleware('guest')->group(function () {
+//    Route::post('register', [RegisteredUserController::class, 'register']);
+    Route::post('login', [AuthenticatedSessionController::class, 'login']);
+    Route::post('check-verification', [AuthenticatedSessionController::class, 'check_verification']);
+});
+
+
+//client - admin
+Route::get('/products', [ProductController::class, 'index']);
+
 
 Route::get('/admin-user', [AuthenticatedSessionController::class, 'get_admin_user'])
     ->middleware('auth:sanctum');
@@ -128,8 +173,6 @@ Route::get('/users/get-profile/image', [UserController::class, 'getProfileImage'
 //getImagePromoCode
 Route::get('promo-code/getImage', [PromoCodeController::class, 'getImage']);
 
-//client - admin
-Route::get('/products', [ProductController::class, 'index']);
 
 // clients
 Route::prefix("/cart-items")->group(function () {
@@ -182,13 +225,6 @@ Route::get('/client-user', [AuthenticatedSessionController::class, 'get_user'])-
 Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
 Route::post('reset-password', [NewPasswordController::class, 'store']);
 
-//auth user
-Route::middleware('guest')->group(function () {
-    Route::post('register', [RegisteredUserController::class, 'register']);
-    Route::post('login', [AuthenticatedSessionController::class, 'login']);
-    Route::post('check-verification', [AuthenticatedSessionController::class, 'check_verification']);
-});
-
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class);
@@ -203,6 +239,59 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 Route::middleware(['auth:sanctum'])->group(function () {
+
+
+    Route::prefix('gift-cards')->name('gift-cards.')->group(function () {
+        Route::get('/', [GiftCardController::class, 'index'])
+            ->name('index');
+
+        // Статистика
+        Route::get('/statistics', [GiftCardController::class, 'statistics'])
+            ->name('statistics');
+
+        // Экспорт в CSV
+        Route::get('/export', [GiftCardController::class, 'export'])
+            ->name('export');
+
+        // Детали конкретной карты
+        Route::get('/{giftCard}', [GiftCardController::class, 'show'])
+            ->name('show');
+
+        // Аннулировать карту
+        Route::post('/{giftCard}/cancel', [GiftCardController::class, 'cancel'])
+            ->name('cancel');
+
+        // Переотправить карту
+        Route::post('/{giftCard}/resend', [GiftCardController::class, 'resend'])
+            ->name('resend');
+    });
+
+
+    Route::prefix('tags')->group(function () {
+        // CRUD для тегов
+        Route::get('/', [TagController::class, 'index']);           // Список всех тегов
+        Route::post('/', [TagController::class, 'store']);          // Создать тег
+        Route::get('/{tag}', [TagController::class, 'show']);       // Получить тег
+        Route::put('/{tag}', [TagController::class, 'update']);     // Обновить тег
+        Route::delete('/{tag}', [TagController::class, 'destroy']); // Удалить тег
+
+        // Статистика
+        Route::get('/statistics/usage', [TagController::class, 'statistics']);
+    });
+
+    Route::prefix('clients/{client}/tags')->group(function () {
+        // Получить все теги клиента
+        Route::get('/', [ClientTagController::class, 'index']);
+
+        // Заменить все теги клиента
+        Route::post('/sync', [ClientTagController::class, 'sync']);
+
+        // Добавить один тег к клиенту
+        Route::post('/attach', [ClientTagController::class, 'attach']);
+
+        // Удалить тег у клиента
+        Route::post('/detach', [ClientTagController::class, 'detach']);
+    });
 
 
     Route::prefix('segments')->name('segments.')->group(function () {
@@ -418,7 +507,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     //        // Products
-    Route::group(['prefix' => 'products', 'as' => 'products.'/*, 'middleware' => ['permission:products.view,products.manage']*/], function () {
+    Route::group(['prefix' => 'products', 'as' => 'products.'], function () {
 
 //        Route::get('/', [ProductController::class, 'index']);
 
@@ -471,10 +560,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         });
 
 
-        // НОВЫЕ маршруты для характеристик
+        //  маршруты для характеристик
         Route::group(['prefix' => 'attributes', 'as' => 'attributes.'], function () {
             Route::post('{product}/absorbency', [ProductAttributeController::class, 'updateAbsorbency']);
             Route::post('{product}', [ProductAttributeController::class, 'updateAttributes']);
+
+            Route::post('bulk/update', [ProductAttributeController::class, 'bulkUpdateAttributes']);
+
         });
 
 

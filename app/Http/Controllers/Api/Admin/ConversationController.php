@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Helpers\PaginationHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Conversation\ConversationResource;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -32,10 +34,17 @@ class ConversationController extends Controller
         $validated = $request->validate([
             'per_page' => 'nullable|integer|min:1',
             'source' => 'nullable|in:telegram,whatsapp,web_chat,vk,email',
+            'search' => 'nullable|string|max:255',
         ]);
 
         // Базовый запрос с нужными связями
-        $query = Conversation::with(['lastMessage', 'client.profile', 'assignedUser'])
+        $query = Conversation::with([
+            'lastMessage',
+            'client.profile',
+            'client.lastOrder',
+            'assignedUser',
+
+        ])
             ->whereHas('messages')
             ->orderBy('last_message_at', 'desc');
 
@@ -44,12 +53,47 @@ class ConversationController extends Controller
             $query->where('source', $validated['source']);
         }
 
+
+
+        // Поиск по клиенту (имя, email, телефон)
+        if (!empty($validated['search'])) {
+            $search = $validated['search'];
+
+            $query->where(function ($q) use ($search) {
+                // Поиск по ID conversation
+                if (is_numeric($search)) {
+                    $q->orWhere('id', $search);
+                }
+
+                // Поиск по клиенту
+                $q->orWhereHas('client', function ($clientQuery) use ($search) {
+                    // По email клиента
+                    $clientQuery->where('email', 'like', "%{$search}%")
+                        // По профилю клиента (имя, фамилия, телефон)
+                        ->orWhereHas('profile', function ($profileQuery) use ($search) {
+                            $profileQuery->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%")
+                                ->orWhere('phone', 'like', "%{$search}%")
+                                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                        });
+                });
+
+                // Поиск по тексту последнего сообщения
+                $q->orWhereHas('lastMessage', function ($messageQuery) use ($search) {
+                    $messageQuery->where('content', 'like', "%{$search}%");
+                });
+            });
+        }
+
         // Пагинация
         $perPage = $validated['per_page'] ?? 20;
         $conversations = $query->paginate($perPage);
 
+
+
         return response()->json([
-            'data' => $conversations
+            'data' => $conversations->items(),
+            'meta' => PaginationHelper::format($conversations)
         ]);
     }
 
@@ -59,6 +103,9 @@ class ConversationController extends Controller
         $conversation->load([
             'messages.attachments',
             'client.profile',
+            'client.segments',
+            'client.lastOrder',
+            'client.tags',
             'assignedUser',
             'participants.user'
         ]);
@@ -66,9 +113,7 @@ class ConversationController extends Controller
         // Отмечаем как прочитанные только сообщения от клиента
         $this->conversationService->markAsRead($conversation);
 
-        return response()->json([
-            'data' => $conversation
-        ]);
+        return ConversationResource::make($conversation);
     }
 
     public function store(Request $request)

@@ -14,9 +14,9 @@ class WhatsAppAdapter extends AbstractMessageAdapter
     {
         $this->whatsappServiceUrl = env('WHATSAPP_SERVICE_URL', 'http://localhost:3001');
 
-        Log::info("WhatsAppAdapter initialized", [
-            'service_url' => $this->whatsappServiceUrl
-        ]);
+//        Log::info("WhatsAppAdapter initialized", [
+//            'service_url' => $this->whatsappServiceUrl
+//        ]);
     }
 
     /**

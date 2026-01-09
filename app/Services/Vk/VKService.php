@@ -127,7 +127,6 @@ class VKService
                 ]
             ];
 
-            // ← ОБНОВИЛИ: Обработка вложений с сохранением файлов
             if (!empty($message['attachments'])) {
                 $attachments = $this->processAttachments($message['attachments']);
                 if (!empty($attachments)) {

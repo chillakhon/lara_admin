@@ -4,10 +4,10 @@ namespace App\Models;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Models\GiftCard\GiftCard;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +16,6 @@ class Order extends Model
 {
     use HasFactory, SoftDeletes;
 
-//    protected $guarded = ['id'];
 
     protected $fillable = [
         'order_number',
@@ -43,6 +42,7 @@ class Order extends Model
         'ip_address',
         'user_agent',
         'notes',
+
         'delivery_method_id',
         'delivery_zone_id',
         'delivery_address',
@@ -51,6 +51,9 @@ class Order extends Model
         'delivery_comment',
         'delivery_target_id',
         'delivery_date',
+
+        'gift_card_id',
+        'gift_card_amount',
     ];
 
     protected $casts = [
@@ -60,6 +63,9 @@ class Order extends Model
         'discount_amount' => 'decimal:2',
         'paid_at' => 'datetime',
         'delivery_date' => 'datetime',
+
+        'gift_card_amount' => 'decimal:2',
+
         'created_at' => 'datetime',
     ];
 
@@ -160,4 +166,30 @@ class Order extends Model
         $this->total_amount = $this->items()->sum(DB::raw('quantity * price'));
         $this->save();
     }
+
+
+    /**
+     * Подарочная карта, использованная в заказе
+     */
+    public function giftCard(): BelongsTo
+    {
+        return $this->belongsTo(GiftCard::class);
+    }
+
+    /**
+     * Проверка: использовалась ли подарочная карта
+     */
+    public function hasGiftCard(): bool
+    {
+        return !is_null($this->gift_card_id) && $this->gift_card_amount > 0;
+    }
+
+    /**
+     * Получить итоговую сумму с учетом подарочной карты
+     */
+    public function getTotalWithGiftCard(): float
+    {
+        return max(0, $this->total_amount - $this->gift_card_amount);
+    }
+
 }

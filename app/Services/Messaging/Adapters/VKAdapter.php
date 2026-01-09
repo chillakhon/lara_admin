@@ -27,10 +27,10 @@ class VKAdapter extends AbstractMessageAdapter
             throw new \RuntimeException("Access token не установлен");
         }
 
-        Log::info("VKAdapter initialized", [
-            'community_id' => $this->settings->community_id,
-            'api_version' => $this->settings->api_version
-        ]);
+//        Log::info("VKAdapter initialized", [
+//            'community_id' => $this->settings->community_id,
+//            'api_version' => $this->settings->api_version
+//        ]);
     }
 
     /**

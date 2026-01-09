@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
-use App\Enums\OrderStatus;
 use App\Helpers\PaginationHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Order\AddOrderItemsRequest;
@@ -10,8 +9,11 @@ use App\Http\Requests\Order\CancelOrderRequest;
 use App\Http\Requests\Order\CreateOrderRequest;
 use App\Http\Requests\Order\UpdateOrderRequest;
 use App\Http\Requests\Order\UpdateOrderStatusRequest;
+use App\Jobs\GiftCard\SendGiftCardJob;
 use App\Models\Client;
+use App\Models\GiftCard\GiftCard;
 use App\Models\Order;
+use App\Services\GiftCard\GiftCardService;
 use App\Services\Notifications\Jobs\SendNotificationJob;
 use App\Services\Order\OrderAuthorizationService;
 use App\Services\Order\OrderDeletionService;
@@ -88,7 +90,6 @@ class OrderController extends Controller
         $user = $request->user();
 
 
-
         // Проверяем права доступа
         if (!$this->orderAuthorizationService->canView($user, $order)) {
             return $this->errorResponse('Доступ запрещён', 403);
@@ -114,7 +115,6 @@ class OrderController extends Controller
      */
     public function store(CreateOrderRequest $request)
     {
-
         DB::beginTransaction();
 
         try {
@@ -124,6 +124,9 @@ class OrderController extends Controller
             if (!$client || !($client instanceof \App\Models\Client)) {
                 return $this->errorResponse('Клиент не авторизован', 401);
             }
+
+            // ДОБАВЬ ЭТУ СТРОКУ!
+            $validated = $request->validated();
 
             // 2. Валидируем промокод если указан
             $promoCode = null;
@@ -143,15 +146,28 @@ class OrderController extends Controller
 
                 $promoCode = $promoResult['promo_code'];
 
-                // Логируем успешную валидацию промокода
-                $this->promoValidationService->logPromoCodeUsage($promoCode, $client, [
-                    'validation_step' => 'order_creation'
-                ]);
+//                $this->promoValidationService->logPromoCodeUsage($promoCode, $client, [
+//                    'validation_step' => 'order_creation'
+//                ]);
             }
 
+            //  3. Валидируем подарочную карту если указана
+            $giftCard = null;
+            if (!empty($validated['gift_card_code'])) {
+                $giftCardValidation = app(GiftCardService::class)
+                    ->validate($validated['gift_card_code']);
 
-            // 3. КРИТИЧЕСКАЯ ПРОВЕРКА: Валидируем позиции заказа
-            // Проверяем цены, остатки, активность товаров и применимость промокода
+                if (!$giftCardValidation['valid']) {
+                    return $this->errorResponse(
+                        $giftCardValidation['message'],
+                        422
+                    );
+                }
+
+                $giftCard = $giftCardValidation['gift_card'];
+            }
+
+            // 4. Валидируем позиции заказа
             $itemsValidation = $this->orderValidationService->validateOrderItems(
                 $validated['items'],
                 $promoCode
@@ -162,19 +178,16 @@ class OrderController extends Controller
                 return $this->validationErrorResponse($itemsValidation['errors']);
             }
 
-
-            // 4. Создаем заказ
+            // 5. Создаем заказ
             $order = $this->orderCreationService->createOrder($validated, $client->id);
 
-
-            // 5. Создаем позиции заказа с проверенными ценами
+            // 6. Создаем позиции заказа с проверенными ценами
             $totals = $this->orderCreationService->createOrderItems(
                 $order,
                 $itemsValidation['validated_items']
             );
 
-
-            // 6. Применяем промокод (если есть) и обновляем суммы
+            // 7. Применяем промокод (если есть) и обновляем суммы
             if ($promoCode) {
                 $this->orderCreationService->applyPromoCodeToOrder(
                     $order,
@@ -187,19 +200,65 @@ class OrderController extends Controller
                 $this->orderCreationService->updateOrderTotals($order, $totals);
             }
 
-            // 7. Отправляем уведомления
+            //  8. Применяем подарочную карту (если есть)
+            $giftCardAmount = 0;
+            if ($giftCard) {
+                $giftCardResult = $this->orderCreationService->applyGiftCardToOrder(
+                    $order,
+                    $giftCard,
+                    $order->total_amount
+                );
+
+                $giftCardAmount = $giftCardResult['amount_used'];
+            }
+
+            //  9. Проверяем, содержит ли заказ подарочный сертификат
+            $containsGiftCard = $this->orderCreationService->containsGiftCardProduct($validated['items']);
+
+            //  10. Если заказ содержит подарочный сертификат - создаём карту
+            if ($containsGiftCard) {
+                foreach ($validated['items'] as $item) {
+
+
+                    $product = \App\Models\Product::find($item['product_id']);
+
+                    if ($product && $product->name === 'Подарочный сертификат') {
+                        $nominal = $this->orderCreationService->extractGiftCardNominal($item);
+
+                        if ($nominal) {
+
+                            $giftCardData = $request->input('gift_card_data', []);
+
+                            // Создаём подарочную карту
+                            $giftCardCreated = app(\App\Services\GiftCard\GiftCardService::class)
+                                ->createFromOrder(
+                                    $order,
+                                    $giftCardData,
+                                    $nominal
+                                );
+
+
+                            $this->scheduleGiftCardDelivery($giftCardCreated, $giftCardData);
+
+                        }
+                    }
+                }
+            }
+
+            // 11. Отправляем уведомления
             $this->sendNotifications($client, $order);
 
             DB::commit();
 
             // Загружаем заказ со всеми связями для ответа
-            $order->load(['items.product', 'items.variant', 'promoCode']);
+            $order->load(['items.product', 'items.variant', 'promoCode', 'giftCard']);
 
             return $this->successResponse(
                 'Заказ успешно создан',
                 [
                     'order' => $order,
-                    'summary' => $this->orderCreationService->getOrderSummary($order)
+                    'summary' => $this->orderCreationService->getOrderSummary($order),
+                    'contains_gift_card_product' => $containsGiftCard,
                 ],
                 201
             );
@@ -221,6 +280,85 @@ class OrderController extends Controller
                     'error_details' => config('app.debug') ? $e->getMessage() : null
                 ]
             );
+        }
+    }
+
+
+    private function scheduleGiftCardDelivery(GiftCard $giftCard, array $data): void
+    {
+        // Проверяем, что это электронная карта
+        if ($giftCard->type !== GiftCard::TYPE_ELECTRONIC) {
+            Log::info('Skipping delivery for non-electronic gift card', [
+                'gift_card_id' => $giftCard->id,
+                'type' => $giftCard->type,
+            ]);
+            return;
+        }
+
+
+        // Проверяем статус карты (ВАЖНО!)
+//        if ($giftCard->status !== GiftCard::STATUS_ACTIVE) {
+//            Log::warning('Cannot schedule delivery for inactive gift card', [
+//                'gift_card_id' => $giftCard->id,
+//                'status' => $giftCard->status,
+//            ]);
+//            return;
+//        }
+
+        $deliveryType = $data['delivery_type'] ?? 'immediate';
+
+        if ($deliveryType === 'immediate') {
+            // Отправляем сразу
+            SendGiftCardJob::dispatch($giftCard->id);
+
+            Log::info('Gift card scheduled for immediate delivery', [
+                'gift_card_id' => $giftCard->id,
+            ]);
+
+            return;
+        }
+
+        // Отложенная отправка
+        if (empty($giftCard->scheduled_at)) {
+            Log::warning('qqqScheduled delivery requested but no scheduled_at date', [
+                'gift_card_id' => $giftCard->id,
+            ]);
+
+            // Отправляем сразу если дата не указана
+            SendGiftCardJob::dispatch($giftCard->id);
+            return;
+        }
+
+        try {
+            $scheduledAt = \Carbon\Carbon::parse($giftCard->scheduled_at);
+
+            // Проверяем, что дата в будущем
+            if ($scheduledAt->isFuture()) {
+                SendGiftCardJob::dispatch($giftCard->id)
+                    ->delay($scheduledAt);
+
+                Log::info('Gift card scheduled for delayed delivery', [
+                    'gift_card_id' => $giftCard->id,
+                    'scheduled_at' => $scheduledAt->toDateTimeString(),
+                ]);
+            } else {
+                // Если дата в прошлом - отправляем сразу
+                SendGiftCardJob::dispatch($giftCard->id);
+
+                Log::warning('Scheduled date is in the past, sending immediately', [
+                    'gift_card_id' => $giftCard->id,
+                    'scheduled_at' => $scheduledAt->toDateTimeString(),
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to parse scheduled_at, sending immediately', [
+                'gift_card_id' => $giftCard->id,
+                'scheduled_at' => $giftCard->scheduled_at,
+                'error' => $e->getMessage(),
+            ]);
+
+            // В случае ошибки парсинга - отправляем сразу
+            SendGiftCardJob::dispatch($giftCard->id);
         }
     }
 

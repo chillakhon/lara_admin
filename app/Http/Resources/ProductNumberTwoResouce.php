@@ -2,11 +2,9 @@
 
 namespace App\Http\Resources;
 
-use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Laravel\Reverb\Loggers\Log;
-use Str;
+use Illuminate\Support\Str;
 
 class ProductNumberTwoResouce extends JsonResource
 {
@@ -71,8 +69,6 @@ class ProductNumberTwoResouce extends JsonResource
             : $this->stock_quantity;
 
 
-
-
         return [
             // Your custom structure based on the JSON you shared
             'id' => $this->id,
@@ -115,6 +111,10 @@ class ProductNumberTwoResouce extends JsonResource
             'length' => (float)$this->length,
             'width' => (float)$this->width,
             'height' => (float)$this->height,
+
+            'fit_type' => $this->fit_type ?? null,
+
+
             // 'image_path' => $this->image_path,
             'main_image' => $this->main_image ? new ImageResource($this->main_image) : null,
             'images' => ImageResource::collection($this->images ?? []),
@@ -129,6 +129,8 @@ class ProductNumberTwoResouce extends JsonResource
             ]),
             'default_unit' => $this->defaultUnit ? new UnitResource($this->defaultUnit) : null,
             // 'discountable' => new DiscountableResource($this->whenLoaded('discountable')),
+
+
         ];
     }
 }

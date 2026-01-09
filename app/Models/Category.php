@@ -8,17 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Kalnoy\Nestedset\NodeTrait;
 
-/**
- * @OA\Schema(
- *     schema="Category",
- *     type="object",
- *     @OA\Property(property="id", type="integer"),
- *     @OA\Property(property="name", type="string"),
- *     @OA\Property(property="slug", type="string"),
- *     @OA\Property(property="created_at", type="string", format="date-time"),
- *     @OA\Property(property="updated_at", type="string", format="date-time")
- * )
- */
+
 class Category extends Model
 {
     use HasFactory, NodeTrait;
@@ -29,7 +19,24 @@ class Category extends Model
 
     protected $appends = ['depth'];
 
-    protected $fillable = ['name', 'slug', 'description', 'parent_id'];
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+        'parent_id',
+        'show_in_catalog_menu',
+        'show_as_home_banner',
+        'menu_order',
+        'banner_image',
+        'is_new_product'
+    ];
+
+    protected $casts = [
+        'show_in_catalog_menu' => 'boolean',
+        'show_as_home_banner' => 'boolean',
+        'is_new_product' => 'boolean',
+        'menu_order' => 'integer',
+    ];
 
 
     protected static function boot()
@@ -51,6 +58,7 @@ class Category extends Model
     {
         return $this->ancestors->count();
     }
+
     public function parent()
     {
         return $this->belongsTo(Category::class, 'parent_id');

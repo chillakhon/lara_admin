@@ -35,6 +35,7 @@ class Product extends Model implements HasMedia
         'max_order_quantity',
         'is_featured',
         'is_new',
+        'fit_type',
         'discount_price',
         'sku',
         'barcode',
@@ -47,7 +48,8 @@ class Product extends Model implements HasMedia
         'uuid',
         'marketplace_links',
         'display_order',
-        'absorbency_level'
+        'absorbency_level',
+
     ];
 
     protected $guarded = ["id"];
@@ -66,6 +68,7 @@ class Product extends Model implements HasMedia
         'height' => 'decimal:2',
         'marketplace_links' => 'array',
         'display_order' => 'integer',
+        'absorbency_level' => 'integer',
     ];
 
     protected static function boot()
@@ -330,8 +333,6 @@ class Product extends Model implements HasMedia
             ->where('is_active', true)
             ->first();
     }
-
-
 
 
     public function scopeOrderedForDisplay($query)

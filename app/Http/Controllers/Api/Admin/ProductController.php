@@ -5,17 +5,13 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductNumberTwoResouce;
 use App\Models\Image as ImageModel;
-use App\Models\InventoryBalance;
 use App\Models\PriceHistory;
 use App\Models\Product;
 use App\Models\ProductVariant;
-use App\Services\MaterialService;
-use App\Services\MoySklad\MoySkladHelperService;
 use App\Services\ProductService;
 use App\Traits\HelperTrait;
 use App\Traits\ImageTrait;
 use App\Traits\ProductsTrait;
-use Arr;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,18 +19,15 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Log;
 
 class ProductController extends Controller
 {
     use HelperTrait, ImageTrait, ProductsTrait;
 
-    protected $materialService;
     protected ProductService $productService;
 
-    public function __construct(MaterialService $materialService, ProductService $productService)
+    public function __construct( ProductService $productService)
     {
-        $this->materialService = $materialService;
         $this->productService = $productService;
     }
 
@@ -44,7 +37,6 @@ class ProductController extends Controller
         try {
 
             $isAdmin = $request->boolean('admin', false);
-//            $isAdmin = false; //это для отключение мой склад надо вернут когда подключишь мой склад
 
             $product_stock_sklad = [];
             if ($isAdmin) {
@@ -199,13 +191,6 @@ class ProductController extends Controller
                 'price_history' => $product_price_history
             ]);
         }
-    }
-
-
-    // enhanced-dev branch
-    public function warehouse_history(Request $request, Product $product)
-    {
-        // TODO: logic for getting product's qty history from warehouse
     }
 
     // enhanced-dev branch
@@ -396,6 +381,7 @@ class ProductController extends Controller
             'colors' => 'nullable|array',
             'variants' => 'nullable|array',
             'marketplace_links' => 'nullable|json',
+            'fit_type' => 'nullable|in:low,tall',
         ];
     }
 

@@ -16,8 +16,6 @@ class ProductVariantNumberTwoResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $isAdmin = $request->boolean('admin', false);
-
 
 
         DB::table('product_variants')

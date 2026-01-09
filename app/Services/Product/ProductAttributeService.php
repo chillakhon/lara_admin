@@ -3,6 +3,7 @@
 namespace App\Services\Product;
 
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 
 class ProductAttributeService
 {
@@ -54,4 +55,42 @@ class ProductAttributeService
             ];
         }
     }
+
+
+    public function bulkUpdateAttributes(array $productIds, array $attributes): array
+    {
+        DB::beginTransaction();
+
+        try {
+            // Проверяем существование всех товаров
+            $products = Product::whereIn('id', $productIds)->get();
+
+            if ($products->count() !== count($productIds)) {
+                throw new \Exception('Один или несколько товаров не найдены');
+            }
+
+            // Обновляем все товары
+            $updatedCount = Product::whereIn('id', $productIds)->update($attributes);
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => "Обновлено товаров: {$updatedCount}",
+                'data' => [
+                    'updated_count' => $updatedCount,
+                    'product_ids' => $productIds,
+                    'attributes' => $attributes,
+                ]
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return [
+                'success' => false,
+                'message' => 'Ошибка при массовом обновлении: ' . $e->getMessage(),
+            ];
+        }
+    }
+
 }

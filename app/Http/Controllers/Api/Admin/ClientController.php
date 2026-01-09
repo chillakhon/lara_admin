@@ -3,20 +3,14 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Client\ClientResource;
 use App\Models\Client;
-use App\Models\User;
-use App\Models\Role;
-use App\Models\UserProfile;
 use App\Traits\ClientControllerTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use App\Models\ClientLevel;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Rakit\Validation\Rules\Date;
 
 
 class ClientController extends Controller
@@ -49,7 +43,6 @@ class ClientController extends Controller
                         break;
                 }
             })
-
             ->when($request->birth_date_from || $request->birth_date_to, function ($query) use ($request) {
                 $query->whereHas('profile', function ($q) use ($request) {
                     if ($request->birth_date_from && $request->birth_date_to) {
@@ -64,7 +57,6 @@ class ClientController extends Controller
                     }
                 });
             })
-
             ->when($request->sort, function ($query, $sort) {
                 [$column, $direction] = explode(',', $sort);
                 $query->orderBy($column, $direction);
@@ -220,8 +212,6 @@ class ClientController extends Controller
             $this->checkExistingClientData($validated, $client);
 
             DB::transaction(function () use ($validated, $client) {
-                // Обновляем профиль
-
 
                 $client->profile()->update([
                     'first_name' => $validated['first_name'],
@@ -239,7 +229,8 @@ class ClientController extends Controller
 
             return response()->json([
                 'message' => 'Клиент успешно обновлён',
-                'client' => $client->fresh()->load('profile'),
+//                'client' => $client->fresh()->load('profile'),
+                'client' => ClientResource::make($client->fresh()->load('profile', 'lastOrder', 'tags')),
             ]);
 
         } catch (ValidationException $e) {
