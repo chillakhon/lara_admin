@@ -42,29 +42,28 @@ class SlideController extends Controller
     // Создаем или обновляем слайд
     public function store(SlideRequest $request)
     {
-//        if (Slide::count() >= 3) {
-//            return response()->json(['message' => 'Нельзя создать более 3 слайдов.'], Response::HTTP_UNPROCESSABLE_ENTITY);
-//        }
-
         $data = $request->validated();
-
 
         $checkOrder = Slide::where('order', $data['order'] ?? null)
             ->where('is_active', 1)
             ->exists();
 
         if ($checkOrder) {
-            if ($checkOrder) {
-                return response()->json([
-                    'message' => 'Слайд с таким порядком уже существует и активен.'
-                ], 422);
-            }
+            return response()->json([
+                'message' => 'Слайд с таким порядком уже существует и активен.'
+            ], 422);
         }
 
-
+        // Обработка desktop изображения
         if ($request->hasFile('image')) {
-            $paths = $this->processAndSaveImage($request->file('image'), $data);
+            $paths = $this->processAndSaveImage($request->file('image'), 'desktop');
             $data['image_paths'] = json_encode($paths);
+        }
+
+        // Обработка mobile изображения
+        if ($request->hasFile('image_mobile')) {
+            $mobilePaths = $this->processAndSaveImage($request->file('image_mobile'), 'mobile');
+            $data['image_mobile_paths'] = json_encode($mobilePaths);
         }
 
         $slide = Slide::create($data);
@@ -76,10 +75,8 @@ class SlideController extends Controller
 
     public function update(SlideRequest $request, Slide $slide)
     {
-
         try {
             $data = $request->validated();
-
 
             $checkOrder = Slide::where('order', $data['order'] ?? null)
                 ->where('is_active', 1)
@@ -87,20 +84,29 @@ class SlideController extends Controller
                 ->exists();
 
             if ($checkOrder) {
-                if ($checkOrder) {
-                    return response()->json([
-                        'message' => 'Слайд с таким порядком уже существует и активен.'
-                    ], 422);
-                }
+                return response()->json([
+                    'message' => 'Слайд с таким порядком уже существует и активен.'
+                ], 422);
             }
 
+            // Обработка desktop изображения
             if ($request->hasFile('image')) {
-                // Удаляем старые изображения всех размеров
-                $this->deleteImageVariants($slide);
+                // Удаляем старые desktop изображения
+                $this->deleteImageVariants($slide, 'desktop');
 
-                // Сохраняем новые версии
-                $paths = $this->processAndSaveImage($request->file('image'), $data);
+                // Сохраняем новые desktop версии
+                $paths = $this->processAndSaveImage($request->file('image'), 'desktop');
                 $data['image_paths'] = json_encode($paths);
+            }
+
+            // Обработка mobile изображения
+            if ($request->hasFile('image_mobile')) {
+                // Удаляем старые mobile изображения
+                $this->deleteImageVariants($slide, 'mobile');
+
+                // Сохраняем новые mobile версии
+                $mobilePaths = $this->processAndSaveImage($request->file('image_mobile'), 'mobile');
+                $data['image_mobile_paths'] = json_encode($mobilePaths);
             }
 
             $slide->update($data);
@@ -113,12 +119,11 @@ class SlideController extends Controller
                 'trace' => $exception->getTrace()
             ]);
         }
-
     }
 
     public function destroy(Slide $slide)
     {
-        // Удаляем все версии изображения
+        // Удаляем все версии изображений (desktop и mobile)
         $this->deleteImageVariants($slide);
 
         $slide->delete();
@@ -147,15 +152,26 @@ class SlideController extends Controller
         return response()->file($filePath);
     }
 
-
     /**
      * Обработка и сохранение изображения в нескольких размерах.
      * Возвращает массив путей для сохранения в базе.
+     *
+     * @param $file - загруженный файл
+     * @param string $type - тип изображения ('desktop' или 'mobile')
+     * @return array - массив путей ['original' => '...', 'lg' => '...', ...]
      */
-    protected function processAndSaveImage($file, $data = [])
+    protected function processAndSaveImage($file, string $type = 'desktop')
     {
-        $img_names = ['original', 'lg', 'md', 'sm'];
-        $img_sizes = [null, 1920, 1280, 640];
+        // Определяем размеры в зависимости от типа
+        if ($type === 'mobile') {
+            $img_names = ['original', 'sm'];
+            $img_sizes = [null, 640];
+        } else {
+            // desktop
+            $img_names = ['original', 'lg', 'md', 'sm'];
+            $img_sizes = [null, 1920, 1280, 640];
+        }
+
         $ext = $file->getClientOriginalExtension();
         $uuid = (string)Str::uuid();
 
@@ -170,7 +186,8 @@ class SlideController extends Controller
         $paths = [];
 
         foreach ($img_names as $i => $prefix) {
-            $image_name = "{$prefix}_{$uuid}.{$ext}";
+            // Добавляем тип в название файла для различия
+            $image_name = "{$type}_{$prefix}_{$uuid}.{$ext}";
             $image_path = $full_path . $image_name;
 
             // Клонируем оригинал, чтобы не менять исходный объект
@@ -185,20 +202,31 @@ class SlideController extends Controller
             $paths[$prefix] = 'slides/' . $image_name;
         }
 
-
         return $paths;
     }
-
     /**
      * Удаляет все версии изображений, связанные со слайдом
+     *
+     * @param Slide $slide
+     * @param string|null $type - тип изображения ('desktop', 'mobile' или null для всех)
      */
-    protected function deleteImageVariants(Slide $slide)
+    protected function deleteImageVariants(Slide $slide, ?string $type = null)
     {
-        if (!$slide->image_paths) {
+        // Если тип не указан - удаляем все изображения
+        if ($type === null) {
+            $this->deleteImageVariants($slide, 'desktop');
+            $this->deleteImageVariants($slide, 'mobile');
             return;
         }
 
-        $paths = json_decode($slide->image_paths, true);
+        // Определяем какое поле использовать
+        $pathField = $type === 'mobile' ? 'image_mobile_paths' : 'image_paths';
+
+        if (!$slide->$pathField) {
+            return;
+        }
+
+        $paths = json_decode($slide->$pathField, true);
         if (!is_array($paths)) {
             return;
         }

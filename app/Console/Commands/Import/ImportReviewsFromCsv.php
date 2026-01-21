@@ -4,11 +4,11 @@ namespace App\Console\Commands\Import;
 
 use App\Models\Client;
 use App\Models\Product;
-use App\Models\Review;
-use App\Models\ReviewResponse;
+use App\Models\Review\Review;
+use App\Models\Review\ReviewResponse;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class ImportReviewsFromCsv extends Command
 {

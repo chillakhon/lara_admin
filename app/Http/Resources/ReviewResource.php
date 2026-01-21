@@ -12,6 +12,8 @@ class ReviewResource extends JsonResource
 
         $isAdmin = $request->get('admin', false);
 
+        $currentClientId = $request->user()?->id;
+
         return [
             'id' => $this->id,
             'content' => $this->content,
@@ -21,6 +23,10 @@ class ReviewResource extends JsonResource
             'published_at' => $this->published_at?->format('d.m.Y H:i'),
             'created_at' => $this->created_at?->format('d.m.Y H:i'),
             'status' => $this->status, // Добавляем статус
+
+            'likes_count' => $this->likesCount(),
+            'is_liked' => $this->isLikedByClient($currentClientId),
+
             'client' => $this->when($this->client, function () {
                 return [
                     'id' => $this->client->id,

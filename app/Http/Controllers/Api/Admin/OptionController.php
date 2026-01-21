@@ -111,40 +111,6 @@ class OptionController extends Controller
         }
     }
 
-    /**
-     * @OA\Put(
-     *     path="/api/options/{option}",
-     *     summary="Обновить опцию",
-     *     tags={"Options"},
-     *     @OA\Parameter(
-     *         name="option",
-     *         in="path",
-     *         description="ID опции для обновления",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/Option")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Опция успешно обновлена",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Опция успешно обновлена")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Ошибка при обновлении опции",
-     *         @OA\JsonContent(
-     *             type="object",
-     *             @OA\Property(property="message", type="string", example="Произошла ошибка при обновлении опции")
-     *         )
-     *     )
-     * )
-     */
 
     public function update(Request $request, Option $option)
     {

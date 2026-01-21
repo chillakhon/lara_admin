@@ -23,7 +23,8 @@ class SlideRequest extends FormRequest
     {
         return [
             'title' => 'nullable|string|max:255',
-            'image' => 'nullable|image|max:10240', // файл: до 10MB
+            'image' => 'nullable|image|max:10240', // Desktop изображение: до 10MB
+            'image_mobile' => 'nullable|image|max:10240', // Mobile изображение: до 10MB
             'subtitle' => 'nullable|string|max:255',
             'text' => 'nullable|string',
             'order' => 'nullable|integer',
@@ -34,9 +35,10 @@ class SlideRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'image.max' => 'Файл изображения не должен превышать 10 мегабайт.',
-            'image.image' => 'Загруженный файл должен быть изображением.',
+            'image.max' => 'Файл изображения (desktop) не должен превышать 10 мегабайт.',
+            'image.image' => 'Загруженный файл (desktop) должен быть изображением.',
+            'image_mobile.max' => 'Файл изображения (mobile) не должен превышать 10 мегабайт.',
+            'image_mobile.image' => 'Загруженный файл (mobile) должен быть изображением.',
         ];
     }
-
 }

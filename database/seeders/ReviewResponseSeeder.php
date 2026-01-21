@@ -2,8 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\ReviewResponse;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Review\ReviewResponse;
 use Illuminate\Database\Seeder;
 
 class ReviewResponseSeeder extends Seeder

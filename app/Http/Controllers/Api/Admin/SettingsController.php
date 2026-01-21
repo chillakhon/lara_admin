@@ -5,9 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Color;
 use App\Models\Setting;
-use App\Models\ApiKey;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class SettingsController extends Controller
 {
@@ -75,40 +73,6 @@ class SettingsController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Integration settings updated successfully']);
     }
 
-    /**
-     * List API keys for current user.
-     */
-    public function apiKeys()
-    {
-        $keys = ApiKey::where('user_id', auth()->id())->get();
-        return response()->json([
-            'status' => 'success',
-            'apiKeys' => $keys,
-        ]);
-    }
-
-    /**
-     * Create a new API key.
-     */
-    public function createApiKey(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'permissions' => 'required|array',
-        ]);
-
-        $apiKey = ApiKey::create([
-            'user_id' => auth()->id(),
-            'name' => $validated['name'],
-            'key' => Str::random(32),
-            'permissions' => $validated['permissions'],
-        ]);
-
-        return response()->json([
-            'status' => 'success',
-            'apiKey' => $apiKey,
-        ], 201);
-    }
 
     /**
      * Get notification settings.

@@ -6,11 +6,9 @@ use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\CDEKController;
 use App\Http\Controllers\Api\Admin\ChatsIntegrationController;
 use App\Http\Controllers\Api\Admin\ClientController;
-use App\Http\Controllers\Api\Admin\ClientLevelController;
 use App\Http\Controllers\Api\Admin\ColorController;
 use App\Http\Controllers\Api\Admin\ContactRequestController;
 use App\Http\Controllers\Api\Admin\ConversationController;
-use App\Http\Controllers\Api\Admin\CostCategoryController;
 use App\Http\Controllers\Api\Admin\CountriesController;
 use App\Http\Controllers\Api\Admin\DeliveryCountryController;
 use App\Http\Controllers\Api\Admin\DeliveryMethodController;
@@ -21,37 +19,31 @@ use App\Http\Controllers\Api\Admin\DiscountController;
 use App\Http\Controllers\Api\Admin\FavoriteController;
 use App\Http\Controllers\Api\Admin\FinancialAnalyticsController;
 use App\Http\Controllers\Api\Admin\GiftCard\GiftCardController;
-use App\Http\Controllers\Api\Admin\InventoryController;
-use App\Http\Controllers\Api\Admin\MaterialController;
 use App\Http\Controllers\Api\Admin\MoySkladController;
 use App\Http\Controllers\Api\Admin\NotificationController;
-use App\Http\Controllers\Api\Admin\OptionController;
 use App\Http\Controllers\Api\Admin\OrderStatsController;
+use App\Http\Controllers\Api\Admin\OtoBanner\OtoBannerAnalyticsController;
+use App\Http\Controllers\Api\Admin\OtoBanner\OtoBannerController;
 use App\Http\Controllers\Api\Admin\Statuses\StatusController;
 use App\Http\Controllers\Api\Admin\Product\ProductAttributeController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\ProductImageController;
-use App\Http\Controllers\Api\Admin\ProductionController;
 use App\Http\Controllers\Api\Admin\ProductOrderController;
 use App\Http\Controllers\Api\Admin\ProductVariantController;
 use App\Http\Controllers\Api\Admin\PromoCodeClientController;
 use App\Http\Controllers\Api\Admin\PromoCodeProductController;
 use App\Http\Controllers\Api\Admin\PromoCodeUsageController;
-use App\Http\Controllers\Api\Admin\RecipeController;
 use App\Http\Controllers\Api\Admin\RoleController;
 use App\Http\Controllers\Api\Admin\Segment\SegmentController;
-use App\Http\Controllers\Api\Admin\SettingsController;
 use App\Http\Controllers\Api\Admin\ShipmentController;
 use App\Http\Controllers\Api\Admin\SimpleProductController;
 use App\Http\Controllers\Api\Admin\Tag\ClientTagController;
 use App\Http\Controllers\Api\Admin\Tag\TagController;
-use App\Http\Controllers\Api\Admin\TaskAttachmentController;
-use App\Http\Controllers\Api\Admin\TaskCommentController;
 use App\Http\Controllers\Api\Admin\TaskController;
 use App\Http\Controllers\Api\Admin\TaskLabelController;
 use App\Http\Controllers\Api\Admin\TaskPriorityController;
 use App\Http\Controllers\Api\Admin\TaskStatusController;
-use App\Http\Controllers\Api\Admin\TelegramWebhookController;
+use App\Http\Controllers\Api\Admin\ThirdPartyIntegrations\Settings\AnalyticsSettingsController;
 use App\Http\Controllers\Api\Admin\ThirdPartyIntegrations\Vk\VKWebhookController;
 use App\Http\Controllers\Api\Admin\ThirdPartyIntegrations\VKSettingsController;
 use App\Http\Controllers\Api\Admin\UnitController;
@@ -73,13 +65,40 @@ use App\Http\Controllers\Api\Admin\ReviewController;
 use App\Http\Controllers\Api\Public\Catalog\CatalogController;
 use App\Http\Controllers\Api\Public\Conversation\PublicConversationController;
 use App\Http\Controllers\Api\Public\GiftCard\GiftCardPublicController;
+use App\Http\Controllers\Api\Public\OtoBanner\PublicOtoBannerController;
 use App\Http\Controllers\Api\Public\WhatsApp\WhatsAppWebhookController;
+use App\Http\Controllers\Api\Review\ReviewLikeController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\Admin\SlideController;
 use Illuminate\Support\Facades\Route;
 
 
+//auth user
+Route::middleware('guest')->group(function () {
+//    Route::post('register', [RegisteredUserController::class, 'register']);
+    Route::post('login', [AuthenticatedSessionController::class, 'login']);
+    Route::post('check-verification', [AuthenticatedSessionController::class, 'check_verification']);
+});
+
+
 Route::prefix("/public")->group(function () {
+
+    Route::get('/settings/analytics', [AnalyticsSettingsController::class, 'getAnalyticsSettings']);
+
+    Route::prefix('oto-banners')->name('public.oto-banners.')->group(function () {
+
+        // Получить активный баннер для устройства
+        Route::get('/active', [PublicOtoBannerController::class, 'getActive'])
+            ->name('active');
+
+        // Трекинг просмотра баннера
+        Route::post('/{otoBanner}/view', [PublicOtoBannerController::class, 'trackView'])
+            ->name('view');
+
+        // Отправить форму баннера
+        Route::post('/{otoBanner}/submit', [PublicOtoBannerController::class, 'submit'])
+            ->name('submit');
+    });
 
 
     Route::prefix('gift-cards')->name('gift-cards.')->group(function () {
@@ -141,13 +160,6 @@ Route::prefix("/public")->group(function () {
 
 });
 
-//auth user
-Route::middleware('guest')->group(function () {
-//    Route::post('register', [RegisteredUserController::class, 'register']);
-    Route::post('login', [AuthenticatedSessionController::class, 'login']);
-    Route::post('check-verification', [AuthenticatedSessionController::class, 'check_verification']);
-});
-
 
 //client - admin
 Route::get('/products', [ProductController::class, 'index']);
@@ -155,6 +167,14 @@ Route::get('/products', [ProductController::class, 'index']);
 
 Route::get('/admin-user', [AuthenticatedSessionController::class, 'get_admin_user'])
     ->middleware('auth:sanctum');
+
+
+Route::prefix('/countries')->group(function () {
+    Route::get('/', [CountriesController::class, 'countries']);
+    Route::get('/regions', [CountriesController::class, 'regions']);
+    Route::get('/cities', [CountriesController::class, 'cities']);
+});
+
 
 //Route::get('products/{product}/images-path', [ProductImageController::class, 'index']);
 Route::get('/products/{product}/image', [ProductImageController::class, 'getProductImage']);
@@ -205,7 +225,11 @@ Route::prefix('reviews')->group(function () {
         Route::post('{review}/publish', [ReviewController::class, 'publish']);
         Route::post('{review}/unpublish', [ReviewController::class, 'unpublish']);
         Route::post('{review}/respond', [ReviewController::class, 'respond']);
-        Route::delete('{review}', [ReviewController::class, 'destroy']); // ->middleware('auth:api'); was removed because sending error
+        Route::delete('{review}', [ReviewController::class, 'destroy']);
+
+        Route::post('{review}/like', [ReviewLikeController::class, 'like']);
+        Route::delete('{review}/unlike', [ReviewLikeController::class, 'unlike']);
+
     });
 
 });
@@ -239,6 +263,66 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 Route::middleware(['auth:sanctum'])->group(function () {
+
+
+    Route::prefix('oto-banners')->name('oto-banners.')->group(function () {
+
+        // CRUD баннеров
+        Route::get('/', [OtoBannerController::class, 'index'])
+            ->name('index');
+
+        Route::post('/', [OtoBannerController::class, 'store'])
+            ->name('store');
+
+        Route::get('/{otoBanner}', [OtoBannerController::class, 'show'])
+            ->name('show');
+
+        Route::put('/{otoBanner}', [OtoBannerController::class, 'update'])
+            ->name('update');
+
+        Route::delete('/{otoBanner}', [OtoBannerController::class, 'destroy'])
+            ->name('destroy');
+
+        // Дополнительные действия с баннером
+        Route::post('/{otoBanner}/duplicate', [OtoBannerController::class, 'duplicate'])
+            ->name('duplicate');
+
+        Route::post('/{otoBanner}/toggle-status', [OtoBannerController::class, 'toggleStatus'])
+            ->name('toggle-status');
+
+        // Заявки по баннеру
+        Route::get('/{otoBanner}/submissions', [OtoBannerController::class, 'submissions'])
+            ->name('submissions');
+
+        // Все OTO заявки (из всех баннеров)
+        Route::get('/submissions/all', [OtoBannerController::class, 'allSubmissions'])
+            ->name('submissions.all');
+
+        // Прикрепить менеджера к заявке
+        Route::post('/submissions/{submissionId}/attach-manager', [OtoBannerController::class, 'attachManager'])
+            ->name('submissions.attach-manager');
+
+
+        // ============================================
+        // АНАЛИТИКА
+        // ============================================
+
+        // Сводная аналитика по всем баннерам
+        Route::get('/analytics/summary', [OtoBannerAnalyticsController::class, 'summary'])
+            ->name('analytics.summary');
+
+        // Аналитика конкретного баннера
+        Route::get('/{otoBanner}/analytics', [OtoBannerAnalyticsController::class, 'show'])
+            ->name('analytics.show');
+
+        // График по баннеру
+        Route::get('/{otoBanner}/analytics/chart', [OtoBannerAnalyticsController::class, 'chart'])
+            ->name('analytics.chart');
+
+        // Экспорт аналитики
+        Route::get('/{otoBanner}/analytics/export', [OtoBannerAnalyticsController::class, 'export'])
+            ->name('analytics.export');
+    });
 
 
     Route::prefix('gift-cards')->name('gift-cards.')->group(function () {
@@ -358,6 +442,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{contact_request}', [ContactRequestController::class, 'show']);
         Route::patch('/{contact_request}', [ContactRequestController::class, 'update']);
         Route::delete('/{contact_request}', [ContactRequestController::class, 'destroy']);
+
+        Route::post('{contact_request}/attach-manager', [ContactRequestController::class, 'attachManager'])
+            ->name('contact_request.attach-manager');
     });
 
     Route::prefix('/slides')->group(function () {
@@ -381,12 +468,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/promo-codes/validate', [PromoCodeController::class, 'validate']);
 
-
-    Route::prefix('/countries')->group(function () {
-        Route::get('/', [CountriesController::class, 'countries']);
-        Route::get('/regions', [CountriesController::class, 'regions']);
-        Route::get('/cities', [CountriesController::class, 'cities']);
-    });
 
     Route::prefix('/delivery-services')->group(function () {
 
@@ -711,6 +792,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 
     Route::prefix('/third-party-integrations')->group(function () {
+
+        Route::prefix('/settings/')->group(function () {
+            Route::get('/analytics', [AnalyticsSettingsController::class, 'getAnalyticsSettings']);
+            Route::post('/analytics/yandex-metrika', [AnalyticsSettingsController::class, 'updateYandexMetrika']);
+        });
+
 
         Route::prefix('/chats')->group(function () {
             Route::post('/telegram', [ChatsIntegrationController::class, 'telegram_integration']);

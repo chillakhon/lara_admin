@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\ReviewAttribute;
-use Database\Factories\ReviewAttributeFactory;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Review\ReviewAttribute;
 use Illuminate\Database\Seeder;
 
 class ReviewAttributeSeeder extends Seeder

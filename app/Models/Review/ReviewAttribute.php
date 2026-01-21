@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Review;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,4 +24,4 @@ class ReviewAttribute extends Model
     {
         return $this->belongsTo(Review::class);
     }
-} 
+}

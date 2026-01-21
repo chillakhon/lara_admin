@@ -6,14 +6,14 @@ use App\Models\Segments\Segment;
 use App\Models\Tag\Tag;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Foundation\Auth\User as Authenticatable; // Добавьте это
 
 
-class Client extends Model
+class Client extends Authenticatable
 {
     use HasFactory, SoftDeletes, Notifiable, HasApiTokens;
 
@@ -58,7 +58,7 @@ class Client extends Model
      */
     public function get_full_name()
     {
-        return $this?->profile?->fullName();
+        return $this?->profile?->full_name;
     }
 
 

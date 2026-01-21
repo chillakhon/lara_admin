@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Review;
 
+use App\Models\Client;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 
 class Review extends Model
@@ -84,4 +85,33 @@ class Review extends Model
     }
 
 
+
+
+    /**
+     * Лайки отзыва
+     */
+    public function likes(): HasMany
+    {
+        return $this->hasMany(ReviewLike::class);
+    }
+
+    /**
+     * Количество лайков
+     */
+    public function likesCount(): int
+    {
+        return $this->likes()->count();
+    }
+
+    /**
+     * Проверка, лайкнул ли конкретный клиент этот отзыв
+     */
+    public function isLikedByClient(?int $clientId): bool
+    {
+        if (!$clientId) {
+            return false;
+        }
+
+        return $this->likes()->where('client_id', $clientId)->exists();
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Notifications\ResetPasswordNotification;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -32,6 +33,14 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
+    protected $appends = ['full_name'];
+
+    protected function fullName(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->profile ? trim("{$this->profile->first_name} {$this->profile->last_name}") : null
+        );
+    }
     public function get_full_name()
     {
         return $this?->profile?->full_name ?? null;

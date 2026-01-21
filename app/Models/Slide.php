@@ -7,7 +7,17 @@ use Illuminate\Support\Facades\Storage;
 
 class Slide extends Model
 {
-    protected $fillable = ['title', 'subtitle', 'text', 'image_path', 'image_paths', 'order', 'is_active'];
+    protected $fillable = [
+        'title',
+        'subtitle',
+        'text',
+        'image_path',
+        'image_paths',
+        'image_mobile_path',
+        'image_mobile_paths',
+        'order',
+        'is_active'
+    ];
 
     protected $casts = [
         'is_active' => 'boolean',

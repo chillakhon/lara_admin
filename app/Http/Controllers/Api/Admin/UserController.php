@@ -61,15 +61,12 @@ class UserController extends Controller
                         break;
                 }
             })
-            // ->when($request->boolean('only_admin_users', false), function ($query) {
-            //     $query->whereDoesntHave('client');
-            // })
+
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 
         return response()->json([
             'users' => $users,
-            'filters' => $request->only(['search', 'role', 'status']),
         ]);
     }
 

@@ -5,9 +5,8 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ReviewResource;
 use App\Models\Product;
-use App\Models\Review;
-use App\Models\ReviewAttribute;
-use App\Models\Role;
+use App\Models\Review\Review;
+use App\Models\Review\ReviewAttribute;
 use App\Traits\HelperTrait;
 use App\Traits\ReviewTrait;
 use DB;
@@ -119,7 +118,7 @@ class ReviewController extends Controller
         $validated = $request->validate([
             'reviewable_id' => 'required|integer',
             'reviewable_type' => 'required|string',
-            'content' => 'required|string|min:10',
+            'content' => 'required|string|min:10|max:200',
             'rating' => 'required|integer|between:1,5',
             'attributes' => 'array',
             'attributes.*.name' => 'required|string',

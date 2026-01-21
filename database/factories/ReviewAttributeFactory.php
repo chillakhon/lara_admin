@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Review;
+use App\Models\Review\Review;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ReviewAttributeFactory extends Factory
@@ -15,4 +15,4 @@ class ReviewAttributeFactory extends Factory
             'rating' => $this->faker->numberBetween(1, 5),
         ];
     }
-} 
+}
