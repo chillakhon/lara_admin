@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Traits;
 
 use App\Models\InventoryBalance;
@@ -98,7 +99,8 @@ trait InventoryTrait
     public function checkDiff(
         $material_details,
         $prevoius_material_details,
-    ): array {
+    ): array
+    {
         $plus_inventory = [];
 
         $previous_index = [];

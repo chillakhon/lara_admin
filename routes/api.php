@@ -16,6 +16,9 @@ use App\Http\Controllers\Api\Admin\DeliveryRateController;
 use App\Http\Controllers\Api\Admin\DeliveryZoneController;
 use App\Http\Controllers\Api\Admin\DiscountAnalyticsController;
 use App\Http\Controllers\Api\Admin\DiscountController;
+use App\Http\Controllers\Api\Admin\Export\ClientExportController;
+use App\Http\Controllers\Api\Admin\Export\OrderExportController;
+use App\Http\Controllers\Api\Admin\Export\ReviewExportController;
 use App\Http\Controllers\Api\Admin\FavoriteController;
 use App\Http\Controllers\Api\Admin\FinancialAnalyticsController;
 use App\Http\Controllers\Api\Admin\GiftCard\GiftCardController;
@@ -263,6 +266,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 Route::middleware(['auth:sanctum'])->group(function () {
+
+
+    // Экспорт данных
+    Route::prefix('export')->name('export.')->group(function () {
+
+        Route::post('/clients', [ClientExportController::class, 'export'])
+            ->name('clients');
+
+        Route::post('/reviews', [ReviewExportController::class, 'export'])
+            ->name('reviews');
+
+        Route::post('/orders', [OrderExportController::class, 'export'])
+            ->name('orders');
+
+    });
 
 
     Route::prefix('oto-banners')->name('oto-banners.')->group(function () {
