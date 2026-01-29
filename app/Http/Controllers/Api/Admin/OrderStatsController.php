@@ -61,12 +61,14 @@ class OrderStatsController extends Controller
 
             // Подготовка данных для графика
             $months = collect();
-            $statuses = ['new', 'processing', 'approved'];
+
+            $statuses = ['new', 'processing', 'assembled'];
+
             $chartData = [
                 'labels' => [],
                 'new' => [],
                 'processing' => [],
-                'approved' => [],
+                'assembled' => [],
             ];
 
             for ($date = clone $from; $date <= $to; $date->addMonth()) {
@@ -74,15 +76,16 @@ class OrderStatsController extends Controller
             }
 
             Carbon::setLocale('ru');
+
             $monthLabels = $months->map(fn($month) => Carbon::createFromFormat('Y-m', $month)->translatedFormat('F'))->toArray();
 
             foreach ($months as $month) {
                 foreach ($statuses as $status) {
-                    $count = $chartRawData
-                        ->firstWhere(fn($item) => $item->month === $month && $item->status === $status)
-                        ->count ?? 0;
+                    $row = $chartRawData->first(fn($item) =>
+                        $item->month === $month && $item->status->value === $status
+                    );
 
-                    $chartData[$status][] = (int)$count;
+                    $chartData[$status][] = (int)($row->count ?? 0);
                 }
             }
 
@@ -97,9 +100,9 @@ class OrderStatsController extends Controller
                     'count' => (int)($stats['processing']->count ?? 0),
                     'total_amount' => (float)($stats['processing']->total_amount ?? 0)
                 ],
-                'approved' => [
-                    'count' => (int)($stats['approved']->count ?? 0),
-                    'total_amount' => (float)($stats['approved']->total_amount ?? 0)
+                'assembled' => [
+                    'count' => (int)($stats['assembled']->count ?? 0),
+                    'total_amount' => (float)($stats['assembled']->total_amount ?? 0)
                 ],
                 'chartData' => $chartData
             ]);
