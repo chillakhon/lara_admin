@@ -25,6 +25,7 @@ class SegmentClientResource extends JsonResource
                 'birthday' => $this->profile?->birthday,
                 'address' => $this->profile?->address,
             ],
+            'tags' => $this?->tags ?? [],
 
             'full_name' => $this->profile?->first_name . ' ' . $this->profile?->last_name,
             // Статистика по заказам

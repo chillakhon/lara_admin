@@ -29,7 +29,7 @@ class CreateOrderRequest extends FormRequest
             'user' => 'required|array',
             'user.first_name' => 'required|string|max:255',
             'user.last_name' => 'required|string|max:255',
-            'user.phone' => 'required|string|max:20',
+            'user.phone' => 'nullable|string|max:20',
 
             // Товары
             'items' => 'required|array|min:1|max:50',

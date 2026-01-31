@@ -23,6 +23,7 @@ use App\Services\Order\OrderValidationService;
 use App\Services\Order\OrderCreationService;
 use App\Services\Order\OrderFilterService;
 use App\Services\PromoCode\PromoCodeValidationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -330,26 +331,60 @@ class OrderController extends Controller
         }
 
         try {
-            $scheduledAt = \Carbon\Carbon::parse($giftCard->scheduled_at);
 
-            // Проверяем, что дата в будущем
-            if ($scheduledAt->isFuture()) {
+//            $scheduledAt = \Carbon\Carbon::parse($giftCard->scheduled_at);
+//
+//            // Проверяем, что дата в будущем
+//            if ($scheduledAt->isFuture()) {
+//                SendGiftCardJob::dispatch($giftCard->id)
+//                    ->delay($scheduledAt);
+//
+//                Log::info('Gift card scheduled for delayed delivery', [
+//                    'gift_card_id' => $giftCard->id,
+//                    'scheduled_at' => $scheduledAt->toDateTimeString(),
+//                ]);
+//            } else {
+//                // Если дата в прошлом - отправляем сразу
+//                SendGiftCardJob::dispatch($giftCard->id);
+//
+//                Log::warning('Scheduled date is in the past, sending immediately', [
+//                    'gift_card_id' => $giftCard->id,
+//                    'scheduled_at' => $scheduledAt->toDateTimeString(),
+//                ]);
+//            }
+
+
+            $tzCard = $giftCard->timezone ?: 'Europe/Moscow';
+
+            $scheduledAt = Carbon::parse($giftCard->scheduled_at); // обычно в app.timezone
+
+            $scheduledAtInCardTz = $scheduledAt->copy()->setTimezone($tzCard);
+
+            $scheduledAtMsk = $tzCard === 'Europe/Moscow'
+                ? $scheduledAtInCardTz
+                : $scheduledAtInCardTz->copy()->setTimezone('Europe/Moscow');
+
+            if ($scheduledAtMsk->copy()->utc()->isFuture()) {
                 SendGiftCardJob::dispatch($giftCard->id)
-                    ->delay($scheduledAt);
+                    ->delay($scheduledAtMsk->copy()->utc()); // delay лучше давать UTC
 
-                Log::info('Gift card scheduled for delayed delivery', [
+                Log::info('Gift card scheduled (MSK-based)', [
                     'gift_card_id' => $giftCard->id,
-                    'scheduled_at' => $scheduledAt->toDateTimeString(),
+                    'card_tz' => $tzCard,
+                    'scheduled_at_card_tz' => $scheduledAtInCardTz->toDateTimeString() . " ({$tzCard})",
+                    'scheduled_at_msk' => $scheduledAtMsk->toDateTimeString() . " (Europe/Moscow)",
+                    'scheduled_at_utc' => $scheduledAtMsk->copy()->utc()->toDateTimeString() . " (UTC)",
                 ]);
             } else {
-                // Если дата в прошлом - отправляем сразу
                 SendGiftCardJob::dispatch($giftCard->id);
 
-                Log::warning('Scheduled date is in the past, sending immediately', [
+                Log::warning('Scheduled date is in the past (MSK-based), sending immediately', [
                     'gift_card_id' => $giftCard->id,
-                    'scheduled_at' => $scheduledAt->toDateTimeString(),
+                    'scheduled_at_msk' => $scheduledAtMsk->toDateTimeString(),
                 ]);
             }
+
+
         } catch (\Exception $e) {
             Log::error('Failed to parse scheduled_at, sending immediately', [
                 'gift_card_id' => $giftCard->id,

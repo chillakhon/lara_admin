@@ -13,6 +13,9 @@ class Tag extends Model
         'color',
     ];
 
+    protected $hidden = ['pivot'];
+
+
     /**
      * Tags attached to this client
      * @return BelongsToMany

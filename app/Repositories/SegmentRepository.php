@@ -40,7 +40,6 @@ class SegmentRepository
     }
 
 
-
     /**
      * Получить доступных клиентов для добавления в сегмент
      * Возвращает только базовую информацию: ID, email, profile
@@ -196,10 +195,13 @@ class SegmentRepository
     public function getSegmentClients(Segment $segment, SegmentClientFilterDTO $filters): LengthAwarePaginator
     {
         $query = $segment->clients()
-            ->with(['profile', 'orders' => function ($q) {
-                $q->where('status', OrderStatus::DELIVERED)
-                    ->where('payment_status', PaymentStatus::PAID);
-            }])
+            ->with([
+                'profile',
+                'tags:id,name',
+                'orders' => function ($q) {
+                    $q->where('status', OrderStatus::DELIVERED)
+                        ->where('payment_status', PaymentStatus::PAID);
+                }])
             ->select('clients.*');
 
         // Добавляем вычисляемые поля для статистики

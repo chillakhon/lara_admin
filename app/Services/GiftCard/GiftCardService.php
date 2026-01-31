@@ -274,9 +274,6 @@ class GiftCardService
     /**
      * Определение времени отправки
      */
-    /**
-     * Определение времени отправки
-     */
     private function resolveScheduledAt(array $giftCardData): ?string
     {
         $deliveryType = $giftCardData['delivery_type'] ?? 'immediate';

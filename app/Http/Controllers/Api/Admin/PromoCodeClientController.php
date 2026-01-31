@@ -9,6 +9,7 @@ use App\Models\PromoCodeClient;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class PromoCodeClientController extends Controller
 {
@@ -102,7 +103,6 @@ class PromoCodeClientController extends Controller
             });
 
 
-
         // Исключаем уже использованные промокоды этим клиентом
         $query->whereDoesntHave('usages', function ($q) use ($clientId) {
             $q->where('client_id', $clientId);
@@ -173,10 +173,6 @@ class PromoCodeClientController extends Controller
             $promoCode->expires_soon = $promoCode->expires_at
                 ? $promoCode->expires_at->diffInDays(now()) <= 7
                 : false;
-
-            $promoCode->image_url = $promoCode->image
-                ? asset('storage/' . $promoCode->image)
-                : null;
 
         });
 

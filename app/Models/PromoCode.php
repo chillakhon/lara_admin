@@ -26,7 +26,7 @@ class PromoCode extends Model
         'description',
         'discount_amount',
         'discount_type',
-        'discount_behavior', // НОВОЕ ПОЛЕ
+        'discount_behavior',
         'starts_at',
         'expires_at',
         'max_uses',
@@ -49,6 +49,10 @@ class PromoCode extends Model
         'applies_to_all_clients' => 'boolean',
     ];
 
+
+    protected $appends = [
+        'image_url'
+    ];
     public function isValid()
     {
         $now = now();
@@ -76,13 +80,31 @@ class PromoCode extends Model
         return $this->belongsToMany(Product::class, 'promo_code_product');
     }
 
-    public function getImageUrlAttribute()
+//    public function getImageUrlAttribute()
+//    {
+//        if ($this->image) {
+//            return Storage::disk('public')->url($this->image);
+//        }
+//        return null;
+//    }
+
+
+
+    public function getImageUrlAttribute(): ?string
     {
-        if ($this->image) {
-            return Storage::disk('public')->url($this->image);
+        if (!$this->image) {
+            return null;
         }
-        return null;
+
+        $path = ltrim(preg_replace('#^storage/#', '', $this->image), '/');
+
+        if (!Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($path);
     }
+
 
     public function isAvailable()
     {
