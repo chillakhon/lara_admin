@@ -247,7 +247,8 @@ Route::middleware('auth:sanctum')->prefix('favorites')->group(function () {
 //admin panel api dashboard
 Route::post('/admin-login', [AuthenticatedSessionController::class, 'admin_login']);
 Route::post('/admin-register', [RegisteredUserController::class, 'admin_registration']);
-Route::get('/client-user', [AuthenticatedSessionController::class, 'get_user'])->middleware('auth:sanctum');
+Route::get('/client-user', [AuthenticatedSessionController::class, 'get_user'])
+    ->middleware('auth:sanctum');
 
 Route::post('forgot-password', [PasswordResetLinkController::class, 'store']);
 Route::post('reset-password', [NewPasswordController::class, 'store']);
@@ -266,7 +267,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 Route::middleware(['auth:sanctum'])->group(function () {
-
 
     // Экспорт данных
     Route::prefix('export')->name('export.')->group(function () {
@@ -663,11 +663,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::group(['prefix' => 'attributes', 'as' => 'attributes.'], function () {
             Route::post('{product}/absorbency', [ProductAttributeController::class, 'updateAbsorbency']);
             Route::post('{product}', [ProductAttributeController::class, 'updateAttributes']);
-
             Route::post('bulk/update', [ProductAttributeController::class, 'bulkUpdateAttributes']);
-
         });
-
 
     });
 

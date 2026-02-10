@@ -26,7 +26,7 @@ class CreateOtoBannerAction
                 $this->uploadImage($banner, $dto->image);
             }
 
-            return $banner->load(['mainImage']);
+            return $banner->load(['mainImage', 'promoCode']);
         });
     }
 

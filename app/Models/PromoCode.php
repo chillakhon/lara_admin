@@ -47,12 +47,19 @@ class PromoCode extends Model
         'times_uses' => 'integer',
         'applies_to_all_products' => 'boolean',
         'applies_to_all_clients' => 'boolean',
+
+
     ];
 
 
     protected $appends = [
-        'image_url'
+        'image_url',
+
+        'is_unlimited',
+        'expires_at_formatted',
+        'starts_at_formatted',
     ];
+
     public function isValid()
     {
         $now = now();
@@ -79,16 +86,6 @@ class PromoCode extends Model
     {
         return $this->belongsToMany(Product::class, 'promo_code_product');
     }
-
-//    public function getImageUrlAttribute()
-//    {
-//        if ($this->image) {
-//            return Storage::disk('public')->url($this->image);
-//        }
-//        return null;
-//    }
-
-
 
     public function getImageUrlAttribute(): ?string
     {
@@ -246,8 +243,6 @@ class PromoCode extends Model
     }
 
 
-
-
     /**
      * Сегменты, к которым привязан промокод
      */
@@ -276,6 +271,19 @@ class PromoCode extends Model
         })->get();
     }
 
+    public function getIsUnlimitedAttribute(): bool
+    {
+        return $this->expires_at === null;
+    }
 
+    public function getExpiresAtFormattedAttribute(): string
+    {
+        return $this->expires_at ? $this->expires_at->format('d.m.Y') : 'Бессрочно';
+    }
+
+    public function getStartsAtFormattedAttribute(): string
+    {
+        return $this->starts_at ? $this->starts_at->format('d.m.Y') : 'Сразу';
+    }
 
 }

@@ -9,17 +9,7 @@ class Discount extends Model
 {
     use SoftDeletes;
 
-    // protected $fillable = [
-    //     'name',
-    //     'type',
-    //     'value',
-    //     'is_active',
-    //     'starts_at',
-    //     'ends_at',
-    //     'priority',
-    //     'conditions',
-    //     'discount_type'
-    // ];
+
 
     protected $guarded = ['id'];
 
@@ -51,6 +41,20 @@ class Discount extends Model
     public function categories()
     {
         return $this->morphedByMany(Category::class, 'discountable');
+    }
+
+
+    public function getIsUnlimitedAttribute(): bool
+    {
+        return $this->ends_at === null;
+    }
+
+    public function getEndsAtFormattedAttribute(): ?string
+    {
+        if ($this->ends_at === null) {
+            return 'Бессрочно';
+        }
+        return $this->ends_at->format('d.m.Y');
     }
 
 }

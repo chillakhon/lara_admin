@@ -8,6 +8,7 @@ use App\Enums\Oto\OtoBannerInputFieldType;
 use App\Enums\Oto\OtoBannerStatus;
 use App\Models\ContactRequest;
 use App\Models\Image;
+use App\Models\PromoCode;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -34,6 +35,7 @@ class OtoBanner extends Model
         'display_delay_seconds',
         'privacy_text',
         'segment_ids',
+        'promo_code_id',
     ];
 
     protected $casts = [
@@ -135,4 +137,16 @@ class OtoBanner extends Model
 
         return round(($this->submissions_count / $viewsCount) * 100, 2);
     }
+
+
+
+    /**
+     * Связь с промокодом
+     */
+    public function promoCode()
+    {
+        return $this->belongsTo(PromoCode::class);
+    }
+
+
 }

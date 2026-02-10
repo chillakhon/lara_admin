@@ -27,7 +27,7 @@ class UpdateOtoBannerAction
                 $this->updateImage($banner, $dto->image);
             }
 
-            return $banner->fresh(['mainImage']);
+            return $banner->fresh(['mainImage', 'promoCode']);
         });
     }
 

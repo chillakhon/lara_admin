@@ -26,6 +26,7 @@ class CreateOtoBannerDTO
         public readonly int $displayDelaySeconds,
         public readonly ?string $privacyText,
         public readonly ?array $segmentIds,
+        public readonly ?int $promoCodeId = null,
         public readonly mixed $image = null, // Uploaded file
     ) {}
 
@@ -47,6 +48,7 @@ class CreateOtoBannerDTO
             displayDelaySeconds: $request->integer('display_delay_seconds', 0),
             privacyText: $request->input('privacy_text'),
             segmentIds: $request->input('segment_ids'),
+            promoCodeId: $request->integer('promo_code_id'),
             image: $request->file('image'),
         );
     }
@@ -69,6 +71,7 @@ class CreateOtoBannerDTO
             'display_delay_seconds' => $this->displayDelaySeconds,
             'privacy_text' => $this->privacyText,
             'segment_ids' => $this->segmentIds,
+            'promo_code_id' => $this->promoCodeId,
         ];
     }
 }

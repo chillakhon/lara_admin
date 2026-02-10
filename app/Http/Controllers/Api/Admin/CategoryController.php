@@ -65,6 +65,11 @@ class CategoryController extends Controller
             'is_new_product' => 'nullable|boolean',
             'menu_order' => 'nullable|integer|min:0',
             'banner_image' => 'nullable|image|max:10240',
+
+
+            'banner_image_desktop' => 'nullable|image|max:10240',
+            'banner_image_mobile' => 'nullable|image|max:10240',
+
         ]);
 
         $category = new Category();
@@ -80,6 +85,20 @@ class CategoryController extends Controller
             $path = $request->file('banner_image')->store('categories/banners', 'public');
             $category->banner_image = $path;
         }
+
+
+        // Загрузка desktop баннера
+        if ($request->hasFile('banner_image_desktop')) {
+            $path = $request->file('banner_image_desktop')->store('categories/banners', 'public');
+            $category->banner_image_desktop = $path;
+        }
+
+        // Загрузка mobile баннера
+        if ($request->hasFile('banner_image_mobile')) {
+            $path = $request->file('banner_image_mobile')->store('categories/banners', 'public');
+            $category->banner_image_mobile = $path;
+        }
+
 
         if (!empty($validated['parent_id'])) {
             $parent = Category::findOrFail($validated['parent_id']);
@@ -115,6 +134,13 @@ class CategoryController extends Controller
             'menu_order' => 'nullable|integer|min:0',
             'banner_image' => 'nullable|image|max:5120',
             'remove_banner_image' => 'nullable|boolean',
+
+            'banner_image_desktop' => 'nullable|image|max:5120',
+            'banner_image_mobile' => 'nullable|image|max:5120',
+
+            'remove_banner_image_desktop' => 'nullable|boolean',
+            'remove_banner_image_mobile' => 'nullable|boolean',
+
         ]);
 
         $category->name = $validated['name'];
@@ -137,6 +163,37 @@ class CategoryController extends Controller
             $path = $request->file('banner_image')->store('categories/banners', 'public');
             $category->banner_image = $path;
         }
+
+
+        // Удаление старого desktop баннера если загружен новый или если запрошено удаление
+        if ($request->hasFile('banner_image_desktop') || $request->boolean('remove_banner_image_desktop')) {
+            if ($category->banner_image_desktop && Storage::disk('public')->exists($category->banner_image_desktop)) {
+                Storage::disk('public')->delete($category->banner_image_desktop);
+            }
+            $category->banner_image_desktop = null;
+        }
+
+// Удаление старого mobile баннера если загружен новый или если запрошено удаление
+        if ($request->hasFile('banner_image_mobile') || $request->boolean('remove_banner_image_mobile')) {
+            if ($category->banner_image_mobile && Storage::disk('public')->exists($category->banner_image_mobile)) {
+                Storage::disk('public')->delete($category->banner_image_mobile);
+            }
+            $category->banner_image_mobile = null;
+        }
+
+
+        // Загрузка нового desktop баннера
+        if ($request->hasFile('banner_image_desktop')) {
+            $path = $request->file('banner_image_desktop')->store('categories/banners', 'public');
+            $category->banner_image_desktop = $path;
+        }
+
+// Загрузка нового mobile баннера
+        if ($request->hasFile('banner_image_mobile')) {
+            $path = $request->file('banner_image_mobile')->store('categories/banners', 'public');
+            $category->banner_image_mobile = $path;
+        }
+
 
         if (!empty($validated['parent_id']) && $validated['parent_id'] !== $category->parent_id) {
             if (!empty($validated['parent_id'])) {

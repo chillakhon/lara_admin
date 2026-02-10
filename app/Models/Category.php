@@ -28,6 +28,10 @@ class Category extends Model
         'show_as_home_banner',
         'menu_order',
         'banner_image',
+
+        'banner_image_desktop',
+        'banner_image_mobile',
+
         'is_new_product'
     ];
 

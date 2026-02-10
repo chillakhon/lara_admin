@@ -25,7 +25,6 @@ class PromoCodeController extends Controller
     {
         $query = PromoCode::query();
 
-        // Поиск по коду промокода
         if ($request->filled('code')) {
             $query->where('code', 'like', '%' . $request->code . '%');
         }
@@ -66,7 +65,16 @@ class PromoCodeController extends Controller
             'discount_type' => 'required|in:percentage,fixed',
             'discount_behavior' => 'required|in:replace,stack,skip',
             'starts_at' => 'nullable|date',
-            'expires_at' => 'nullable|date|after_or_equal:starts_at',
+//            'expires_at' => 'nullable|date|after_or_equal:starts_at',
+
+            'expires_at' => [
+                'nullable',
+                'date',
+                'after_or_equal:starts_at',
+                \Illuminate\Validation\Rule::requiredIf(fn() => !$request->boolean('is_unlimited', false)),
+            ],
+            'is_unlimited' => 'sometimes|boolean',
+
             'max_uses' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
             'client_ids' => 'nullable|array',
@@ -133,7 +141,16 @@ class PromoCodeController extends Controller
             'discount_type' => 'required|in:percentage,fixed',
             'discount_behavior' => 'required|in:replace,stack,skip',
             'starts_at' => 'nullable|date',
-            'expires_at' => 'nullable|date|after_or_equal:starts_at',
+//            'expires_at' => 'nullable|date|after_or_equal:starts_at',
+
+            'expires_at' => [
+                'nullable',
+                'date',
+                'after_or_equal:starts_at',
+                \Illuminate\Validation\Rule::requiredIf(fn() => !$request->boolean('is_unlimited', false)),
+            ],
+
+            'is_unlimited' => 'sometimes|boolean',
             'max_uses' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
             'client_ids' => 'nullable|array',

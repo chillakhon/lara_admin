@@ -23,6 +23,11 @@ class CategoryResource extends JsonResource
             'is_new_product' => $this->is_new_product,
             'banner_url' => $this->banner_image ? url('storage/' . $this->banner_image) : null,
 
+
+            'desktop_url' => $this->banner_image_desktop ? url('storage/' . $this->banner_image_desktop) : null,
+            'mobile_url'  => $this->banner_image_mobile ? url('storage/' . $this->banner_image_mobile) : null,
+
+
             'children' => CategoryResource::collection($this->whenLoaded('children')),
         ];
     }

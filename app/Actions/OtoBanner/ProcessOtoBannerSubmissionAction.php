@@ -10,18 +10,23 @@ use App\Models\Tag\Tag;
 use App\Repositories\OtoBanner\OtoBannerSubmissionRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ProcessOtoBannerSubmissionAction
 {
     public function __construct(
         private readonly OtoBannerSubmissionRepository $repository,
-        private readonly AttachClientToSegmentsAction $attachToSegmentsAction,
-    ) {}
+        private readonly AttachClientToSegmentsAction  $attachToSegmentsAction,
+    )
+    {
+    }
 
     public function execute(OtoBanner $banner, OtoBannerSubmissionDTO $dto): ContactRequest
     {
         return DB::transaction(function () use ($banner, $dto) {
+            $banner->load('promoCode');
+
             // Если клиент не авторизован, пытаемся найти или создать
             $clientId = $dto->clientId ?? $this->findOrCreateClient($dto);
 
@@ -39,6 +44,34 @@ class ProcessOtoBannerSubmissionAction
                 $client = Client::find($clientId);
                 if ($client) {
                     $this->attachToSegmentsAction->execute($client, $banner->segment_ids);
+                }
+            }
+
+
+            if ($banner->promo_code_id && $banner->input_field_type?->value === 'email') {
+                $promo = $banner->promoCode;
+
+
+                if ($promo && $clientId) {
+                    $client = Client::find($clientId);
+
+                    if ($client->email) {
+                        if (!$client->promoCodes()->where('promo_code_id', $promo->id)->exists()) {
+                            $client->promoCodes()->attach($promo->id);
+                        }
+
+                        // Формируем и отправляем письмо
+                        $html = view('emails.oto-promo-code', compact('client', 'promo', 'banner'))->render();
+
+                        \App\Services\Notifications\Jobs\SendNotificationJob::dispatch(
+                            channel: 'email',
+                            recipientId: $client->email,
+                            message: $html,
+                            data: [
+                                'subject' => 'Ваш эксклюзивный промокод от OTO-предложения!',
+                            ]
+                        );
+                    }
                 }
             }
 

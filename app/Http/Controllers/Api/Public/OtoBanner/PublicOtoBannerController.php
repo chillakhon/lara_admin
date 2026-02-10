@@ -29,11 +29,6 @@ class PublicOtoBannerController extends Controller
         $deviceType = $request->input('device_type', 'desktop');
 
 
-        Log::debug([
-            'deviceType' => $deviceType,
-            'test' => 5444
-        ]);
-
         try {
             $deviceTypeEnum = OtoBannerDeviceType::from($deviceType);
         } catch (\ValueError $e) {

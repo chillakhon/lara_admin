@@ -48,6 +48,17 @@ class OtoBannerResource extends JsonResource
 
             'is_active' => $this->isActive(),
 
+
+            'promo_code_id' => $this->promo_code_id,
+
+            'promo_code' => $this->whenLoaded('promoCode', fn() => [
+                'id'   => $this->promoCode?->id,
+                'code' => $this->promoCode?->code,
+                'description' => $this->promoCode?->description,
+                'discount_amount' => $this->promoCode?->discount_amount,
+                'discount_type'   => $this->promoCode?->discount_type,
+            ]),
+
             'created_at' => $this->created_at?->toDateTimeString(),
             'updated_at' => $this->updated_at?->toDateTimeString(),
         ];

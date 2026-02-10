@@ -13,11 +13,20 @@ class CatalogService
      */
     public function getCatalogMenuCategories()
     {
-        return Category::where('show_in_catalog_menu', true)
+        return Category::query()
+            ->where('show_in_catalog_menu', true)
+            ->whereIsRoot()
+            ->with(['children' => function ($q) {
+                $q->where('show_in_catalog_menu', true)
+                    ->orderBy('menu_order', 'asc')
+                    ->orderBy('name', 'asc')
+                    ->select(['id', 'name', 'slug', 'parent_id']);
+            }])
             ->orderBy('menu_order', 'asc')
             ->orderBy('name', 'asc')
             ->get(['id', 'name', 'slug']);
     }
+
 
     /**
      * Получить категории для баннеров главной страницы
@@ -26,20 +35,30 @@ class CatalogService
     {
         $banners = Category::where('show_as_home_banner', true)
             ->orderBy('menu_order', 'asc')
-            ->get(['id', 'name', 'slug', 'banner_image', 'description']);
+            ->get([
+                'id',
+                'name',
+                'slug',
+                'description',
+                'banner_image_desktop',
+                'banner_image_mobile',
+            ]);
 
-        // Добавляем полный URL для баннера
         $banners->transform(function ($banner) {
-            if ($banner->banner_image) {
-                $banner->banner_url = url('storage/' . $banner->banner_image);
-            } else {
-                $banner->banner_url = null;
-            }
+            $banner->desktop_url = $banner->banner_image_desktop
+                ? url('storage/' . $banner->banner_image_desktop)
+                : null;
+
+            $banner->mobile_url = $banner->banner_image_mobile
+                ? url('storage/' . $banner->banner_image_mobile)
+                : null;
+
             return $banner;
         });
 
         return $banners;
     }
+
 
     /**
      * Получить товары каталога с фильтрами

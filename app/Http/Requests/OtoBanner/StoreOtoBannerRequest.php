@@ -41,7 +41,7 @@ class StoreOtoBannerRequest extends FormRequest
 
             'segment_ids' => ['nullable', 'array'],
             'segment_ids.*' => ['integer', 'exists:segments,id'],
-
+            'promo_code_id' => 'nullable|integer|exists:promo_codes,id',
             'image' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ];
     }

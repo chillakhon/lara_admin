@@ -15,7 +15,7 @@ abstract class ExportService
     /**
      * Разделитель CSV
      */
-    protected string $delimiter = ',';
+    protected string $delimiter = ';';
 
     /**
      * Кодировка файла

@@ -62,13 +62,13 @@ class OrderStatsController extends Controller
             // Подготовка данных для графика
             $months = collect();
 
-            $statuses = ['new', 'processing', 'assembled'];
+            $statuses = ['new', 'processing', 'shipped_export'];
 
             $chartData = [
                 'labels' => [],
                 'new' => [],
                 'processing' => [],
-                'assembled' => [],
+                'shipped_export' => [],
             ];
 
             for ($date = clone $from; $date <= $to; $date->addMonth()) {
@@ -100,9 +100,9 @@ class OrderStatsController extends Controller
                     'count' => (int)($stats['processing']->count ?? 0),
                     'total_amount' => (float)($stats['processing']->total_amount ?? 0)
                 ],
-                'assembled' => [
-                    'count' => (int)($stats['assembled']->count ?? 0),
-                    'total_amount' => (float)($stats['assembled']->total_amount ?? 0)
+                'shipped_export' => [
+                    'count' => (int)($stats['shipped_export']->count ?? 0),
+                    'total_amount' => (float)($stats['shipped_export']->total_amount ?? 0)
                 ],
                 'chartData' => $chartData
             ]);
