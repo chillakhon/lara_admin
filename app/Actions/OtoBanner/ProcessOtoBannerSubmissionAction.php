@@ -25,14 +25,46 @@ class ProcessOtoBannerSubmissionAction
     public function execute(OtoBanner $banner, OtoBannerSubmissionDTO $dto): ContactRequest
     {
         return DB::transaction(function () use ($banner, $dto) {
+
+            $promoStatus = null;
+            $promoId = null;
+            $alreadyHasPromo = null;
+
             $banner->load('promoCode');
 
             // Если клиент не авторизован, пытаемся найти или создать
             $clientId = $dto->clientId ?? $this->findOrCreateClient($dto);
 
-            // Создаём заявку
+            // --- 1) Считаем статус промо ДО создания заявки ---
+            if ($banner->promo_code_id && $banner->input_field_type?->value === 'email') {
+                $promo = $banner->promoCode;
+
+                if ($promo && $clientId) {
+                    $client = Client::find($clientId);
+
+                    if ($client && $client->email) {
+                        $alreadyHasPromo = $client->promoCodes()
+                            ->where('promo_code_id', $promo->id)
+                            ->exists();
+
+                        $promoId = $promo->id;
+                        $promoStatus = $alreadyHasPromo ? 'already_issued' : 'issued';
+                    }
+                }
+            }
+
+            // --- 2) Создаём заявку ---
             $submissionData = $dto->toContactRequestArray($banner->name);
             $submissionData['client_id'] = $clientId;
+
+            // Добавляем promo-мету (не затирая существующую meta)
+            if (!empty($promoStatus) && !empty($promoId)) {
+                $submissionData['meta'] = $submissionData['meta'] ?? [];
+                $submissionData['meta']['promo'] = [
+                    'status' => $promoStatus,
+                    'promo_code_id' => $promoId,
+                ];
+            }
 
             $submission = $this->repository->create($submissionData);
 
@@ -47,37 +79,34 @@ class ProcessOtoBannerSubmissionAction
                 }
             }
 
-
-            if ($banner->promo_code_id && $banner->input_field_type?->value === 'email') {
+            // --- 3) Если промо новое — привязываем и отправляем письмо ---
+            if ($promoStatus === 'issued' && $promoId && $clientId) {
+                $client = Client::find($clientId);
                 $promo = $banner->promoCode;
 
-
-                if ($promo && $clientId) {
-                    $client = Client::find($clientId);
-
-                    if ($client->email) {
-                        if (!$client->promoCodes()->where('promo_code_id', $promo->id)->exists()) {
-                            $client->promoCodes()->attach($promo->id);
-                        }
-
-                        // Формируем и отправляем письмо
-                        $html = view('emails.oto-promo-code', compact('client', 'promo', 'banner'))->render();
-
-                        \App\Services\Notifications\Jobs\SendNotificationJob::dispatch(
-                            channel: 'email',
-                            recipientId: $client->email,
-                            message: $html,
-                            data: [
-                                'subject' => 'Ваш эксклюзивный промокод от OTO-предложения!',
-                            ]
-                        );
+                if ($client && $promo && $client->email) {
+                    // На всякий случай (чтобы не упасть на unique)
+                    if (!$client->promoCodes()->where('promo_code_id', $promo->id)->exists()) {
+                        $client->promoCodes()->attach($promo->id);
                     }
+
+                    $html = view('emails.oto-promo-code', compact('client', 'promo', 'banner'))->render();
+
+                    \App\Services\Notifications\Jobs\SendNotificationJob::dispatch(
+                        channel: 'email',
+                        recipientId: $client->email,
+                        message: $html,
+                        data: [
+                            'subject' => 'Ваш эксклюзивный промокод от OTO-предложения!',
+                        ]
+                    );
                 }
             }
 
             return $submission->load(['client.profile', 'otoBanner']);
         });
     }
+
 
     private function findOrCreateClient(OtoBannerSubmissionDTO $dto): ?int
     {
