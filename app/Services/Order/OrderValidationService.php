@@ -5,6 +5,7 @@ namespace App\Services\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\PromoCode;
+use App\Services\Promotion\PromotionService;
 use App\Traits\ProductsTrait;
 use Illuminate\Support\Facades\Log;
 
@@ -12,21 +13,41 @@ class OrderValidationService
 {
     use ProductsTrait;
 
-    public function validateOrderItems(array $items, ?PromoCode $promoCode = null): array
+    public function __construct(
+        protected PromotionService $promotionService
+    ) {}
+
+    public function validateOrderItems(array $items, ?PromoCode $promoCode = null, ?int $promotionId = null): array
     {
-//        Log::info('=== START ORDER VALIDATION ===');
-//        Log::info('Items count: ' . count($items));
-//        Log::info('PromoCode: ' . ($promoCode ? $promoCode->code : 'null'));
+        //        Log::info('=== START ORDER VALIDATION ===');
+        //        Log::info('Items count: ' . count($items));
+        //        Log::info('PromoCode: ' . ($promoCode ? $promoCode->code : 'null'));
 
         $errors = [];
         $validatedItems = [];
 
+        // Проверка совместимости акции и промокода
+        if ($promotionId && $promoCode) {
+            $promotion = Promotion::find($promotionId);
+
+            if ($promotion && ! $promotion->allowsPromoCodes()) {
+                return [
+                    'valid' => false,
+                    'errors' => [[
+                        'message' => 'Промокоды не могут быть использованы с этой акцией. Выберите либо подарок, либо промокод.',
+                        'code' => 'PROMO_CODE_NOT_ALLOWED_WITH_PROMOTION',
+                    ]],
+                    'validated_items' => [],
+                ];
+            }
+        }
+
         foreach ($items as $index => $item) {
-//            Log::info("Validating item #{$index}", [
-//                'product_id' => $item['product_id'] ?? null,
-//                'variant_id' => $item['product_variant_id'] ?? null,
-//                'price' => $item['price'] ?? null,
-//            ]);
+            //            Log::info("Validating item #{$index}", [
+            //                'product_id' => $item['product_id'] ?? null,
+            //                'variant_id' => $item['product_variant_id'] ?? null,
+            //                'price' => $item['price'] ?? null,
+            //            ]);
 
             try {
                 $result = $this->validateSingleItem($item, $index, $promoCode);
@@ -47,17 +68,17 @@ class OrderValidationService
 
                 $errors[] = [
                     'item' => $index,
-                    'message' => 'Ошибка валидации товара: ' . $e->getMessage(),
+                    'message' => 'Ошибка валидации товара: '.$e->getMessage(),
                     'code' => 'VALIDATION_ERROR',
                 ];
             }
         }
 
-//        Log::info('=== END ORDER VALIDATION ===', [
-//            'valid' => empty($errors),
-//            'errors_count' => count($errors),
-//            'validated_items_count' => count($validatedItems),
-//        ]);
+        //        Log::info('=== END ORDER VALIDATION ===', [
+        //            'valid' => empty($errors),
+        //            'errors_count' => count($errors),
+        //            'validated_items_count' => count($validatedItems),
+        //        ]);
 
         return [
             'valid' => empty($errors),
@@ -70,19 +91,20 @@ class OrderValidationService
     {
         $productId = $item['product_id'];
         $variantId = $item['product_variant_id'] ?? null;
-        $frontendPrice = (float)$item['price'];
-        $quantity = (int)$item['quantity'];
+        $frontendPrice = (float) $item['price'];
+        $quantity = (int) $item['quantity'];
         $colorId = $item['color_id'] ?? null;
 
-//        Log::info("Step 1: Loading product model", [
-//            'product_id' => $productId,
-//            'variant_id' => $variantId,
-//        ]);
+        //        Log::info("Step 1: Loading product model", [
+        //            'product_id' => $productId,
+        //            'variant_id' => $variantId,
+        //        ]);
 
         // 1. Загрузка модели товара или варианта
         $modelResult = $this->loadProductModel($productId, $variantId);
-        if (!$modelResult['success']) {
-            Log::warning("Product model not loaded", $modelResult);
+        if (! $modelResult['success']) {
+            Log::warning('Product model not loaded', $modelResult);
+
             return [
                 'error' => [
                     'item' => $index,
@@ -96,47 +118,47 @@ class OrderValidationService
         }
 
         $model = $modelResult['model'];
-//        Log::info("Product model loaded", [
-//            'model_type' => get_class($model),
-//            'model_id' => $model->id,
-//            'name' => $model->name,
-//        ]);
+        //        Log::info("Product model loaded", [
+        //            'model_type' => get_class($model),
+        //            'model_id' => $model->id,
+        //            'name' => $model->name,
+        //        ]);
 
         // 2. Проверка активности
-//        Log::info("Step 2: Checking active status");
+        //        Log::info("Step 2: Checking active status");
         $activeCheck = $this->checkProductActive($model, $index);
         if ($activeCheck) {
             return ['error' => $activeCheck, 'validated_item' => null];
         }
 
         // 3. Проверка остатков
-//        Log::info("Step 3: Checking stock_quantity");
+        //        Log::info("Step 3: Checking stock_quantity");
         $stockCheck = $this->checkProductStock($model, $quantity, $index);
         if ($stockCheck) {
             return ['error' => $stockCheck, 'validated_item' => null];
         }
 
         // 4. Проверка минимального количества
-//        Log::info("Step 4: Checking min quantity");
+        //        Log::info("Step 4: Checking min quantity");
         $minQtyCheck = $this->checkMinimumQuantity($model, $quantity, $index);
         if ($minQtyCheck) {
             return ['error' => $minQtyCheck, 'validated_item' => null];
         }
 
         // 5. Проверка максимального количества
-//        Log::info("Step 5: Checking max quantity");
+        //        Log::info("Step 5: Checking max quantity");
         $maxQtyCheck = $this->checkMaximumQuantity($model, $quantity, $index);
         if ($maxQtyCheck) {
             return ['error' => $maxQtyCheck, 'validated_item' => null];
         }
 
         // 6. Расчет цен с учетом скидок и промокода
-//        Log::info("Step 6: Calculating prices");
+        //        Log::info("Step 6: Calculating prices");
         try {
             $priceData = $this->calculateItemPrice($model, $productId, $variantId, $promoCode);
-            Log::info("Price calculated", $priceData);
+            Log::info('Price calculated', $priceData);
         } catch (\Exception $e) {
-            Log::error("Error calculating price", [
+            Log::error('Error calculating price', [
                 'error' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
@@ -145,7 +167,7 @@ class OrderValidationService
         }
 
         // 7. Проверка соответствия цены
-//        Log::info("Step 7: Checking price match");
+        //        Log::info("Step 7: Checking price match");
         $priceCheck = $this->checkPriceMatch(
             $frontendPrice,
             $priceData['final_price'],
@@ -161,7 +183,7 @@ class OrderValidationService
         }
 
         // 8. Формируем валидированную позицию
-//        Log::info("Step 8: Item validated successfully");
+        //        Log::info("Step 8: Item validated successfully");
         return [
             'error' => null,
             'validated_item' => [
@@ -184,7 +206,7 @@ class OrderValidationService
     {
         try {
             if ($variantId) {
-//                Log::info("Loading ProductVariant with relations");
+                //                Log::info("Loading ProductVariant with relations");
 
                 // Явно указываем, какие связи загружать
                 $model = ProductVariant::with([
@@ -193,7 +215,7 @@ class OrderValidationService
                     'colors',
                 ])->find($variantId);
 
-                if (!$model) {
+                if (! $model) {
                     return [
                         'success' => false,
                         'message' => "Вариант товара #{$variantId} не найден",
@@ -208,21 +230,21 @@ class OrderValidationService
                 }
 
                 // Проверяем, что discount() метод существует
-                if (!method_exists($model, 'discount')) {
+                if (! method_exists($model, 'discount')) {
                     Log::warning("ProductVariant model doesn't have discount() method");
                 }
 
                 return ['success' => true, 'model' => $model];
             }
 
-            Log::info("Loading Product with relations");
+            Log::info('Loading Product with relations');
 
             $model = Product::with([
                 'defaultUnit',
                 'colors',
             ])->find($productId);
 
-            if (!$model) {
+            if (! $model) {
                 return [
                     'success' => false,
                     'message' => "Товар #{$productId} не найден",
@@ -230,14 +252,14 @@ class OrderValidationService
             }
 
             // Проверяем, что discount() метод существует
-            if (!method_exists($model, 'discount')) {
+            if (! method_exists($model, 'discount')) {
                 Log::warning("Product model doesn't have discount() method");
             }
 
             return ['success' => true, 'model' => $model];
 
         } catch (\Exception $e) {
-            Log::error("Error loading product model", [
+            Log::error('Error loading product model', [
                 'product_id' => $productId,
                 'variant_id' => $variantId,
                 'error' => $e->getMessage(),
@@ -246,20 +268,21 @@ class OrderValidationService
 
             return [
                 'success' => false,
-                'message' => "Ошибка загрузки товара: " . $e->getMessage(),
+                'message' => 'Ошибка загрузки товара: '.$e->getMessage(),
             ];
         }
     }
 
     private function checkProductActive($model, int $index): ?array
     {
-        if (!$model->is_active) {
+        if (! $model->is_active) {
             return [
                 'item' => $index,
                 'message' => "Товар '{$model->name}' недоступен для заказа",
                 'code' => 'PRODUCT_INACTIVE',
             ];
         }
+
         return null;
     }
 
@@ -277,6 +300,7 @@ class OrderValidationService
                 'code' => 'INSUFFICIENT_STOCK',
             ];
         }
+
         return null;
     }
 
@@ -290,6 +314,7 @@ class OrderValidationService
                 'code' => 'MIN_QUANTITY_NOT_MET',
             ];
         }
+
         return null;
     }
 
@@ -303,12 +328,13 @@ class OrderValidationService
                 'code' => 'MAX_QUANTITY_EXCEEDED',
             ];
         }
+
         return null;
     }
 
     private function calculateItemPrice($model, int $productId, ?int $variantId, ?PromoCode $promoCode): array
     {
-        Log::info("Calculating price", [
+        Log::info('Calculating price', [
             'original_price' => $model->price,
             'has_promo' => $promoCode !== null,
         ]);
@@ -317,11 +343,11 @@ class OrderValidationService
         $originalOldPrice = $model->old_price;
 
         // Применяем скидку товара
-        Log::info("Applying product discount");
+        Log::info('Applying product discount');
         try {
             $this->applyDiscountToProduct($model);
         } catch (\Exception $e) {
-            Log::error("Error applying discount to product", [
+            Log::error('Error applying discount to product', [
                 'error' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString(),
@@ -338,7 +364,7 @@ class OrderValidationService
 
         // Применяем промокод если есть
         if ($promoCode) {
-            Log::info("Applying promo code");
+            Log::info('Applying promo code');
             try {
                 $promoResult = $this->applyPromoCodeToItem($model, $promoCode, $productId, $variantId);
 
@@ -348,7 +374,7 @@ class OrderValidationService
                     $promoApplied = true;
                 }
             } catch (\Exception $e) {
-                Log::error("Error applying promo code", [
+                Log::error('Error applying promo code', [
                     'error' => $e->getMessage(),
                     'line' => $e->getLine(),
                 ]);
@@ -369,7 +395,7 @@ class OrderValidationService
 
     private function applyPromoCodeToItem($model, PromoCode $promoCode, int $productId, ?int $variantId): array
     {
-        if (!$this->isPromoApplicableToProduct($promoCode, $productId, $variantId)) {
+        if (! $this->isPromoApplicableToProduct($promoCode, $productId, $variantId)) {
             return [
                 'applied' => false,
                 'final_price' => $model->price,
@@ -419,13 +445,12 @@ class OrderValidationService
     private function checkPriceMatch(
         float $frontendPrice,
         float $calculatedPrice,
-              $model,
-        int   $index,
-        int   $productId,
-        ?int  $variantId,
+        $model,
+        int $index,
+        int $productId,
+        ?int $variantId,
         array $priceData
-    ): ?array
-    {
+    ): ?array {
         $priceDifference = abs($calculatedPrice - $frontendPrice);
 
         if ($priceDifference > 0.01) {

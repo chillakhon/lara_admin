@@ -41,6 +41,16 @@ return [
     ],
 
     'telegram-bot-api' => [
-        'token' => env('TELEGRAM_BOT_TOKEN')
+        'token' => env('TELEGRAM_BOT_TOKEN'),
+    ],
+
+    'max-bot-api' => [
+        'token' => env('MAX_BOT_TOKEN'),
+    ],
+
+    'max' => [
+        'bot_token' => env('MAX_BOT_TOKEN'),
+        'webhook_url' => env('MAX_WEBHOOK_URL') ?: env('APP_URL'),
+        'webhook_secret' => env('MAX_WEBHOOK_SECRET'),
     ],
 ];

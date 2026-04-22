@@ -177,9 +177,9 @@ class ClientController extends Controller
                     'first_name' => $validated['first_name'],
                     'last_name' => $validated['last_name'],
                     'phone' => $validated['phone'],
-                    'address' => $validated['address'],
+                    //'address' => $validated['address'],
                     'level_id' => $validated['level_id'] ?? null,
-                    'birthday' => $validated['birthday'] ? Carbon::parse($validated['birthday'])->format('Y-m-d') : null,
+                    'birthday' => isset($validated['birthday']) ? Carbon::parse($validated['birthday'])->format('Y-m-d') : null,
                 ]);
 
                 return $client->load('profile');

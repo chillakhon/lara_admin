@@ -18,11 +18,14 @@ class OrderItem extends Model
         'price',
         'discount',
         'color_id',
+        'is_gift',
+        'promotion_id',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
-        'discount' => 'decimal:2'
+        'discount' => 'decimal:2',
+        'is_gift' => 'boolean',
     ];
 
     public function order(): BelongsTo
@@ -43,5 +46,10 @@ class OrderItem extends Model
     public function color()
     {
         return $this->hasOne(Color::class, 'id', 'color_id');
+    }
+
+    public function promotion(): BelongsTo
+    {
+        return $this->belongsTo(Promotion::class);
     }
 }

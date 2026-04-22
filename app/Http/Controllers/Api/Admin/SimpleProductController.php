@@ -13,6 +13,14 @@ class SimpleProductController extends Controller
         try {
             $query = Product::query();
 
+            // Фильтр по активности (по умолчанию только активные)
+            if ($request->filled('is_active')) {
+                $query->where('is_active', $request->boolean('is_active'));
+            } elseif (! $request->boolean('show_all', false)) {
+                // По умолчанию показываем только активные товары
+                $query->where('is_active', true);
+            }
+
             // Фильтр по ID продукта
             if ($request->filled('product_id')) {
                 $query->where('id', $request->product_id);
@@ -35,6 +43,7 @@ class SimpleProductController extends Controller
 
             $perPage = $request->get('per_page', 10);
             $products = $query->paginate($perPage);
+
             return response()->json([
                 'success' => true,
                 'data' => $products->items(),
@@ -43,7 +52,7 @@ class SimpleProductController extends Controller
                     'last_page' => $products->lastPage(),
                     'per_page' => $products->perPage(),
                     'total' => $products->total(),
-                ]
+                ],
             ]);
 
         } catch (\Exception $e) {

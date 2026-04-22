@@ -2,62 +2,71 @@
 
 namespace App\Services\Messaging;
 
+use App\Models\Client;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\Messaging\Adapters\EmailAdapter;
+use App\Services\Messaging\Adapters\MaxAdapter;
+use App\Services\Messaging\Adapters\TelegramAdapter;
 use App\Services\Messaging\Adapters\VKAdapter;
 use App\Services\Messaging\Adapters\WhatsAppAdapter;
 use Illuminate\Support\Facades\DB;
-use App\Services\Messaging\Adapters\TelegramAdapter;
-use App\Models\Client;
 use Illuminate\Support\Facades\Log;
 
 class ConversationService
 {
     protected $telegramAdapter;
+
     protected $vkAdapter;
+
     protected $whatsappAdapter;
+
     protected $emailAdapter;
 
+    protected $maxAdapter;
 
     public function __construct(TelegramAdapter $telegramAdapter)
     {
         $this->telegramAdapter = $telegramAdapter;
 
         try {
-            $this->vkAdapter = new VKAdapter();
+            $this->vkAdapter = new VKAdapter;
         } catch (\Exception $e) {
-            Log::warning("VKAdapter not available: " . $e->getMessage());
+            Log::warning('VKAdapter not available: '.$e->getMessage());
             $this->vkAdapter = null;
         }
 
         try {
-            $this->whatsappAdapter = new WhatsAppAdapter();
+            $this->whatsappAdapter = new WhatsAppAdapter;
         } catch (\Exception $e) {
-            Log::warning("WhatsAppAdapter not available: " . $e->getMessage());
+            Log::warning('WhatsAppAdapter not available: '.$e->getMessage());
             $this->whatsappAdapter = null;
         }
 
         try {
-            $this->emailAdapter = new EmailAdapter();
+            $this->emailAdapter = new EmailAdapter;
         } catch (\Exception $e) {
-            Log::warning("EmailAdapter not available: " . $e->getMessage());
+            Log::warning('EmailAdapter not available: '.$e->getMessage());
             $this->emailAdapter = null;
         }
 
+        try {
+            $this->maxAdapter = new MaxAdapter;
+        } catch (\Exception $e) {
+            Log::warning('MaxAdapter not available: '.$e->getMessage());
+            $this->maxAdapter = null;
+        }
     }
 
     public function createConversation(string $source, string $externalId, ?int $clientId = null): Conversation
     {
 
-
         return DB::transaction(function () use ($source, $externalId, $clientId) {
             // Проверяем существование клиента
-            if ($clientId && !Client::find($clientId)) {
+            if ($clientId && ! Client::find($clientId)) {
                 throw new \InvalidArgumentException("Client not found: {$clientId}");
             }
-
 
             return Conversation::create([
                 'source' => $source,
@@ -84,9 +93,8 @@ class ConversationService
                 'source_data' => $messageData['source_data'] ?? null,
             ]);
 
-
             // Создание вложений
-            if (!empty($messageData['attachments'])) {
+            if (! empty($messageData['attachments'])) {
                 foreach ($messageData['attachments'] as $attachment) {
                     $message->attachments()->create($attachment);
                 }
@@ -102,30 +110,70 @@ class ConversationService
             if ($messageData['direction'] === 'outgoing') {
                 $sent = false;
 
+                Log::info('ConversationService: Attempting to send outgoing message', [
+                    'conversation_id' => $conversation->id,
+                    'source' => $conversation->source,
+                    'external_id' => $conversation->external_id,
+                    'has_max_adapter' => $this->maxAdapter !== null,
+                ]);
+
+                // Загружаем attachments из созданного сообщения
+                $message->load('attachments');
+                $attachmentsToSend = $message->attachments->map(function ($attachment) {
+                    return [
+                        'type' => $attachment->type,
+                        'url' => $attachment->url,
+                        'file_path' => $attachment->file_path,
+                        'file_name' => $attachment->file_name,
+                        'mime_type' => $attachment->mime_type,
+                    ];
+                })->toArray();
+
                 if ($conversation->source === 'telegram') {
                     $sent = $this->telegramAdapter->sendMessage(
                         $conversation->external_id,
                         $messageData['content'],
-                        $messageData['attachments'] ?? []
+                        $attachmentsToSend
                     );
                 } elseif ($conversation->source === 'vk' && $this->vkAdapter) {
                     $sent = $this->vkAdapter->sendMessage(
                         $conversation->external_id,
                         $messageData['content'],
-                        $messageData['attachments'] ?? []
+                        $attachmentsToSend
                     );
                 } elseif ($conversation->source === 'whatsapp' && $this->whatsappAdapter) {
                     $sent = $this->whatsappAdapter->sendMessage(
                         $conversation->external_id,
                         $messageData['content'],
-                        $messageData['attachments'] ?? []
+                        $attachmentsToSend
                     );
                 } elseif ($conversation->source === 'email' && $this->emailAdapter) {
                     $sent = $this->emailAdapter->sendMessage(
                         $conversation->external_id,
                         $messageData['content'],
-                        $messageData['attachments'] ?? []
+                        $attachmentsToSend
                     );
+                } elseif ($conversation->source === 'max' && $this->maxAdapter) {
+                    Log::info('ConversationService: Sending via MaxAdapter', [
+                        'attachments' => $attachmentsToSend,
+                    ]);
+                    $sent = $this->maxAdapter->sendMessage(
+                        $conversation->external_id,
+                        $messageData['content'],
+                        $attachmentsToSend
+                    );
+                    Log::info('ConversationService: MaxAdapter send result', ['sent' => $sent]);
+                } else {
+                    Log::warning('ConversationService: No adapter found for source', [
+                        'source' => $conversation->source,
+                        'available_adapters' => [
+                            'telegram' => true,
+                            'vk' => $this->vkAdapter !== null,
+                            'whatsapp' => $this->whatsappAdapter !== null,
+                            'email' => $this->emailAdapter !== null,
+                            'max' => $this->maxAdapter !== null,
+                        ],
+                    ]);
                 }
             }
 
@@ -139,7 +187,7 @@ class ConversationService
             } catch (\Exception $e) {
                 Log::warning('MessageCreated broadcast failed, but message saved:', [
                     'message_id' => $message->id,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
             }
 
@@ -150,11 +198,11 @@ class ConversationService
     protected function validateMessageData(array $data): void
     {
         // direction обязателен всегда
-        if (!isset($data['direction'])) {
+        if (! isset($data['direction'])) {
             throw new \InvalidArgumentException('Missing required field: direction');
         }
 
-        if (!in_array($data['direction'], ['incoming', 'outgoing'], true)) {
+        if (! in_array($data['direction'], ['incoming', 'outgoing'], true)) {
             throw new \InvalidArgumentException("Invalid direction: {$data['direction']}");
         }
 
@@ -168,7 +216,7 @@ class ConversationService
             && is_array($data['attachments'])
             && count($data['attachments']) > 0;
 
-        if (!$hasContent && !$hasAttachments) {
+        if (! $hasContent && ! $hasAttachments) {
             throw new \InvalidArgumentException(
                 'Message must contain content or attachments'
             );
@@ -179,7 +227,7 @@ class ConversationService
     {
         // Сбрасываем счётчик непрочитанных входящих
         $conversation->update([
-            'unread_messages_count' => 0
+            'unread_messages_count' => 0,
         ]);
 
         // Помечаем как read только входящие сообщения
@@ -191,7 +239,7 @@ class ConversationService
 
     public function assignManager(Conversation $conversation, ?User $manager = null): void
     {
-        if (!$manager) {
+        if (! $manager) {
             // Здесь логика выбора менеджера
             // Например, выбор менеджера с наименьшей нагрузкой
             $manager = User::role('manager')

@@ -29,6 +29,7 @@ class OrderExportService extends ExportService
             'Способ оплаты',
             'Способ доставки',
             'Адрес доставки',
+            'Дата доставки',
             'Стоимость доставки',
             'Товары',
             'Примечания',
@@ -44,7 +45,7 @@ class OrderExportService extends ExportService
     {
         // Формируем список товаров
         $items = $order->items
-            ->map(function($item) {
+            ->map(function ($item) {
                 $productName = $item->product->name ?? 'Неизвестный товар';
                 $variantName = $item->variant ? " ({$item->variant->name})" : '';
                 $quantity = $item->quantity;
@@ -69,6 +70,14 @@ class OrderExportService extends ExportService
             ? NumberHelper::formatRussian($order->gift_card_amount)
             : '';
 
+        // Дата доставки из address или из order
+        $deliveryDate = '';
+        if ($order->address && $order->address->delivery_date) {
+            $deliveryDate = DateHelper::formatRussian($order->address->delivery_date);
+        } elseif ($order->delivery_date) {
+            $deliveryDate = DateHelper::formatRussian($order->delivery_date);
+        }
+
         return [
             $order->id,
             $order->order_number ?? '',
@@ -84,6 +93,7 @@ class OrderExportService extends ExportService
             $order->payment_method ?? '',
             $order->deliveryMethod->name ?? '',
             $deliveryAddress,
+            $deliveryDate,
             NumberHelper::formatRussian($order->delivery_cost),
             $items,
             $order->notes ?? '',
@@ -104,11 +114,12 @@ class OrderExportService extends ExportService
                 'items.variant',
                 'promoCode',
                 'deliveryMethod',
+                'address',
             ])
             ->whereNull('deleted_at');
 
         // Если переданы конкретные ID - фильтруем
-        if (!empty($ids)) {
+        if (! empty($ids)) {
             $query->whereIn('id', $ids);
         }
 
@@ -124,6 +135,7 @@ class OrderExportService extends ExportService
     protected function getFileName(): string
     {
         $timestamp = now()->format('Ymd_His');
+
         return "orders_{$timestamp}.csv";
     }
 
@@ -136,28 +148,52 @@ class OrderExportService extends ExportService
             return '';
         }
 
-        // Если это строка JSON - декодируем
-        if (is_string($deliveryAddress)) {
-            $deliveryAddress = json_decode($deliveryAddress, true);
+        if (is_array($deliveryAddress)) {
+            $entrance = ! empty($deliveryAddress['entrance']) ? 'подъезд '.$deliveryAddress['entrance'] : null;
+            $floor = ! empty($deliveryAddress['floor']) ? 'этаж '.$deliveryAddress['floor'] : null;
+            $intercom = ! empty($deliveryAddress['intercom']) ? 'домофон '.$deliveryAddress['intercom'] : null;
+
+            return implode(', ', array_filter([
+                $deliveryAddress['country'] ?? null,
+                $deliveryAddress['region'] ?? null,
+                $deliveryAddress['city'] ?? null,
+                $deliveryAddress['postal_code'] ?? null,
+                $deliveryAddress['address'] ?? null,
+                $entrance,
+                $floor,
+                $intercom,
+                $deliveryAddress['delivery_comment'] ?? null,
+                $deliveryAddress['buyer_comment'] ?? null,
+            ]));
         }
 
-        if (!is_array($deliveryAddress)) {
+        if (is_string($deliveryAddress)) {
+            $decodedAddress = json_decode($deliveryAddress, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decodedAddress)) {
+                return $deliveryAddress;
+            }
+
+            $deliveryAddress = $decodedAddress;
+        }
+
+        if (! is_array($deliveryAddress)) {
             return '';
         }
 
         // Собираем адрес из полей
         $parts = [];
 
-        if (!empty($deliveryAddress['city'])) {
+        if (! empty($deliveryAddress['city'])) {
             $parts[] = $deliveryAddress['city'];
         }
-        if (!empty($deliveryAddress['street'])) {
+        if (! empty($deliveryAddress['street'])) {
             $parts[] = $deliveryAddress['street'];
         }
-        if (!empty($deliveryAddress['house'])) {
+        if (! empty($deliveryAddress['house'])) {
             $parts[] = "д. {$deliveryAddress['house']}";
         }
-        if (!empty($deliveryAddress['apartment'])) {
+        if (! empty($deliveryAddress['apartment'])) {
             $parts[] = "кв. {$deliveryAddress['apartment']}";
         }
 

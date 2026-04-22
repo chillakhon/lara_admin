@@ -4,16 +4,13 @@ namespace App\Services\Order;
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderUpdateService
 {
     /**
      * Обновить данные заказа
-     *
-     * @param Order $order
-     * @param array $data
-     * @return bool
      */
     public function update(Order $order, array $data): bool
     {
@@ -21,22 +18,40 @@ class OrderUpdateService
             // Фильтруем только разрешенные поля
             $allowedFields = [
                 'notes',
-//                'country_code',
-//                'city_name',
-//                'delivery_address',
-//                'first_name',
-//                'last_name',
-//                'phone',
-//                'delivery_method_id',
-
+                'client_id',
                 'status',
                 'payment_status',
+                'payment_method',
+                'delivery_method_id',
+                'delivery_date',
+                'delivery_comment',
             ];
 
             $filteredData = array_intersect_key(
-                array_filter($data),
+                array_filter($data, function ($value) {
+                    return $value !== null && $value !== '';
+                }),
                 array_flip($allowedFields)
             );
+
+            // Обработка вложенных данных
+            if (isset($data['delivery_address'])) {
+                // Если delivery_date есть на верхнем уровне, но нет в delivery_address - добавляем
+                if (isset($data['delivery_date']) && ! isset($data['delivery_address']['delivery_date'])) {
+                    $data['delivery_address']['delivery_date'] = $data['delivery_date'];
+                }
+
+                // Извлекаем delivery_date из delivery_address если есть
+                if (isset($data['delivery_address']['delivery_date'])) {
+                    $filteredData['delivery_date'] = $this->formatDeliveryDate($data['delivery_address']['delivery_date']);
+                }
+
+                $this->updateDeliveryAddress($order, $data['delivery_address']);
+            }
+
+            if (isset($data['items'])) {
+                $this->updateOrderItems($order, $data['items']);
+            }
 
             $order->update($filteredData);
 
@@ -58,17 +73,83 @@ class OrderUpdateService
     }
 
     /**
+     * Форматировать дату доставки
+     */
+    private function formatDeliveryDate($date): ?string
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        try {
+            return \Carbon\Carbon::parse($date)->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            Log::warning('Failed to parse delivery_date', [
+                'date' => $date,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Обновить адрес доставки заказа
+     */
+    private function updateDeliveryAddress(Order $order, array $addressData): void
+    {
+        $order->address()->updateOrCreate(
+            ['order_id' => $order->id],
+            [
+                'country' => $addressData['country'] ?? null,
+                'region' => $addressData['region'] ?? null,
+                'city' => $addressData['city'] ?? null,
+                'postal_code' => $addressData['postal_code'] ?? null,
+                'address' => $addressData['address'] ?? null,
+                'entrance' => $addressData['entrance'] ?? null,
+                'floor' => $addressData['floor'] ?? null,
+                'intercom' => $addressData['intercom'] ?? null,
+                'delivery_comment' => $addressData['delivery_comment'] ?? null,
+                'delivery_date' => $this->formatDeliveryDate($addressData['delivery_date'] ?? null),
+                'buyer_comment' => $addressData['buyer_comment'] ?? null,
+            ]
+        );
+    }
+
+    /**
+     * Обновить товары в заказе
+     */
+    private function updateOrderItems(Order $order, array $items): void
+    {
+        // Удаляем старые товары
+        $order->items()->delete();
+
+        // Создаем новые
+        foreach ($items as $item) {
+            $order->items()->create([
+                'product_id' => $item['product_id'],
+                'variant_id' => $item['variant_id'] ?? null,
+                'product_variant_id' => $item['product_variant_id'] ?? null,
+                'color_id' => $item['color_id'] ?? null,
+                'quantity' => $item['quantity'],
+                'price' => $item['price'],
+            ]);
+        }
+
+        // Пересчитываем сумму заказа
+        $total = $order->items()->sum(DB::raw('quantity * price'));
+        $order->update(['total_amount' => $total]);
+    }
+
+    /**
      * Проверить можно ли редактировать заказ
-     *
-     * @param Order $order
-     * @return bool
      */
     public function canUpdate(Order $order): bool
     {
-        // Можно редактировать только заказы в определенных статусах
-        return in_array($order->status, [
-            OrderStatus::NEW,
-            OrderStatus::PROCESSING,
+        // Можно редактировать заказы в любом статусе, кроме отмененных и доставленных
+        return ! in_array($order->status, [
+            OrderStatus::CANCELLED,
+            OrderStatus::DELIVERED,
         ]);
     }
 }

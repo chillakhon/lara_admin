@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d306a1525a83ed70fcb5d69b700d4354",
+    "content-hash": "58e7946ac1a8170af63e24b542004360",
     "packages": [
         {
             "name": "bepsvpt/blurhash",
@@ -136,6 +136,86 @@
                 }
             ],
             "time": "2025-02-28T13:11:00+00:00"
+        },
+        {
+            "name": "bushlanov-dev/max-bot-api-client-php",
+            "version": "1.6.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/BushlanovDev/max-bot-api-client-php.git",
+                "reference": "dd295efc3de5354b209ff923b707103d4f08fb41"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/BushlanovDev/max-bot-api-client-php/zipball/dd295efc3de5354b209ff923b707103d4f08fb41",
+                "reference": "dd295efc3de5354b209ff923b707103d4f08fb41",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "guzzlehttp/guzzle": "^6.5.8||^7.0",
+                "guzzlehttp/psr7": "^1.8||^2.0",
+                "php": ">=8.3",
+                "psr/http-client": "^1.0",
+                "psr/http-factory": "^1.0",
+                "psr/http-message": "^1.0||^2.0",
+                "psr/log": "^3.0"
+            },
+            "require-dev": {
+                "bushlanov-dev/php-coverage-badger": "^2.1",
+                "friendsofphp/php-cs-fixer": "^3.77",
+                "laravel/framework": "^11.0",
+                "mikey179/vfsstream": "^1.6",
+                "mockery/mockery": "^1.6",
+                "orchestra/testbench": "^9.0",
+                "php-mock/php-mock-phpunit": "^2.13",
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^12.0",
+                "roave/security-advisories": "dev-latest"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "MaxBot": "BushlanovDev\\MaxMessengerBot\\Laravel\\MaxBotFacade"
+                    },
+                    "providers": [
+                        "BushlanovDev\\MaxMessengerBot\\Laravel\\MaxBotServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "BushlanovDev\\MaxMessengerBot\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Aleksandr Bushlanov",
+                    "email": "alex@bushlanov.dev",
+                    "homepage": "https://bushlanov.dev",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Max Bot API Client library",
+            "keywords": [
+                "api",
+                "bot",
+                "laravel",
+                "laravel max bot",
+                "max",
+                "max bot",
+                "max messenger"
+            ],
+            "support": {
+                "issues": "https://github.com/BushlanovDev/max-bot-api-client-php/issues",
+                "source": "https://github.com/BushlanovDev/max-bot-api-client-php/tree/1.6.0"
+            },
+            "time": "2026-03-22T06:23:35+00:00"
         },
         {
             "name": "carbonphp/carbon-doctrine-types",
@@ -11765,13 +11845,13 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2",
         "ext-iconv": "*"
     },
-    "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "platform-dev": [],
+    "plugin-api-version": "2.3.0"
 }

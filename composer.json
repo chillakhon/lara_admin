@@ -11,6 +11,7 @@
     "php": "^8.2",
     "ext-iconv": "*",
     "bepsvpt/blurhash": "^4.0",
+    "bushlanov-dev/max-bot-api-client-php": "^1.6",
     "cdek-it/sdk2.0": "^1.0",
     "darkaonline/l5-swagger": "^9.0",
     "defstudio/telegraph": "^1.59",
