@@ -29,7 +29,7 @@ class PromotionService
                 $query->whereNull('max_uses')
                     ->orWhereRaw('times_used < max_uses');
             })
-            ->with(['triggerProducts', 'giftProducts'])
+            ->with(['triggerProducts', 'giftProducts.images'])
             ->orderBy('priority', 'desc')
             ->get();
 

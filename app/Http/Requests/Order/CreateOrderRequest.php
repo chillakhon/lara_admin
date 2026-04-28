@@ -47,6 +47,13 @@ class CreateOrderRequest extends FormRequest
                     $validator->errors()->add('client_id', 'Укажите клиента (client_id).');
                 }
             }
+
+            // gift_product_id обязателен только если promotion_id указан И use_discount_instead != true
+            if ($this->filled('promotion_id') && ! $this->boolean('use_discount_instead')) {
+                if (! $this->filled('gift_product_id')) {
+                    $validator->errors()->add('gift_product_id', 'Выберите подарок для акции.');
+                }
+            }
         });
     }
 
@@ -75,7 +82,7 @@ class CreateOrderRequest extends FormRequest
 
             // Акция
             'promotion_id' => 'nullable|integer|exists:promotions,id',
-            'gift_product_id' => 'nullable|required_with:promotion_id|integer|exists:products,id',
+            'gift_product_id' => 'nullable|integer|exists:products,id',
             'use_discount_instead' => 'nullable|boolean',
 
             // Контактная информация

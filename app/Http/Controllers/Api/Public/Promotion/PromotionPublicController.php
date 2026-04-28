@@ -84,7 +84,7 @@ class PromotionPublicController extends Controller
                 $query->whereNull('max_uses')
                     ->orWhereRaw('times_used < max_uses');
             })
-            ->with(['triggerProducts', 'giftProducts'])
+            ->with(['triggerProducts', 'giftProducts.images'])
             ->orderBy('priority', 'desc')
             ->get();
 
@@ -111,6 +111,7 @@ class PromotionPublicController extends Controller
                             'name' => $product->name,
                             'price' => $product->price,
                             'quantity' => $product->pivot->quantity,
+                            'image' => $product->images->first()?->url ?? null,
                         ];
                     }),
                 ];
