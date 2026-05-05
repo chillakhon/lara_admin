@@ -7,6 +7,7 @@ use App\Enums\PaymentStatus;
 use App\Models\DeliveryMethod;
 use App\Models\GiftCard\GiftCard;
 use App\Models\Order;
+use App\Models\Promotion;
 use App\Models\PromoCode;
 use App\Services\GiftCard\GiftCardService;
 use App\Services\Promotion\PromotionService;

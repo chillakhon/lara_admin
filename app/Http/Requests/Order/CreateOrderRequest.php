@@ -99,6 +99,8 @@ class CreateOrderRequest extends FormRequest
 
             'status' => ['nullable', 'string', Rule::in(OrderStatus::values())],
             'payment_status' => ['nullable', 'string', Rule::in(PaymentStatus::values())],
+            'payment_method' => 'nullable|string|max:255',
+            'source' => 'nullable|string|max:255',
 
             'delivery_method' => 'nullable|array',
             'delivery_method.name' => 'nullable|string|max:255',

@@ -231,7 +231,11 @@ class MaxAdapter extends AbstractMessageAdapter
             // Скачиваем файл во временную директорию
             $tempPath = sys_get_temp_dir().'/'.uniqid('max_attachment_').'.'.pathinfo($url, PATHINFO_EXTENSION);
 
-            $fileContent = file_get_contents($url);
+            $context = stream_context_create([
+                'http' => ['timeout' => 30],
+                'https' => ['timeout' => 30],
+            ]);
+            $fileContent = file_get_contents($url, false, $context);
             if ($fileContent === false) {
                 throw new \RuntimeException('Failed to download file from URL');
             }

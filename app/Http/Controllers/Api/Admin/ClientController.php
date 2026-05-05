@@ -308,6 +308,13 @@ class ClientController extends Controller
             return response()->json(['success' => false, 'message' => "Пользователь не найден"]);
         }
 
+        // Если ДР уже заполнено — игнорируем попытку его изменить
+        $birthday = $request->birthday;
+        $existingProfile = $client->profile;
+        if ($existingProfile && $existingProfile->birthday) {
+            $birthday = $existingProfile->birthday;
+        }
+
         try {
             DB::beginTransaction();
 
@@ -320,7 +327,7 @@ class ClientController extends Controller
                     'last_name' => $request->last_name,
                     'phone' => $request->phone,
                     'address' => $request->address,
-                    'birthday' => $request->birthday,
+                    'birthday' => $birthday,
                 ]);
             } else {
                 $client->profile()->updateOrCreate(
@@ -330,7 +337,7 @@ class ClientController extends Controller
                         'last_name' => $request->last_name,
                         'phone' => $request->phone,
                         'address' => $request->address,
-                        'birthday' => $request->birthday,
+                        'birthday' => $birthday,
                     ]
                 );
             }

@@ -22,6 +22,22 @@ class MaxWebhookController extends Controller
      */
     public function webhook(Request $request)
     {
+        // Верификация webhook secret (если задан)
+        $secret = config('services.max.webhook_secret');
+        if (!empty($secret)) {
+            $signature = $request->header('X-Hub-Signature');
+            if (!$signature) {
+                Log::warning('MaxWebhookController: Missing X-Hub-Signature header');
+                return response()->json(['ok' => false], 403);
+            }
+
+            $expected = hash_hmac('sha256', $request->getContent(), $secret);
+            if (!hash_equals($expected, $signature)) {
+                Log::warning('MaxWebhookController: Invalid webhook signature');
+                return response()->json(['ok' => false], 403);
+            }
+        }
+
         try {
             $data = $request->json()->all();
 

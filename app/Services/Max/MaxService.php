@@ -67,7 +67,9 @@ class MaxService
      */
     protected function getWebhookSecret(): ?string
     {
-        return config('services.max.webhook_secret');
+        $secret = config('services.max.webhook_secret');
+
+        return !empty($secret) ? $secret : null;
     }
 
     /**
@@ -235,37 +237,50 @@ class MaxService
      */
     protected function handleMessageCreated(array $message): array
     {
-        return DB::transaction(function () use ($message) {
-            // Извлекаем данные
-            $senderId = $message['sender']['user_id'] ?? null;
-            $senderName = $message['sender']['name'] ?? '';
-            $chatId = $message['recipient']['chat_id'] ?? null;
-            $messageId = $message['body']['mid'] ?? null;
-            $text = $message['body']['text'] ?? '';
-            $attachments = $message['body']['attachments'] ?? [];
+        // Извлекаем данные ДО транзакции
+        $senderId  = $message['sender']['user_id'] ?? null;
+        $senderName = $message['sender']['name'] ?? '';
+        $chatId    = $message['recipient']['chat_id'] ?? null;
+        $messageId = $message['body']['mid'] ?? null;
+        $text      = $message['body']['text'] ?? '';
+        $attachments = $message['body']['attachments'] ?? [];
 
-            if (! $senderId) {
-                Log::warning('MaxService: Message without sender_id');
+        if (! $senderId) {
+            Log::warning('MaxService: Message without sender_id');
+            return ['ok' => false];
+        }
 
-                return ['ok' => false];
+        // Защита от дублирующих вебхуков — проверяем по max_message_id ДО транзакции
+        if ($messageId) {
+            $exists = \App\Models\Message::whereJsonContains('source_data->max_message_id', $messageId)->exists();
+            if ($exists) {
+                Log::info('MaxService: Duplicate message ignored', ['mid' => $messageId]);
+                return ['ok' => true];
             }
+        }
 
+        return DB::transaction(function () use ($message, $senderId, $senderName, $chatId, $messageId, $text, $attachments) {
             // Находим клиента
             $client = $this->findClient($senderId);
 
-            // Создаем/обновляем conversation
+            // Создаем/обновляем conversation — ищем только по source+external_id (unique индекс)
             $conversation = Conversation::firstOrCreate(
                 [
                     'source' => 'max',
                     'external_id' => (string) $senderId,
-                    'client_id' => $client?->id ?? null,
                 ],
                 [
+                    'client_id' => $client?->id ?? null,
                     'status' => 'active',
                     'last_message_at' => now(),
                     'unread_messages_count' => 0,
                 ]
             );
+
+            // Если клиент появился позже — обновляем привязку
+            if ($client && $conversation->client_id === null) {
+                $conversation->update(['client_id' => $client->id]);
+            }
 
             // Подготавливаем данные сообщения
             $messageData = [
@@ -302,11 +317,8 @@ class MaxService
                 ]);
             }
 
-            // Сохраняем сообщение
+            // Сохраняем сообщение (addMessage уже отправляет MessageCreated и ConversationUpdated events)
             $this->conversationService->addMessage($conversation, $messageData);
-
-            // Отправляем событие
-            event(new \App\Events\ConversationUpdated($conversation));
 
             return ['ok' => true];
         });

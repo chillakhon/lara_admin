@@ -41,10 +41,18 @@ class MaxSettingsController extends Controller
         // Сохраняем настройки
         $settings = MaxSettings::first();
 
+        $tokenChanged = $settings && $settings->bot_token !== $validated['bot_token'];
+
         if ($settings) {
             $settings->update($validated);
         } else {
             $settings = MaxSettings::create($validated);
+        }
+
+        // Если токен изменился — перерегистрируем webhook (старый удаляем, новый создаём)
+        if ($tokenChanged) {
+            $url = rtrim(config('services.max.webhook_url'), '/') . '/api/public/max/webhook';
+            $this->maxService->unregisterWebhook($url);
         }
 
         // Автоматически регистрируем webhook

@@ -3,6 +3,8 @@
 namespace App\Services\Order;
 
 use App\Enums\OrderStatus;
+use App\Models\Client;
+use App\Models\DeliveryMethod;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,34 +17,46 @@ class OrderUpdateService
     public function update(Order $order, array $data): bool
     {
         try {
-            // Фильтруем только разрешенные поля
+            // Поля напрямую обновляемые в таблице orders
             $allowedFields = [
                 'notes',
                 'client_id',
                 'status',
                 'payment_status',
                 'payment_method',
+                'source',
                 'delivery_method_id',
                 'delivery_date',
                 'delivery_comment',
             ];
 
             $filteredData = array_intersect_key(
-                array_filter($data, function ($value) {
-                    return $value !== null && $value !== '';
-                }),
+                array_filter($data, fn ($value) => $value !== null && $value !== ''),
                 array_flip($allowedFields)
             );
 
-            // Обработка вложенных данных
+            // Определяем delivery_method_id по имени если пришёл объект delivery_method
+            if (! isset($filteredData['delivery_method_id']) && isset($data['delivery_method']['name'])) {
+                $method = DeliveryMethod::where('name', $data['delivery_method']['name'])->first();
+                if ($method) {
+                    $filteredData['delivery_method_id'] = $method->id;
+                }
+            }
+
+            // Обновляем контактные данные клиента если переданы
+            if (isset($data['user']) && is_array($data['user'])) {
+                $this->updateClientContactInfo($order, $data['user']);
+            }
+
+            // Обработка адреса доставки
             if (isset($data['delivery_address'])) {
-                // Если delivery_date есть на верхнем уровне, но нет в delivery_address - добавляем
+                // Если delivery_date есть на верхнем уровне, но нет в delivery_address — добавляем
                 if (isset($data['delivery_date']) && ! isset($data['delivery_address']['delivery_date'])) {
                     $data['delivery_address']['delivery_date'] = $data['delivery_date'];
                 }
 
                 // Извлекаем delivery_date из delivery_address если есть
-                if (isset($data['delivery_address']['delivery_date'])) {
+                if (array_key_exists('delivery_date', $data['delivery_address'])) {
                     $filteredData['delivery_date'] = $this->formatDeliveryDate($data['delivery_address']['delivery_date']);
                 }
 
@@ -69,6 +83,34 @@ class OrderUpdateService
             ]);
 
             return false;
+        }
+    }
+
+    /**
+     * Обновить контактную информацию клиента заказа
+     */
+    private function updateClientContactInfo(Order $order, array $userData): void
+    {
+        $clientId = $order->client_id;
+
+        if (! $clientId) {
+            return;
+        }
+
+        $client = Client::find($clientId);
+
+        if (! $client) {
+            return;
+        }
+
+        $updateData = array_filter([
+            'first_name' => $userData['first_name'] ?? null,
+            'last_name'  => $userData['last_name'] ?? null,
+            'phone'      => $userData['phone'] ?? null,
+        ], fn ($v) => $v !== null && $v !== '');
+
+        if (! empty($updateData)) {
+            $client->update($updateData);
         }
     }
 

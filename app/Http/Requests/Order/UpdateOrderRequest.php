@@ -27,19 +27,31 @@ class UpdateOrderRequest extends FormRequest
             'delivery_method_id' => 'nullable|integer|exists:delivery_methods,id',
             'delivery_date' => 'nullable|date',
             'delivery_comment' => 'nullable|string|max:1000',
+            'source' => 'nullable|string|max:255',
+
+            // Контактная информация
+            'user' => 'nullable|array',
+            'user.first_name' => 'nullable|string|max:255',
+            'user.last_name' => 'nullable|string|max:255',
+            'user.phone' => 'nullable|string|max:20',
+
+            // Метод доставки
+            'delivery_method' => 'nullable|array',
+            'delivery_method.name' => 'nullable|string|max:255',
 
             // Адрес доставки
             'delivery_address' => 'nullable|array',
-            'delivery_address.country' => 'nullable|string|max:2',
+            'delivery_address.country' => 'nullable|string|max:255',
             'delivery_address.region' => 'nullable|string|max:255',
             'delivery_address.city' => 'nullable|string|max:255',
             'delivery_address.postal_code' => 'nullable|string|max:20',
-            'delivery_address.address' => 'nullable|string|max:500',
+            'delivery_address.address' => 'nullable|string|max:1000',
             'delivery_address.entrance' => 'nullable|string|max:50',
             'delivery_address.floor' => 'nullable|string|max:50',
             'delivery_address.intercom' => 'nullable|string|max:50',
-            'delivery_address.delivery_comment' => 'nullable|string|max:500',
-            'delivery_address.buyer_comment' => 'nullable|string|max:500',
+            'delivery_address.delivery_comment' => 'nullable|string|max:1000',
+            'delivery_address.delivery_date' => 'nullable|date',
+            'delivery_address.buyer_comment' => 'nullable|string|max:1000',
 
             // Товары
             'items' => 'nullable|array',
@@ -79,6 +91,6 @@ class UpdateOrderRequest extends FormRequest
      */
     public function validated($key = null, $default = null): array
     {
-        return array_filter(parent::validated());
+        return parent::validated($key, $default);
     }
 }
