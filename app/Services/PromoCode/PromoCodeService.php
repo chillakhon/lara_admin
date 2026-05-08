@@ -36,17 +36,26 @@ class PromoCodeService
             return ['error' => response()->json(['message' => 'Промокод не найден или истёк'], 404)];
         }
 
-        if (!$this->isAvailableForClient($promoCode, $client->id)) {
-            return ['error' => response()->json(['message' => 'Промокод недоступен этому клиенту'], 400)];
-        }
+        // Админ открыл предпросмотр без выбранного клиента: разрешаем только публичные купоны.
+        if (!$client) {
+            if (!$promoCode->applies_to_all_clients) {
+                return ['error' => response()->json([
+                    'message' => 'Этот промокод доступен только конкретным клиентам — выберите клиента в заказе.',
+                    'code' => 'PROMO_REQUIRES_CLIENT',
+                ], 400)];
+            }
+        } else {
+            if (!$this->isAvailableForClient($promoCode, $client->id)) {
+                return ['error' => response()->json(['message' => 'Промокод недоступен этому клиенту'], 400)];
+            }
 
+            if ($promoCode->usages()->where('client_id', $client->id)->exists()) {
+                return ['error' => response()->json(['message' => 'Этот клиент уже использовал данный промокод'], 400)];
+            }
+        }
 
         if ($promoCode->max_uses && $promoCode->times_used >= $promoCode->max_uses) {
             return ['error' => response()->json(['message' => 'Лимит использований промокода исчерпан'], 400)];
-        }
-
-        if ($promoCode->usages()->where('client_id', $client->id)->exists()) {
-            return ['error' => response()->json(['message' => 'Вы уже использовали этот промокод'], 400)];
         }
 
 
@@ -304,10 +313,12 @@ class PromoCodeService
 
     /**
      * Проверяет, доступен ли промокод конкретному клиенту.
+     *
+     * Если у купона нет ни флага applies_to_all_clients, ни привязок в promo_code_clients —
+     * считаем его публичным (это безопасный default, иначе купон становится никому недоступен).
      */
     private function isAvailableForClient(PromoCode $promoCode, int $clientId): bool
     {
-
         if ($promoCode->applies_to_all_clients) {
             return true;
         }
@@ -316,11 +327,15 @@ class PromoCodeService
             return $promoCode->clients()->where('client_id', $clientId)->exists();
         }
 
-        return false;
+        // Нет ни флага, ни привязок — трактуем как «для всех».
+        return true;
     }
 
     /**
      * Определяет клиента на основе client_id или текущего авторизованного пользователя.
+     *
+     * Если запрос приходит от админа (User) без client_id — возвращаем null,
+     * чтобы validatePromo мог проверить публичные (applies_to_all_clients=true) купоны.
      */
     private function resolveClient(Request $request, ?int $clientId)
     {
@@ -335,10 +350,7 @@ class PromoCodeService
         }
 
         if ($user instanceof \App\Models\User) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Пожалуйста, укажите client_id — вы авторизованы как администратор.',
-            ], 422);
+            return null;
         }
 
         return response()->json([
