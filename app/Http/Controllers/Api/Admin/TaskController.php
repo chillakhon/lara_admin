@@ -24,6 +24,7 @@ class TaskController extends Controller
             'label' => request('label', ''),
             'dueDate' => request('dueDate', ''),
             'overdue' => filter_var(request('overdue', false), FILTER_VALIDATE_BOOLEAN),
+            'order_id' => request('order_id', ''),
         ];
 
         // Параметры пагинации
@@ -76,6 +77,10 @@ class TaskController extends Controller
                 ->whereNull('completed_at');
         }
 
+        if (!empty($filters['order_id'])) {
+            $query->where('order_id', $filters['order_id']);
+        }
+
         // Пагинация
         $tasks = $query->paginate($perPage, ['*'], 'page', $page);
 
@@ -117,6 +122,7 @@ class TaskController extends Controller
                         'profile' => $task->assignee?->profile,
                     ] : null,
                     'assignee_id' => $task->assignee_id,
+                    'order_id' => $task->order_id,
                     'labels' => $task->labels,
                     'due_date' => $task->due_date,
                     'estimated_time' => $task->estimated_time,
@@ -162,6 +168,7 @@ class TaskController extends Controller
             'creator_id' => 'nullable|exists:users,id',
             'assignee_id' => 'nullable|exists:users,id',
             'parent_id' => 'nullable|exists:tasks,id',
+            'order_id' => 'nullable|exists:orders,id',
             'due_date' => 'nullable|date',
             'started_at' => 'nullable|date',
             'estimated_time' => 'nullable|integer|min:0',
@@ -194,6 +201,7 @@ class TaskController extends Controller
             'creator_id' => ['sometimes', 'nullable', 'exists:users,id'],
             'assignee_id' => ['sometimes', 'nullable', 'exists:users,id'],
             'parent_id' => ['sometimes', 'nullable', 'exists:tasks,id'],
+            'order_id' => ['sometimes', 'nullable', 'exists:orders,id'],
             'due_date' => ['sometimes', 'nullable', 'date'],
             'started_at' => ['sometimes', 'nullable', 'date'],
             'completed_at' => ['sometimes', 'nullable', 'date'],

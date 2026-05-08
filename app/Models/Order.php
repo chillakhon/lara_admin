@@ -188,6 +188,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
+
     public function history()
     {
         return $this->hasMany(OrderHistory::class);

@@ -22,6 +22,7 @@ class Task extends Model
         'creator_id',
         'assignee_id',
         'parent_id',
+        'order_id',
         'due_date',
         'started_at',
         'completed_at',
@@ -59,6 +60,11 @@ class Task extends Model
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Task::class, 'parent_id');
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
     }
 
     public function subtasks(): HasMany

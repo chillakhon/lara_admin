@@ -44,6 +44,9 @@ class OrderViewController extends Controller
             'lead',
             'history.user.roles',
             'payments',
+            'tasks.status',
+            'tasks.priority',
+            'tasks.assignee.profile',
         ]);
 
         $summary = $this->orderCreationService->getOrderSummary($order);
@@ -71,7 +74,7 @@ class OrderViewController extends Controller
             'client_stats' => $clientStats,
             'history' => $this->formatHistory($order),
             'payments' => $order->payments,
-            'tasks' => [],            // TODO: связь Task <-> Order не реализована
+            'tasks' => $this->formatTasks($order),
             'custom_fields' => [],    // TODO: модель CustomFieldValue не привязана к orders
             'viewed_products' => [],  // TODO: трекинг просмотров клиента
             'source' => [
@@ -115,6 +118,35 @@ class OrderViewController extends Controller
                         'id' => $user->id,
                         'name' => $user->get_full_name() ?: ($user->email ?? null),
                         'role' => $role?->name,
+                    ] : null,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Формирует компактный массив задач заказа для правого блока на странице просмотра.
+     */
+    private function formatTasks(Order $order): array
+    {
+        return $order->tasks
+            ->sortByDesc('id')
+            ->map(function ($task) {
+                $assignee = $task->assignee;
+                return [
+                    'id' => $task->id,
+                    'title' => $task->title,
+                    'description' => $task->description,
+                    'due_date' => $task->due_date,
+                    'completed_at' => $task->completed_at,
+                    'is_overdue' => $task->isOverdue(),
+                    'status' => $task->status,
+                    'priority' => $task->priority,
+                    'assignee' => $assignee ? [
+                        'id' => $assignee->id,
+                        'name' => data_get($assignee, 'profile.full_name') ?: $assignee->email,
+                        'email' => $assignee->email,
                     ] : null,
                 ];
             })
