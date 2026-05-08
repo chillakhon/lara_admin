@@ -74,6 +74,13 @@ class CreateOrderRequest extends FormRequest
             'delivery_address.delivery_date' => 'nullable|date',
             'delivery_address.buyer_comment' => 'nullable|string|max:1000',
 
+            // Получатель (имя/фамилия/телефон обязательны, отчество опционально)
+            'recipient' => 'required|array',
+            'recipient.first_name' => 'required|string|max:255',
+            'recipient.last_name' => 'required|string|max:255',
+            'recipient.middle_name' => 'nullable|string|max:255',
+            'recipient.phone' => 'required|string|max:32',
+
             // Заметки
             'notes' => 'nullable|string|max:1000',
 
@@ -165,6 +172,11 @@ class CreateOrderRequest extends FormRequest
             'user.first_name.required' => 'Имя обязательно',
             'user.last_name.required' => 'Фамилия обязательна',
             'user.phone.required' => 'Телефон обязателен',
+
+            'recipient.required' => 'Данные получателя обязательны',
+            'recipient.first_name.required' => 'Имя получателя обязательно',
+            'recipient.last_name.required' => 'Фамилия получателя обязательна',
+            'recipient.phone.required' => 'Телефон получателя обязателен',
 
             'items.required' => 'Необходимо добавить товары в заказ',
             'items.min' => 'Необходимо добавить хотя бы один товар',

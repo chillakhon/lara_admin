@@ -149,6 +149,12 @@ class Order extends Model
             'delivery_comment' => $address->delivery_comment,
             'delivery_date' => $address->delivery_date?->format('Y-m-d H:i:s'),
             'buyer_comment' => $address->buyer_comment,
+            // Получатель хранится здесь же — отдаём фронту как часть delivery_address,
+            // а также отдельным полем 'recipient' через accessor ниже.
+            'recipient_first_name' => $address->recipient_first_name,
+            'recipient_last_name' => $address->recipient_last_name,
+            'recipient_middle_name' => $address->recipient_middle_name,
+            'recipient_phone' => $address->recipient_phone,
         ];
     }
 

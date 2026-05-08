@@ -9,10 +9,14 @@ use Illuminate\Support\Facades\Log;
 class OrderDeletionService
 {
     protected OrderCreationService $orderCreationService;
+    protected OrderHistoryService $historyService;
 
-    public function __construct(OrderCreationService $orderCreationService)
-    {
+    public function __construct(
+        OrderCreationService $orderCreationService,
+        OrderHistoryService $historyService,
+    ) {
         $this->orderCreationService = $orderCreationService;
+        $this->historyService = $historyService;
     }
 
     /**
@@ -36,6 +40,9 @@ class OrderDeletionService
                     return false;
                 }
             }
+
+            // Запись в историю до удаления, чтобы user_id и order_id были сохранены
+            $this->historyService->logDeleted($order, $reason);
 
             // Мягкое удаление
             $order->delete();

@@ -5,6 +5,7 @@ namespace App\Services\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\PromoCode;
+use App\Models\Promotion;
 use App\Services\Promotion\PromotionService;
 use App\Traits\ProductsTrait;
 use Illuminate\Support\Facades\Log;
@@ -452,6 +453,14 @@ class OrderValidationService
         array $priceData
     ): ?array {
         $priceDifference = abs($calculatedPrice - $frontendPrice);
+
+        // Если применён промокод, фронт мог прислать цену ДО применения промокода
+        // (например, админ-форма создания заказа не пересчитывает позиции при выборе купона —
+        // промо-скидка применяется на уровне заказа в applyPromoCodeToOrder).
+        // Допускаем такую цену тоже — final_price всё равно определяется бэком.
+        if ($priceDifference > 0.01 && $priceData['promo_applied']) {
+            $priceDifference = abs($priceData['price_after_discount'] - $frontendPrice);
+        }
 
         if ($priceDifference > 0.01) {
             return [

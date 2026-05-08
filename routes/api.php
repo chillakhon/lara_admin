@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\Admin\MoySkladController;
 use App\Http\Controllers\Api\Admin\NotificationController;
 use App\Http\Controllers\Api\Admin\OrderController;
 use App\Http\Controllers\Api\Admin\OrderStatsController;
+use App\Http\Controllers\Api\Admin\OrderViewController;
 use App\Http\Controllers\Api\Admin\OtoBanner\OtoBannerAnalyticsController;
 use App\Http\Controllers\Api\Admin\OtoBanner\OtoBannerController;
 use App\Http\Controllers\Api\Admin\Product\ProductAttributeController;
@@ -708,6 +709,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/user', [OrderController::class, 'getUserOrders']);
 
         Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+        Route::get('/{order}/view', [OrderViewController::class, 'show'])->name('view');
         Route::put('/{order}', [OrderController::class, 'update'])->name('update');
         Route::delete('/{order}', [OrderController::class, 'destroy'])->name('destroy');
 

@@ -8079,3 +8079,5 @@
   38  artisan:13
       Illuminate\Foundation\Application::handleCommand()
 
+  2026-05-06 15:03:26 App\Services\Notifications\Jobs\SendNotificationJob  RUNNING
+  2026-05-06 15:03:28 App\Services\Notifications\Jobs\SendNotificationJob  1s DONE

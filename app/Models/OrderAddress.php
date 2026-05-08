@@ -12,6 +12,10 @@ class OrderAddress extends Model
 
     protected $fillable = [
         'order_id',
+        'recipient_first_name',
+        'recipient_last_name',
+        'recipient_middle_name',
+        'recipient_phone',
         'country',
         'region',
         'city',

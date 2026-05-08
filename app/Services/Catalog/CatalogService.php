@@ -149,10 +149,11 @@ class CatalogService
             });
         }
 
-        // Сортировка
+        // Сортировка: сперва товары в наличии, затем по выбранному полю
         $sortBy = $filters['sort_by'] ?? 'display_order';
         $sortOrder = $filters['sort_order'] ?? 'asc';
-        $query->orderBy($sortBy, $sortOrder);
+        $query->orderByRaw('CASE WHEN stock_quantity > 0 THEN 0 ELSE 1 END')
+            ->orderBy($sortBy, $sortOrder);
 
         return $query;
     }

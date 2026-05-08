@@ -18,7 +18,8 @@ class OrderCreationService
 {
     public function __construct(
         protected GiftCardService $giftCardService,
-        protected PromotionService $promotionService
+        protected PromotionService $promotionService,
+        protected OrderHistoryService $historyService
     ) {}
 
     /**
@@ -32,6 +33,7 @@ class OrderCreationService
     {
         $deliveryAddress = $orderData['delivery_address'] ?? [];
         $userData = $orderData['user'] ?? [];
+        $recipient = $orderData['recipient'] ?? [];
         $deliveryMethodData = $orderData['delivery_method'] ?? [];
         $resolvedClientId = $orderData['client_id'] ?? $clientId;
         $deliveryMethodId = $this->resolveDeliveryMethodId($deliveryMethodData);
@@ -64,8 +66,15 @@ class OrderCreationService
             'created_at' => now(),
         ]);
 
-        if (! empty(array_filter($deliveryAddress, fn ($value) => $value !== null && $value !== ''))) {
+        $hasAddressData = ! empty(array_filter($deliveryAddress, fn ($value) => $value !== null && $value !== ''));
+        $hasRecipientData = ! empty(array_filter($recipient, fn ($value) => $value !== null && $value !== ''));
+
+        if ($hasAddressData || $hasRecipientData) {
             $order->address()->create([
+                'recipient_first_name' => $recipient['first_name'] ?? null,
+                'recipient_last_name' => $recipient['last_name'] ?? null,
+                'recipient_middle_name' => $recipient['middle_name'] ?? null,
+                'recipient_phone' => $recipient['phone'] ?? null,
                 'country' => $deliveryAddress['country'] ?? null,
                 'region' => $deliveryAddress['region'] ?? null,
                 'city' => $deliveryAddress['city'] ?? null,
@@ -79,6 +88,8 @@ class OrderCreationService
                 'buyer_comment' => $deliveryAddress['buyer_comment'] ?? null,
             ]);
         }
+
+        $this->historyService->logCreated($order);
 
         return $order;
     }
@@ -268,7 +279,7 @@ class OrderCreationService
         ]);
 
         // Увеличиваем счетчик использований промокода
-        $promoCode->increment('max_uses');
+        $promoCode->increment('times_used');
 
         // Обновляем итоговую сумму заказа
         $order->updateTotalAmount();
@@ -372,7 +383,7 @@ class OrderCreationService
             if ($order->promo_code_id) {
                 $promoCode = PromoCode::find($order->promo_code_id);
                 if ($promoCode) {
-                    $promoCode->decrement('times_uses');
+                    $promoCode->decrement('times_used');
 
                     // Удаляем запись об использовании
                     $promoCode->usages()

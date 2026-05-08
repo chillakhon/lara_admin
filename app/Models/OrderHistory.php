@@ -9,6 +9,8 @@ class OrderHistory extends Model
     protected $fillable = [
         'order_id',
         'user_id',
+        'action',
+        'description',
         'status',
         'payment_status',
         'comment'

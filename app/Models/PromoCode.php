@@ -30,7 +30,7 @@ class PromoCode extends Model
         'starts_at',
         'expires_at',
         'max_uses',
-        'times_uses',
+        'times_used',
         'is_active',
         'applies_to_all_products',
         'applies_to_all_clients',
@@ -44,7 +44,7 @@ class PromoCode extends Model
         'is_active' => 'boolean',
         'discount_amount' => 'decimal:2',
         'max_uses' => 'integer',
-        'times_uses' => 'integer',
+        'times_used' => 'integer',
         'applies_to_all_products' => 'boolean',
         'applies_to_all_clients' => 'boolean',
 
@@ -67,6 +67,20 @@ class PromoCode extends Model
             $now->gte($this->starts_at) &&
             $now->lte($this->expires_at) &&
             ($this->max_uses === null || $this->times_used < $this->max_uses);
+    }
+
+    /**
+     * Алиас times_uses → times_used для обратной совместимости
+     * (исторически в коде встречаются обе формы; реальная колонка БД — times_used).
+     */
+    public function getTimesUsesAttribute()
+    {
+        return $this->attributes['times_used'] ?? 0;
+    }
+
+    public function setTimesUsesAttribute($value): void
+    {
+        $this->attributes['times_used'] = $value;
     }
 
     /**

@@ -35,6 +35,13 @@ class UpdateOrderRequest extends FormRequest
             'user.last_name' => 'nullable|string|max:255',
             'user.phone' => 'nullable|string|max:20',
 
+            // Получатель (на update все nullable, чтобы можно было править частично)
+            'recipient' => 'nullable|array',
+            'recipient.first_name' => 'nullable|string|max:255',
+            'recipient.last_name' => 'nullable|string|max:255',
+            'recipient.middle_name' => 'nullable|string|max:255',
+            'recipient.phone' => 'nullable|string|max:32',
+
             // Метод доставки
             'delivery_method' => 'nullable|array',
             'delivery_method.name' => 'nullable|string|max:255',
@@ -65,6 +72,9 @@ class UpdateOrderRequest extends FormRequest
             // Статусы
             'status' => 'nullable|string|in:'.implode(',', \App\Enums\OrderStatus::values()),
             'payment_status' => 'nullable|string|in:'.implode(',', \App\Enums\PaymentStatus::values()),
+
+            // Промокод (купон). Пустая строка/null = снять купон.
+            'promo_code' => 'nullable|string|max:50',
         ];
     }
 

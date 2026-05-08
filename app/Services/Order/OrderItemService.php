@@ -13,13 +13,16 @@ class OrderItemService
 {
     protected OrderValidationService $validationService;
     protected OrderCreationService $creationService;
+    protected OrderHistoryService $historyService;
 
     public function __construct(
         OrderValidationService $validationService,
-        OrderCreationService $creationService
+        OrderCreationService $creationService,
+        OrderHistoryService $historyService,
     ) {
         $this->validationService = $validationService;
         $this->creationService = $creationService;
+        $this->historyService = $historyService;
     }
 
     /**
@@ -55,6 +58,15 @@ class OrderItemService
             // Обновляем суммы заказа
             $this->creationService->updateOrderTotals($order, $totals);
 
+            // Пишем в историю по каждой добавленной позиции
+            $order->refresh()->load('items.product');
+            $newItems = $order->items
+                ->sortByDesc('id')
+                ->take(count($items));
+            foreach ($newItems as $item) {
+                $this->historyService->logItemAdded($order, $item);
+            }
+
             Log::info('Items added to order', [
                 'order_id' => $order->id,
                 'items_count' => count($items),
@@ -86,7 +98,7 @@ class OrderItemService
     public function removeItem(Order $order, int $itemId): bool
     {
         try {
-            $item = $order->items()->findOrFail($itemId);
+            $item = $order->items()->with('product')->findOrFail($itemId);
 
             // Проверяем что это не последняя позиция
             if ($order->items()->count() === 1) {
@@ -99,6 +111,9 @@ class OrderItemService
 
             // Возвращаем товар на склад
             $this->returnItemToStock($item);
+
+            // Пишем в историю до удаления, чтобы данные позиции были доступны
+            $this->historyService->logItemRemoved($order, $item);
 
             // Удаляем позицию
             $item->delete();

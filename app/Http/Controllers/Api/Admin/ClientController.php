@@ -23,10 +23,23 @@ class ClientController extends Controller
             ->whereNull('deleted_at')
             ->withCount('orders')
             ->when($request->search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->whereHas('profile', function ($q) use ($search) {
+                // Нормализованная версия для поиска по телефону:
+                // оставляем только цифры, чтобы строки вида "+7 (912) 345-67-89"
+                // совпадали с тем, что хранится в БД ("+79123456789", "89123456789", и т.п.).
+                $digits = preg_replace('/\D+/', '', (string) $search);
+
+                $query->where(function ($q) use ($search, $digits) {
+                    $q->whereHas('profile', function ($q) use ($search, $digits) {
                         $q->where('first_name', 'like', "%{$search}%")
-                            ->orWhere('last_name', 'like', "%{$search}%");
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+
+                        if ($digits !== '') {
+                            $q->orWhereRaw(
+                                "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(phone, ''), '+', ''), ' ', ''), '(', ''), ')', ''), '-', ''), '.', '') LIKE ?",
+                                ["%{$digits}%"]
+                            );
+                        }
                     })->orWhere('email', 'like', "%{$search}%");
                 });
             })
