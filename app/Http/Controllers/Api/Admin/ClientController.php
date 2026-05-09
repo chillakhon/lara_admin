@@ -298,10 +298,34 @@ class ClientController extends Controller
             'last_order_date' => $client->orders->first()?->created_at,
         ];
 
+        // События клиента — это история всех его заказов
+        // (создание, смены статусов и т.п.) — последние 30 записей.
+        $orderIds = $client->orders->pluck('id');
+        $events = \App\Models\OrderHistory::query()
+            ->whereIn('order_id', $orderIds)
+            ->with(['order:id,order_number'])
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->limit(30)
+            ->get()
+            ->map(fn ($e) => [
+                'id' => $e->id,
+                'order_id' => $e->order_id,
+                'order_number' => $e->order?->order_number,
+                'action' => $e->action,
+                'description' => $e->description ?? $e->comment,
+                'status' => $e->status,
+                'payment_status' => $e->payment_status,
+                'created_at' => $e->created_at,
+            ])
+            ->values()
+            ->all();
+
         // Возвращаем JSON с клиентом (включая user.profile) и статистикой
         return response()->json([
             'client' => $client,
             'statistics' => $statistics,
+            'events' => $events,
         ]);
     }
 
