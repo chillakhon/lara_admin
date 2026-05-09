@@ -283,7 +283,7 @@ class ClientController extends Controller
             },
             'orders.items',
             'orders.items.product',
-            'orders.items.productVariant',
+            'orders.items.variant',
         ]);
 
         // Собираем статистику по заказам
