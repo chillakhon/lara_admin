@@ -8081,3 +8081,7 @@
 
   2026-05-06 15:03:26 App\Services\Notifications\Jobs\SendNotificationJob  RUNNING
   2026-05-06 15:03:28 App\Services\Notifications\Jobs\SendNotificationJob  1s DONE
+  2026-05-08 12:05:11 App\Events\MessageCreated ...................... RUNNING
+  2026-05-08 12:05:11 App\Events\MessageCreated ................ 396.37ms DONE
+  2026-05-08 12:05:11 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-08 12:05:11 App\Events\ConversationUpdated ............ 25.55ms DONE

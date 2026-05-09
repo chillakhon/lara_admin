@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Enums\OrderStatus;
 use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -45,7 +46,7 @@ class OrderStatsController extends Controller
                 ])
                 ->groupBy('status')
                 ->get()
-                ->keyBy(fn($item) => $item->status->value);;
+                ->keyBy(fn($item) => $item->status->value);
 
             // Получаем данные по месяцам и статусам
             $chartRawData = Order::query()
@@ -59,17 +60,14 @@ class OrderStatsController extends Controller
                 ->orderBy('month')
                 ->get();
 
-            // Подготовка данных для графика
+            // Подготовка данных для графика — учитываем ВСЕ статусы из enum
             $months = collect();
+            $statuses = OrderStatus::values();
 
-            $statuses = ['new', 'processing', 'shipped_export'];
-
-            $chartData = [
-                'labels' => [],
-                'new' => [],
-                'processing' => [],
-                'shipped_export' => [],
-            ];
+            $chartData = ['labels' => []];
+            foreach ($statuses as $status) {
+                $chartData[$status] = [];
+            }
 
             for ($date = clone $from; $date <= $to; $date->addMonth()) {
                 $months->push($date->format('Y-m'));
@@ -91,21 +89,29 @@ class OrderStatsController extends Controller
 
             $chartData['labels'] = $monthLabels;
 
-            return response()->json([
-                'new' => [
-                    'count' => (int)($stats['new']->count ?? 0),
-                    'total_amount' => (float)($stats['new']->total_amount ?? 0)
-                ],
-                'processing' => [
-                    'count' => (int)($stats['processing']->count ?? 0),
-                    'total_amount' => (float)($stats['processing']->total_amount ?? 0)
-                ],
-                'shipped_export' => [
-                    'count' => (int)($stats['shipped_export']->count ?? 0),
-                    'total_amount' => (float)($stats['shipped_export']->total_amount ?? 0)
-                ],
-                'chartData' => $chartData
-            ]);
+            // Формируем ответ по всем статусам + общий итог
+            $response = [];
+            $totalCount = 0;
+            $totalAmount = 0.0;
+
+            foreach ($statuses as $status) {
+                $count = (int)($stats[$status]->count ?? 0);
+                $amount = (float)($stats[$status]->total_amount ?? 0);
+                $response[$status] = [
+                    'count' => $count,
+                    'total_amount' => $amount,
+                ];
+                $totalCount += $count;
+                $totalAmount += $amount;
+            }
+
+            $response['total'] = [
+                'count' => $totalCount,
+                'total_amount' => $totalAmount,
+            ];
+            $response['chartData'] = $chartData;
+
+            return response()->json($response);
 
         } catch (\RuntimeException $e) {
             Log::error("Validation error in Order stats: " . $e->getMessage());

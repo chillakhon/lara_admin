@@ -185,3 +185,9 @@
   30  artisan:13
       Illuminate\Foundation\Application::handleCommand()
 
+
+   INFO  Gracefully terminating connections.  
+
+
+   INFO  Starting server on 0.0.0.0:8001 (127.0.0.1).  
+
