@@ -275,7 +275,9 @@ class ClientController extends Controller
     {
         // Эйджир-загружаем профиль пользователя вместе с другими связями
         $client->load([
-            'profile',                         // <-- добавили
+            'profile',
+            'level',
+            'tags',
             'orders' => function ($query) {
                 $query->latest();
             },
@@ -285,9 +287,13 @@ class ClientController extends Controller
         ]);
 
         // Собираем статистику по заказам
+        $paidOrders = $client->orders->where('payment_status', \App\Enums\PaymentStatus::PAID);
+
         $statistics = [
             'total_orders' => $client->orders->count(),
             'total_spent' => $client->orders->sum('total_amount'),
+            'total_paid' => $paidOrders->sum('total_amount'),
+            'paid_orders_count' => $paidOrders->count(),
             'average_order_value' => $client->orders->avg('total_amount'),
             'last_order_date' => $client->orders->first()?->created_at,
         ];
