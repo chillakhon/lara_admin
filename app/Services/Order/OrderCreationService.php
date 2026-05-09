@@ -468,7 +468,9 @@ class OrderCreationService
      */
     public function getOrderSummary(Order $order): array
     {
-        $order->load(['items', 'client', 'promoCode', 'address']);
+        // loadMissing, чтобы не затереть уже эагер-загруженные ранее
+        // вложенные связи (например client.profile из OrderViewController).
+        $order->loadMissing(['items', 'client', 'promoCode', 'address']);
 
         $itemsCount = $order->items->sum('quantity');
         $subtotal = $order->items->sum(function ($item) {
