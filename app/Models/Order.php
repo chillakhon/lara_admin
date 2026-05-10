@@ -54,6 +54,21 @@ class Order extends Model
 
         'gift_card_id',
         'gift_card_amount',
+
+        // Поля под легаси-импорт InSales
+        'assigned_user_id',
+        'tracking_number',
+        'bonuses_credited',
+        'bonuses_used',
+        'no_receipt',
+        'export_country',
+        'utm_source_first',
+        'referrer_first',
+        'referrer_last',
+        'landing_first',
+        'landing_last',
+        'legacy_meta',
+        'legacy_delivery_method',
     ];
 
     protected $casts = [
@@ -67,6 +82,12 @@ class Order extends Model
         'gift_card_amount' => 'decimal:2',
 
         'created_at' => 'datetime',
+
+        // Легаси-импорт
+        'bonuses_credited' => 'decimal:2',
+        'bonuses_used' => 'decimal:2',
+        'no_receipt' => 'boolean',
+        'legacy_meta' => 'array',
     ];
 
     public function address(): HasOne

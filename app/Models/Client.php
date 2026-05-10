@@ -27,6 +27,9 @@ class Client extends Authenticatable
      */
     protected $casts = [
         'bonus_balance' => 'decimal:2',
+        'subscribed_to_newsletter' => 'boolean',
+        'personal_data_consent' => 'boolean',
+        'messenger_subscription' => 'boolean',
     ];
 
     /**

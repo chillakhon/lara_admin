@@ -20,12 +20,17 @@ class OrderItem extends Model
         'color_id',
         'is_gift',
         'promotion_id',
+        'legacy_name',
+        'legacy_sku',
+        'purchase_price',
+        'marking_codes',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'discount' => 'decimal:2',
         'is_gift' => 'boolean',
+        'purchase_price' => 'decimal:2',
     ];
 
     public function order(): BelongsTo

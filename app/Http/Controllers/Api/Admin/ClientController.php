@@ -189,10 +189,26 @@ class ClientController extends Controller
                 $client->profile()->create([
                     'first_name' => $validated['first_name'],
                     'last_name' => $validated['last_name'],
+                    'middle_name' => $validated['middle_name'] ?? null,
                     'phone' => $validated['phone'],
-                    //'address' => $validated['address'],
+                    'address' => $validated['address'] ?? null,
                     'level_id' => $validated['level_id'] ?? null,
                     'birthday' => isset($validated['birthday']) ? Carbon::parse($validated['birthday'])->format('Y-m-d') : null,
+                    'delivery_country_id' => $validated['delivery_country_id'] ?? null,
+                    'delivery_city_id' => $validated['delivery_city_id'] ?? null,
+                    'delivery_region' => $validated['delivery_region'] ?? null,
+                    'delivery_street' => $validated['delivery_street'] ?? null,
+                    'delivery_house' => $validated['delivery_house'] ?? null,
+                    'delivery_apartment' => $validated['delivery_apartment'] ?? null,
+                    'delivery_postal_code' => $validated['delivery_postal_code'] ?? null,
+                ]);
+
+                $client->update([
+                    'subscribed_to_newsletter' => (bool) ($validated['subscribed_to_newsletter'] ?? false),
+                    'personal_data_consent' => (bool) ($validated['personal_data_consent'] ?? false),
+                    'messenger_subscription' => (bool) ($validated['messenger_subscription'] ?? false),
+                    'rfm_segment' => $validated['rfm_segment'] ?? null,
+                    'group_name' => $validated['group_name'] ?? null,
                 ]);
 
                 return $client->load('profile');
@@ -226,18 +242,46 @@ class ClientController extends Controller
 
             DB::transaction(function () use ($validated, $client) {
 
-                $client->profile()->update([
+                $profileData = [
                     'first_name' => $validated['first_name'],
                     'last_name' => $validated['last_name'],
+                    'middle_name' => $validated['middle_name'] ?? null,
                     'phone' => $validated['phone'],
                     'address' => $validated['address'],
                     'birthday' => $validated['birthday'] ? Carbon::parse($validated['birthday'])->format('Y-m-d') : null,
-                ]);
+                ];
 
-                // Обновляем почту пользователя
-                $client->update([
+                foreach ([
+                    'delivery_country_id',
+                    'delivery_city_id',
+                    'delivery_region',
+                    'delivery_street',
+                    'delivery_house',
+                    'delivery_apartment',
+                    'delivery_postal_code',
+                ] as $field) {
+                    if (array_key_exists($field, $validated)) {
+                        $profileData[$field] = $validated[$field];
+                    }
+                }
+
+                $client->profile()->update($profileData);
+
+                // Обновляем поля самого клиента (email + флаги согласий/подписок + RFM/группа)
+                $clientData = [
                     'email' => $validated['email'],
-                ]);
+                    'subscribed_to_newsletter' => (bool) ($validated['subscribed_to_newsletter'] ?? $client->subscribed_to_newsletter),
+                    'personal_data_consent' => (bool) ($validated['personal_data_consent'] ?? $client->personal_data_consent),
+                    'messenger_subscription' => (bool) ($validated['messenger_subscription'] ?? $client->messenger_subscription),
+                ];
+
+                foreach (['rfm_segment', 'group_name'] as $field) {
+                    if (array_key_exists($field, $validated)) {
+                        $clientData[$field] = $validated[$field];
+                    }
+                }
+
+                $client->update($clientData);
             });
 
             return response()->json([
@@ -276,6 +320,8 @@ class ClientController extends Controller
         // Эйджир-загружаем профиль пользователя вместе с другими связями
         $client->load([
             'profile',
+            'profile.Country',
+            'profile.City',
             'level',
             'tags',
             'orders' => function ($query) {

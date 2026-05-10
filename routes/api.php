@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\Admin\DeliveryZoneController;
 use App\Http\Controllers\Api\Admin\DiscountAnalyticsController;
 use App\Http\Controllers\Api\Admin\DiscountController;
 use App\Http\Controllers\Api\Admin\Export\ClientExportController;
+use App\Http\Controllers\Api\Admin\Import\ClientImportController;
+use App\Http\Controllers\Api\Admin\Import\OrderImportController;
 use App\Http\Controllers\Api\Admin\Export\OrderExportController;
 use App\Http\Controllers\Api\Admin\Export\ReviewExportController;
 use App\Http\Controllers\Api\Admin\FavoriteController;
@@ -269,6 +271,13 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum'])->group(function () {
 
     // Экспорт данных
+    Route::prefix('import')->name('import.')->group(function () {
+        Route::post('/clients', [ClientImportController::class, 'import'])
+            ->name('clients');
+        Route::post('/orders', [OrderImportController::class, 'import'])
+            ->name('orders');
+    });
+
     Route::prefix('export')->name('export.')->group(function () {
 
         Route::post('/clients', [ClientExportController::class, 'export'])
