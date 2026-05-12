@@ -43,6 +43,7 @@ class OrderCreationService
             'status' => $this->resolveOrderStatus($orderData['status'] ?? null),
             'payment_status' => $this->resolvePaymentStatus($orderData['payment_status'] ?? null),
             'order_number' => $this->generateOrderNumber(),
+            'view_token' => $this->generateViewToken(),
             'total_amount' => $orderData['total'] ?? $this->calculateTotalFromItems($orderData['items'] ?? []),
             'payment_method' => $orderData['payment_method'] ?? null,
             'source' => $orderData['source'] ?? null,
@@ -97,6 +98,18 @@ class OrderCreationService
     private function generateOrderNumber(): string
     {
         return 'ORD-'.strtoupper(uniqid());
+    }
+
+    /**
+     * Уникальный 32-символьный hex-токен для публичной ссылки /orders/{token}.
+     */
+    private function generateViewToken(): string
+    {
+        do {
+            $token = bin2hex(random_bytes(16));
+        } while (Order::where('view_token', $token)->exists());
+
+        return $token;
     }
 
     private function calculateTotalFromItems(array $items): float

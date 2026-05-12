@@ -34,6 +34,7 @@ class OrderUpdateService
                 'delivery_method_id' => $order->delivery_method_id,
                 'delivery_cost' => $order->delivery_cost,
                 'notes' => $order->notes,
+                'assigned_user_id' => $order->assigned_user_id,
             ];
             // Поля напрямую обновляемые в таблице orders
             $allowedFields = [
@@ -52,6 +53,24 @@ class OrderUpdateService
                 array_filter($data, fn ($value) => $value !== null && $value !== ''),
                 array_flip($allowedFields)
             );
+
+            // Прикреплённый менеджер обрабатывается отдельно: разрешаем явный null
+            // (открепить менеджера от заказа), чего array_filter выше не позволяет.
+            if (array_key_exists('assigned_user_id', $data)) {
+                $assignedId = $data['assigned_user_id'];
+                $filteredData['assigned_user_id'] = ($assignedId === '' || $assignedId === null)
+                    ? null
+                    : (int) $assignedId;
+            }
+
+            // Дата оплаты редактируется вручную в админке. Разрешаем явный null
+            // (сбросить дату), чего array_filter выше не позволяет.
+            if (array_key_exists('paid_at', $data)) {
+                $paidAt = $data['paid_at'];
+                $filteredData['paid_at'] = ($paidAt === '' || $paidAt === null)
+                    ? null
+                    : $this->formatDeliveryDate($paidAt);
+            }
 
             // Определяем delivery_method_id по имени если пришёл объект delivery_method
             if (! isset($filteredData['delivery_method_id']) && isset($data['delivery_method']['name'])) {
@@ -115,6 +134,7 @@ class OrderUpdateService
                 'delivery_method_id' => $order->delivery_method_id,
                 'delivery_cost' => $order->delivery_cost,
                 'notes' => $order->notes,
+                'assigned_user_id' => $order->assigned_user_id,
             ];
             $this->historyService->logUpdated($order, $originalSnapshot, $updatedSnapshot);
 

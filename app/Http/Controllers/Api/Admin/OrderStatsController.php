@@ -31,9 +31,35 @@ class OrderStatsController extends Controller
             }
 
 
-            $from = $request->query('from') ? Carbon::parse($request->query('from')) : now()->subMonths(5)->startOfMonth();
-            $to = $request->query('to') ? Carbon::parse($request->query('to')) : now()->endOfMonth();
+            // Пресет "all" — берём min/max created_at из таблицы orders.
+            // Если в базе нет заказов — фолбэк на последние 6 месяцев.
+            $isAllTime = $request->query('preset') === 'all'
+                || $request->boolean('all');
 
+            if ($isAllTime) {
+                $minCreated = Order::query()->min('created_at');
+                $maxCreated = Order::query()->max('created_at');
+                $from = $minCreated ? Carbon::parse($minCreated)->startOfDay() : now()->subMonths(5)->startOfMonth();
+                $to = $maxCreated ? Carbon::parse($maxCreated)->endOfDay() : now()->endOfDay();
+            } else {
+                $from = $request->query('from')
+                    ? Carbon::parse($request->query('from'))->startOfDay()
+                    : now()->subMonths(5)->startOfMonth();
+                $to = $request->query('to')
+                    ? Carbon::parse($request->query('to'))->endOfDay()
+                    : now()->endOfMonth();
+            }
+
+            // Авто-выбор гранулярности по длине периода:
+            // ≤ 31 день → группируем по дням (метки "dd.mm"),
+            // ≤ ~2 года → по месяцам ("Месяц" или "Месяц YYYY", если период пересекает года),
+            // больше → по месяцам с явным годом.
+            // Можно явно переопределить через ?granularity=day|month.
+            $rangeDays = $from->diffInDays($to) + 1;
+            $granularity = $request->query('granularity');
+            if (!in_array($granularity, ['day', 'month'], true)) {
+                $granularity = $rangeDays <= 31 ? 'day' : 'month';
+            }
 
             $stats = Order::query()
                 ->when($request->has(['from', 'to']), function ($query) use ($from, $to) {
@@ -48,20 +74,21 @@ class OrderStatsController extends Controller
                 ->get()
                 ->keyBy(fn($item) => $item->status->value);
 
-            // Получаем данные по месяцам и статусам
+            $bucketFormat = $granularity === 'day' ? '%Y-%m-%d' : '%Y-%m';
+
+            // Получаем данные по бакетам (день или месяц) и статусам
             $chartRawData = Order::query()
                 ->select([
-                    DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                    DB::raw("DATE_FORMAT(created_at, \"$bucketFormat\") as bucket"),
                     'status',
                     DB::raw('COUNT(*) as count')
                 ])
                 ->whereBetween('created_at', [$from, $to])
-                ->groupBy('month', 'status')
-                ->orderBy('month')
+                ->groupBy('bucket', 'status')
+                ->orderBy('bucket')
                 ->get();
 
             // Подготовка данных для графика — учитываем ВСЕ статусы из enum
-            $months = collect();
             $statuses = OrderStatus::values();
 
             $chartData = ['labels' => []];
@@ -69,25 +96,40 @@ class OrderStatsController extends Controller
                 $chartData[$status] = [];
             }
 
-            for ($date = clone $from; $date <= $to; $date->addMonth()) {
-                $months->push($date->format('Y-m'));
-            }
-
             Carbon::setLocale('ru');
 
-            $monthLabels = $months->map(fn($month) => Carbon::createFromFormat('Y-m', $month)->translatedFormat('F'))->toArray();
+            $buckets = collect();
+            $labels = [];
+            $crossYears = $from->year !== $to->year;
 
-            foreach ($months as $month) {
+            if ($granularity === 'day') {
+                for ($date = $from->copy()->startOfDay(); $date <= $to; $date->addDay()) {
+                    $buckets->push($date->format('Y-m-d'));
+                    $labels[] = $date->translatedFormat('d.m');
+                }
+            } else {
+                for ($date = $from->copy()->startOfMonth(); $date <= $to; $date->addMonth()) {
+                    $buckets->push($date->format('Y-m'));
+                    $labels[] = $crossYears
+                        ? $date->translatedFormat('F Y')
+                        : $date->translatedFormat('F');
+                }
+            }
+
+            foreach ($buckets as $bucket) {
                 foreach ($statuses as $status) {
                     $row = $chartRawData->first(fn($item) =>
-                        $item->month === $month && $item->status->value === $status
+                        $item->bucket === $bucket && $item->status->value === $status
                     );
 
                     $chartData[$status][] = (int)($row->count ?? 0);
                 }
             }
 
-            $chartData['labels'] = $monthLabels;
+            $chartData['labels'] = $labels;
+            $chartData['granularity'] = $granularity;
+            $chartData['from'] = $from->toDateString();
+            $chartData['to'] = $to->toDateString();
 
             // Формируем ответ по всем статусам + общий итог
             $response = [];

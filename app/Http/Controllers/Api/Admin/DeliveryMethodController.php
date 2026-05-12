@@ -110,10 +110,16 @@ class DeliveryMethodController extends Controller
 
     public function get_all_delivery_methods(Request $request)
     {
-        $delivery_methods = DeliveryMethod::query()
+        $query = DeliveryMethod::query()
             ->orderBy('id', 'asc')
-            ->select(['id', 'name', 'code as delivery_type_code', 'description'])
-            ->get();
+            ->select(['id', 'name', 'code as delivery_type_code', 'description', 'is_active']);
+
+        // Опциональный фильтр для витрины: только активные методы.
+        if ($request->boolean('active')) {
+            $query->where('is_active', true);
+        }
+
+        $delivery_methods = $query->get();
 
         return response()->json([
             'data' => $delivery_methods,

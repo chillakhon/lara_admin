@@ -17,6 +17,43 @@ class CreateOrderRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        // Fallback 1: если авторизованный клиент не прислал part полей (старая
+        // сборка фронта или JS-кэш), дотягиваем недостающие first_name/last_name/phone
+        // из его же профиля в БД — заказ всё равно оформляется на этого же клиента,
+        // дублировать ввод тех же данных на чекауте не требуется.
+        $user = $this->input('user');
+        if (! is_array($user)) {
+            $user = [];
+        }
+        $authUser = $this->user();
+        $profile = $authUser?->profile ?? null;
+        if ($profile) {
+            foreach (['first_name', 'last_name', 'middle_name', 'phone'] as $f) {
+                if (empty($user[$f]) && ! empty($profile->{$f})) {
+                    $user[$f] = $profile->{$f};
+                }
+            }
+        }
+        if ($authUser && empty($user['email']) && ! empty($authUser->email)) {
+            $user['email'] = $authUser->email;
+        }
+        $this->merge(['user' => $user]);
+
+        // Fallback 2: обратная совместимость со старыми клиентами фронта, которые
+        // шлют только `user` без отдельного `recipient`. В 99% случаев заказчик
+        // и получатель — один и тот же человек; копируем из user.
+        $recipient = $this->input('recipient');
+        if (! is_array($recipient) || $this->isRecipientEffectivelyEmpty($recipient)) {
+            $this->merge([
+                'recipient' => [
+                    'first_name' => $user['first_name'] ?? null,
+                    'last_name' => $user['last_name'] ?? null,
+                    'middle_name' => $user['middle_name'] ?? null,
+                    'phone' => $user['phone'] ?? null,
+                ],
+            ]);
+        }
+
         $items = $this->input('items', []);
         if (! is_array($items)) {
             return;
@@ -36,6 +73,17 @@ class CreateOrderRequest extends FormRequest
         }
 
         $this->merge(['items' => $normalized]);
+    }
+
+    private function isRecipientEffectivelyEmpty(array $recipient): bool
+    {
+        foreach (['first_name', 'last_name', 'phone'] as $f) {
+            if (! empty($recipient[$f])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function withValidator($validator): void

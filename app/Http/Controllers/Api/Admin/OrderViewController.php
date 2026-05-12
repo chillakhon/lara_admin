@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Client;
 use App\Models\Order;
 use App\Services\Order\OrderAuthorizationService;
 use App\Services\Order\OrderCreationService;
@@ -47,6 +48,8 @@ class OrderViewController extends Controller
             'tasks.status',
             'tasks.priority',
             'tasks.assignee.profile',
+            'assignedUser.profile',
+            'assignedUser.roles',
         ]);
 
         $summary = $this->orderCreationService->getOrderSummary($order);
@@ -90,7 +93,110 @@ class OrderViewController extends Controller
                 'prev_id' => $prevId,
                 'next_id' => $nextId,
             ],
+            'similar_clients' => $this->getSimilarClients($client),
         ]);
+    }
+
+    /**
+     * Ищет клиентов с совпадающими данными: телефон, email или ФИО.
+     * Используется для блока «Похожие клиенты» на странице заказа.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getSimilarClients(?Client $client): array
+    {
+        if (! $client) {
+            return [];
+        }
+
+        $profile = $client->profile;
+        $email = $client->email ? mb_strtolower(trim($client->email)) : null;
+        $phone = $profile?->phone;
+        $firstName = $profile?->first_name ? mb_strtolower(trim($profile->first_name)) : null;
+        $lastName = $profile?->last_name ? mb_strtolower(trim($profile->last_name)) : null;
+        $middleName = $profile?->middle_name ? mb_strtolower(trim($profile->middle_name)) : null;
+
+        $normalizedPhone = $phone ? preg_replace('/\D+/', '', $phone) : null;
+        if ($normalizedPhone === '') {
+            $normalizedPhone = null;
+        }
+
+        if (! $email && ! $normalizedPhone && (! $firstName || ! $lastName)) {
+            return [];
+        }
+
+        $candidates = Client::query()
+            ->with('profile')
+            ->where('id', '!=', $client->id)
+            ->where(function ($q) use ($email, $normalizedPhone, $firstName, $lastName) {
+                if ($email) {
+                    $q->orWhereRaw('LOWER(email) = ?', [$email]);
+                }
+                if ($normalizedPhone) {
+                    $q->orWhereHas('profile', function ($pq) use ($normalizedPhone) {
+                        $pq->whereRaw(
+                            "REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '') = ?",
+                            [$normalizedPhone],
+                        );
+                    });
+                }
+                if ($firstName && $lastName) {
+                    $q->orWhereHas('profile', function ($pq) use ($firstName, $lastName) {
+                        $pq->whereRaw('LOWER(TRIM(first_name)) = ?', [$firstName])
+                            ->whereRaw('LOWER(TRIM(last_name)) = ?', [$lastName]);
+                    });
+                }
+            })
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get();
+
+        return $candidates->map(function (Client $c) use ($email, $normalizedPhone, $firstName, $lastName, $middleName) {
+            $matchedBy = [];
+
+            $cEmail = $c->email ? mb_strtolower(trim($c->email)) : null;
+            if ($email && $cEmail === $email) {
+                $matchedBy[] = 'email';
+            }
+
+            $cPhone = $c->profile?->phone;
+            $cNormalizedPhone = $cPhone ? preg_replace('/\D+/', '', $cPhone) : null;
+            if ($normalizedPhone && $cNormalizedPhone === $normalizedPhone) {
+                $matchedBy[] = 'phone';
+            }
+
+            if ($firstName && $lastName && $c->profile) {
+                $sameFirst = mb_strtolower(trim((string) $c->profile->first_name)) === $firstName;
+                $sameLast = mb_strtolower(trim((string) $c->profile->last_name)) === $lastName;
+                if ($sameFirst && $sameLast) {
+                    if ($middleName) {
+                        $cMiddle = mb_strtolower(trim((string) $c->profile->middle_name));
+                        if ($cMiddle === $middleName) {
+                            $matchedBy[] = 'name';
+                        }
+                    } else {
+                        $matchedBy[] = 'name';
+                    }
+                }
+            }
+
+            $fullName = trim(implode(' ', array_filter([
+                $c->profile?->last_name,
+                $c->profile?->first_name,
+                $c->profile?->middle_name,
+            ])));
+
+            return [
+                'id' => $c->id,
+                'email' => $c->email,
+                'phone' => $cPhone,
+                'full_name' => $fullName,
+                'matched_by' => $matchedBy,
+            ];
+        })
+            ->filter(fn ($row) => ! empty($row['matched_by']))
+            ->values()
+            ->all();
     }
 
     /**

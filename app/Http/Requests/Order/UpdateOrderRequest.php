@@ -73,8 +73,15 @@ class UpdateOrderRequest extends FormRequest
             'status' => 'nullable|string|in:'.implode(',', \App\Enums\OrderStatus::values()),
             'payment_status' => 'nullable|string|in:'.implode(',', \App\Enums\PaymentStatus::values()),
 
+            // Дата оплаты (можно править вручную из админки)
+            'paid_at' => 'nullable|date',
+
             // Промокод (купон). Пустая строка/null = снять купон.
             'promo_code' => 'nullable|string|max:50',
+
+            // Прикреплённый менеджер (пользователь из раздела «Роли»).
+            // null = открепить менеджера от заказа.
+            'assigned_user_id' => 'nullable|integer|exists:users,id',
         ];
     }
 

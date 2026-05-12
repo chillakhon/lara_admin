@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\Admin\GiftCard\GiftCardController;
 use App\Http\Controllers\Api\Admin\MoySkladController;
 use App\Http\Controllers\Api\Admin\NotificationController;
 use App\Http\Controllers\Api\Admin\OrderController;
+use App\Http\Controllers\Api\Public\Order\PublicOrderController;
 use App\Http\Controllers\Api\Admin\OrderStatsController;
 use App\Http\Controllers\Api\Admin\OrderViewController;
 use App\Http\Controllers\Api\Admin\OtoBanner\OtoBannerAnalyticsController;
@@ -170,6 +171,11 @@ Route::prefix('/public')->group(function () {
             ->name('track');
 
     });
+
+    // Публичный просмотр заказа по view_token (используется на витрине /orders/{token})
+    Route::get('/orders/{viewToken}', [PublicOrderController::class, 'show'])
+        ->where('viewToken', '[a-f0-9]{32}')
+        ->name('public.orders.show');
 
 });
 
@@ -508,6 +514,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Получить список всех разговоров (чатов)
         Route::get('/', [ConversationController::class, 'index']);
 
+        // Получить все диалоги клиента (для inline-чата на карточке заказа).
+        // Ищет по client_id и пытается подобрать «анонимные» диалоги по
+        // email / телефону (если внешний ID источника содержит контакты).
+        Route::get('/by-client/{client}', [ConversationController::class, 'byClient']);
+
         // Получить подробную информацию о конкретном разговоре по его ID, включая сообщения и участников
         Route::get('/{conversation}', [ConversationController::class, 'show']);
 
@@ -727,6 +738,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{order}/cancel', [OrderController::class, 'cancel'])->name('cancel');
         Route::post('/{order}/items', [OrderController::class, 'addItems'])->name('add-items');
         Route::delete('/{order}/items/{item}', [OrderController::class, 'removeItem'])->name('remove-item');
+        Route::post('/{order}/send-email', [OrderController::class, 'sendEmail'])->name('send-email');
 
         // DeliveryMethodController
         Route::get('/delivery-methods', [DeliveryMethodController::class, 'index']);

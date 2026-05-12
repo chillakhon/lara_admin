@@ -285,6 +285,9 @@ class OrderImportService
                     if (!$order) {
                         $isNew = true;
                         $order = new Order();
+                        // Публичный токен для /orders/{token}; генерим только для
+                        // новых, чтобы не ломать существующие ссылки при reimport.
+                        $payload['view_token'] = $this->generateViewToken();
                         // forceFill, чтобы сохранить created_at/updated_at из CSV
                         // (они не в $fillable, и Eloquent::create их отбросил бы).
                         $order->forceFill($payload);
@@ -346,6 +349,18 @@ class OrderImportService
         }
 
         return $stats;
+    }
+
+    /**
+     * Уникальный 32-символьный hex-токен для публичной ссылки /orders/{token}.
+     */
+    protected function generateViewToken(): string
+    {
+        do {
+            $token = bin2hex(random_bytes(16));
+        } while (Order::where('view_token', $token)->exists());
+
+        return $token;
     }
 
     /**

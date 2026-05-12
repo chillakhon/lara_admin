@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Helpers\PaginationHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Conversation\ConversationResource;
+use App\Models\Client;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -94,6 +95,89 @@ class ConversationController extends Controller
         return response()->json([
             'data' => $conversations->items(),
             'meta' => PaginationHelper::format($conversations)
+        ]);
+    }
+
+    /**
+     * Все диалоги конкретного клиента — для inline-чата на странице заказа.
+     *
+     * Ищет диалоги двумя способами:
+     *   1) По прямой привязке `conversations.client_id`.
+     *   2) «Анонимные» диалоги без client_id, у которых external_id источника
+     *      совпадает с email клиента (source=email) или с его телефоном
+     *      (source=whatsapp / vk / telegram / max — там external_id обычно
+     *      хранит номер или username). Такие диалоги автоматически
+     *      привязываются к клиенту (UPDATE client_id), чтобы в следующий
+     *      раз не нужно было их искать.
+     */
+    public function byClient(Client $client)
+    {
+        $client->loadMissing('profile');
+
+        // 1) Прямая привязка
+        $direct = Conversation::query()
+            ->where('client_id', $client->id)
+            ->get(['id']);
+
+        // 2) Подбор анонимных диалогов по контактам клиента.
+        $email = $client->email ? mb_strtolower(trim($client->email)) : null;
+        $phoneDigits = $client->profile?->phone
+            ? preg_replace('/\D+/', '', $client->profile->phone)
+            : null;
+        if ($phoneDigits === '') {
+            $phoneDigits = null;
+        }
+
+        $matched = collect();
+        if ($email || $phoneDigits) {
+            $matched = Conversation::query()
+                ->whereNull('client_id')
+                ->where(function ($q) use ($email, $phoneDigits) {
+                    if ($email) {
+                        $q->orWhere(function ($qq) use ($email) {
+                            $qq->where('source', 'email')
+                                ->whereRaw('LOWER(external_id) = ?', [$email]);
+                        });
+                    }
+                    if ($phoneDigits) {
+                        // Для whatsapp/vk/telegram/max external_id содержит цифры номера
+                        // (whatsapp: '79991234567@c.us', vk/telegram/max: '79991234567').
+                        // Сравниваем по «хвосту» цифр — 10 последних разрядов российского номера.
+                        $tail = substr($phoneDigits, -10);
+                        if (strlen($tail) >= 7) {
+                            $q->orWhere(function ($qq) use ($tail) {
+                                $qq->whereIn('source', ['whatsapp', 'vk', 'telegram', 'max'])
+                                    ->where('external_id', 'like', "%{$tail}%");
+                            });
+                        }
+                    }
+                })
+                ->get(['id']);
+        }
+
+        // Автоматически привязываем найденные «анонимные» диалоги к клиенту,
+        // чтобы дальнейшая логика (например, /conversations) их видела.
+        if ($matched->isNotEmpty()) {
+            Conversation::query()
+                ->whereIn('id', $matched->pluck('id'))
+                ->update(['client_id' => $client->id]);
+        }
+
+        $ids = $direct->pluck('id')->merge($matched->pluck('id'))->unique();
+
+        $conversations = Conversation::query()
+            ->whereIn('id', $ids)
+            ->with([
+                'lastMessage',
+                'client.profile',
+                'assignedUser',
+            ])
+            ->orderByDesc('last_message_at')
+            ->orderByDesc('id')
+            ->get();
+
+        return response()->json([
+            'data' => $conversations,
         ]);
     }
 

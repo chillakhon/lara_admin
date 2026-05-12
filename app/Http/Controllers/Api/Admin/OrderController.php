@@ -24,14 +24,18 @@ use App\Services\Order\OrderItemService;
 use App\Services\Order\OrderUpdateService;
 use App\Services\Order\OrderValidationService;
 use App\Services\PromoCode\PromoCodeValidationService;
+use App\Traits\HelperTrait;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
+    use HelperTrait;
+
     public function __construct(
         protected OrderValidationService $orderValidationService,
         protected OrderCreationService $orderCreationService,
@@ -103,6 +107,8 @@ class OrderController extends Controller
             'address',
             'deliveryMethod',
             'deliveryTarget',
+            'assignedUser.profile',
+            'assignedUser.roles',
         ]);
 
         $summary = $this->orderCreationService->getOrderSummary($order);
@@ -493,7 +499,7 @@ class OrderController extends Controller
 
             DB::commit();
 
-            $order->load(['items.product', 'items.variant', 'promoCode', 'client']);
+            $order->load(['items.product', 'items.variant', 'promoCode', 'client', 'assignedUser.profile', 'assignedUser.roles']);
 
             return $this->successResponse(
                 'Заказ успешно обновлён',
@@ -753,6 +759,153 @@ class OrderController extends Controller
     private function validatePromoCode(string $code, $client): array
     {
         return $this->promoValidationService->validate($code, $client);
+    }
+
+    /**
+     * Отправить клиенту шаблонное письмо с инфой о заказе.
+     * Получатель: order->client->email. Отправитель: from_address из MailSetting.
+     */
+    public function sendEmail(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->orderAuthorizationService->canView($user, $order)) {
+            return $this->errorResponse('Доступ запрещён', 403);
+        }
+
+        $order->loadMissing([
+            'items.product.images',
+            'items.variant.images',
+            'items.color',
+            'client.profile',
+            'address',
+            'deliveryMethod',
+            'deliveryTarget',
+            'promoCode',
+            'promotion',
+        ]);
+
+        $email = $order->client?->email;
+        if (! $email) {
+            return $this->errorResponse('У клиента не указан email', 422);
+        }
+
+        try {
+            $this->applyMailSettings();
+        } catch (\Throwable $e) {
+            Log::error('Mail settings not configured', ['error' => $e->getMessage()]);
+            return $this->errorResponse('Настройки почты не сконфигурированы', 500);
+        }
+
+        $profile = $order->client?->profile;
+        // По примеру InSales — только имя в "Здравствуйте, {имя}!", без фамилии.
+        $customerName = $profile?->first_name
+            ?: $order->first_name
+            ?: null;
+
+        $subtotal = $order->items->sum(function ($item) {
+            $unitPrice = (float) ($item->unit_price ?? $item->price ?? 0);
+            return $unitPrice * (int) $item->quantity;
+        });
+
+        $discountAmount =
+            (float) ($order->discount_amount ?? 0)
+            + (float) ($order->total_promo_discount ?? 0)
+            + (float) ($order->total_items_discount ?? 0);
+
+        $discountLabel = $order->promoCode?->code
+            ?? $order->promotion?->name
+            ?? null;
+
+        $address = $order->address;
+        $deliveryAddress = null;
+        if ($address) {
+            $deliveryAddress = trim(implode(', ', array_filter([
+                $address->country,
+                $address->region,
+                $address->city,
+                $address->address,
+            ])));
+        }
+
+        $deliveryMethodName = $order->deliveryMethod?->name ?? $order->legacy_delivery_method ?? null;
+        $deliveryTargetName = $order->deliveryTarget?->name ?? null;
+        $deliveryMethodLine = $deliveryMethodName && $deliveryTargetName && $deliveryMethodName !== $deliveryTargetName
+            ? "{$deliveryMethodName} ({$deliveryTargetName})"
+            : ($deliveryMethodName ?: $deliveryTargetName);
+
+        $paymentMethodLabels = [
+            'card' => 'Оплата картой РФ',
+            'card_ru' => 'Оплата картой РФ',
+            'yookassa' => 'Оплата картой РФ',
+            'yandex_pay' => 'Yandex Pay',
+            'cash' => 'Наличные при получении',
+            'cod' => 'Наложенный платёж',
+            'sbp' => 'СБП',
+            'bank_transfer' => 'Банковский перевод',
+        ];
+        $paymentMethodLabel = $order->payment_method
+            ? ($paymentMethodLabels[$order->payment_method] ?? $order->payment_method)
+            : null;
+
+        $paymentStatusLabel = method_exists($order->payment_status, 'label')
+            ? $order->payment_status->label()
+            : (string) $order->payment_status;
+
+        $frontendUrl = rtrim((string) config('app.frontend_url'), '/');
+        $viewOrderUrl = $order->view_token && $frontendUrl
+            ? $frontendUrl.'/orders/'.$order->view_token
+            : null;
+
+        $messengerLinks = [];
+        if ($order->view_token) {
+            $messengerLinks[] = [
+                'label' => 'Telegram',
+                'url' => 'tg://resolve?domain=again8help_bot&start='.$order->view_token,
+            ];
+        }
+
+        try {
+            $subject = 'Заказ № '.($order->order_number ?? $order->id);
+
+            Mail::send(
+                'emails.order-receipt',
+                [
+                    'order' => $order,
+                    'customerName' => $customerName,
+                    'subtotal' => $subtotal,
+                    'discountAmount' => $discountAmount,
+                    'discountLabel' => $discountLabel,
+                    'deliveryAddress' => $deliveryAddress,
+                    'deliveryMethodLine' => $deliveryMethodLine,
+                    'paymentMethodLabel' => $paymentMethodLabel,
+                    'paymentStatusLabel' => $paymentStatusLabel,
+                    'viewOrderUrl' => $viewOrderUrl,
+                    'messengerLinks' => $messengerLinks,
+                    'shopName' => config('app.name'),
+                    'shopUrl' => $frontendUrl ?: config('app.url'),
+                    'contactPhone' => '+7 999 117-88-88',
+                ],
+                function ($message) use ($email, $subject) {
+                    $message->to($email)->subject($subject);
+                }
+            );
+
+            Log::info('Order receipt email sent', [
+                'order_id' => $order->id,
+                'to' => $email,
+                'by_user_id' => $user?->id,
+            ]);
+
+            return $this->successResponse('Письмо отправлено на '.$email);
+        } catch (\Throwable $e) {
+            Log::error('Failed to send order receipt email', [
+                'order_id' => $order->id,
+                'to' => $email,
+                'error' => $e->getMessage(),
+            ]);
+            return $this->errorResponse('Не удалось отправить письмо: '.$e->getMessage(), 500);
+        }
     }
 
     /**
