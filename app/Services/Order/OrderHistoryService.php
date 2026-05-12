@@ -37,6 +37,7 @@ class OrderHistoryService
         'delivery_method_id' => 'Способ доставки',
         'delivery_cost' => 'Стоимость доставки',
         'notes' => 'Комментарий',
+        'assigned_user_id' => 'Менеджер',
     ];
 
     public function logCreated(Order $order): void
@@ -139,6 +140,14 @@ class OrderHistoryService
         if ($field === 'delivery_method_id') {
             $method = \App\Models\DeliveryMethod::find($value);
             return $method?->name ?? (string) $value;
+        }
+
+        if ($field === 'assigned_user_id') {
+            $user = \App\Models\User::with('profile')->find($value);
+            if (! $user) {
+                return (string) $value;
+            }
+            return $user->get_full_name() ?: ($user->email ?? (string) $value);
         }
 
         if (in_array($field, ['total_amount', 'delivery_cost'], true)) {

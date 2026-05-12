@@ -2,21 +2,22 @@
 
 namespace App\Console\Commands\Import;
 
-use App\Services\Import\ClientImportService;
+use App\Services\Import\OrderImportService;
 use Illuminate\Console\Command;
 
-class ImportClientsFromCsv extends Command
+class ImportOrdersFromCsv extends Command
 {
-    protected $signature = 'import:clients
+    protected $signature = 'import:orders
         {file : Путь к CSV (UTF-8/UTF-16LE с BOM, tab-разделитель, формат InSales)}
-        {--limit=0 : Максимум клиентов (0 = без лимита)}
+        {--limit=0 : Максимум заказов (0 = без лимита)}
         {--dry-run : Только показать статистику, без записи в БД}
-        {--no-overwrite : Не переписывать существующих клиентов}
-        {--memory=1024M : memory_limit на время выполнения}';
+        {--no-overwrite : Не переписывать существующие заказы}
+        {--no-history : Не импортировать историю изменений}
+        {--memory=2048M : memory_limit на время выполнения}';
 
-    protected $description = 'Импортировать клиентов из CSV-выгрузки InSales';
+    protected $description = 'Импортировать заказы из CSV-выгрузки InSales (orders-DD.MM.YYYY.csv)';
 
-    public function handle(ClientImportService $service): int
+    public function handle(OrderImportService $service): int
     {
         $file = (string) $this->argument('file');
         if (!is_file($file) || !is_readable($file)) {
@@ -28,7 +29,7 @@ class ImportClientsFromCsv extends Command
         @ini_set('memory_limit', (string) $this->option('memory'));
 
         $this->info(sprintf(
-            'Импорт клиентов: %s (%s МБ)%s',
+            'Импорт заказов: %s (%s МБ)%s',
             $file,
             number_format(filesize($file) / 1024 / 1024, 1),
             $this->option('dry-run') ? ' — DRY RUN' : '',
@@ -39,6 +40,7 @@ class ImportClientsFromCsv extends Command
             'limit' => (int) $this->option('limit'),
             'dry_run' => (bool) $this->option('dry-run'),
             'overwrite' => !$this->option('no-overwrite'),
+            'import_history' => !$this->option('no-history'),
         ]);
         $stats['duration_sec'] = round(microtime(true) - $start, 2);
         $stats['peak_memory_mb'] = round(memory_get_peak_usage(true) / 1024 / 1024, 1);
@@ -56,7 +58,7 @@ class ImportClientsFromCsv extends Command
         if (!empty($stats['errors_list'])) {
             $this->warn('Ошибки (первые ' . count($stats['errors_list']) . '):');
             foreach ($stats['errors_list'] as $e) {
-                $this->line(' - ' . json_encode($e, JSON_UNESCAPED_UNICODE));
+                $this->line(" - #{$e['order_number']}: {$e['error']}");
             }
         }
 

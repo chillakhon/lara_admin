@@ -18,6 +18,7 @@ class Order extends Model
 
     protected $fillable = [
         'order_number',
+        'view_token',
         'client_id',
         'lead_id',
         'status',
@@ -197,6 +198,14 @@ class Order extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Менеджер, прикреплённый к заказу (пользователь из admin-панели).
+     */
+    public function assignedUser(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'assigned_user_id');
     }
 
     public function lead()
