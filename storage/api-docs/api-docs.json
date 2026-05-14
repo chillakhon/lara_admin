@@ -1,0 +1,1428 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "API Documentation",
+        "description": "API Documentation",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000/api/v1",
+            "description": "Local server"
+        }
+    ],
+    "components": {
+        "schemas": {
+            "Category": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Client": {
+                "required": [
+                    "id",
+                    "user_id",
+                    "bonus_balance",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier of the client",
+                        "type": "integer"
+                    },
+                    "user_id": {
+                        "description": "ID of the associated user",
+                        "type": "integer"
+                    },
+                    "client_level_id": {
+                        "description": "ID of the client's level",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "bonus_balance": {
+                        "description": "The bonus balance of the client",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "created_at": {
+                        "description": "Timestamp when the client was created",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Timestamp when the client was last updated",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "description": "Timestamp when the client was deleted, null if not deleted",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ClientLevel": {
+                "required": [
+                    "name",
+                    "threshold",
+                    "calculation_type",
+                    "discount_percentage"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "ID of the client level",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "description": "Name of the client level",
+                        "type": "string"
+                    },
+                    "threshold": {
+                        "description": "Threshold for the client level",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "calculation_type": {
+                        "description": "Calculation type for the client level",
+                        "type": "string",
+                        "enum": [
+                            "order_count",
+                            "order_sum"
+                        ]
+                    },
+                    "discount_percentage": {
+                        "description": "Discount percentage for the client level",
+                        "type": "number",
+                        "format": "float"
+                    }
+                },
+                "type": "object"
+            },
+            "CostCategory": {
+                "required": [
+                    "id",
+                    "name",
+                    "type",
+                    "is_active",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier of the cost category",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "description": "Name of the cost category",
+                        "type": "string"
+                    },
+                    "type": {
+                        "description": "Type of the cost category (e.g., 'Material', 'Labor', etc.)",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "Description of the cost category",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "description": "Whether the cost category is active",
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "description": "Timestamp when the cost category was created",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Timestamp when the cost category was last updated",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Image": {
+                "title": "Image",
+                "required": [
+                    "path",
+                    "url",
+                    "is_main",
+                    "order"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "path": {
+                        "description": "Относительный путь к изображению на сервере",
+                        "type": "string",
+                        "example": "product_images/1/abc123.jpg"
+                    },
+                    "url": {
+                        "description": "Полный URL для доступа к изображению",
+                        "type": "string",
+                        "example": "https://example.com/storage/product_images/1/abc123.jpg"
+                    },
+                    "is_main": {
+                        "description": "Флаг, указывающий, является ли изображение основным",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "order": {
+                        "description": "Порядок сортировки изображения",
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "Material": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "unit_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Option": {
+                "description": "Модель опции",
+                "properties": {
+                    "id": {
+                        "description": "ID опции",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Название опции",
+                        "type": "string",
+                        "example": "Цвет"
+                    },
+                    "type": {
+                        "description": "Тип опции",
+                        "type": "string",
+                        "example": "select"
+                    },
+                    "category_id": {
+                        "description": "ID категории, к которой принадлежит опция",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_required": {
+                        "description": "Обязательная ли опция",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "order": {
+                        "description": "Порядок сортировки",
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "created_at": {
+                        "description": "Дата и время создания",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-10-01T12:00:00Z"
+                    },
+                    "updated_at": {
+                        "description": "Дата и время обновления",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-10-01T12:00:00Z"
+                    },
+                    "deleted_at": {
+                        "description": "Дата и время удаления (если опция удалена)",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-10-01T12:00:00Z",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Product": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "simple",
+                            "manufactured",
+                            "composite"
+                        ]
+                    },
+                    "default_unit_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "has_variants": {
+                        "type": "boolean"
+                    },
+                    "allow_preorder": {
+                        "type": "boolean"
+                    },
+                    "after_purchase_processing_time": {
+                        "type": "integer"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "cost_price": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "stock_quantity": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "min_order_quantity": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "max_order_quantity": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "is_featured": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "is_new": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "discount_price": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "sku": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "currency": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "barcode": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "weight": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "length": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "width": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "height": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Category"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ProductionBatch": {
+                "required": [
+                    "id",
+                    "batch_number",
+                    "recipe_id",
+                    "product_variant_id",
+                    "planned_quantity",
+                    "status",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier for the production batch",
+                        "type": "integer"
+                    },
+                    "batch_number": {
+                        "description": "The batch number",
+                        "type": "string"
+                    },
+                    "recipe_id": {
+                        "description": "ID of the associated recipe",
+                        "type": "integer"
+                    },
+                    "product_variant_id": {
+                        "description": "ID of the associated product variant",
+                        "type": "integer"
+                    },
+                    "planned_quantity": {
+                        "description": "The planned quantity for the production batch",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "actual_quantity": {
+                        "description": "The actual quantity produced",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "status": {
+                        "description": "The status of the production batch",
+                        "type": "string",
+                        "enum": [
+                            "planned",
+                            "pending",
+                            "in_progress",
+                            "completed",
+                            "cancelled",
+                            "failed"
+                        ]
+                    },
+                    "unit_cost": {
+                        "description": "The unit cost of production",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "total_material_cost": {
+                        "description": "The total cost of materials used in the production batch",
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "additional_costs": {
+                        "description": "Any additional costs for the production batch",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "planned_start_date": {
+                        "description": "Planned start date for the production batch",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "planned_end_date": {
+                        "description": "Planned end date for the production batch",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "started_at": {
+                        "description": "Actual start date of the production batch",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "completed_at": {
+                        "description": "Actual completion date of the production batch",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_by": {
+                        "description": "ID of the user who created the production batch",
+                        "type": "integer"
+                    },
+                    "completed_by": {
+                        "description": "ID of the user who completed the production batch",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "description": "Additional notes for the production batch",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Timestamp when the production batch was created",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Timestamp when the production batch was last updated",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "description": "Timestamp when the production batch was deleted",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProductionBatchCost": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "production_batch_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "cost_category_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Recipe": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "output_quantity": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "output_unit_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "instructions": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "production_time": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "created_by": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RecipeCostRate": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "recipe_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "cost_category_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "rate_per_unit": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "fixed_rate": {
+                        "type": "number",
+                        "format": "float",
+                        "default": 0
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "RecipeItem": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "recipe_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "component_type": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "component_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "quantity": {
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "unit_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "waste_percentage": {
+                        "type": "number",
+                        "format": "float",
+                        "default": 0
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "default": 0
+                    },
+                    "notes": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Review": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 14
+                    },
+                    "content": {
+                        "type": "string",
+                        "example": "Отличный продукт!"
+                    },
+                    "rating": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "is_verified": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_published": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-04-09T12:00:00Z",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-04-09T11:22:00Z"
+                    },
+                    "status": {
+                        "description": "Статус отзыва: 'new' (новый) или 'published' (опубликован)",
+                        "type": "string",
+                        "enum": [
+                            "new",
+                            "published"
+                        ],
+                        "example": "published"
+                    },
+                    "client": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 11
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Super Admin"
+                            },
+                            "email": {
+                                "type": "string",
+                                "example": "superadmin@example.com"
+                            },
+                            "avatar": {
+                                "type": "string",
+                                "example": null,
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "reviewable": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "type": {
+                                "type": "string",
+                                "example": "Product"
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Product Name"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "attributes": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 23
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "Качество"
+                                },
+                                "rating": {
+                                    "type": "integer",
+                                    "example": 5
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "responses": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "content": {
+                                    "type": "string",
+                                    "example": "Спасибо за отзыв!"
+                                },
+                                "created_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "example": "2025-04-09T12:30:00Z"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "url": {
+                                    "type": "string",
+                                    "example": "http://127.0.0.1:8000/storage/reviews/image1.jpg"
+                                },
+                                "thumbnail": {
+                                    "type": "string",
+                                    "example": "http://127.0.0.1:8000/storage/reviews/thumb1.jpg"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "Shipment": {
+                "required": [
+                    "order_id",
+                    "delivery_method_id",
+                    "status_id",
+                    "tracking_number",
+                    "shipping_date",
+                    "recipient_name",
+                    "recipient_phone",
+                    "weight",
+                    "cost"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Уникальный идентификатор отправления",
+                        "type": "integer"
+                    },
+                    "order_id": {
+                        "description": "Идентификатор заказа, с которым связано отправление",
+                        "type": "integer"
+                    },
+                    "delivery_method_id": {
+                        "description": "Идентификатор метода доставки",
+                        "type": "integer"
+                    },
+                    "status_id": {
+                        "description": "Идентификатор статуса отправления",
+                        "type": "integer"
+                    },
+                    "tracking_number": {
+                        "description": "Номер отслеживания отправления",
+                        "type": "string"
+                    },
+                    "provider_data": {
+                        "description": "Данные провайдера доставки",
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "shipping_date": {
+                        "description": "Дата отправки",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "estimated_delivery_date": {
+                        "description": "Предполагаемая дата доставки",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "actual_delivery_date": {
+                        "description": "Фактическая дата доставки",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "shipping_address": {
+                        "description": "Адрес отправки",
+                        "type": "string"
+                    },
+                    "recipient_name": {
+                        "description": "Имя получателя",
+                        "type": "string"
+                    },
+                    "recipient_phone": {
+                        "description": "Телефон получателя",
+                        "type": "string"
+                    },
+                    "weight": {
+                        "description": "Вес отправления",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "dimensions": {
+                        "description": "Габариты отправления",
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "cost": {
+                        "description": "Стоимость отправления",
+                        "type": "number",
+                        "format": "float"
+                    },
+                    "notes": {
+                        "description": "Примечания к отправлению",
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "description": "Дата и время создания отправления",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Дата и время последнего обновления отправления",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ShipmentStatus": {
+                "required": [
+                    "code",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Уникальный идентификатор статуса доставки",
+                        "type": "integer"
+                    },
+                    "code": {
+                        "description": "Код статуса доставки (например, 'new', 'processing')",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "Название статуса доставки",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "Описание статуса доставки",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Дата и время создания статуса",
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "description": "Дата и время последнего обновления статуса",
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Task": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Исправить баг в API"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Не работает эндпоинт /tasks/create",
+                        "nullable": true
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/TaskStatus"
+                    },
+                    "priority": {
+                        "$ref": "#/components/schemas/TaskPriority"
+                    },
+                    "creator": {
+                        "$ref": "#/components/schemas/User"
+                    },
+                    "assignee": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/User"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "parent_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "nullable": true
+                    },
+                    "due_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-12-31T23:59:59Z",
+                        "nullable": true
+                    },
+                    "started_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "completed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "estimated_time": {
+                        "type": "integer",
+                        "example": 120
+                    },
+                    "spent_time": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "deleted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "labels": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TaskLabel"
+                        }
+                    },
+                    "comments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TaskComment"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "TaskComment": {
+                "description": "Комментарий к задаче",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "task_id": {
+                        "description": "ID связанной задачи",
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 123
+                    },
+                    "user_id": {
+                        "description": "ID автора комментария",
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 456
+                    },
+                    "content": {
+                        "description": "Текст комментария",
+                        "type": "string",
+                        "example": "Этот баг нужно исправить в первую очередь!"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T12:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T12:00:00Z"
+                    },
+                    "deleted_at": {
+                        "description": "Дата мягкого удаления",
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/User"
+                    }
+                },
+                "type": "object"
+            },
+            "TaskHistory": {
+                "description": "История изменений задачи",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "task_id": {
+                        "description": "ID задачи",
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 123
+                    },
+                    "user_id": {
+                        "description": "ID пользователя, внесшего изменение",
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 456
+                    },
+                    "field": {
+                        "description": "Название измененного поля",
+                        "type": "string",
+                        "example": "status"
+                    },
+                    "old_value": {
+                        "description": "Старое значение поля",
+                        "type": "string",
+                        "example": "pending",
+                        "nullable": true
+                    },
+                    "new_value": {
+                        "description": "Новое значение поля",
+                        "type": "string",
+                        "example": "completed",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T12:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T12:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "TaskLabel": {
+                "description": "Метка задачи",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Баг"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "bug"
+                    },
+                    "color": {
+                        "description": "HEX-код цвета метки",
+                        "type": "string",
+                        "example": "#6B7280"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-02T12:34:56Z"
+                    }
+                },
+                "type": "object"
+            },
+            "TaskPriority": {
+                "description": "Приоритет задачи",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Высокий"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "high"
+                    },
+                    "color": {
+                        "description": "HEX-код цвета приоритета",
+                        "type": "string",
+                        "example": "#6B7280"
+                    },
+                    "level": {
+                        "description": "Уровень приоритета (чем выше число - тем выше приоритет)",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-02T12:34:56Z"
+                    }
+                },
+                "type": "object"
+            },
+            "TaskStatus": {
+                "description": "Статус задачи",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "В работе"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "in-progress"
+                    },
+                    "color": {
+                        "description": "HEX-код цвета статуса",
+                        "type": "string",
+                        "example": "#6B7280"
+                    },
+                    "order": {
+                        "description": "Порядок сортировки",
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "is_default": {
+                        "description": "Является ли статусом по умолчанию",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-02T12:34:56Z"
+                    }
+                },
+                "type": "object"
+            },
+            "Unit": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "abbreviation": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "description": "Описание",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "user@example.com"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-10-01T12:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2023-10-01T12:00:00Z"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Clients",
+            "description": "API для управления клиентами"
+        },
+        {
+            "name": "Options",
+            "description": "API для управления опциями"
+        },
+        {
+            "name": "Categories",
+            "description": "Categories"
+        },
+        {
+            "name": "ClientLevels",
+            "description": "ClientLevels"
+        },
+        {
+            "name": "Cost Categories",
+            "description": "Cost Categories"
+        },
+        {
+            "name": "Inventory",
+            "description": "Inventory"
+        },
+        {
+            "name": "Materials",
+            "description": "Materials"
+        },
+        {
+            "name": "Orders",
+            "description": "Orders"
+        },
+        {
+            "name": "Products",
+            "description": "Products"
+        },
+        {
+            "name": "Product Variants",
+            "description": "Product Variants"
+        },
+        {
+            "name": "Product Images",
+            "description": "Product Images"
+        },
+        {
+            "name": "Production",
+            "description": "Production"
+        },
+        {
+            "name": "Promo Codes",
+            "description": "Promo Codes"
+        },
+        {
+            "name": "Recipes",
+            "description": "Recipes"
+        },
+        {
+            "name": "Reviews",
+            "description": "Reviews"
+        },
+        {
+            "name": "Shipments",
+            "description": "Shipments"
+        },
+        {
+            "name": "Task Attachments",
+            "description": "Task Attachments"
+        },
+        {
+            "name": "Task Comments",
+            "description": "Task Comments"
+        },
+        {
+            "name": "Tasks",
+            "description": "Tasks"
+        },
+        {
+            "name": "Units",
+            "description": "Units"
+        },
+        {
+            "name": "Authentication",
+            "description": "Authentication"
+        }
+    ],
+    "paths": {}
+}

@@ -1,0 +1,449 @@
+<?php
+
+namespace App\Http\Controllers\Api\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Client\ClientResource;
+use App\Models\Client;
+use App\Traits\ClientControllerTrait;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+
+
+class ClientController extends Controller
+{
+    use ClientControllerTrait;
+
+    public function index(Request $request)
+    {
+        $query = Client::with(['level'])
+            ->whereNull('deleted_at')
+            ->withCount('orders')
+            ->when($request->search, function ($query, $search) {
+                // Нормализованная версия для поиска по телефону:
+                // оставляем только цифры, чтобы строки вида "+7 (912) 345-67-89"
+                // совпадали с тем, что хранится в БД ("+79123456789", "89123456789", и т.п.).
+                $digits = preg_replace('/\D+/', '', (string) $search);
+
+                $query->where(function ($q) use ($search, $digits) {
+                    $q->whereHas('profile', function ($q) use ($search, $digits) {
+                        $q->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+
+                        if ($digits !== '') {
+                            $q->orWhereRaw(
+                                "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(phone, ''), '+', ''), ' ', ''), '(', ''), ')', ''), '-', ''), '.', '') LIKE ?",
+                                ["%{$digits}%"]
+                            );
+                        }
+                    })->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->when($request->level, function ($query, $level) {
+                $query->where('client_level_id', $level);
+            })
+            ->when($request->status, function ($query, $status) {
+                switch ($status) {
+                    case 'active':
+                        $query->whereNotNull('email_verified_at');
+                        break;
+                    case 'inactive':
+                        $query->whereNull('email_verified_at');
+                        break;
+                }
+            })
+            ->when($request->birth_date_from || $request->birth_date_to, function ($query) use ($request) {
+                $query->whereHas('profile', function ($q) use ($request) {
+                    if ($request->birth_date_from && $request->birth_date_to) {
+                        // если есть обе даты — используем диапазон
+                        $q->whereBetween('birthday', [$request->birth_date_from, $request->birth_date_to]);
+                    } elseif ($request->birth_date_from) {
+                        // только с какой даты
+                        $q->where('birthday', '>=', $request->birth_date_from);
+                    } elseif ($request->birth_date_to) {
+                        // только до какой даты
+                        $q->where('birthday', '<=', $request->birth_date_to);
+                    }
+                });
+            })
+            ->when($request->sort, function ($query, $sort) {
+                [$column, $direction] = explode(',', $sort);
+                $query->orderBy($column, $direction);
+            }, function ($query) {
+                $query->latest();
+            });
+
+        $clients = $query->paginate($request->get('per_page'), 10)
+            ->through(function ($client) {
+                return [
+                    'id' => $client->id,
+                    'email' => $client?->email,
+                    'verified_at' => $client?->verified_at,
+                    'full_name' => $client?->profile?->first_name . ' ' . $client->profile?->last_name,
+                    'profile' => [
+                        'first_name' => $client?->profile?->first_name,
+                        'last_name' => $client?->profile?->last_name,
+                        'full_name' => $client?->profile?->full_name,
+                        'birthday' => $client?->profile?->birthday,
+                        'phone' => $client?->profile?->phone,
+                        'address' => $client?->profile?->address,
+                    ],
+                    'phone' => $client?->profile?->phone,
+                    'address' => $client?->profile?->address,
+                    'bonus_balance' => $client->bonus_balance,
+                    'level' => $client->level,
+                    'orders_count' => $client->orders_count,
+                    'created_at' => $client->created_at,
+                ];
+            })
+            ->withQueryString();
+
+
+        return response()->json([
+            'clients' => $clients,
+        ]);
+    }
+
+
+    public function update_delivery_address(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'delivery_country_id' => 'nullable|integer|exists:country,id',
+            'delivery_city_id' => 'nullable|integer|exists:city,id',
+            'delivery_postal_code' => 'nullable|string|max:20',
+            'delivery_address' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $client = $request->user();
+
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => "Пользователь не найден"
+            ], 404);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $profile = $client->profile;
+
+            // Данные для обновления
+            $deliveryData = $request->only([
+                'delivery_country_id',
+                'delivery_city_id',
+                'delivery_postal_code',
+                'delivery_address',
+            ]);
+
+            if ($profile) {
+                $profile->update($deliveryData);
+            } else {
+                $client->profile()->create($deliveryData);
+            }
+
+            DB::commit();
+
+            // Загружаем профиль со связанными данными
+            $client->load([
+                'profile.Country',
+                'profile.City'
+            ]);
+
+            return response()->json([
+                'message' => 'Адрес доставки обновлён',
+                'user' => $client,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Ошибка при обновлении адреса доставки',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function store(Request $request)
+    {
+
+        try {
+            // Валидация с использованием трейта
+            $validated = $this->validateClientData($request->all());
+            $this->checkExistingClientData($validated);
+
+            // Создание клиента в транзакции
+            $client = DB::transaction(function () use ($validated) {
+                $client = Client::create([
+                    'email' => $validated['email'],
+//                    'password' => Hash::make($validated['password']),
+                ]);
+
+                $client->profile()->create([
+                    'first_name' => $validated['first_name'],
+                    'last_name' => $validated['last_name'],
+                    'middle_name' => $validated['middle_name'] ?? null,
+                    'phone' => $validated['phone'],
+                    'address' => $validated['address'] ?? null,
+                    'level_id' => $validated['level_id'] ?? null,
+                    'birthday' => isset($validated['birthday']) ? Carbon::parse($validated['birthday'])->format('Y-m-d') : null,
+                    'delivery_country_id' => $validated['delivery_country_id'] ?? null,
+                    'delivery_city_id' => $validated['delivery_city_id'] ?? null,
+                    'delivery_region' => $validated['delivery_region'] ?? null,
+                    'delivery_street' => $validated['delivery_street'] ?? null,
+                    'delivery_house' => $validated['delivery_house'] ?? null,
+                    'delivery_apartment' => $validated['delivery_apartment'] ?? null,
+                    'delivery_postal_code' => $validated['delivery_postal_code'] ?? null,
+                ]);
+
+                $client->update([
+                    'subscribed_to_newsletter' => (bool) ($validated['subscribed_to_newsletter'] ?? false),
+                    'personal_data_consent' => (bool) ($validated['personal_data_consent'] ?? false),
+                    'messenger_subscription' => (bool) ($validated['messenger_subscription'] ?? false),
+                    'rfm_segment' => $validated['rfm_segment'] ?? null,
+                    'group_name' => $validated['group_name'] ?? null,
+                ]);
+
+                return $client->load('profile');
+            });
+
+            return response()->json([
+                'message' => 'Клиент успешно создан',
+                'client' => $client
+            ], 201);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Ошибка при создании клиента',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function update(Request $request, Client $client)
+    {
+        try {
+            // Валидация с использованием трейта
+            $validated = $this->validateClientData($request->all(), $client);
+            $this->checkExistingClientData($validated, $client);
+
+            DB::transaction(function () use ($validated, $client) {
+
+                $profileData = [
+                    'first_name' => $validated['first_name'],
+                    'last_name' => $validated['last_name'],
+                    'middle_name' => $validated['middle_name'] ?? null,
+                    'phone' => $validated['phone'],
+                    'address' => $validated['address'],
+                    'birthday' => $validated['birthday'] ? Carbon::parse($validated['birthday'])->format('Y-m-d') : null,
+                ];
+
+                foreach ([
+                    'delivery_country_id',
+                    'delivery_city_id',
+                    'delivery_region',
+                    'delivery_street',
+                    'delivery_house',
+                    'delivery_apartment',
+                    'delivery_postal_code',
+                ] as $field) {
+                    if (array_key_exists($field, $validated)) {
+                        $profileData[$field] = $validated[$field];
+                    }
+                }
+
+                $client->profile()->update($profileData);
+
+                // Обновляем поля самого клиента (email + флаги согласий/подписок + RFM/группа)
+                $clientData = [
+                    'email' => $validated['email'],
+                    'subscribed_to_newsletter' => (bool) ($validated['subscribed_to_newsletter'] ?? $client->subscribed_to_newsletter),
+                    'personal_data_consent' => (bool) ($validated['personal_data_consent'] ?? $client->personal_data_consent),
+                    'messenger_subscription' => (bool) ($validated['messenger_subscription'] ?? $client->messenger_subscription),
+                ];
+
+                foreach (['rfm_segment', 'group_name'] as $field) {
+                    if (array_key_exists($field, $validated)) {
+                        $clientData[$field] = $validated[$field];
+                    }
+                }
+
+                $client->update($clientData);
+            });
+
+            return response()->json([
+                'message' => 'Клиент успешно обновлён',
+//                'client' => $client->fresh()->load('profile'),
+                'client' => ClientResource::make($client->fresh()->load('profile', 'lastOrder', 'tags')),
+            ]);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Ошибка при обновлении клиента',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function destroy(Client $client)
+    {
+        // $user = $client->user;
+        $client->delete();
+        // $user->delete();
+
+        return response()->json([
+            'message' => 'Клиент успешно удалён'
+        ]);
+    }
+
+    public function show(Client $client)
+    {
+        // Эйджир-загружаем профиль пользователя вместе с другими связями
+        $client->load([
+            'profile',
+            'profile.Country',
+            'profile.City',
+            'level',
+            'tags',
+            'orders' => function ($query) {
+                $query->latest();
+            },
+            'orders.items',
+            'orders.items.product',
+            'orders.items.variant',
+        ]);
+
+        // Собираем статистику по заказам
+        $paidOrders = $client->orders->where('payment_status', \App\Enums\PaymentStatus::PAID);
+
+        $statistics = [
+            'total_orders' => $client->orders->count(),
+            'total_spent' => $client->orders->sum('total_amount'),
+            'total_paid' => $paidOrders->sum('total_amount'),
+            'paid_orders_count' => $paidOrders->count(),
+            'average_order_value' => $client->orders->avg('total_amount'),
+            'last_order_date' => $client->orders->first()?->created_at,
+        ];
+
+        // События клиента — это история всех его заказов
+        // (создание, смены статусов и т.п.) — последние 30 записей.
+        $orderIds = $client->orders->pluck('id');
+        $events = \App\Models\OrderHistory::query()
+            ->whereIn('order_id', $orderIds)
+            ->with(['order:id,order_number'])
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->limit(30)
+            ->get()
+            ->map(fn ($e) => [
+                'id' => $e->id,
+                'order_id' => $e->order_id,
+                'order_number' => $e->order?->order_number,
+                'action' => $e->action,
+                'description' => $e->description ?? $e->comment,
+                'status' => $e->status,
+                'payment_status' => $e->payment_status,
+                'created_at' => $e->created_at,
+            ])
+            ->values()
+            ->all();
+
+        // Возвращаем JSON с клиентом (включая user.profile) и статистикой
+        return response()->json([
+            'client' => $client,
+            'statistics' => $statistics,
+            'events' => $events,
+        ]);
+    }
+
+
+    public function update_profile(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'birthday' => 'nullable|date',
+            'address' => 'nullable|string',
+            'phone' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $client = $request->user();
+
+
+        if (!$client) {
+            return response()->json(['success' => false, 'message' => "Пользователь не найден"]);
+        }
+
+        // Если ДР уже заполнено — игнорируем попытку его изменить
+        $birthday = $request->birthday;
+        $existingProfile = $client->profile;
+        if ($existingProfile && $existingProfile->birthday) {
+            $birthday = $existingProfile->birthday;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $user_profile = $this->check_users_with_same_email($client);
+
+            if ($user_profile) {
+                $user_profile->update([
+                    'client_id' => $client->id,
+                    'first_name' => $request->first_name,
+                    'last_name' => $request->last_name,
+                    'phone' => $request->phone,
+                    'address' => $request->address,
+                    'birthday' => $birthday,
+                ]);
+            } else {
+                $client->profile()->updateOrCreate(
+                    ['client_id' => $client->id], // condition
+                    [                          // values to update
+                        'first_name' => $request->first_name,
+                        'last_name' => $request->last_name,
+                        'phone' => $request->phone,
+                        'address' => $request->address,
+                        'birthday' => $birthday,
+                    ]
+                );
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Информация о пользователе обновлена',
+                'user' => $client->load('profile'),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Ошибка при обновлении пользователя',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+}

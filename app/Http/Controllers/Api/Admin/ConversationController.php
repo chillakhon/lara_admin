@@ -1,0 +1,457 @@
+<?php
+
+namespace App\Http\Controllers\Api\Admin;
+
+use App\Helpers\PaginationHelper;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Conversation\ConversationResource;
+use App\Models\Client;
+use App\Models\Conversation;
+use App\Models\Message;
+use App\Models\User;
+use App\Services\File\FileStorageService;
+use App\Services\Messaging\ConversationService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+
+class ConversationController extends Controller
+{
+    protected $conversationService;
+    protected $fileStorage;
+
+    public function __construct(
+        ConversationService $conversationService,
+        FileStorageService  $fileStorage
+    )
+    {
+        $this->conversationService = $conversationService;
+        $this->fileStorage = $fileStorage;
+    }
+
+    // Список чатов (пагинация)
+    public function index(Request $request)
+    {
+        // Опциональный параметр фильтрации
+        $validated = $request->validate([
+            'per_page' => 'nullable|integer|min:1',
+            'source' => 'nullable|in:telegram,whatsapp,web_chat,vk,email,max',
+            'search' => 'nullable|string|max:255',
+        ]);
+
+        // Базовый запрос с нужными связями
+        $query = Conversation::with([
+            'lastMessage',
+            'client.profile',
+            'client.lastOrder',
+            'assignedUser',
+
+        ])
+            ->whereHas('messages')
+            ->orderBy('last_message_at', 'desc');
+
+        // Если пришёл source — добавляем where-условие
+        if (!empty($validated['source'])) {
+            $query->where('source', $validated['source']);
+        }
+
+
+
+        // Поиск по клиенту (имя, email, телефон)
+        if (!empty($validated['search'])) {
+            $search = $validated['search'];
+
+            $query->where(function ($q) use ($search) {
+                // Поиск по ID conversation
+                if (is_numeric($search)) {
+                    $q->orWhere('id', $search);
+                }
+
+                // Поиск по клиенту
+                $q->orWhereHas('client', function ($clientQuery) use ($search) {
+                    // По email клиента
+                    $clientQuery->where('email', 'like', "%{$search}%")
+                        // По профилю клиента (имя, фамилия, телефон)
+                        ->orWhereHas('profile', function ($profileQuery) use ($search) {
+                            $profileQuery->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%")
+                                ->orWhere('phone', 'like', "%{$search}%")
+                                ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                        });
+                });
+
+                // Поиск по тексту последнего сообщения
+                $q->orWhereHas('lastMessage', function ($messageQuery) use ($search) {
+                    $messageQuery->where('content', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // Пагинация
+        $perPage = $validated['per_page'] ?? 20;
+        $conversations = $query->paginate($perPage);
+
+
+
+        return response()->json([
+            'data' => $conversations->items(),
+            'meta' => PaginationHelper::format($conversations)
+        ]);
+    }
+
+    /**
+     * Все диалоги конкретного клиента — для inline-чата на странице заказа.
+     *
+     * Ищет диалоги двумя способами:
+     *   1) По прямой привязке `conversations.client_id`.
+     *   2) «Анонимные» диалоги без client_id, у которых external_id источника
+     *      совпадает с email клиента (source=email) или с его телефоном
+     *      (source=whatsapp / vk / telegram / max — там external_id обычно
+     *      хранит номер или username). Такие диалоги автоматически
+     *      привязываются к клиенту (UPDATE client_id), чтобы в следующий
+     *      раз не нужно было их искать.
+     */
+    public function byClient(Client $client)
+    {
+        $client->loadMissing('profile');
+
+        // 1) Прямая привязка
+        $direct = Conversation::query()
+            ->where('client_id', $client->id)
+            ->get(['id']);
+
+        // 2) Подбор анонимных диалогов по контактам клиента.
+        $email = $client->email ? mb_strtolower(trim($client->email)) : null;
+        $phoneDigits = $client->profile?->phone
+            ? preg_replace('/\D+/', '', $client->profile->phone)
+            : null;
+        if ($phoneDigits === '') {
+            $phoneDigits = null;
+        }
+
+        $matched = collect();
+        if ($email || $phoneDigits) {
+            $matched = Conversation::query()
+                ->whereNull('client_id')
+                ->where(function ($q) use ($email, $phoneDigits) {
+                    if ($email) {
+                        $q->orWhere(function ($qq) use ($email) {
+                            $qq->where('source', 'email')
+                                ->whereRaw('LOWER(external_id) = ?', [$email]);
+                        });
+                    }
+                    if ($phoneDigits) {
+                        // Для whatsapp/vk/telegram/max external_id содержит цифры номера
+                        // (whatsapp: '79991234567@c.us', vk/telegram/max: '79991234567').
+                        // Сравниваем по «хвосту» цифр — 10 последних разрядов российского номера.
+                        $tail = substr($phoneDigits, -10);
+                        if (strlen($tail) >= 7) {
+                            $q->orWhere(function ($qq) use ($tail) {
+                                $qq->whereIn('source', ['whatsapp', 'vk', 'telegram', 'max'])
+                                    ->where('external_id', 'like', "%{$tail}%");
+                            });
+                        }
+                    }
+                })
+                ->get(['id']);
+        }
+
+        // Автоматически привязываем найденные «анонимные» диалоги к клиенту,
+        // чтобы дальнейшая логика (например, /conversations) их видела.
+        if ($matched->isNotEmpty()) {
+            Conversation::query()
+                ->whereIn('id', $matched->pluck('id'))
+                ->update(['client_id' => $client->id]);
+        }
+
+        $ids = $direct->pluck('id')->merge($matched->pluck('id'))->unique();
+
+        $conversations = Conversation::query()
+            ->whereIn('id', $ids)
+            ->with([
+                'lastMessage',
+                'client.profile',
+                'assignedUser',
+            ])
+            ->orderByDesc('last_message_at')
+            ->orderByDesc('id')
+            ->get();
+
+        return response()->json([
+            'data' => $conversations,
+        ]);
+    }
+
+    // Получение конкретного чата + сообщений и связей
+    public function show(Conversation $conversation)
+    {
+        $conversation->load([
+            'messages.attachments',
+            'client.profile',
+            'client.segments',
+            'client.lastOrder',
+            'client.tags',
+            'assignedUser',
+            'participants.user'
+        ]);
+
+        // Отмечаем как прочитанные только сообщения от клиента
+        $this->conversationService->markAsRead($conversation);
+
+        return ConversationResource::make($conversation);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'client_id' => 'required|exists:clients,id',
+            'source' => 'nullable|string',
+            'external_id' => 'nullable|string',
+            'content' => 'required|string',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,mp3,wav,ogg,m4a|max:10240',
+        ]);
+
+        $attachmentsData = [];
+
+        try {
+            // Обрабатываем файлы если они есть
+            if ($request->hasFile('attachments')) {
+                $attachmentsData = $this->fileStorage->storeAttachments(
+                    $request->file('attachments')
+                );
+            }
+
+            // 1) создаём сам разговор
+            $conversation = $this->conversationService->createConversation(
+                $validated['source'] ?? 'web_chat',
+                $validated['external_id'] ?? '',
+                $validated['client_id']
+            );
+
+            // 2) сразу добавляем первое сообщение
+            $message = $this->conversationService->addMessage($conversation, [
+                'direction' => 'incoming',
+                'content' => $validated['content'],
+                'attachments' => $attachmentsData,
+            ]);
+
+            // 3) вернуть разговор с вложениями сообщений
+            $conversation->load('messages.attachments');
+
+            return response()->json([
+                'message' => 'Conversation started successfully.',
+                'conversation' => $conversation,
+                'firstMessage' => $message,
+            ], 201);
+
+        } catch (\Exception $e) {
+            // При ошибке удаляем загруженные файлы
+            if (!empty($attachmentsData)) {
+                foreach ($attachmentsData as $attachment) {
+                    $this->fileStorage->delete($attachment['file_path']);
+                }
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create conversation: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    // Ответить на сообщение
+    public function reply(Request $request, Conversation $conversation)
+    {
+
+        $validated = $request->validate([
+            'content' => 'nullable|string',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,mp3,wav,ogg,m4a|max:10240',
+        ]);
+
+        $attachmentsData = [];
+
+        try {
+            // Обрабатываем файлы если они есть
+            if ($request->hasFile('attachments')) {
+                $attachmentsData = $this->fileStorage->storeAttachments(
+                    $request->file('attachments')
+                );
+            }
+
+            // 1) Добавляем исходящее сообщение
+            $message = $this->conversationService->addMessage($conversation, [
+                'direction' => Message::DIRECTION_OUTGOING,
+                'content' => $validated['content'],
+                'attachments' => $attachmentsData,
+                'status' => Message::STATUS_SENT,
+            ]);
+
+            // 2) Обновляем время последнего сообщения
+            $conversation->update([
+                'last_message_at' => now(),
+                // 3) Сбрасываем счётчик непрочитанных входящих
+                'unread_messages_count' => 0,
+            ]);
+
+            return response()->json([
+                'message' => 'Reply sent successfully.',
+                'data' => $message,
+            ], 201);
+
+        } catch (\Exception $e) {
+            // При ошибке удаляем загруженные файлы
+            if (!empty($attachmentsData)) {
+                foreach ($attachmentsData as $attachment) {
+                    $this->fileStorage->delete($attachment['file_path']);
+                }
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send reply: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function incomingForClient(Request $request)
+    {
+        $validated = $request->validate([
+            'client_id' => 'nullable|exists:clients,id',
+            'external_id' => 'nullable|string',
+            'source' => 'nullable|in:telegram,whatsapp,web_chat,email,vk,max',
+            'content' => 'required|string',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,mp3,wav,ogg,m4a|max:10240',
+        ]);
+
+        // Ищем разговор
+        $conversation = Conversation::query()
+            ->when($validated['client_id'] ?? null, function ($q, $clientId) {
+                $q->where('client_id', $clientId);
+            })
+            ->when($validated['external_id'] ?? null, function ($q, $externalId) use ($validated) {
+                $q->where('external_id', $externalId)
+                    ->when($validated['source'] ?? null, fn($qq) => $qq->where('source', $validated['source']));
+            })
+            ->first();
+
+        if (!$conversation) {
+            return response()->json([
+                'error' => 'Диалог не найден'
+            ], 404);
+        }
+
+        $attachmentsData = [];
+
+        try {
+            // Обрабатываем файлы если они есть
+            if ($request->hasFile('attachments')) {
+                $attachmentsData = $this->fileStorage->storeAttachments(
+                    $request->file('attachments')
+                );
+            }
+
+            // Добавляем сообщение через сервис
+            $message = $this->conversationService->addMessage($conversation, [
+                'direction' => Message::DIRECTION_INCOMING,
+                'content' => $validated['content'],
+                'attachments' => $attachmentsData,
+                'status' => Message::STATUS_SENT,
+            ]);
+
+            return response()->json([
+                'message' => 'Входящее сообщение сохранено.',
+                'data' => $message,
+                'unread_count' => $conversation->unread_messages_count,
+            ], 201);
+
+        } catch (\Exception $e) {
+            // При ошибке удаляем загруженные файлы
+            if (!empty($attachmentsData)) {
+                foreach ($attachmentsData as $attachment) {
+                    $this->fileStorage->delete($attachment['file_path']);
+                }
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save message: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function incoming(Request $request, Conversation $conversation)
+    {
+        $validated = $request->validate([
+            'content' => 'required|string',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,mp3,wav,ogg,m4a|max:10240',
+        ]);
+
+        $attachmentsData = [];
+
+        try {
+            // Обрабатываем файлы если они есть
+            if ($request->hasFile('attachments')) {
+                $attachmentsData = $this->fileStorage->storeAttachments(
+                    $request->file('attachments')
+                );
+            }
+
+            $message = $this->conversationService->addMessage($conversation, [
+                'direction' => Message::DIRECTION_INCOMING,
+                'content' => $validated['content'],
+                'attachments' => $attachmentsData,
+                'status' => Message::STATUS_SENT,
+            ]);
+
+            return response()->json([
+                'message' => 'Incoming message saved.',
+                'data' => $message,
+                'unread_count' => $conversation->unread_messages_count,
+            ], 201);
+
+        } catch (\Exception $e) {
+            // При ошибке удаляем загруженные файлы
+            if (!empty($attachmentsData)) {
+                foreach ($attachmentsData as $attachment) {
+                    $this->fileStorage->delete($attachment['file_path']);
+                }
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save incoming message: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Закрыть чат
+    public function close(Conversation $conversation)
+    {
+        $this->conversationService->closeConversation($conversation);
+
+        return response()->json([
+            'message' => 'Conversation closed.'
+        ], 200);
+    }
+
+    // Назначить оператора (менеджера)
+    public function assign(Request $request, Conversation $conversation)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id'
+        ]);
+
+        $user = User::findOrFail($validated['user_id']);
+
+        $this->conversationService->assignManager($conversation, $user);
+
+        return response()->json([
+            'message' => 'Conversation assigned to user.',
+            'assigned_user' => $user
+        ], 200);
+    }
+}

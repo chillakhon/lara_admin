@@ -1,0 +1,64 @@
+  2026-05-12 09:32:18 App\Events\MessageCreated ...................... RUNNING
+  2026-05-12 09:32:18 App\Events\MessageCreated ................. 43.93ms DONE
+  2026-05-12 09:32:18 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-12 09:32:18 App\Events\ConversationUpdated ............. 8.73ms DONE
+  2026-05-12 09:34:27 App\Events\MessageCreated ...................... RUNNING
+  2026-05-12 09:34:27 App\Events\MessageCreated ................. 16.03ms DONE
+  2026-05-12 09:34:27 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-12 09:34:27 App\Events\ConversationUpdated ............. 8.17ms DONE
+  2026-05-12 09:34:30 App\Events\MessageCreated ...................... RUNNING
+  2026-05-12 09:34:30 App\Events\MessageCreated ................. 12.49ms DONE
+  2026-05-12 09:34:30 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-12 09:34:30 App\Events\ConversationUpdated ............. 7.38ms DONE
+  2026-05-12 09:34:39 App\Events\MessageCreated ...................... RUNNING
+  2026-05-12 09:34:39 App\Events\MessageCreated ................. 12.78ms DONE
+  2026-05-12 09:34:39 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-12 09:34:39 App\Events\ConversationUpdated ............. 9.23ms DONE
+  2026-05-12 09:36:40 App\Events\MessageCreated ...................... RUNNING
+  2026-05-12 09:36:40 App\Events\MessageCreated ................. 16.31ms DONE
+  2026-05-12 09:36:40 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-12 09:36:40 App\Events\ConversationUpdated ............. 8.42ms DONE
+  2026-05-12 09:36:46 App\Events\MessageCreated ...................... RUNNING
+  2026-05-12 09:36:46 App\Events\MessageCreated ................. 18.43ms DONE
+  2026-05-12 09:36:46 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-12 09:36:46 App\Events\ConversationUpdated ............ 13.42ms DONE
+  2026-05-12 09:44:02 App\Events\MessageCreated ...................... RUNNING
+  2026-05-12 09:44:02 App\Events\MessageCreated ................. 18.09ms DONE
+  2026-05-12 09:44:02 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-12 09:44:02 App\Events\ConversationUpdated ............ 10.26ms DONE
+  2026-05-12 09:44:11 App\Events\MessageCreated ...................... RUNNING
+  2026-05-12 09:44:11 App\Events\MessageCreated ................. 11.57ms DONE
+  2026-05-12 09:44:11 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-12 09:44:11 App\Events\ConversationUpdated ............. 7.22ms DONE
+  2026-05-12 09:51:14 App\Events\MessageCreated ...................... RUNNING
+  2026-05-12 09:51:14 App\Events\MessageCreated ................. 16.24ms DONE
+  2026-05-12 09:51:14 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-12 09:51:14 App\Events\ConversationUpdated ............ 10.92ms DONE
+  2026-05-13 14:05:52 App\Events\MessageCreated ...................... RUNNING
+  2026-05-13 14:05:52 App\Events\MessageCreated ................. 40.49ms DONE
+  2026-05-13 14:05:52 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-13 14:05:52 App\Events\ConversationUpdated ............ 10.79ms DONE
+  2026-05-13 14:06:04 App\Events\MessageCreated ...................... RUNNING
+  2026-05-13 14:06:04 App\Events\MessageCreated ................. 15.89ms DONE
+  2026-05-13 14:06:04 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-13 14:06:04 App\Events\ConversationUpdated ............. 8.49ms DONE
+  2026-05-13 14:06:25 App\Events\MessageCreated ...................... RUNNING
+  2026-05-13 14:06:25 App\Events\MessageCreated ................. 15.85ms DONE
+  2026-05-13 14:06:25 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-13 14:06:25 App\Events\ConversationUpdated ............. 9.49ms DONE
+  2026-05-13 14:06:37 App\Events\MessageCreated ...................... RUNNING
+  2026-05-13 14:06:37 App\Events\MessageCreated ................. 16.66ms DONE
+  2026-05-13 14:06:37 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-13 14:06:37 App\Events\ConversationUpdated ............. 8.62ms DONE
+  2026-05-13 14:06:46 App\Events\MessageCreated ...................... RUNNING
+  2026-05-13 14:06:46 App\Events\MessageCreated ................. 11.14ms DONE
+  2026-05-13 14:06:46 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-13 14:06:46 App\Events\ConversationUpdated ............. 8.62ms DONE
+  2026-05-13 14:07:04 App\Events\MessageCreated ...................... RUNNING
+  2026-05-13 14:07:04 App\Events\MessageCreated ................. 11.28ms DONE
+  2026-05-13 14:07:04 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-13 14:07:04 App\Events\ConversationUpdated ............. 8.21ms DONE
+  2026-05-14 12:15:30 App\Events\MessageCreated ...................... RUNNING
+  2026-05-14 12:15:30 App\Events\MessageCreated ................. 51.51ms DONE
+  2026-05-14 12:15:30 App\Events\ConversationUpdated ................. RUNNING
+  2026-05-14 12:15:30 App\Events\ConversationUpdated ............ 16.40ms DONE

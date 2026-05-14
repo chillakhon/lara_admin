@@ -1,0 +1,982 @@
+<?php
+
+namespace App\Http\Controllers\Api\Admin;
+
+use App\Helpers\PaginationHelper;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Order\AddOrderItemsRequest;
+use App\Http\Requests\Order\CancelOrderRequest;
+use App\Http\Requests\Order\CreateOrderRequest;
+use App\Http\Requests\Order\UpdateOrderRequest;
+use App\Http\Requests\Order\UpdateOrderStatusRequest;
+use App\Jobs\GiftCard\SendGiftCardJob;
+use App\Models\Client;
+use App\Models\GiftCard\GiftCard;
+use App\Models\Order;
+use App\Models\User;
+use App\Services\GiftCard\GiftCardService;
+use App\Services\Notifications\Jobs\SendNotificationJob;
+use App\Services\Order\OrderAuthorizationService;
+use App\Services\Order\OrderCreationService;
+use App\Services\Order\OrderDeletionService;
+use App\Services\Order\OrderFilterService;
+use App\Services\Order\OrderItemService;
+use App\Services\Order\OrderUpdateService;
+use App\Services\Order\OrderValidationService;
+use App\Services\PromoCode\PromoCodeValidationService;
+use App\Traits\HelperTrait;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+
+class OrderController extends Controller
+{
+    use HelperTrait;
+
+    public function __construct(
+        protected OrderValidationService $orderValidationService,
+        protected OrderCreationService $orderCreationService,
+        protected OrderUpdateService $orderUpdateService,
+        protected OrderDeletionService $orderDeletionService,
+        protected OrderItemService $orderItemService,
+        protected OrderAuthorizationService $orderAuthorizationService,
+        protected PromoCodeValidationService $promoValidationService,
+        protected OrderFilterService $orderFilterService
+    ) {}
+
+    /**
+     * Получить список заказов с фильтрацией
+     */
+    public function index(Request $request): JsonResponse
+    {
+        // Валидация параметров фильтрации
+        $validated = $this->orderFilterService->validateFilterParams($request);
+
+        $user = $request->user();
+
+        $query = Order::with(['items.product', 'items.variant', 'promoCode', 'client.profile', 'address']);
+
+        // Если это клиент - показываем только его заказы
+        if ($user instanceof \App\Models\Client) {
+            $query->where('client_id', $user->id);
+        }
+
+        // Применяем фильтры
+        $query = $this->orderFilterService->applyFilters($query, $request);
+
+        // Применяем сортировку
+        $query = $this->orderFilterService->applySorting($query, $request);
+
+        // Пагинация
+        $paginator = $query->paginate($validated['per_page'] ?? 15);
+
+        // Получаем активные фильтры для отображения
+        $activeFilters = $this->orderFilterService->getActiveFilters($request);
+
+        $data = [
+            'data' => $paginator->items(),
+            'meta' => PaginationHelper::format($paginator),
+            'filters' => $activeFilters,
+        ];
+
+        return $this->successResponse('Список заказов', $data);
+    }
+
+    /**
+     * Получить детали заказа
+     */
+    public function show(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        // Проверяем права доступа
+        if (! $this->orderAuthorizationService->canView($user, $order)) {
+            return $this->errorResponse('Доступ запрещён', 403);
+        }
+
+        $order->load([
+            'items.product.images',
+            'items.variant.images',
+            'items.color',
+            'client',
+            'promoCode',
+            'giftCard',
+            'address',
+            'deliveryMethod',
+            'deliveryTarget',
+            'assignedUser.profile',
+            'assignedUser.roles',
+        ]);
+
+        $summary = $this->orderCreationService->getOrderSummary($order);
+        $containsGiftCard = $this->orderCreationService->containsGiftCardProduct(
+            $order->items->map(fn ($item) => ['product_id' => $item->product_id])->all()
+        );
+
+        return $this->successResponse('Детали заказа', [
+            'order' => $order,
+            'summary' => $summary,
+            'contains_gift_card_product' => $containsGiftCard,
+        ]);
+    }
+
+    /**
+     * Создание нового заказа
+     */
+    public function store(CreateOrderRequest $request)
+    {
+        DB::beginTransaction();
+
+        try {
+            $authUser = $request->user();
+            if (! $authUser) {
+                return $this->errorResponse('Не авторизован', 401);
+            }
+
+            $validated = $request->validated();
+
+            if ($authUser instanceof Client) {
+                $validated['client_id'] = $authUser->id;
+                $orderClient = $authUser;
+            } elseif ($authUser instanceof User) {
+                $orderClient = Client::query()
+                    ->where('id', (int) $validated['client_id'])
+                    ->whereNull('deleted_at')
+                    ->first();
+
+                if (! $orderClient) {
+                    return $this->errorResponse('Клиент не найден', 404);
+                }
+            } else {
+                return $this->errorResponse('Недопустимый тип учётной записи', 403);
+            }
+
+            // 2. Валидируем промокод если указан
+            $promoCode = null;
+            if (! empty($validated['promo_code'])) {
+                $promoResult = $this->validatePromoCode($validated['promo_code'], $orderClient);
+
+                if (! $promoResult['success']) {
+                    return $this->errorResponse(
+                        $promoResult['message'],
+                        422,
+                        [
+                            'code' => $promoResult['code'] ?? null,
+                            'details' => $promoResult,
+                        ]
+                    );
+                }
+
+                $promoCode = $promoResult['promo_code'];
+
+                //                $this->promoValidationService->logPromoCodeUsage($promoCode, $client, [
+                //                    'validation_step' => 'order_creation'
+                //                ]);
+            }
+
+            //  3. Валидируем подарочную карту если указана
+            $giftCard = null;
+            if (! empty($validated['gift_card_code'])) {
+                $giftCardValidation = app(GiftCardService::class)
+                    ->validate($validated['gift_card_code']);
+
+                if (! $giftCardValidation['valid']) {
+                    return $this->errorResponse(
+                        $giftCardValidation['message'],
+                        422
+                    );
+                }
+
+                $giftCard = $giftCardValidation['gift_card'];
+            }
+
+            // 4. Валидируем позиции заказа
+            $promotionId = $validated['promotion_id'] ?? null;
+            $itemsValidation = $this->orderValidationService->validateOrderItems(
+                $validated['items'],
+                $promoCode,
+                $promotionId
+            );
+
+            if (! $itemsValidation['valid']) {
+                DB::rollBack();
+
+                return $this->validationErrorResponse($itemsValidation['errors']);
+            }
+
+            // 5. Создаем заказ
+            $order = $this->orderCreationService->createOrder($validated, $orderClient->id);
+
+            // 6. Создаем позиции заказа с проверенными ценами
+            $totals = $this->orderCreationService->createOrderItems(
+                $order,
+                $itemsValidation['validated_items']
+            );
+
+            // 7. Применяем промокод (если есть) и обновляем суммы
+            if ($promoCode) {
+                $this->orderCreationService->applyPromoCodeToOrder(
+                    $order,
+                    $promoCode,
+                    $totals['order_total'],
+                    $totals['total_discount'],
+                    $totals['total_promo_discount']
+                );
+            } else {
+                $this->orderCreationService->updateOrderTotals($order, $totals);
+            }
+
+            // 7.5. Применяем акцию (если есть)
+            if ($promotionId && ! empty($validated['gift_product_id'])) {
+                $useDiscountInstead = $validated['use_discount_instead'] ?? false;
+
+                $this->orderCreationService->applyPromotionToOrder(
+                    $order,
+                    $promotionId,
+                    $validated['gift_product_id'],
+                    $useDiscountInstead
+                );
+            }
+
+            //  8. Применяем подарочную карту (если есть)
+            $giftCardAmount = 0;
+            if ($giftCard) {
+                $giftCardResult = $this->orderCreationService->applyGiftCardToOrder(
+                    $order,
+                    $giftCard,
+                    $order->total_amount
+                );
+
+                $giftCardAmount = $giftCardResult['amount_used'];
+            }
+
+            //  9. Проверяем, содержит ли заказ подарочный сертификат
+            $containsGiftCard = $this->orderCreationService->containsGiftCardProduct($validated['items']);
+
+            //  10. Если заказ содержит подарочный сертификат - создаём карту
+            if ($containsGiftCard) {
+                foreach ($validated['items'] as $item) {
+
+                    $product = \App\Models\Product::find($item['product_id']);
+
+                    if ($product && $product->name === 'Подарочный сертификат') {
+                        $nominal = $this->orderCreationService->extractGiftCardNominal($item);
+
+                        if ($nominal) {
+
+                            $giftCardData = $request->input('gift_card_data', []);
+
+                            // Создаём подарочную карту
+                            $giftCardCreated = app(\App\Services\GiftCard\GiftCardService::class)
+                                ->createFromOrder(
+                                    $order,
+                                    $giftCardData,
+                                    $nominal
+                                );
+
+                            $this->scheduleGiftCardDelivery($giftCardCreated, $giftCardData);
+
+                        }
+                    }
+                }
+            }
+
+            // 11. Отправляем уведомления
+            $this->sendNotifications($orderClient, $order);
+
+            DB::commit();
+
+            // Загружаем заказ со всеми связями для ответа
+            $order->load(['items.product', 'items.variant', 'promoCode', 'giftCard', 'address']);
+
+            return $this->successResponse(
+                'Заказ успешно создан',
+                [
+                    'order' => $order,
+                    'summary' => $this->orderCreationService->getOrderSummary($order),
+                    'contains_gift_card_product' => $containsGiftCard,
+                ],
+                201
+            );
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Order creation failed', [
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return $this->errorResponse(
+                'Ошибка при создании заказа. Пожалуйста, попробуйте позже.',
+                500,
+                [
+                    'error_details' => config('app.debug') ? $e->getMessage() : null,
+                ]
+            );
+        }
+    }
+
+    private function scheduleGiftCardDelivery(GiftCard $giftCard, array $data): void
+    {
+        // Проверяем, что это электронная карта
+        if ($giftCard->type !== GiftCard::TYPE_ELECTRONIC) {
+            Log::info('Skipping delivery for non-electronic gift card', [
+                'gift_card_id' => $giftCard->id,
+                'type' => $giftCard->type,
+            ]);
+
+            return;
+        }
+
+        // Проверяем статус карты (ВАЖНО!)
+        //        if ($giftCard->status !== GiftCard::STATUS_ACTIVE) {
+        //            Log::warning('Cannot schedule delivery for inactive gift card', [
+        //                'gift_card_id' => $giftCard->id,
+        //                'status' => $giftCard->status,
+        //            ]);
+        //            return;
+        //        }
+
+        $deliveryType = $data['delivery_type'] ?? 'immediate';
+
+        if ($deliveryType === 'immediate') {
+            // Отправляем сразу
+            SendGiftCardJob::dispatch($giftCard->id);
+
+            Log::info('Gift card scheduled for immediate delivery', [
+                'gift_card_id' => $giftCard->id,
+            ]);
+
+            return;
+        }
+
+        // Отложенная отправка
+        if (empty($giftCard->scheduled_at)) {
+            Log::warning('qqqScheduled delivery requested but no scheduled_at date', [
+                'gift_card_id' => $giftCard->id,
+            ]);
+
+            // Отправляем сразу если дата не указана
+            SendGiftCardJob::dispatch($giftCard->id);
+
+            return;
+        }
+
+        try {
+
+            //            $scheduledAt = \Carbon\Carbon::parse($giftCard->scheduled_at);
+            //
+            //            // Проверяем, что дата в будущем
+            //            if ($scheduledAt->isFuture()) {
+            //                SendGiftCardJob::dispatch($giftCard->id)
+            //                    ->delay($scheduledAt);
+            //
+            //                Log::info('Gift card scheduled for delayed delivery', [
+            //                    'gift_card_id' => $giftCard->id,
+            //                    'scheduled_at' => $scheduledAt->toDateTimeString(),
+            //                ]);
+            //            } else {
+            //                // Если дата в прошлом - отправляем сразу
+            //                SendGiftCardJob::dispatch($giftCard->id);
+            //
+            //                Log::warning('Scheduled date is in the past, sending immediately', [
+            //                    'gift_card_id' => $giftCard->id,
+            //                    'scheduled_at' => $scheduledAt->toDateTimeString(),
+            //                ]);
+            //            }
+
+            $tzCard = $giftCard->timezone ?: 'Europe/Moscow';
+
+            $scheduledAt = Carbon::parse($giftCard->scheduled_at); // обычно в app.timezone
+
+            $scheduledAtInCardTz = $scheduledAt->copy()->setTimezone($tzCard);
+
+            $scheduledAtMsk = $tzCard === 'Europe/Moscow'
+                ? $scheduledAtInCardTz
+                : $scheduledAtInCardTz->copy()->setTimezone('Europe/Moscow');
+
+            if ($scheduledAtMsk->copy()->utc()->isFuture()) {
+                SendGiftCardJob::dispatch($giftCard->id)
+                    ->delay($scheduledAtMsk->copy()->utc()); // delay лучше давать UTC
+
+                Log::info('Gift card scheduled (MSK-based)', [
+                    'gift_card_id' => $giftCard->id,
+                    'card_tz' => $tzCard,
+                    'scheduled_at_card_tz' => $scheduledAtInCardTz->toDateTimeString()." ({$tzCard})",
+                    'scheduled_at_msk' => $scheduledAtMsk->toDateTimeString().' (Europe/Moscow)',
+                    'scheduled_at_utc' => $scheduledAtMsk->copy()->utc()->toDateTimeString().' (UTC)',
+                ]);
+            } else {
+                SendGiftCardJob::dispatch($giftCard->id);
+
+                Log::warning('Scheduled date is in the past (MSK-based), sending immediately', [
+                    'gift_card_id' => $giftCard->id,
+                    'scheduled_at_msk' => $scheduledAtMsk->toDateTimeString(),
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to parse scheduled_at, sending immediately', [
+                'gift_card_id' => $giftCard->id,
+                'scheduled_at' => $giftCard->scheduled_at,
+                'error' => $e->getMessage(),
+            ]);
+
+            // В случае ошибки парсинга - отправляем сразу
+            SendGiftCardJob::dispatch($giftCard->id);
+        }
+    }
+
+    public function getUserOrders(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return response()->json(['error' => 'Пользователь не авторизован'], 401);
+        }
+
+        $client = Client::where('id', $user->id)->whereNull('deleted_at')->first();
+
+        if (! $client) {
+            return response()->json(['error' => 'Клиент не найден!'], 404);
+        }
+
+        $perPage = $request->query('per_page', 10);
+
+        $orders = Order::with([
+            'items.product',
+            'items.variant',
+            'items.color' => function ($sql) {
+                $sql->select(['id', 'name', 'code']);
+            },
+            'deliveryMethod',
+            'deliveryTarget',
+        ])
+            ->where('client_id', $client->id)
+            ->orderByDesc('created_at')
+            ->paginate($perPage);
+
+        return response()->json([
+            'orders' => $orders->items(), // только список заказов
+            'pagination' => PaginationHelper::format($orders),
+        ]);
+    }
+
+    /**
+     * Обновление заказа
+     */
+    public function update(UpdateOrderRequest $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->orderAuthorizationService->canUpdate($user)) {
+            return $this->errorResponse('Доступ запрещён', 403);
+        }
+
+        if (! $this->orderUpdateService->canUpdate($order)) {
+            return $this->errorResponse(
+                'Невозможно редактировать заказ в текущем статусе',
+                422
+            );
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $success = $this->orderUpdateService->update($order, $request->validated());
+
+            if (! $success) {
+                DB::rollBack();
+
+                return $this->errorResponse('Не удалось обновить заказ', 500);
+            }
+
+            DB::commit();
+
+            $order->load(['items.product', 'items.variant', 'promoCode', 'client', 'assignedUser.profile', 'assignedUser.roles']);
+
+            return $this->successResponse(
+                'Заказ успешно обновлён',
+                [
+                    'order' => $order,
+                    'summary' => $this->orderCreationService->getOrderSummary($order),
+                ]
+            );
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update order', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
+            return $this->errorResponse('Ошибка при обновлении заказа', 500);
+        }
+    }
+
+    /**
+     * Обновление статуса заказа
+     */
+    public function updateStatus(UpdateOrderStatusRequest $request, Order $order): JsonResponse
+    {
+        DB::beginTransaction();
+
+        try {
+            $status = \App\Enums\OrderStatus::from($request->validated('status'));
+
+            if ($status === \App\Enums\OrderStatus::CANCELLED) {
+                $success = $this->orderCreationService->cancelOrder(
+                    $order,
+                    $request->validated('reason')
+                );
+            } else {
+                $success = $this->orderCreationService->updateOrderStatus($order, $status);
+            }
+
+            if (! $success) {
+                DB::rollBack();
+
+                return $this->errorResponse('Не удалось обновить статус заказа', 500);
+            }
+
+            DB::commit();
+
+            return $this->successResponse(
+                'Статус заказа обновлён',
+                ['order' => $order->fresh()]
+            );
+
+        } catch (\ValueError $e) {
+            DB::rollBack();
+
+            return $this->errorResponse('Невалидный статус заказа', 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update order status', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
+            return $this->errorResponse('Ошибка при обновлении статуса', 500);
+        }
+    }
+
+    /**
+     * Отмена заказа
+     */
+    public function cancel(CancelOrderRequest $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->orderAuthorizationService->canCancel($user, $order)) {
+            return $this->errorResponse('Доступ запрещён', 403);
+        }
+
+        if (in_array($order->status, [\App\Enums\OrderStatus::DELIVERED, \App\Enums\OrderStatus::CANCELLED])) {
+            return $this->errorResponse(
+                'Невозможно отменить заказ в текущем статусе',
+                422
+            );
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $success = $this->orderCreationService->cancelOrder(
+                $order,
+                $request->validated('reason') ?? 'Отменён клиентом'
+            );
+
+            if (! $success) {
+                DB::rollBack();
+
+                return $this->errorResponse('Не удалось отменить заказ', 500);
+            }
+
+            DB::commit();
+
+            return $this->successResponse(
+                'Заказ успешно отменён',
+                ['order' => $order->fresh()]
+            );
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to cancel order', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
+            return $this->errorResponse('Ошибка при отмене заказа', 500);
+        }
+    }
+
+    /**
+     * Удаление заказа
+     */
+    public function destroy(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->orderAuthorizationService->canDelete($user)) {
+            return $this->errorResponse('Доступ запрещён', 403);
+        }
+
+        if (! $this->orderDeletionService->canDelete($order)) {
+            return $this->errorResponse(
+                'Невозможно удалить заказ в текущем статусе',
+                422
+            );
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $success = $this->orderDeletionService->delete($order);
+
+            if (! $success) {
+                DB::rollBack();
+
+                return $this->errorResponse('Не удалось удалить заказ', 500);
+            }
+
+            DB::commit();
+
+            return $this->successResponse('Заказ успешно удалён');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete order', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
+            return $this->errorResponse('Ошибка при удалении заказа', 500);
+        }
+    }
+
+    /**
+     * Добавить позиции в заказ
+     */
+    public function addItems(AddOrderItemsRequest $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->orderAuthorizationService->canUpdate($user)) {
+            return $this->errorResponse('Доступ запрещён', 403);
+        }
+
+        if (! $this->orderItemService->canModifyItems($order)) {
+            return $this->errorResponse(
+                'Невозможно добавить товары в заказ с текущим статусом',
+                422
+            );
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $result = $this->orderItemService->addItems($order, $request->validated('items'));
+
+            if (! $result) {
+                DB::rollBack();
+
+                return $this->errorResponse('Ошибка при добавлении товаров', 500);
+            }
+
+            if (! $result['success']) {
+                DB::rollBack();
+
+                return $this->validationErrorResponse($result['errors']);
+            }
+
+            DB::commit();
+
+            $order->load(['items.product', 'items.variant']);
+
+            return $this->successResponse(
+                'Товары успешно добавлены в заказ',
+                [
+                    'order' => $order,
+                    'summary' => $this->orderCreationService->getOrderSummary($order),
+                ]
+            );
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to add items', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
+            return $this->errorResponse('Ошибка при добавлении товаров', 500);
+        }
+    }
+
+    /**
+     * Удалить позицию из заказа
+     */
+    public function removeItem(Request $request, Order $order, $itemId): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->orderAuthorizationService->canUpdate($user)) {
+            return $this->errorResponse('Доступ запрещён', 403);
+        }
+
+        if (! $this->orderItemService->canModifyItems($order)) {
+            return $this->errorResponse(
+                'Невозможно удалить товары из заказа с текущим статусом',
+                422
+            );
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $success = $this->orderItemService->removeItem($order, $itemId);
+
+            if (! $success) {
+                DB::rollBack();
+
+                return $this->errorResponse(
+                    'Не удалось удалить товар',
+                    422
+                );
+            }
+
+            DB::commit();
+
+            $order->load(['items.product', 'items.variant']);
+
+            return $this->successResponse(
+                'Товар успешно удалён из заказа',
+                [
+                    'order' => $order,
+                    'summary' => $this->orderCreationService->getOrderSummary($order),
+                ]
+            );
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to remove item', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+
+            return $this->errorResponse('Ошибка при удалении товара', 500);
+        }
+    }
+
+    private function validatePromoCode(string $code, $client): array
+    {
+        return $this->promoValidationService->validate($code, $client);
+    }
+
+    /**
+     * Отправить клиенту шаблонное письмо с инфой о заказе.
+     * Получатель: order->client->email. Отправитель: from_address из MailSetting.
+     */
+    public function sendEmail(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $this->orderAuthorizationService->canView($user, $order)) {
+            return $this->errorResponse('Доступ запрещён', 403);
+        }
+
+        $order->loadMissing([
+            'items.product.images',
+            'items.variant.images',
+            'items.color',
+            'client.profile',
+            'address',
+            'deliveryMethod',
+            'deliveryTarget',
+            'promoCode',
+            'promotion',
+        ]);
+
+        $email = $order->client?->email;
+        if (! $email) {
+            return $this->errorResponse('У клиента не указан email', 422);
+        }
+
+        try {
+            $this->applyMailSettings();
+        } catch (\Throwable $e) {
+            Log::error('Mail settings not configured', ['error' => $e->getMessage()]);
+            return $this->errorResponse('Настройки почты не сконфигурированы', 500);
+        }
+
+        $profile = $order->client?->profile;
+        // По примеру InSales — только имя в "Здравствуйте, {имя}!", без фамилии.
+        $customerName = $profile?->first_name
+            ?: $order->first_name
+            ?: null;
+
+        $subtotal = $order->items->sum(function ($item) {
+            $unitPrice = (float) ($item->unit_price ?? $item->price ?? 0);
+            return $unitPrice * (int) $item->quantity;
+        });
+
+        $discountAmount =
+            (float) ($order->discount_amount ?? 0)
+            + (float) ($order->total_promo_discount ?? 0)
+            + (float) ($order->total_items_discount ?? 0);
+
+        $discountLabel = $order->promoCode?->code
+            ?? $order->promotion?->name
+            ?? null;
+
+        $address = $order->address;
+        $deliveryAddress = null;
+        if ($address) {
+            $deliveryAddress = trim(implode(', ', array_filter([
+                $address->country,
+                $address->region,
+                $address->city,
+                $address->address,
+            ])));
+        }
+
+        $deliveryMethodName = $order->deliveryMethod?->name ?? $order->legacy_delivery_method ?? null;
+        $deliveryTargetName = $order->deliveryTarget?->name ?? null;
+        $deliveryMethodLine = $deliveryMethodName && $deliveryTargetName && $deliveryMethodName !== $deliveryTargetName
+            ? "{$deliveryMethodName} ({$deliveryTargetName})"
+            : ($deliveryMethodName ?: $deliveryTargetName);
+
+        $paymentMethodLabels = [
+            // Актуальные коды (после нормализации)
+            'card_ru' => 'Оплата картой РФ',
+            'sberpay' => 'SberPay, рассрочка, иностранная карта',
+            'yandex_pay_split' => 'Яндекс Пэй и Сплит',
+            'cash_on_delivery' => 'Наличными или картой при получении',
+            'pickup_payment' => 'Оплата в точке самовывоза',
+            'podeli' => 'Подели',
+            'robokassa_mokka' => 'Robokassa X Мокка',
+            'robokassa_yandex_split' => 'Robokassa X Яндекс Сплит',
+            // Легаси-коды
+            'card' => 'Оплата картой РФ',
+            'yookassa' => 'Оплата картой РФ',
+            'online' => 'Оплата картой РФ',
+            'yandex_pay' => 'Яндекс Пэй и Сплит',
+            'split' => 'Яндекс Пэй и Сплит',
+            'cash' => 'Наличными или картой при получении',
+            'cod' => 'Наличными или картой при получении',
+            'sbp' => 'SberPay, рассрочка, иностранная карта',
+            'bank_transfer' => 'Оплата картой РФ',
+        ];
+        $paymentMethodLabel = $order->payment_method
+            ? ($paymentMethodLabels[$order->payment_method] ?? $order->payment_method)
+            : null;
+
+        $paymentStatusLabel = method_exists($order->payment_status, 'label')
+            ? $order->payment_status->label()
+            : (string) $order->payment_status;
+
+        $frontendUrl = rtrim((string) config('app.frontend_url'), '/');
+        $viewOrderUrl = $order->view_token && $frontendUrl
+            ? $frontendUrl.'/orders/'.$order->view_token
+            : null;
+
+        $messengerLinks = [];
+        if ($order->view_token) {
+            $messengerLinks[] = [
+                'label' => 'Telegram',
+                'url' => 'tg://resolve?domain=again8help_bot&start='.$order->view_token,
+            ];
+        }
+
+        try {
+            $subject = 'Заказ № '.($order->order_number ?? $order->id);
+
+            Mail::send(
+                'emails.order-receipt',
+                [
+                    'order' => $order,
+                    'customerName' => $customerName,
+                    'subtotal' => $subtotal,
+                    'discountAmount' => $discountAmount,
+                    'discountLabel' => $discountLabel,
+                    'deliveryAddress' => $deliveryAddress,
+                    'deliveryMethodLine' => $deliveryMethodLine,
+                    'paymentMethodLabel' => $paymentMethodLabel,
+                    'paymentStatusLabel' => $paymentStatusLabel,
+                    'viewOrderUrl' => $viewOrderUrl,
+                    'messengerLinks' => $messengerLinks,
+                    'shopName' => config('app.name'),
+                    'shopUrl' => $frontendUrl ?: config('app.url'),
+                    'contactPhone' => '+7 999 117-88-88',
+                ],
+                function ($message) use ($email, $subject) {
+                    $message->to($email)->subject($subject);
+                }
+            );
+
+            Log::info('Order receipt email sent', [
+                'order_id' => $order->id,
+                'to' => $email,
+                'by_user_id' => $user?->id,
+            ]);
+
+            return $this->successResponse('Письмо отправлено на '.$email);
+        } catch (\Throwable $e) {
+            Log::error('Failed to send order receipt email', [
+                'order_id' => $order->id,
+                'to' => $email,
+                'error' => $e->getMessage(),
+            ]);
+            return $this->errorResponse('Не удалось отправить письмо: '.$e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Отправка уведомлений о заказе
+     */
+    private function sendNotifications($client, Order $order): void
+    {
+        try {
+            $message = "Ваш заказ #{$order->id} принят! Сумма: {$order->total_amount} руб.";
+
+            // Отправить через все доступные каналы асинхронно
+            if ($client->email) {
+                SendNotificationJob::dispatch('email', $client->email, $message, ['order_id' => $order->id]);
+            }
+            if ($client->profile?->telegram_user_id) {
+                SendNotificationJob::dispatch('telegram', $client->profile->telegram_user_id, $message, ['order_id' => $order->id]);
+            }
+
+            // и т.д. для других каналов
+
+            Log::info('Order notifications queued', ['order_id' => $order->id]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to queue notifications', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Успешный ответ
+     */
+    private function successResponse(string $message, array $data = [], int $status = 200): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            ...$data,
+        ], $status);
+    }
+
+    /**
+     * Ответ с ошибкой
+     */
+    private function errorResponse(string $message, int $status = 400, array $extra = []): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => $message,
+            ...$extra,
+        ], $status);
+    }
+
+    /**
+     * Ответ с ошибками валидации
+     */
+    private function validationErrorResponse(array $errors): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'Обнаружены ошибки при проверке товаров в корзине',
+            'errors' => $errors,
+        ], 422);
+    }
+}

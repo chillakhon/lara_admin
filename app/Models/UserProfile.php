@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class UserProfile extends Model
+{
+    use HasFactory;
+
+
+    protected $guarded = ["id"];
+
+    protected $appends = ['full_name'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class, 'client_id');
+    }
+
+    public function Country()
+    {
+        return $this->belongsTo(Country::class, 'delivery_country_id');
+    }
+
+    // Связь с City
+    public function City()
+    {
+        return $this->belongsTo(City::class, 'delivery_city_id');
+    }
+
+    protected function fullName(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => trim(implode(' ', array_filter([
+                $this->last_name,
+                $this->first_name,
+                $this->middle_name,
+            ])))
+        );
+    }
+
+}

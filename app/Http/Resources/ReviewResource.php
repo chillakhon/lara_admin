@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class ReviewResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+
+        $isAdmin = $request->get('admin', false);
+
+        $currentClientId = $request->user()?->id;
+
+        return [
+            'id' => $this->id,
+            'content' => $this->content,
+            'rating' => $this->rating,
+            'is_verified' => $this->is_verified,
+            'is_published' => $this->is_published,
+            'published_at' => $this->published_at?->format('d.m.Y H:i'),
+            'created_at' => $this->created_at?->format('d.m.Y H:i'),
+            'status' => $this->status, // Добавляем статус
+
+            'likes_count' => $this->likesCount(),
+            'is_liked' => $this->isLikedByClient($currentClientId),
+
+            'client' => $this->when($this->client, function () {
+                return [
+                    'id' => $this->client->id,
+                    'name' => trim(($this->client->profile?->first_name ?? '') . ' ' . ($this->client->profile?->last_name ?? '')),
+                    'email' => $this->client->email, // Добавляем email клиента
+                    'avatar' => $this->client->avatar_url,
+                ];
+            }, null),
+            $this->mergeWhen($isAdmin, [
+                'reviewable' => $this->when($this->reviewable, function () {
+                    return [
+                        'id' => $this->reviewable->id,
+                        'type' => class_basename($this->reviewable_type),
+                        'name' => $this->reviewable->name,
+                        'slug' => $this->reviewable?->slug ?? null,
+                    ];
+                }, null),
+            ]),
+            'attributes' => ReviewAttributeResource::collection($this->whenLoaded('attributes')),
+            'responses' => ReviewResponseResource::collection($this->whenLoaded('responses')),
+
+        ];
+    }
+}

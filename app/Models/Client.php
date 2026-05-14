@@ -1,0 +1,135 @@
+<?php
+
+namespace App\Models;
+
+use App\Models\Segments\Segment;
+use App\Models\Tag\Tag;
+use App\Notifications\ResetPasswordNotification;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Foundation\Auth\User as Authenticatable; // Добавьте это
+
+
+class Client extends Authenticatable
+{
+    use HasFactory, SoftDeletes, Notifiable, HasApiTokens;
+
+
+    protected $guarded = ['id'];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'bonus_balance' => 'decimal:2',
+        'subscribed_to_newsletter' => 'boolean',
+        'personal_data_consent' => 'boolean',
+        'messenger_subscription' => 'boolean',
+    ];
+
+    /**
+     * Get the level that owns the client.
+     */
+    public function level()
+    {
+        return $this->belongsTo(ClientLevel::class, 'client_level_id');
+    }
+
+
+    /**
+     * Get the orders for the client.
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function lastOrder()
+    {
+        return $this->hasOne(Order::class)->latest();
+    }
+
+    /**
+     * Get the full name of the client.
+     *
+     * @return string
+     */
+    public function get_full_name()
+    {
+        return $this?->profile?->full_name;
+    }
+
+
+    public function profile()
+    {
+        return $this->hasOne(UserProfile::class);
+    }
+
+
+    public function routeNotificationForTelegram()
+    {
+        return $this->profile()->telegram_user_id;
+    }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
+
+    // is not necessary for clients, but in order to not get a error
+    // just let it be here
+    public function hasAnyRole($roles)
+    {
+        return false;
+    }
+
+
+    public function promoCodes()
+    {
+        return $this->belongsToMany(PromoCode::class, 'promo_code_client')
+            ->withPivot('birthday_discount', 'notified_at', 'reminder_sent')
+            ->withTimestamps();
+    }
+
+
+    /**
+     * Сегменты, в которые входит клиент
+     */
+    public function segments(): BelongsToMany
+    {
+        return $this->belongsToMany(Segment::class, 'client_segment')
+            ->withPivot('added_at')
+            ->withTimestamps();
+    }
+
+    /**
+     * Проверить, находится ли клиент в определённом сегменте
+     */
+    public function isInSegment(int $segmentId): bool
+    {
+        return $this->segments()->where('segment_id', $segmentId)->exists();
+    }
+
+    /**
+     * Получить все промокоды клиента из сегментов
+     */
+    public function getSegmentPromoCodes()
+    {
+        return PromoCode::whereHas('segments', function ($query) {
+            $query->whereIn('segment_id', $this->segments->pluck('id'));
+        })->get();
+    }
+
+
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class, 'client_tag')
+            ->withTimestamps();
+    }
+
+}
